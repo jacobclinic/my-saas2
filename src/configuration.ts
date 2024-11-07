@@ -61,7 +61,7 @@ const configuration = {
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
   stripe: {
-    embedded: true,
+    embedded: false,
     displayMode: StripeCheckoutDisplayMode.Popup,
     products: [
       {
