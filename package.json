@@ -14,6 +14,7 @@
     "cypress": "NODE_ENV=test cypress open",
     "cypress:headless": "NODE_ENV=test cypress run",
     "supabase:start": "supabase start --ignore-health-check",
+    "supabase:start:no-pull": "supabase start --ignore-health-check --no-pull",
     "supabase:stop": "supabase stop",
     "supabase:stop:backup": "supabase stop --backup",
     "supabase:db:reset": "supabase db reset",
