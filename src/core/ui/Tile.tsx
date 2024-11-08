@@ -8,19 +8,22 @@ import {
   Bars2Icon,
 } from '@heroicons/react/24/outline';
 
-const Tile: React.FCC & {
+const Tile: React.FCC<{
+  className?: string;
+}> & {
   Header: typeof TileHeader;
   Heading: typeof TileHeading;
   Body: typeof TileBody;
   Figure: typeof TileFigure;
   Trend: typeof TileTrend;
   Badge: typeof TileBadge;
-} = ({ children }) => {
+} = ({ children, className = '' }) => {
   return (
     <div
       className={
         'flex flex-col space-y-3 rounded-lg border border-gray-100' +
-        ' dark:border-dark-900 bg-background p-5'
+        ' dark:border-dark-900 bg-background p-5 ' +
+        className
       }
     >
       {children}
