@@ -39,6 +39,46 @@ const NAVIGATION_CONFIG: NavigationConfig = {
       end: true,
     },
     {
+      label: 'Classes',
+      path: '/classes',
+      Icon: ({ className }: { className: string }) => {
+        return <Squares2X2Icon className={className} />;
+      },
+      end: true,
+    },
+    {
+      label: 'Tutors',
+      path: '/tutors',
+      Icon: ({ className }: { className: string }) => {
+        return <Squares2X2Icon className={className} />;
+      },
+      end: true,
+    },
+    {
+      label: 'Students',
+      path: '/students',
+      Icon: ({ className }: { className: string }) => {
+        return <Squares2X2Icon className={className} />;
+      },
+      end: true,
+    },
+    {
+      label: 'Sessions',
+      path: '/sessions',
+      Icon: ({ className }: { className: string }) => {
+        return <Squares2X2Icon className={className} />;
+      },
+      end: true,
+    },
+    {
+      label: 'Payments',
+      path: '/payments',
+      Icon: ({ className }: { className: string }) => {
+        return <Squares2X2Icon className={className} />;
+      },
+      end: true,
+    },
+    {
       label: 'Settings',
       collapsible: false,
       children: [
