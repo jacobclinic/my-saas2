@@ -5,6 +5,9 @@ import { useMemo } from 'react';
 
 import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
+import Filter from '../base/Filter';
+import SearchBar from '../base/SearchBar';
+import CreateStudentModal from './CreateStudentModal';
 
 export default function StudentsList() {
   const mrr = useMemo(() => generateDemoData(), []);
@@ -149,6 +152,24 @@ function DataTableExample() {
       action: 'View'
     },
   ];
+
+  const filterOptions = [
+    { label: 'All', value: 'all' },
+    { label: 'Class', value: 'class' },
+    { label: 'Tutor', value: 'tutor' },
+    { label: 'Student', value: 'student' },
+  ]
  
-  return <DataTable data={data} columns={columns} />;
+  return (
+    <div>
+      <div className='flex justify-between items-center'>
+        <div className='flex gap-3 w-1/2'>
+          <SearchBar name="Search" />
+          <Filter name="Search Filter" placeholder="Search by an attribute" width='150px' options={filterOptions}/>
+        </div>
+        <CreateStudentModal />
+      </div>
+      <DataTable data={data} columns={columns} />
+    </div>
+  );
 }
