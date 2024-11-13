@@ -5,6 +5,11 @@ import { useMemo } from 'react';
 
 import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
+import SearchBar from '../base/SearchBar';
+import Filter from '../base/Filter';
+import ModalComponent from '../base/ModalComponent';
+import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
+import CreateClassModal from './CreateClassModal';
 
 export default function ClassesList() {
   const mrr = useMemo(() => generateDemoData(), []);
@@ -58,18 +63,19 @@ function DataTableExample() {
     {
       header: 'Name',
       accessorKey: 'name',
+      size: 240, // Fixed width,
+    },
+    {
+      header: 'Tutor',
+      accessorKey: 'tutor',
     },
     {
       header: 'No of Students',
       accessorKey: 'noOfStudents',
     },
     {
-      header: 'No of Classes',
-      accessorKey: 'noOfClasses',
-    },
-    {
-      header: 'No of Sessions',
-      accessorKey: 'noOfSessions',
+      header: 'Next Session',
+      accessorKey: 'nextSession',
     },
     {
       header: 'Action',
@@ -79,76 +85,93 @@ function DataTableExample() {
  
   const data = [
     {
-      name: 'Hashini Daluwatta',
+      name: 'Economics - 2024 A/L - Group 1',
+      tutor: 'Hashini Daluwatta',
       noOfStudents: 10,
-      noOfClasses: 5,
-      noOfSessions: 20,
+      nextSession: 20,
       action: 'View',
     },
-    {
-      name: 'John Doe',
+    {name: 'Mathematics - 2024 O/L - Group A',
+      tutor: 'John Doe',
       noOfStudents: 15,
-      noOfClasses: 8,
-      noOfSessions: 30,
+      nextSession: 15,
       action: 'View',
     },
     {
-      name: 'Jane Doe',
+      name: 'Physics - 2023 A/L - Group B',
+      tutor: 'Jane Doe',
       noOfStudents: 12,
-      noOfClasses: 6,
-      noOfSessions: 24,
+      nextSession: 10,
       action: 'View',
     },
     {
-      name: 'John Smith',
+      name: 'Chemistry - 2024 O/L - Group C',
+      tutor: 'John Smith',
       noOfStudents: 18,
-      noOfClasses: 10,
-      noOfSessions: 40,
+      nextSession: 25,
       action: 'View',
     },
     {
-      name: 'Alice Johnson',
+      name: 'Biology - 2023 A/L - Group D',
+      tutor: 'Alice Johnson',
       noOfStudents: 22,
-      noOfClasses: 12,
-      noOfSessions: 48,
-      action: 'View'
+      nextSession: 18,
+      action: 'View',
     },
     {
-      name: 'Bob Smith',
+      name: 'History - 2024 O/L - Group E',
+      tutor: 'Bob Smith',
       noOfStudents: 16,
-      noOfClasses: 9,
-      noOfSessions: 36,
-      action: 'View'
+      nextSession: 12,
+      action: 'View',
     },
     {
-      name: 'Charlie Brown',
+      name: 'Geography - 2023 A/L - Group F',
+      tutor: 'Charlie Brown',
       noOfStudents: 10,
-      noOfClasses: 5,
-      noOfSessions: 20,
-      action: 'View'
+      nextSession: 8,
+      action: 'View',
     },
     {
-      name: 'David Lee',
+      name: 'English Literature - 2024 O/L - Group G',
+      tutor: 'David Lee',
       noOfStudents: 25,
-      noOfClasses: 15,
-      noOfSessions: 60,
-      action: 'View'
+      nextSession: 20,
+      action: 'View',
     },
     {
-      name: 'Emily Davis',
+      name: 'ICT - 2023 A/L - Group H',
+      tutor: 'Emily Davis',
       noOfStudents: 18,
-      noOfClasses: 10,
-      noOfSessions: 40,
-      action: 'View'
+      nextSession: 15,
+      action: 'View',
     },
     {
-      name: 'Frank Miller',
-      noOfStudents: 12,
-      noOfClasses: 6,
-      noOfSessions: 24,
-      action: 'View'
-    },
+      name: 'ICT - 2023 A/L - Group H',
+      tutor: 'Emily Davis',
+      noOfStudents: 18,
+      nextSession: 15,
+      action: 'View',
+    }
   ];
+
+  const filterOptions = [
+    { label: 'All', value: 'all' },
+    { label: 'Class', value: 'class' },
+    { label: 'Tutor', value: 'tutor' },
+    { label: 'Student', value: 'student' },
+  ]
  
-  return <DataTable data={data} columns={columns} />;
+  return (
+    <div className='flex flex-col gap-4'>
+      <div className='flex justify-between items-center'>
+        <div className='flex gap-3 w-1/2'>
+          <SearchBar name="Search" />
+          <Filter name="Search Filter" placeholder="Search by an attribute" width='150px' options={filterOptions}/>
+        </div>
+        <CreateClassModal />
+      </div>
+      <DataTable data={data} columns={columns} />
+    </div>
+  );
 }
