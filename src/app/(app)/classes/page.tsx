@@ -23,7 +23,7 @@ function ClassesPage() {
         }
       />
 
-      <PageBody>
+      <PageBody className='overflow-y-auto'>
         <ClassesList />
       </PageBody>
     </>

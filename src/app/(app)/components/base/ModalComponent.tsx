@@ -23,31 +23,31 @@ export default function ModalComponent(props: ModalComponentProps) {
             {modalName}
         </Button>   
         <Modal heading={heading} isOpen={open} setIsOpen={setOpen}>
-            <div className="flex flex-col space-y-4">
-            {/* Header         */}
+            <div className="flex flex-col space-y-4 h-full overflow-y-auto">
+                {/* Header         */}
 
-            {/* Body         */}
-            <div>
-                {children}
-            </div>
-
-            {/* Footer         */}
-            {!noFooter ? (
-                !specialFooter ? (
-                <div className="flex gap-3 justify-end">
-                    <div className="flex justify-end min-w-24">
-                        <Button variant="default">Save</Button>
-                    </div>
-                    <div className="flex justify-end min-w-24">
-                        <Button variant="secondary" onClick={toggleModal}>
-                            Cancel
-                        </Button>
-                    </div>
+                {/* Body         */}
+                <div className='h-full overflow-y-auto'>
+                    {children}
                 </div>
-                ) : (
-                specialFooter
-                )
-            ) : null}
+
+                {/* Footer         */}
+                {!noFooter ? (
+                    !specialFooter ? (
+                    <div className="flex gap-3 justify-end">
+                        <div className="flex justify-end min-w-24">
+                            <Button variant="default">Save</Button>
+                        </div>
+                        <div className="flex justify-end min-w-24">
+                            <Button variant="secondary" onClick={toggleModal}>
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                    ) : (
+                    specialFooter
+                    )
+                ) : null}
             </div>
         </Modal>
         </>

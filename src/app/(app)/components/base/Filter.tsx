@@ -27,15 +27,17 @@ interface FilterProps {
     placeholder: string;
     isGroupedOption?: boolean;
     options: SimpleOption[] | GroupedOption[];
+    value?: string;
     width?: string;
+    onChange?: (value: string) => void; // Callback for value change
 }
 
 export default function Filter(props: FilterProps) {
-    const { name, placeholder, isGroupedOption, options, width = '' } = props;
+    const { name, placeholder, isGroupedOption, options, value, width = '', onChange } = props;
     return ( 
         <TextFieldLabel className={`flex flex-col items-start justify-start ${width ? `w-[${width}]` : ""}`}>
             {name}
-            <Select>
+            <Select value={value} onValueChange={onChange}>
                 <SelectTrigger>
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>

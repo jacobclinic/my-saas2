@@ -48,14 +48,14 @@ const Modal: React.FC<Props> & {
       </If>
 
       <DialogContent>
-        <div className={'flex flex-col space-y-4'}>
+        <div className={'flex flex-col space-y-4 h-[90dvh] max-h-[90dvh]'}>
           <div className="flex items-center">
             <DialogTitle className="flex w-full text-xl font-semibold text-current">
               <span className={'max-w-[90%] truncate'}>{heading}</span>
             </DialogTitle>
           </div>
 
-          <div className="relative">{children}</div>
+          <div className="relative flex-1 overflow-y-auto h-full">{children}</div>
 
           <If condition={useCloseButton}>
             <DialogPrimitiveClose asChild>
