@@ -1,7 +1,7 @@
 'use client';
 
 import { Line, ResponsiveContainer, LineChart, XAxis } from 'recharts';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
@@ -10,10 +10,15 @@ import Filter from '../base/Filter';
 import ModalComponent from '../base/ModalComponent';
 import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import CreateClassModal from './CreateClassModal';
+import useClassDataQuery from '~/lib/classes/hooks/use-fetch-class';
+import ClassType, { ClassTypeWithTutor } from '~/lib/classes/types/class';
+import useDeleteClassMutation from '~/lib/classes/hooks/use-delete-class';
+import UpdateClassModal from './UpdateClassModal';
+import Button from '~/core/ui/Button';
 
-type ClassData = {
+type ClassTableData = {
   id: string;
-  name: string | JSX.Element; // Allow both string and JSX.Element for flexibility
+  name: string;
   tutor: string;
   subject: string;
   noOfStudents: number;
@@ -30,6 +35,20 @@ export default function ClassesList() {
   const newCustomers = useMemo(() => generateDemoData(), []);
   const tickets = useMemo(() => generateDemoData(), []);
   const activeUsers = useMemo(() => generateDemoData(), []);
+  
+  const { data: classes, error, isLoading } = useClassDataQuery();
+
+  if (isLoading) {
+    return <div>Loading classes...</div>;
+  }
+
+  if (error) {
+    return <div>Error fetching classes: {error.message}</div>;
+  }
+
+  if (!classes || classes.length === 0) {
+    return <div>No classes found.</div>;
+  }
 
   return (
     <div className={'flex flex-col space-y-6 pb-36'}>
@@ -38,7 +57,7 @@ export default function ClassesList() {
           <Tile.Heading>Classes</Tile.Heading>
 
           <Tile.Body>
-            <DataTableExample />
+            <DataTableExample classesData={classes} />
           </Tile.Body>
         </Tile>
       </div>
@@ -66,20 +85,55 @@ function generateDemoData() {
 
   return [data, data[data.length - 1].value] as [typeof data, string];
 }
-
-function handleActionClick(rowData: ClassData) {
-  window.location.href = `/classes/${rowData.id}`;
-}
  
-function DataTableExample() {
+function DataTableExample({classesData}: { classesData: ClassTypeWithTutor[] }) {
   const [searchFilter, setSearchFilter] = useState('all');
+  const [showActionMenu, setShowActionMenu] = useState<string | null>(null); // Track which row's menu is open
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null); // Track selected class for actions
+
+  const { trigger: deleteClass, isMutating } = useDeleteClassMutation();
+
+  const toggleActionMenu = (classId: string) => {
+    // Toggle the action menu for the clicked class
+    setShowActionMenu(showActionMenu === classId ? null : classId);
+    setSelectedClassId(classId);
+  };
+
+  function handleActionClick(rowData: ClassTableData) {
+    window.location.href = `/classes/${rowData.id}`;
+  }
+
+  const handleUpdateClass = (classData: ClassTableData) => {
+    // Navigate to the class update page or open a modal for updating
+    console.log("Update class:", classData);
+    // window.location.href = `/classes/${classData.id}/update`; // Example URL
+  };
+  
+  const handleDeleteClass = async (classData: ClassTableData) => {
+    // Confirm deletion and then delete the class
+    const confirmed = window.confirm(`Are you sure you want to delete ${classData.name}?`);
+    if (confirmed) {
+      try {
+        await deleteClass(classData.id);
+        console.log(`Class ${classData.name} deleted successfully`);
+      } catch (error: any) {
+        console.error(`Failed to delete class: ${error?.message}`);
+      }
+    }
+  };
+  
   const columns = [
     {
       header: 'Name',
       accessorKey: 'name',
       size: 240, // Fixed width,
-      cell: ({ row }: { row: { original: ClassData } }) => (
-        row.original.name // Render JSX if it's not a string
+      cell: ({ row }: { row: { original: ClassTableData } }) => (
+        <button
+          className="bg-transparent font-semibold px-3 py-1 rounded"
+          onClick={() => handleActionClick(row.original)}
+        >
+          {row.original.name}
+        </button>
       ),
     },
     {
@@ -97,18 +151,60 @@ function DataTableExample() {
     {
       header: 'Action',
       accessorKey: 'action',
-      cell: ({ row }: { row: { original: ClassData } }) => (
-        <button
-          className="bg-blue-500 text-white px-3 py-1 rounded"
-          onClick={() => handleActionClick(row.original)}
-        >
-          View
-        </button>
-      ),
+      cell: ({ row }: { row: { original: ClassTableData } }) => {
+        const { id } = row.original;
+        const classData = classesData.find((classData) => classData.id === id);
+        if (classData) {
+          const classDataFormated: ClassType = {
+            ...classData,
+            tutor: classData.tutor.id,
+          };
+          return (
+            <div className="relative">
+              {/* Three-dot action button */}
+              <button
+                className="p-2 text-gray-600 hover:text-black"
+                onClick={() => toggleActionMenu(row.original.id)}
+              >
+                ⋮
+              </button>
+
+              {/* Action menu for delete and update */}
+              {showActionMenu === row.original.id && (
+                <div className="absolute z-10 right-0 p-2 flex flex-col gap-2 bg-white border border-gray-300 rounded shadow-lg">
+                  {classData && (
+                    <UpdateClassModal
+                      classData={classDataFormated}
+                    />
+                  )}
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDeleteClass(row.original)}
+                    disabled={isMutating}
+                  >
+                    {isMutating ? 'Deleting...' : 'Delete'}
+                  </Button>  
+                </div>
+              )}
+            </div>
+          );
+        }
+      },
     },
   ];
+
+  const tableData = classesData.map((classData) => ({
+    id: classData?.id,
+    name: classData?.name,
+    tutor: classData?.tutor?.name,
+    subject: classData?.subject,
+    noOfStudents: (classData?.students || []).length,
+    action: 'View',
+  }))
+
+  console.log("tableData",tableData)
  
-  const data: ClassData[] = [
+  const sampleData: ClassTableData[] = [
     {
       id: '1',
       name: 'Economics - 2024 A/L - Group 1',
@@ -214,7 +310,7 @@ function DataTableExample() {
         </div>
         <CreateClassModal />
       </div>
-      <DataTable<ClassData> data={data} columns={columns} />
+      <DataTable<ClassTableData> data={tableData} columns={columns} />
     </div>
   );
 }

@@ -10,12 +10,28 @@ interface ModalComponentProps {
     heading?: string;
     noFooter?: boolean;
     specialFooter?: React.ReactNode | null;
+    onConfirm?: () => void;
+    onCancel?: () => void;
 }
 
 export default function ModalComponent(props: ModalComponentProps) {
-    const { children, modalName, heading = "", noFooter = false, specialFooter = null } = props;
+    const { children, modalName, heading = "", noFooter = false, specialFooter = null, onConfirm, onCancel } = props;
     const [open, setOpen] = useState(false);
     const toggleModal = () => setOpen(!open);
+
+    const handleOnConfirm = () => {
+        if (onConfirm) {
+            onConfirm();
+        }
+        toggleModal();
+    }
+
+    const handleOnCancel = () => {
+        if (onCancel) {
+            onCancel();
+        }
+        toggleModal();
+    }
 
     return (
         <>
@@ -36,10 +52,10 @@ export default function ModalComponent(props: ModalComponentProps) {
                     !specialFooter ? (
                     <div className="flex gap-3 justify-end">
                         <div className="flex justify-end min-w-24">
-                            <Button variant="default">Save</Button>
+                            <Button variant="default" onClick={handleOnConfirm}>Save</Button>
                         </div>
                         <div className="flex justify-end min-w-24">
-                            <Button variant="secondary" onClick={toggleModal}>
+                            <Button variant="secondary" onClick={handleOnCancel}>
                                 Cancel
                             </Button>
                         </div>
