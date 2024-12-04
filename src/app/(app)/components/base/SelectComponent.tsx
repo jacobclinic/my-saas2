@@ -11,20 +11,24 @@ interface SelectComponentProps {
   placeholder?: string;
   label?: string;
   value?: string;
+  required?: boolean;
   onChange?: (value: string) => void; // Callback for value change
 }
 
 export default function SelectComponent({
-className = '',
+  className = '',
   options,
   placeholder = 'Select an option...',
   label,
   value,
+  required = false,
   onChange,
 }: SelectComponentProps) {
   return (
-    <div className={`relative flex h-full w-full flex-1 items-center justify-center ${className}`}>
-      <Select value={value} onValueChange={onChange}>
+    <div
+      className={`relative flex h-full w-full flex-1 items-center justify-center ${className}`}
+    >
+      <Select value={value} onValueChange={onChange} required={required}>
         <SelectTrigger>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

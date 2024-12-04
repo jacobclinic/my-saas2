@@ -3,6 +3,7 @@
 import classNames from 'clsx';
 import { StarIcon } from '@heroicons/react/24/outline';
 import Button from '~/core/ui/Button';
+import { useState } from 'react';
 
 interface HorizontalMainTabsProps {
     tabs: {
@@ -13,28 +14,14 @@ interface HorizontalMainTabsProps {
     tabAction?: (tab: any, index: number) => void;
 }
 
-const Tab = (props: { name: string; isHighlighted: boolean, tabAction?: () => void; }) => {
-    const { name, isHighlighted, tabAction = () => {} } = props;
-
-    const labelClassName = classNames(
-        'hover:bg-accent hover:text-accent-foreground',
-        {
-            ['border-b border-gray-300']: isHighlighted,
-        }
-    );
-    return (
-        <Button
-            variant="custom"
-            className={labelClassName}
-            onClick={() => tabAction()}
-        >
-            {name}
-        </Button>
-    );
-};
-
 export default function HorizontalMainTabs(props: HorizontalMainTabsProps) {
     const { tabs, highlightedTabIndex = 0, tabAction = () => {} } = props;
+    const [currentTab, setCurrentTab] = useState(highlightedTabIndex);
+
+    const handleTabClick = (tab: any, index: number) => {
+      setCurrentTab(index);
+      tabAction(tab, index);
+    };
 
     return ( 
         <div className='flex flex-row gap-2'>
@@ -42,10 +29,35 @@ export default function HorizontalMainTabs(props: HorizontalMainTabsProps) {
                 <Tab
                     key={index}
                     name={tab.name}
-                    isHighlighted={highlightedTabIndex === index}
-                    tabAction={() => tabAction(tab, index)}
+                    isActive={currentTab === index}
+                    onClick={() => handleTabClick(tab, index)}
                 />
             ))}
         </div>
     )
 }
+
+interface TabProps {
+  name: string;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+// const Tab = (props: { name: string; isHighlighted: boolean, tabAction?: () => void; }) => {
+const Tab = ({ name, isActive, onClick }: TabProps) => {
+    const labelClassName = classNames(
+        'hover:bg-accent hover:text-accent-foreground',
+        {
+            ['border-b border-gray-500']: isActive,
+        }
+    );
+    return (
+        <Button
+            variant="custom"
+            className={labelClassName}
+            onClick={onClick}
+        >
+            {name}
+        </Button>
+    );
+};

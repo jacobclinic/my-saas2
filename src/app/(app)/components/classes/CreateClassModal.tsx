@@ -1,41 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import ModalComponent from '../base/ModalComponent';
 import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import { Section, SectionBody, SectionHeader } from '~/core/ui/Section';
 import { Select } from '~/core/ui/Select';
 import SelectComponent from '../base/SelectComponent';
-
-export interface ClassType {
-  id: string; // Database generated
-  name: string;
-  description: string;
-  subject: string; // Selected or newly created
-  tutor: string; // Selected from dropdown
-  students: string[]; // Selected from dropdown
-  sessions: string[]; // Selected from dropdown
-  material: File[]; // Uploaded files
-  fee: number; // Numeric input
-  payment: string[]; // Selected payment methods
-  status: 'Active' | 'Inactive' | 'Cancelled'; // Default to 'Active'
-}
+import useCreateClassMutation from '~/lib/classes/hooks/use-create-class';
+import ClassType from '~/lib/classes/types/class';
+import { useRouter } from 'next/navigation';
 
 export default function CreateClassModal() {
-  const [className, setClassName] = useState('');
+  const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [subject, setSubject] = useState('');
   const [tutor, setTutor] = useState('');
-  const [students, setStudents] = useState<string[]>([]);
-  const [sessions, setSessions] = useState<string[]>([]);
-  const [material, setMaterial] = useState<File[]>([]);
   const [fee, setFee] = useState<number>(0);
-  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
-  const [status, setStatus] = useState<'Active' | 'Inactive' | 'Cancelled'>('Active');
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setClassName(event.target.value); // Update state with the input value
-  };
+  const createClassMutation = useCreateClassMutation();
+  const router = useRouter();
+
+  const resetToDefaultValues = () => {
+    setName('');
+    setDescription('');
+    setSubject('');
+    setTutor('');
+    setFee(0);
+  }
 
   const handleSelectSubjectChange = (value: string) => {
     setSubject(value); // Update state with the selected value
@@ -45,12 +36,6 @@ export default function CreateClassModal() {
   const handleSelectTutorChange = (value: string) => {
     setTutor(value); // Update state with the selected value
     console.log('Selected fruit:', value); // Log the selected value
-  };
-  
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setMaterial([...material, ...Array.from(event.target.files)]);
-    }
   };
 
   const subjectOptions = [
@@ -62,16 +47,35 @@ export default function CreateClassModal() {
   ];
 
   const tutorOptions = [
-    { label: 'John Doe', value: 'id1' },
-    { label: 'Jane Doe', value: 'id2' },
-    { label: 'John Smith', value: 'id3' },
+    { label: 'John Doe', value: '95572317-8cf6-4b15-bd5a-e8ccf420110f' },
+    // { label: 'Jane Doe', value: '95572317-8cf6-4b15-bd5a-e8ccf420110f' },
+    // { label: 'John Smith', value: '95572317-8cf6-4b15-bd5a-e8ccf420110f' },
   ];
+
+  const handleCreateClass = useCallback(async () => {
+    // Create a new class object with the current state values
+    const newClass: Omit<ClassType, 'id'> = {
+      name,
+      description,
+      subject,
+      tutor,
+      fee,
+    }
+    console.log("newClass-1",newClass);
+
+    // create task
+    await createClassMutation.trigger(newClass);
+    resetToDefaultValues();    
+    // redirect to /tasks
+    return router.push(`/classes`);
+  }, [router, createClassMutation, name, description, subject, tutor, fee])
  
   return (
     <div>
       <ModalComponent
         modalName='Create a Class'   
-        heading='Create a Class'       
+        heading='Create a Class'
+        onConfirm={handleCreateClass}
       >
         <Section>
           <SectionHeader
@@ -83,14 +87,16 @@ export default function CreateClassModal() {
               Name
               <TextFieldInput
                 placeholder="Enter the name"
-                value={className}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClassName(e.target.value)}
+                required
+                value={name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
               />
             </TextFieldLabel>
             <TextFieldLabel className='flex flex-col items-start justify-start'>
               Description
               <TextFieldInput
                 placeholder="Enter the description"
+                required
                 value={description}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
               />
@@ -103,6 +109,7 @@ export default function CreateClassModal() {
                 onChange={handleSelectSubjectChange}
                 value={subject}
                 className="w-full"
+                required
               />              
             </TextFieldLabel>
             <TextFieldLabel className='flex flex-col items-start justify-start'>
@@ -111,47 +118,9 @@ export default function CreateClassModal() {
                 options={tutorOptions}
                 placeholder="Select a tutor..."
                 onChange={handleSelectTutorChange}
-                value={subject}
+                value={tutor}
                 className="w-full"
-              />
-            </TextFieldLabel>
-            <TextFieldLabel className='flex flex-col items-start justify-start'>
-              Students
-              <select
-                multiple
-                value={students}
-                onChange={(e) =>
-                  setStudents(Array.from(e.target.selectedOptions, (option) => option.value))
-                }
-                className="border rounded px-3 py-2"
-              >
-                {/* Dynamically populate options */}
-                <option value="Student 1">Student 1</option>
-                <option value="Student 2">Student 2</option>
-              </select>
-            </TextFieldLabel>
-            <TextFieldLabel className='flex flex-col items-start justify-start'>
-              Sessions
-              <select
-                multiple
-                value={sessions}
-                onChange={(e) =>
-                  setSessions(Array.from(e.target.selectedOptions, (option) => option.value))
-                }
-                className="border rounded px-3 py-2"
-              >
-                {/* Dynamically populate options */}
-                <option value="Session 1">Session 1</option>
-                <option value="Session 2">Session 2</option>
-              </select>
-            </TextFieldLabel>
-            <TextFieldLabel className='flex flex-col items-start justify-start'>
-              Material
-              <input
-                type="file"
-                multiple
-                onChange={handleFileUpload}
-                className="border rounded px-3 py-2 w-full"
+                required
               />
             </TextFieldLabel>
             <TextFieldLabel className='flex flex-col items-start justify-start'>
@@ -159,43 +128,13 @@ export default function CreateClassModal() {
               <TextFieldInput
                 type="number"
                 placeholder="Enter the fee"
+                required
                 value={fee}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFee(Number(e.target.value))}
               />
             </TextFieldLabel>
-            <TextFieldLabel className='flex flex-col items-start justify-start'>
-              Payment Methods
-              <select
-                multiple
-                value={paymentMethods}
-                onChange={(e) =>
-                  setPaymentMethods(Array.from(e.target.selectedOptions, (option) => option.value))
-                }
-                className="border rounded px-3 py-2"
-              >
-                {/* Dynamically populate options */}
-                <option value="Card">Card</option>
-                <option value="Cash">Cash</option>
-              </select>
-            </TextFieldLabel>
-            <TextFieldLabel className='flex flex-col items-start justify-start'>
-              Status
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive' | 'Cancelled')}
-                className="border rounded px-3 py-2"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </TextFieldLabel>
           </SectionBody>
         </Section>
-        <div>
-          
-          
-        </div>
       </ModalComponent>
     </div>
   );
