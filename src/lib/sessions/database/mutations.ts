@@ -4,7 +4,7 @@ import type { Database } from '~/database.types';
 type Client = SupabaseClient<Database>;
 
 import { CLASSES_TABLE } from '~/lib/db-tables';
-import ClassType from '../types/class';
+import ClassType from '../types/session';
 
 /**
  * @description Creates a new class
@@ -21,7 +21,6 @@ export async function createClass(client: Client, data: Omit<ClassType, 'id'>) {
         subject: data.subject,
         tutor: data.tutor,
         fee: data.fee,
-        timeSlots: data.timeSlots,
       })
       .select('id')
       .throwOnError()

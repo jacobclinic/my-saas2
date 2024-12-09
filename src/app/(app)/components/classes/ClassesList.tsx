@@ -15,6 +15,7 @@ import ClassType, { ClassTypeWithTutor } from '~/lib/classes/types/class';
 import useDeleteClassMutation from '~/lib/classes/hooks/use-delete-class';
 import UpdateClassModal from './UpdateClassModal';
 import Button from '~/core/ui/Button';
+import { DeleteIcon } from '~/assets/images/react-icons';
 
 type ClassTableData = {
   id: string;
@@ -37,6 +38,12 @@ export default function ClassesList() {
   const activeUsers = useMemo(() => generateDemoData(), []);
   
   const { data: classes, error, isLoading } = useClassDataQuery();
+
+  useEffect(() => {
+    console.log('Current path:', window.location.pathname);
+ 
+  },[])
+
 
   if (isLoading) {
     return <div>Loading classes...</div>;
@@ -160,32 +167,24 @@ function DataTableExample({classesData}: { classesData: ClassTypeWithTutor[] }) 
             tutor: classData.tutor.id,
           };
           return (
-            <div className="relative">
-              {/* Three-dot action button */}
-              <button
-                className="p-2 text-gray-600 hover:text-black"
-                onClick={() => toggleActionMenu(row.original.id)}
+            <div className='flex gap-2'>
+              <Button
+                variant="custom"
+                size="custom"
+                disabled={isMutating}
               >
-                ⋮
-              </button>
-
-              {/* Action menu for delete and update */}
-              {showActionMenu === row.original.id && (
-                <div className="absolute z-10 right-0 p-2 flex flex-col gap-2 bg-white border border-gray-300 rounded shadow-lg">
-                  {classData && (
-                    <UpdateClassModal
-                      classData={classDataFormated}
-                    />
-                  )}
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleDeleteClass(row.original)}
-                    disabled={isMutating}
-                  >
-                    {isMutating ? 'Deleting...' : 'Delete'}
-                  </Button>  
-                </div>
-              )}
+                <UpdateClassModal
+                  classData={classDataFormated}
+                />
+              </Button>
+              <Button
+                variant="custom"
+                size="custom"
+                onClick={() => handleDeleteClass(row.original)}
+                disabled={isMutating}
+              >                
+                <DeleteIcon />
+              </Button>
             </div>
           );
         }

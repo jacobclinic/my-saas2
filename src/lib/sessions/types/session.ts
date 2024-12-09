@@ -9,7 +9,6 @@ interface ClassType {
   fee?: number;
   payments?: string[];
   status?: string;
-  timeSlots?: TimeSlot[];
 }
 
 // Tutor object structure for fetched data
@@ -18,15 +17,21 @@ interface Tutor {
   name: string;
 }
 
-interface TimeSlot {
-  day: string;
-  time: string;
-}
-
 // Extended Class Type for fetched data
 interface ClassTypeWithTutor extends Omit<ClassType, 'tutor'> {
   tutor: Tutor; // Replace `tutor` string with detailed object
 }
 
+type SessionTableData = {
+  id: string;
+  date: string;
+  class: string;
+  tutor: string;
+  subject: string;
+  noOfStudents: number;
+  noOfAtendedStudents: number;
+  action: string;
+};
+
 export default ClassType;
-export type { ClassTypeWithTutor, TimeSlot };
+export type { ClassTypeWithTutor, SessionTableData };

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '~/database.types';
 import { CLASSES_TABLE } from '~/lib/db-tables';
-import { ClassTypeWithTutor } from '../types/class';
+import { ClassTypeWithTutor } from '../types/session';
 
 /**
  * @description Fetch class object data (not auth!) by ID {@link classId}
@@ -26,8 +26,7 @@ export async function getClassDataById(
         sessions,
         fee,
         payments,
-        status,
-        timeSlots
+        status
       `,
     )
     .eq('id', classId)
@@ -54,8 +53,7 @@ export async function getAllClassesData(
         sessions,
         fee,
         payments,
-        status,
-        timeSlots
+        status
       `,
     )
     .returns<ClassTypeWithTutor[]>();

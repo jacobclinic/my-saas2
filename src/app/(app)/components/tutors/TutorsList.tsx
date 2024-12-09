@@ -1,7 +1,7 @@
 'use client';
 
 import { Line, ResponsiveContainer, LineChart, XAxis } from 'recharts';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
@@ -57,6 +57,7 @@ function generateDemoData() {
 }
  
 function DataTableExample() {
+  const [searchFilter, setSearchFilter] = useState('all');
   const columns = [
     {
       header: 'Name',
@@ -162,10 +163,16 @@ function DataTableExample() {
  
   return (
     <div>
-      <div className='flex justify-between items-center'>
-        <div className='flex gap-3 w-1/2'>
+      <div className="flex justify-between items-center">
+        <div className="flex gap-3 w-1/2">
           <SearchBar name="Search" />
-          <Filter name="Search Filter" placeholder="Search by an attribute" width='150px' options={filterOptions}/>
+          <Filter
+            name="Search Filter"
+            placeholder="Search by an attribute"
+            width="150px"
+            options={filterOptions}
+            value={searchFilter}
+          />
         </div>
         <CreateTutorModal />
       </div>

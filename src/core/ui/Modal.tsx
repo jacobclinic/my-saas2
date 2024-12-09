@@ -2,6 +2,7 @@
 
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Close as DialogPrimitiveClose } from '@radix-ui/react-dialog';
+import clsx from "clsx";
 
 import IconButton from '~/core/ui/IconButton';
 import If from '~/core/ui/If';
@@ -28,6 +29,7 @@ type Props = React.PropsWithChildren<
     modal?: boolean;
     heading: string | React.ReactNode;
     closeButton?: boolean;
+    width?: string;
   } & (ControlledOpenProps & TriggerProps)
 >;
 
@@ -47,7 +49,13 @@ const Modal: React.FC<Props> & {
         <DialogTrigger asChild>{props.Trigger}</DialogTrigger>
       </If>
 
-      <DialogContent>
+      <DialogContent
+        // className={props?.width ? ` max-w-[${props?.width}] ` : ""}
+        style={props?.width ? { maxWidth: props?.width } : {}}
+        className={clsx({
+          [`max-w-[${props.width}]`]: props.width,
+        })}
+      >
         <div className={'flex flex-col space-y-4 max-h-[90dvh]'}>
           <div className="flex items-center">
             <DialogTitle className="flex w-full text-xl font-semibold text-current">

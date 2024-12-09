@@ -15,8 +15,8 @@ export default function CreateStudentModal() {
   return (
     <div>
       <ModalComponent
-        modalName='Create a Student'   
-        heading='Create a Student'       
+        modalName='Add a Student'   
+        heading='Add a Student'       
       >
         <Section>
           <SectionHeader
