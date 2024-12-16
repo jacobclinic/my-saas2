@@ -15,8 +15,8 @@ export default function CreateTutorModal() {
   return (
     <div>
       <ModalComponent
-        modalName='Create a Tutor'   
-        heading='Create a Tutor'       
+        modalName='Add a Tutor'   
+        heading='Add a Tutor'       
       >
         <Section>
           <SectionHeader

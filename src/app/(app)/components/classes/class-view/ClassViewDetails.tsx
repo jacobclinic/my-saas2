@@ -5,22 +5,22 @@ import HorizontalMainTabs from '../../base/HorizontalMainTabs';
 import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import Button from '~/core/ui/Button';
 import Filter from '../../base/Filter';
-import { ClassTypeWithTutor } from '~/lib/classes/types/class';
+import { ClassWithTutorAndEnrollment } from '~/lib/classes/types/class';
 import SelectComponent from '../../base/SelectComponent';
 import { useState } from 'react';
 
 interface SearchBarProps {
-    classData: ClassTypeWithTutor;
+    classData: ClassWithTutorAndEnrollment;
 }
 
 export default function ClassViewDetails({ classData }: SearchBarProps) {
 
-    const [name, setName] = useState(classData.name);
-    const [subject, setSubject] = useState(classData.subject);
-    const [description, setDescription] = useState(classData.description || '');
-    const [status, setStatus] = useState(classData.status);
-    const [tutor, setTutor] = useState(classData.tutor);
-    const [fee, setFee] = useState<number>(classData.fee || 0);
+    const [name, setName] = useState(classData?.name);
+    const [subject, setSubject] = useState(classData?.subject);
+    const [description, setDescription] = useState(classData?.description || '');
+    const [status, setStatus] = useState(classData?.status);
+    const [tutor, setTutor] = useState(classData?.tutor);
+    const [fee, setFee] = useState<number>(classData?.fee || 0);
 
     const tabsArray = [
       { name: 'Details', hasPermission: true },

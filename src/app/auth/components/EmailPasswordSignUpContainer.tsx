@@ -33,7 +33,8 @@ const EmailPasswordSignUpContainer: React.FCC<{
   }, [callOnErrorCallback]);
 
   const onSignupRequested = useCallback(
-    async (params: { email: string; password: string }) => {
+    async (params: { email: string; password: string, role: string }) => {
+      console.log("onSignupRequested-params", params);
       if (loading) {
         return;
       }

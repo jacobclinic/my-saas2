@@ -1,42 +1,24 @@
 'use client';
 
-import { Line, ResponsiveContainer, LineChart, XAxis } from 'recharts';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
 import SearchBar from '../base/SearchBar';
 import Filter from '../base/Filter';
-import ModalComponent from '../base/ModalComponent';
-import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import CreateClassModal from './CreateClassModal';
-import useClassDataQuery from '~/lib/classes/hooks/use-fetch-class';
-import ClassType, { ClassTypeWithTutor } from '~/lib/classes/types/class';
-import useDeleteClassMutation from '~/lib/classes/hooks/use-delete-class';
+import useClassesDataQuery from '~/lib/classes/hooks/use-fetch-class';
+import ClassType, { ClassTableData, ClassWithTutorAndEnrollment } from '~/lib/classes/types/class';
 import UpdateClassModal from './UpdateClassModal';
 import Button from '~/core/ui/Button';
+import { DeleteIcon } from '~/assets/images/react-icons';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { deleteClassAction } from '~/lib/classes/server-actions';
 
-type ClassTableData = {
-  id: string;
-  name: string;
-  tutor: string;
-  subject: string;
-  noOfStudents: number;
-  action: string;
-};
+export default function ClassesList() {  
+  const { data: classes, error, isLoading, revalidate: revalidateClassesDataFetch } = useClassesDataQuery();
 
-export default function ClassesList() {
-  const mrr = useMemo(() => generateDemoData(), []);
-  const visitors = useMemo(() => generateDemoData(), []);
-  const returningVisitors = useMemo(() => generateDemoData(), []);
-  const churn = useMemo(() => generateDemoData(), []);
-  const netRevenue = useMemo(() => generateDemoData(), []);
-  const fees = useMemo(() => generateDemoData(), []);
-  const newCustomers = useMemo(() => generateDemoData(), []);
-  const tickets = useMemo(() => generateDemoData(), []);
-  const activeUsers = useMemo(() => generateDemoData(), []);
-  
-  const { data: classes, error, isLoading } = useClassDataQuery();
+  console.log('classes', classes);
 
   if (isLoading) {
     return <div>Loading classes...</div>;
@@ -55,66 +37,40 @@ export default function ClassesList() {
       <div>
         <Tile>
           <Tile.Heading>Classes</Tile.Heading>
-
           <Tile.Body>
-            <DataTableExample classesData={classes} />
+            <DataTableExample classesData={classes} revalidateClassesDataFetch={revalidateClassesDataFetch}/>
           </Tile.Body>
         </Tile>
       </div>
     </div>
   );
 }
-
-function generateDemoData() {
-  const today = new Date();
-  const formatter = new Intl.DateTimeFormat('en-us', {
-    month: 'long',
-    year: '2-digit',
-  });
-
-  const data: { value: string; name: string }[] = [];
-
-  for (let n = 8; n > 0; n -= 1) {
-    const date = new Date(today.getFullYear(), today.getMonth() - n, 1);
-
-    data.push({
-      name: formatter.format(date) as string,
-      value: (Math.random() * 10).toFixed(1),
-    });
-  }
-
-  return [data, data[data.length - 1].value] as [typeof data, string];
-}
  
-function DataTableExample({classesData}: { classesData: ClassTypeWithTutor[] }) {
+function DataTableExample({
+  classesData, revalidateClassesDataFetch
+}: {
+  classesData: ClassWithTutorAndEnrollment[],
+  revalidateClassesDataFetch: () => void;
+}) {
   const [searchFilter, setSearchFilter] = useState('all');
-  const [showActionMenu, setShowActionMenu] = useState<string | null>(null); // Track which row's menu is open
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null); // Track selected class for actions
 
-  const { trigger: deleteClass, isMutating } = useDeleteClassMutation();
-
-  const toggleActionMenu = (classId: string) => {
-    // Toggle the action menu for the clicked class
-    setShowActionMenu(showActionMenu === classId ? null : classId);
-    setSelectedClassId(classId);
-  };
+  const [isMutating, startTransition] = useTransition();
+  const csrfToken = useCsrfToken();
 
   function handleActionClick(rowData: ClassTableData) {
     window.location.href = `/classes/${rowData.id}`;
   }
-
-  const handleUpdateClass = (classData: ClassTableData) => {
-    // Navigate to the class update page or open a modal for updating
-    console.log("Update class:", classData);
-    // window.location.href = `/classes/${classData.id}/update`; // Example URL
-  };
   
   const handleDeleteClass = async (classData: ClassTableData) => {
     // Confirm deletion and then delete the class
     const confirmed = window.confirm(`Are you sure you want to delete ${classData.name}?`);
     if (confirmed) {
       try {
-        await deleteClass(classData.id);
+        startTransition(async () => {
+          await deleteClassAction({ classId: classData.id, csrfToken});
+          revalidateClassesDataFetch();
+        });
+        // await deleteClass(classData.id);
         console.log(`Class ${classData.name} deleted successfully`);
       } catch (error: any) {
         console.error(`Failed to delete class: ${error?.message}`);
@@ -155,37 +111,25 @@ function DataTableExample({classesData}: { classesData: ClassTypeWithTutor[] }) 
         const { id } = row.original;
         const classData = classesData.find((classData) => classData.id === id);
         if (classData) {
-          const classDataFormated: ClassType = {
-            ...classData,
-            tutor: classData.tutor.id,
-          };
           return (
-            <div className="relative">
-              {/* Three-dot action button */}
-              <button
-                className="p-2 text-gray-600 hover:text-black"
-                onClick={() => toggleActionMenu(row.original.id)}
+            <div className='flex gap-2'>
+              <Button
+                variant="custom"
+                size="custom"
+                disabled={isMutating}
               >
-                ⋮
-              </button>
-
-              {/* Action menu for delete and update */}
-              {showActionMenu === row.original.id && (
-                <div className="absolute z-10 right-0 p-2 flex flex-col gap-2 bg-white border border-gray-300 rounded shadow-lg">
-                  {classData && (
-                    <UpdateClassModal
-                      classData={classDataFormated}
-                    />
-                  )}
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleDeleteClass(row.original)}
-                    disabled={isMutating}
-                  >
-                    {isMutating ? 'Deleting...' : 'Delete'}
-                  </Button>  
-                </div>
-              )}
+                <UpdateClassModal
+                  classData={classData}
+                />
+              </Button>
+              <Button
+                variant="custom"
+                size="custom"
+                onClick={() => handleDeleteClass(row.original)}
+                disabled={isMutating}
+              >                
+                <DeleteIcon />
+              </Button>
             </div>
           );
         }
@@ -193,99 +137,16 @@ function DataTableExample({classesData}: { classesData: ClassTypeWithTutor[] }) 
     },
   ];
 
-  const tableData = classesData.map((classData) => ({
+  const tableData: ClassTableData[] = classesData.map((classData) => ({
     id: classData?.id,
     name: classData?.name,
-    tutor: classData?.tutor?.name,
+    tutor: `${classData?.tutor?.firstName} ${classData?.tutor?.lastName}`,
     subject: classData?.subject,
-    noOfStudents: (classData?.students || []).length,
-    action: 'View',
+    noOfStudents: classData?.noOfStudents || 0,
+    action: 'Manage',
   }))
 
   console.log("tableData",tableData)
- 
-  const sampleData: ClassTableData[] = [
-    {
-      id: '1',
-      name: 'Economics - 2024 A/L - Group 1',
-      tutor: 'Hashini Daluwatta',
-      subject: 'Economics',
-      noOfStudents: 10,
-      action: 'View',
-    },
-    {
-      id: '2',
-      name: 'Mathematics - 2024 O/L - Group A',
-      tutor: 'John Doe',
-      subject: 'Mathematics',
-      noOfStudents: 15,
-      action: 'View'
-    },
-    {
-      id: '3',
-      name: 'Physics - 2023 A/L - Group B',
-      tutor: 'Jane Doe',
-      subject: 'Physics',
-      noOfStudents: 12,
-      action: 'View'
-    },
-    {
-      id: '4',
-      name: 'Chemistry - 2024 O/L - Group C',
-      tutor: 'John Smith',
-      subject: 'Chemistry',
-      noOfStudents: 18,
-      action: 'View'
-    },
-    {
-      id: '5',
-      name: 'Biology - 2023 A/L - Group D',
-      tutor: 'Alice Johnson',
-      subject: 'Biology',
-      noOfStudents: 22,
-      action: 'View'
-    },
-    {
-      id: '6',
-      name: 'History - 2024 O/L - Group E',
-      tutor: 'Bob Smith',
-      subject: 'History',
-      noOfStudents: 16,
-      action: 'View'
-    },
-    {
-      id: '7',
-      name: 'Geography - 2023 A/L - Group F',
-      tutor: 'Charlie Brown',
-      subject: 'Geography',
-      noOfStudents: 10,
-      action: 'View'
-    },
-    {
-      id: '8',
-      name: 'English Literature - 2024 O/L - Group G',
-      tutor: 'David Lee',
-      subject: 'English Literature',
-      noOfStudents: 25,
-      action: 'View'
-    },
-    {
-      id: '9',
-      name: 'ICT - 2023 A/L - Group H',
-      tutor: 'Emily Davis',
-      subject: 'ICT',
-      noOfStudents: 18,
-      action: 'View'
-    },
-    {
-      id: '10',
-      name: 'Accounting - 2024 A/L - Group I',
-      tutor: 'Frank Miller',
-      subject: 'Accounting',
-      noOfStudents: 12,
-      action: 'View'
-    },
-  ];
 
   const filterOptions = [
     { label: 'All', value: 'all' },
@@ -308,7 +169,9 @@ function DataTableExample({classesData}: { classesData: ClassTypeWithTutor[] }) 
             onChange={(value) => setSearchFilter(value)}
           />
         </div>
-        <CreateClassModal />
+        <div>
+          <CreateClassModal />
+        </div>
       </div>
       <DataTable<ClassTableData> data={tableData} columns={columns} />
     </div>

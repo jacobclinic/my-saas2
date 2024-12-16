@@ -5,16 +5,19 @@ import HorizontalMainTabs from '../../base/HorizontalMainTabs';
 import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import Button from '~/core/ui/Button';
 import Filter from '../../base/Filter';
-import { ClassTypeWithTutor } from '~/lib/classes/types/class';
+import { ClassWithTutorAndEnrollment } from '~/lib/classes/types/class';
 import SelectComponent from '../../base/SelectComponent';
 import { useState } from 'react';
 import ClassViewDetails from './ClassViewDetails';
+import useSessionsDataQuery, { useSessionsDataByClassIdQuery } from '~/lib/sessions/hooks/use-fetch-session';
+import SessionsList from '../../sessions/SessionsList';
 
 interface SearchBarProps {
-    classData: ClassTypeWithTutor;
+    classData: ClassWithTutorAndEnrollment;
 }
 
 export default function ClassView({ classData }: SearchBarProps) {
+    const { data: sessions, error, isLoading, revalidate: revalidateSessionsByClassIdDataFetch } = useSessionsDataByClassIdQuery(classData.id);
     const tabsArray = [
       { name: 'Details', hasPermission: true },
       { name: 'Students', hasPermission: true },
@@ -28,9 +31,9 @@ export default function ClassView({ classData }: SearchBarProps) {
             case 0:
                 return <ClassViewDetails classData={classData} />;
             case 1:
-                return <div className='mt-8'>Student List</div>;
+                return <div className='mt-8'>Students List</div>;
             case 2:
-                return <div className='mt-8'>Session List</div>;
+                return <SessionsList sessionData={sessions || []} classId={classData.id} revalidateSessionsByClassIdDataFetch={revalidateSessionsByClassIdDataFetch} />;
             case 3:
                 return <div className='mt-8'>Payments List</div>;
             default:
