@@ -5,6 +5,7 @@ import HttpStatusCode from '~/core/generic/http-status-code.enum';
 import configuration from '~/configuration';
 import createMiddlewareClient from '~/core/supabase/middleware-client';
 import GlobalRole from '~/core/session/types/global-role';
+import { fetchUserRole } from './lib/user/database/queries';
 
 const CSRF_SECRET_COOKIE = 'csrfSecret';
 const NEXT_ACTION_HEADER = 'next-action';
@@ -20,7 +21,7 @@ export async function middleware(request: NextRequest) {
   const csrfResponse = await withCsrfMiddleware(request, response);
   const sessionResponse = await sessionMiddleware(request, csrfResponse);
 
-  return await adminMiddleware(request, sessionResponse);
+  return await roleBasedMiddleware(request, sessionResponse);
 }
 
 async function sessionMiddleware(req: NextRequest, res: NextResponse) {
@@ -91,5 +92,47 @@ async function adminMiddleware(request: NextRequest, response: NextResponse) {
   }
 
   // in all other cases, return the response
+  return response;
+}
+
+async function roleBasedMiddleware(request: NextRequest, response: NextResponse) {
+  const pathname = request.nextUrl.pathname;
+
+  const supabase = createMiddlewareClient(request, response);
+  const { data: user, error } = await supabase.auth.getUser();
+
+  // If the user is not authenticated, redirect to sign-in
+  if (error || !user) {
+    return NextResponse.redirect(configuration.paths.signIn);
+  }
+
+  const userId = user.user?.id;
+
+  if (!userId) {
+    return NextResponse.redirect(configuration.paths.signIn);
+  }
+
+  try {
+    // Fetch the user role from the public.users table
+    const userRole = await fetchUserRole(supabase, userId);
+
+    // Restrict access based on user userRole
+    if (pathname.startsWith('/admin') && userRole !== 'admin') {
+      return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
+    }
+
+    if (pathname.startsWith('/tutor') && userRole !== 'tutor' && userRole !== 'admin') {
+      return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
+    }
+
+    if (pathname.startsWith('/student') && userRole !== 'student' && userRole !== 'tutor' && userRole !== 'admin') {
+      return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
+    }
+
+  } catch (error: any) {
+    console.error('Error fetching user userRole:', error.message);
+    return NextResponse.redirect(configuration.paths.signIn);
+  }
+
   return response;
 }

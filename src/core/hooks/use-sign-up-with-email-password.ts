@@ -5,7 +5,7 @@ import configuration from '~/configuration';
 interface Credentials {
   email: string;
   password: string;
-  role:string
+  userRole:string
 }
 
 /**
@@ -31,7 +31,7 @@ function useSignUpWithEmailAndPassword() {
           options: {
             emailRedirectTo,
             data: {
-              role: credentials.role, // Store role in Supabase Auth metadata
+              role: credentials.userRole, // Store role in Supabase Auth metadata
             },
           },
         })

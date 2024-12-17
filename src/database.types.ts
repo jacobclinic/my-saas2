@@ -132,6 +132,7 @@ export type Database = {
           display_name: string | null
           id: string
           photo_url: string | null
+          userRole: string | null
         }
         Insert: {
           created_at?: string

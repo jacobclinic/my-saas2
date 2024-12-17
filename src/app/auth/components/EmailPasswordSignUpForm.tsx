@@ -10,7 +10,7 @@ const EmailPasswordSignUpForm: React.FCC<{
     email: string;
     password: string;
     repeatPassword: string;
-    role: 'student' | 'tutor';
+    userRole: 'student' | 'tutor';
   }) => unknown;
   loading: boolean;
 }> = ({ onSubmit, loading }) => {
@@ -22,7 +22,7 @@ const EmailPasswordSignUpForm: React.FCC<{
     },
   });
   
-  const [role, setRole] = useState<'student' | 'tutor'>('student'); // Default role
+  const [userRole, setUserRole] = useState<'student' | 'tutor'>('student'); // Default userRole
 
   const emailControl = register('email', { required: true });
   const errors = formState.errors;
@@ -59,23 +59,23 @@ const EmailPasswordSignUpForm: React.FCC<{
         <button
           type="button"
           className={`w-1/2 p-2 ${
-            role === 'student' ? 'bg-primary text-white' : 'bg-gray-100'
+            userRole === 'student' ? 'bg-primary text-white' : 'bg-gray-100'
           }`}
-          onClick={() => setRole('student')}
+          onClick={() => setUserRole('student')}
         >
           Student
         </button>
         <button
           type="button"
           className={`w-1/2 p-2 ${
-            role === 'tutor' ? 'bg-primary text-white' : 'bg-gray-100'
+            userRole === 'tutor' ? 'bg-primary text-white' : 'bg-gray-100'
           }`}
-          onClick={() => setRole('tutor')}
+          onClick={() => setUserRole('tutor')}
         >
           Tutor
         </button>
       </div>
-      <form className={'w-full'} onSubmit={handleSubmit((data) => onSubmit({ ...data, role }))}>
+      <form className={'w-full'} onSubmit={handleSubmit((data) => onSubmit({ ...data, userRole }))}>
         <div className={'flex-col space-y-4'}>
           <TextField>
             <TextField.Label>
