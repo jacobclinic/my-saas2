@@ -31,7 +31,7 @@ function useSignUpWithEmailAndPassword() {
           options: {
             emailRedirectTo,
             data: {
-              role: credentials.userRole, // Store role in Supabase Auth metadata
+              userRole: credentials.userRole, // Store role in Supabase Auth metadata
             },
           },
         })

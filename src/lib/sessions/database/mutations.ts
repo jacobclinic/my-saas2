@@ -35,6 +35,33 @@ export async function createSession(client: Client, data: Omit<SessionType, 'id'
 }
 
 /**
+ * @description Creates multiple sessions
+ * @param client - Supabase client instance
+ * @param sessions - Array of session data (excluding the ID)
+ */
+export async function createSessions(client: Client, sessions: Omit<SessionType, 'id'>[]) {
+  try {
+    const { data: insertedSessions, error } = await client
+      .from(SESSIONS_TABLE)
+      .insert(sessions.map((session) => ({
+        startTime: session.startTime,
+        classId: session.classId,
+        title: session?.title,
+        description: session?.description,
+      })))
+      .select('id') // Select the IDs of the inserted rows
+      .throwOnError();
+
+    if (error) throw error; // Manually throw error if any
+
+    return insertedSessions;
+  } catch (error) {
+    console.error("Error creating sessions:", error);
+    throw new Error("Failed to create sessions. Please try again.");
+  }
+}
+
+/**
  * @description Updates an existing session by ID
  * @param client - Supabase client instance
  * @param sessionId - ID of the session to update

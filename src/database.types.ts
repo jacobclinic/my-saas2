@@ -133,6 +133,13 @@ export type Database = {
           id: string
           photo_url: string | null
           userRole: string | null
+          biography?: string
+          email: string
+          phoneNumber?: string
+          status?: string
+          bankDetails?: string
+          firstName?: string
+          lastName?: string
         }
         Insert: {
           created_at?: string

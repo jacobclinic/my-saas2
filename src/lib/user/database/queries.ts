@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '~/database.types';
 import { USERS_TABLE } from '~/lib/db-tables';
+import UserType from '../types/user';
 
 /**
  * @description Fetch user object data (not auth!) by ID {@link userId}
@@ -52,4 +53,33 @@ export async function fetchUserRole(
   }
 
   return data.userRole;
+}
+
+
+export async function getAllUsersByUserRoleData(
+  client: SupabaseClient<Database>,
+  userRole: string
+): Promise<UserType[] | []> {
+  try {
+    const { data, error } = await client
+      .from(USERS_TABLE)
+      .select()
+      .eq('userRole', userRole)
+
+    console.log("getAllUsersData", data)
+
+    if (error) {
+      throw new Error(`Error fetching all users: ${error.message}`);
+    }
+
+    if (!data) {
+      return [];
+    }
+    
+    return data;
+
+  } catch (error) {
+    console.error('Failed to fetch all users:', error);
+    throw error;
+  }
 }

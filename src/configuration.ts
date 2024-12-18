@@ -134,6 +134,9 @@ const configuration = {
       },
     ],
   },
+  email: {
+    fromAddress: process.env.EMAIL_SENDER,
+  }
 };
 
 export default configuration;

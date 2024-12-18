@@ -19,6 +19,8 @@ interface ClassTableTutor {
 interface TimeSlot {
   day: string;
   time: string;
+  duration: string;
+  reccurringPattern: string;
 }
 
 // Extended Class Type for fetched data

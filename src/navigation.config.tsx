@@ -13,6 +13,7 @@ type NavigationItemLink = {
   path: string;
   Icon: (props: { className: string }) => JSX.Element;
   end?: boolean;
+  userRole?: string[];
 };
 
 type NavigationGroup = {
@@ -37,6 +38,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
+      userRole: ['admin', 'tutor', 'student'],
     },
     {
       label: 'Classes',
@@ -45,6 +47,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
+      userRole: ['admin', 'tutor'],
     },
     {
       label: 'Tutors',
@@ -53,6 +56,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
+      userRole: ['admin'],
     },
     {
       label: 'Students',
@@ -61,6 +65,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
+      userRole: ['admin', 'tutor'],
     },
     {
       label: 'Sessions',
@@ -69,6 +74,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
+      userRole: ['admin', 'tutor', 'student'],
     },
     {
       label: 'Payments',
@@ -77,6 +83,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
+      userRole: ['admin', 'tutor', 'student'],
     },
     {
       label: 'Settings',
@@ -88,6 +95,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
           Icon: ({ className }: { className: string }) => {
             return <UserIcon className={className} />;
           },
+          userRole: ['admin', 'tutor', 'student'],
         },
         {
           label: 'Subscription',
@@ -95,6 +103,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
           Icon: ({ className }: { className: string }) => {
             return <CreditCardIcon className={className} />;
           },
+          userRole: ['admin', 'tutor', 'student'],
         },
       ],
     },

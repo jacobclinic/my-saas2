@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
   const csrfResponse = await withCsrfMiddleware(request, response);
   const sessionResponse = await sessionMiddleware(request, csrfResponse);
 
-  return await roleBasedMiddleware(request, sessionResponse);
+  return await adminMiddleware(request, sessionResponse);
 }
 
 async function sessionMiddleware(req: NextRequest, res: NextResponse) {
@@ -77,6 +77,7 @@ async function adminMiddleware(request: NextRequest, response: NextResponse) {
 
   const supabase = createMiddlewareClient(request, response);
   const user = await supabase.auth.getUser();
+  console.log('-----------User:', user);
 
   // If user is not logged in, redirect to sign in page.
   // This should never happen, but just in case.
@@ -97,12 +98,19 @@ async function adminMiddleware(request: NextRequest, response: NextResponse) {
 
 async function roleBasedMiddleware(request: NextRequest, response: NextResponse) {
   const pathname = request.nextUrl.pathname;
+  const isInAppPath = pathname.startsWith('/admin') || pathname.startsWith('/tutor') || pathname.startsWith('/student');
+
+  if (!isInAppPath) {
+    return response;
+  }
 
   const supabase = createMiddlewareClient(request, response);
   const { data: user, error } = await supabase.auth.getUser();
+  console.log('User:', user);
 
   // If the user is not authenticated, redirect to sign-in
-  if (error || !user) {
+  if (error || !user?.user) {
+    console.error('User not authenticated:', error?.message || 'No user found');
     return NextResponse.redirect(configuration.paths.signIn);
   }
 

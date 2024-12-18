@@ -13,6 +13,9 @@ import Button from '~/core/ui/Button';
 import { DeleteIcon } from '~/assets/images/react-icons';
 import { useClassesDataQueryRevalidate } from '~/lib/classes/hooks/use-fetch-class';
 import { TIME_SLOT_DAY_OPTIONS } from '~/lib/classes/constants/class';
+import SessionsType from '~/lib/sessions/types/session';
+import { createSessionsAction } from '~/lib/sessions/server-actions';
+import { calculateSessionsTimes } from '~/lib/utility-functions';
 
 export default function CreateClassModal() {
   const [name, setName] = useState('');
@@ -20,7 +23,7 @@ export default function CreateClassModal() {
   const [subject, setSubject] = useState('');
   const [tutor, setTutor] = useState('');
   const [fee, setFee] = useState<number>(0);
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([{ day: "", time: "" }]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([{ day: "", time: "", duration: "", reccurringPattern: "" }]);
 
   const [isMutating, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
@@ -34,7 +37,7 @@ export default function CreateClassModal() {
     setSubject('');
     setTutor('');
     setFee(0);
-    setTimeSlots([{ day: "", time: "" }]);
+    setTimeSlots([{ day: "", time: "", duration: "", reccurringPattern: "" }]);
   }
 
   const handleSelectSubjectChange = (value: string) => {
@@ -76,7 +79,36 @@ export default function CreateClassModal() {
     console.log("newClass-1",newClass);
 
     startTransition(async () => {
-      await createClassAction({ classData: newClass, csrfToken });
+      const createdClass = await createClassAction({ classData: newClass, csrfToken });
+      console.log("createdClass-1",createdClass);
+      if (createdClass.success && createdClass?.class?.id) {
+        console.log("createdClass-2",filteredTimeSlots,timeSlots);
+
+        if (filteredTimeSlots.length > 0) {
+          let newSessions: Omit<SessionsType, 'id'>[] = []
+          filteredTimeSlots.forEach((timeSlot) => {
+            const input = {
+              day: timeSlot.day,
+              time: timeSlot.time,
+              duration: timeSlot.duration, // Duration as a string
+              recurringPattern: "weekly",
+            };
+            
+            const sessionsTimes = calculateSessionsTimes(input);
+            sessionsTimes.forEach(element => {
+              newSessions.push({
+                classId: createdClass?.class?.id,
+                startTime: element.startTime,
+                endTime: element?.endTime,
+              })
+              
+            });
+          });
+          console.log("newSession-1",newSessions);
+          await createSessionsAction({ sessionsData: newSessions, csrfToken });
+        }
+
+      }
       revalidateClassesDataFetch();
     });
 
@@ -99,7 +131,7 @@ export default function CreateClassModal() {
 
   // Add a new empty time slot
   const addTimeSlot = () => {
-    setTimeSlots([...timeSlots, { day: "", time: "" }]);
+    setTimeSlots([...timeSlots, { day: "", time: "", duration: "", reccurringPattern: "" }]);
   };
 
   // Optionally handle removing a time slot
