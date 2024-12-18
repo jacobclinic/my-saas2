@@ -22,7 +22,7 @@ export default function UpdateClassModal({ classData }: { classData: ClassWithTu
   const [subject, setSubject] = useState(classData.subject);
   const [tutor, setTutor] = useState(classData.tutorId);
   const [fee, setFee] = useState<number>(classData.fee || 0);
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>(classData.timeSlots || [{ day: "", time: "" }]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>(classData.timeSlots || [{ day: "", time: "", duration: "", reccurringPattern: "" }]);
 
   const [isMutating, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
@@ -34,7 +34,7 @@ export default function UpdateClassModal({ classData }: { classData: ClassWithTu
     setSubject(classData.subject);
     setTutor(classData.tutorId);
     setFee(classData.fee || 0);
-    setTimeSlots(classData.timeSlots || [{ day: "", time: "" }]);
+    setTimeSlots(classData.timeSlots || [{ day: "", time: "", duration: "", reccurringPattern: "" }]);
   }, [classData]);
 
   const handleSelectSubjectChange = (value: string) => {
@@ -52,7 +52,7 @@ export default function UpdateClassModal({ classData }: { classData: ClassWithTu
   };
 
   const addTimeSlot = () => {
-    setTimeSlots([...timeSlots, { day: "", time: "" }]);
+    setTimeSlots([...timeSlots, { day: "", time: "", duration: "", reccurringPattern: "" }]);
   };
 
   const removeTimeSlot = (index: number) => {
