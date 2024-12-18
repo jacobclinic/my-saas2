@@ -5,6 +5,7 @@ import configuration from '~/configuration';
 interface Credentials {
   email: string;
   password: string;
+  userRole:string
 }
 
 /**
@@ -17,6 +18,7 @@ function useSignUpWithEmailAndPassword() {
   return useSWRMutation(
     key,
     (_, { arg: credentials }: { arg: Credentials }) => {
+      console.log("onSignupRequested-params", credentials);
       const emailRedirectTo = [
         window.location.origin,
         configuration.paths.authCallback,
@@ -24,9 +26,13 @@ function useSignUpWithEmailAndPassword() {
 
       return client.auth
         .signUp({
-          ...credentials,
+          email: credentials.email,
+          password: credentials.password,
           options: {
             emailRedirectTo,
+            data: {
+              userRole: credentials.userRole, // Store role in Supabase Auth metadata
+            },
           },
         })
         .then((response) => {

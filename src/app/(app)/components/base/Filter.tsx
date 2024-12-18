@@ -23,7 +23,7 @@ interface GroupedOption {
 }
 
 interface FilterProps {
-    name: string;
+    name?: string;
     placeholder: string;
     isGroupedOption?: boolean;
     options: SimpleOption[] | GroupedOption[];
@@ -34,9 +34,11 @@ interface FilterProps {
 
 export default function Filter(props: FilterProps) {
     const { name, placeholder, isGroupedOption, options, value, width = '', onChange } = props;
+
+    const className = `flex flex-col items-start justify-start ${width ? `w-[${width}]` : ""}`;
     return ( 
-        <TextFieldLabel className={`flex flex-col items-start justify-start ${width ? `w-[${width}]` : ""}`}>
-            {name}
+        <TextFieldLabel className={className}>
+            {name ? name : null}
             <Select value={value} onValueChange={onChange}>
                 <SelectTrigger>
                     <SelectValue placeholder={placeholder} />

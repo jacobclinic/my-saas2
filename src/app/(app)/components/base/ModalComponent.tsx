@@ -6,16 +6,17 @@ import Modal from '~/core/ui/Modal';
 
 interface ModalComponentProps {
     children: React.ReactNode;
-    modalName: string;
+    modalName: string | React.ReactNode;
     heading?: string;
     noFooter?: boolean;
     specialFooter?: React.ReactNode | null;
+    width?: string;
     onConfirm?: () => void;
     onCancel?: () => void;
 }
 
 export default function ModalComponent(props: ModalComponentProps) {
-    const { children, modalName, heading = "", noFooter = false, specialFooter = null, onConfirm, onCancel } = props;
+    const { children, modalName, heading = "", noFooter = false, specialFooter = null, width, onConfirm, onCancel } = props;
     const [open, setOpen] = useState(false);
     const toggleModal = () => setOpen(!open);
 
@@ -35,10 +36,14 @@ export default function ModalComponent(props: ModalComponentProps) {
 
     return (
         <>
-        <Button variant="default" onClick={() => setOpen(true)}>
+        {typeof modalName === 'string' ? (
+            <Button variant="default" onClick={() => setOpen(true)}>
+                {modalName}
+            </Button>
+        ) : <Button variant="custom" size="custom" onClick={() => setOpen(true)}>
             {modalName}
-        </Button>   
-        <Modal heading={heading} isOpen={open} setIsOpen={setOpen}>
+        </Button>} 
+        <Modal heading={heading} isOpen={open} setIsOpen={setOpen} width={width}>
             <div className="flex flex-col space-y-4 h-full overflow-y-auto">
                 {/* Header         */}
 

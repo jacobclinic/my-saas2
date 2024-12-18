@@ -3,24 +3,40 @@ interface ClassType {
   name: string;
   description?: string;
   subject: string;
-  tutor: string;
-  students?: string[];
-  sessions?: string[];
+  tutorId: string;
   fee?: number;
-  payments?: string[];
   status?: string;
+  timeSlots?: TimeSlot[];
 }
 
 // Tutor object structure for fetched data
-interface Tutor {
+interface ClassTableTutor {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
+}
+
+interface TimeSlot {
+  day: string;
+  time: string;
+  duration: string;
+  reccurringPattern: string;
 }
 
 // Extended Class Type for fetched data
-interface ClassTypeWithTutor extends Omit<ClassType, 'tutor'> {
-  tutor: Tutor; // Replace `tutor` string with detailed object
+interface ClassWithTutorAndEnrollment extends ClassType {
+  tutor: ClassTableTutor;
+  noOfStudents: number;
 }
 
+type ClassTableData = {
+  id: string;
+  name: string;
+  tutor: string;
+  subject: string;
+  noOfStudents: number;
+  action: string;
+};
+
 export default ClassType;
-export type { ClassTypeWithTutor };
+export type { ClassWithTutorAndEnrollment, TimeSlot, ClassTableData };

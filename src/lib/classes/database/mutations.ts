@@ -19,8 +19,9 @@ export async function createClass(client: Client, data: Omit<ClassType, 'id'>) {
         name: data.name,
         description: data.description,
         subject: data.subject,
-        tutor: data.tutor,
+        tutorId: data.tutorId,
         fee: data.fee,
+        timeSlots: data.timeSlots,
       })
       .select('id')
       .throwOnError()
@@ -67,15 +68,16 @@ export async function updateClass(client: Client, classId: string, data: Partial
  */
 export async function deleteClass(client: Client, classId: string) {
   try {
-    const { error } = await client
+    const { data, error } = await client
       .from(CLASSES_TABLE)
       .delete()
       .eq('id', classId) // Filter by classId
+      .select('id') // Return the class ID after the update
       .throwOnError();
 
     if (error) throw error; // Manually throw error if any
 
-    return { message: "Class deleted successfully" };
+    return data;
   } catch (error) {
     console.error("Error deleting class:", error);
     throw new Error("Failed to delete class. Please try again.");

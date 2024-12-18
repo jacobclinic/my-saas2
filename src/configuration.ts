@@ -32,7 +32,8 @@ const configuration = {
       phoneNumber: false,
       emailLink: false,
       emailOtp: false,
-      oAuth: ['google'] as Provider[],
+      // oAuth: ['google'] as Provider[],
+      oAuth: [] as Provider[],
     },
   },
   production,
@@ -133,6 +134,9 @@ const configuration = {
       },
     ],
   },
+  email: {
+    fromAddress: process.env.EMAIL_SENDER,
+  }
 };
 
 export default configuration;
