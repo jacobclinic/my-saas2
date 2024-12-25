@@ -4,7 +4,7 @@ import { PageBody } from '~/core/ui/Page';
 import SessionView from '../../components/sessions/session-view/SessionView';
 
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
-import { getSessionDataById } from '~/lib/sessions/database/queries';
+// import { getSessionDataById } from '~/lib/sessions/database/queries';
 import { SessionsWithTableData } from '~/lib/sessions/types/session';
 import Button from '~/core/ui/Button';
 
@@ -20,15 +20,15 @@ export const metadata = {
 
 export default async function SessionViewPage({ params }: Params) {
   const client = getSupabaseServerComponentClient();
-  const sessionData = await getSessionDataById(client, params.id) as SessionsWithTableData;
-  console.log("sessionData-------", sessionData);
+  // const sessionData = await getSessionDataById(client, params.id) as SessionsWithTableData;
+  // console.log("sessionData-------", sessionData);
 
   return (
     <>
-      <AppHeader
+      {/* <AppHeader
         title={`${new Date(sessionData?.startTime || '').toLocaleString()} - ${sessionData?.class?.name}`}
         description={`Attendance - ${sessionData?.noOfAtendedStudents}, Status - ${sessionData?.status}`}
-      />
+      /> */}
 
       <PageBody>
         <div className='flex gap-4 self-end'>
@@ -40,7 +40,7 @@ export default async function SessionViewPage({ params }: Params) {
               </Button>
           </div>
         </div>
-        <SessionView sessionData={sessionData}/>
+        {/* <SessionView sessionData={sessionData}/> */}
       </PageBody>
     </>
   );

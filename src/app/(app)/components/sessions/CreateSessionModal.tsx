@@ -8,7 +8,7 @@ import SelectComponent from '../base/SelectComponent';
 import { useRouter } from 'next/navigation';
 import SessionsType from '~/lib/sessions/types/session';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { useSessionsDataQueryRevalidate } from '~/lib/sessions/hooks/use-fetch-session';
+// import { useSessionsDataQueryRevalidate } from '~/lib/sessions/hooks/use-fetch-session';
 import { createSessionAction } from '~/lib/sessions/server-actions';
 
 export default function CreateSessionModal({ classId, revalidateSessionsByClassIdDataFetch }: {
