@@ -2,7 +2,7 @@ import loadDynamic from 'next/dynamic';
 import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
-import { getAllSessionsData } from '~/lib/sessions/database/queries';
+// import { getAllSessionsData } from '~/lib/sessions/database/queries';
 import { SessionsWithTableData } from '~/lib/sessions/types/session';
 
 const SessionsList = loadDynamic(
@@ -18,8 +18,8 @@ export const metadata = {
 
 async function SessionsPage() {
   const client = getSupabaseServerComponentClient();
-  const sessionData = await getAllSessionsData(client) as SessionsWithTableData[];
-  console.log("sessionData-server-component------", sessionData);
+  // const sessionData = await getAllSessionsData(client) as SessionsWithTableData[];
+  // console.log("sessionData-server-component------", sessionData);
   
   return (
     <>
@@ -31,7 +31,7 @@ async function SessionsPage() {
       />
 
       <PageBody>
-        <SessionsList sessionData={sessionData}/>
+        {/* <SessionsList sessionData={sessionData}/> */}
       </PageBody>
     </>
   );

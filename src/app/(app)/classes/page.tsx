@@ -1,8 +1,8 @@
 import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
-import { getAllSessionsData } from '~/lib/sessions/database/queries';
-import { SessionsWithTableData } from '~/lib/sessions/types/session';
+// import { getAllSessionsData } from '~/lib/sessions/database/queries';
+// import { SessionsWithTableData } from '~/lib/sessions/types/session';
 import ClassesList from '../components/classes/ClassesList';
 
 export const metadata = {
