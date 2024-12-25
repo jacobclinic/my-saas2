@@ -1,7 +1,7 @@
 import loadDynamic from 'next/dynamic';
 import AppHeader from '~/app/(app)/components/AppHeader';
 import { PageBody } from '~/core/ui/Page';
-import ClassView from '../../components/classes-old/class-view/ClassView';
+// import ClassView from '../../components/classes-old/class-view/ClassView';
 
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { getClassDataById } from '~/lib/classes/database/queries';
@@ -43,7 +43,7 @@ export default async function ClassViewPage({ params }: Params) {
           {/* <CreateClassModal />
           <CreateClassModal /> */}
         </div>
-        <ClassView classData={classData}/>
+        {/* <ClassView classData={classData}/> */}
       </PageBody>
     </>
   );
