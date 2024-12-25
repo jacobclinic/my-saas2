@@ -1,30 +1,25 @@
-import loadDynamic from 'next/dynamic';
 import AppHeader from '~/app/(app)/components/AppHeader';
 import { PageBody } from '~/core/ui/Page';
-
-const PaymentsList = loadDynamic(
-  () => import('~/app/(app)/components/payments/PaymentsList'),
-  {
-    ssr: false,
-  },
-);
+import TutorPayments from '../components/payments/TutorPaymentList';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 
 export const metadata = {
   title: 'Payments',
 };
 
 function PaymentsPage() {
+  // const client = getSupabaseServerComponentClient();
   return (
     <>
       <AppHeader
-        title={'Payments'}
+        title={''}
         description={
-          "All the payments."
+          ""
         }
       />
 
       <PageBody>
-        <PaymentsList />
+        <TutorPayments />
       </PageBody>
     </>
   );

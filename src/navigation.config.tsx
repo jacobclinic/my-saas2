@@ -41,7 +41,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
       userRole: ['admin', 'tutor', 'student'],
     },
     {
-      label: 'Classes',
+      label: 'Class Groups',
       path: '/classes',
       Icon: ({ className }: { className: string }) => {
         return <Squares2X2Icon className={className} />;
@@ -49,33 +49,51 @@ const NAVIGATION_CONFIG: NavigationConfig = {
       end: true,
       userRole: ['admin', 'tutor'],
     },
+    // {
+    //   label: 'Tutors',
+    //   path: '/tutors',
+    //   Icon: ({ className }: { className: string }) => {
+    //     return <Squares2X2Icon className={className} />;
+    //   },
+    //   end: true,
+    //   userRole: ['admin'],
+    // },
+    // {
+    //   label: 'Students',
+    //   path: '/students',
+    //   Icon: ({ className }: { className: string }) => {
+    //     return <Squares2X2Icon className={className} />;
+    //   },
+    //   end: true,
+    //   userRole: ['admin', 'tutor'],
+    // },
     {
-      label: 'Tutors',
-      path: '/tutors',
-      Icon: ({ className }: { className: string }) => {
-        return <Squares2X2Icon className={className} />;
-      },
-      end: true,
-      userRole: ['admin'],
-    },
-    {
-      label: 'Students',
-      path: '/students',
-      Icon: ({ className }: { className: string }) => {
-        return <Squares2X2Icon className={className} />;
-      },
-      end: true,
-      userRole: ['admin', 'tutor'],
-    },
-    {
-      label: 'Sessions',
-      path: '/sessions',
+      label: 'Upcoming Classes',
+      path: '/upcoming-sessions',
       Icon: ({ className }: { className: string }) => {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
       userRole: ['admin', 'tutor', 'student'],
     },
+    {
+      label: 'Past Classes',
+      path: '/past-sessions',
+      Icon: ({ className }: { className: string }) => {
+        return <Squares2X2Icon className={className} />;
+      },
+      end: true,
+      userRole: ['admin', 'tutor', 'student'],
+    },
+    // {
+    //   label: 'Sessions',
+    //   path: '/sessions',
+    //   Icon: ({ className }: { className: string }) => {
+    //     return <Squares2X2Icon className={className} />;
+    //   },
+    //   end: true,
+    //   userRole: ['admin', 'tutor', 'student'],
+    // },
     {
       label: 'Payments',
       path: '/payments',

@@ -128,36 +128,364 @@ export type Database = {
       }
       users: {
         Row: {
-          created_at: string
-          display_name: string | null
           id: string
           photo_url: string | null
-          userRole: string | null
-          biography?: string
+          display_name: string | null
+          created_at: string
+          biography: string | null
           email: string
-          phoneNumber?: string
-          status?: string
-          bankDetails?: string
-          firstName?: string
-          lastName?: string
+          phone_number: string | null
+          status: string | null
+          bank_details: string | null
+          user_role: string | null
+          first_name: string | null
+          last_name: string | null
         }
         Insert: {
+          id: string
           created_at?: string
           display_name?: string | null
-          id: string
           photo_url?: string | null
+          email: string
+          phone_number?: string | null
+
         }
         Update: {
-          created_at?: string
-          display_name?: string | null
           id?: string
           photo_url?: string | null
+          display_name?: string | null
+          created_at?: string
+          biography?: string | null
+          email?: string
+          phone_number?: string | null
+          status?: string | null
+          bank_details?: string | null
+          user_role?: string | null
+          first_name?: string | null
+          last_name?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "users_id_fkey"
             columns: ["id"]
             isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          id: string
+          created_at: string
+          class_id: string
+          recording_urls: string[] | [] | null
+          start_time: string
+          end_time: string | null
+          recurring_session_id: string | null
+          title: string | null
+          description: string | null
+          updated_at: string | null
+          meeting_url: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          class_id: string
+          recording_urls?: string[] | [] | null
+          start_time: string
+          end_time?: string | null
+          recurring_session_id?: string | null
+          title?: string | null
+          description?: string | null
+          updated_at?: string | null
+          meeting_url?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          class_id?: string
+          recording_urls?: string[] | [] | null
+          start_time?: string
+          end_time?: string | null
+          recurring_session_id?: string | null
+          title?: string | null
+          description?: string | null
+          updated_at?: string | null
+          meeting_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_class_id_fkey"
+            columns: ["class_id"]
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_recurring_session_id_fkey"
+            columns: ["recurring_session_id"]
+            referencedRelation: "reccuring_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_materials: {
+        Row: {
+          id: string
+          created_at: string | null
+          name: string | null
+          description: string | null
+          availability_period: string | null
+          url: string
+          class_id: string
+          session_id: string | null
+          file_size: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string | null
+          name?: string | null
+          description?: string | null
+          availability_period?: string | null
+          url: string
+          class_id: string
+          session_id?: string | null
+          file_size?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string | null
+          name?: string | null
+          description?: string | null
+          availability_period?: string | null
+          url?: string
+          class_id?: string
+          session_id?: string | null
+          file_size?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_materials_class_id_fkey"
+            columns: ["class_id"]
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_materials_session_id_fkey"
+            columns: ["session_id"]
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_sessions: {
+        Row: {
+          id: string
+          created_at: string | null
+          class_id: string
+          title: string | null
+          description: string | null
+          start_time: string
+          end_time: string | null
+          recurring_end_date: string | null
+          recurrence_rule: string | null
+        }
+        Insert: {
+          id: string
+          created_at?: string | null
+          class_id: string
+          title?: string | null
+          description?: string | null
+          start_time: string
+          end_time?: string | null
+          recurring_end_date?: string | null
+          recurrence_rule?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string | null
+          class_id?: string
+          title?: string | null
+          description?: string | null
+          start_time?: string
+          end_time?: string | null
+          recurring_end_date?: string | null
+          recurrence_rule?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_sessions_class_id_fkey"
+            columns: ["class_id"]
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          id: string
+          created_at: string | null
+          name: string
+          description: string | null
+          subject: string | null
+          tutor_id: string
+          fee: number | null
+          status: string | null
+          time_slots: Json[] | [] | null
+          no_of_students?: { count: number }[]
+        }
+        Insert: {
+          id?: string
+          created_at?: string | null
+          name: string
+          description?: string | null
+          subject?: string | null
+          tutor_id: string
+          fee?: number |null
+          status?: string | null
+          time_slots?: Json[] | [] | null
+        }
+        Update: {
+          id?: string
+          created_at?: string | null
+          name?: string
+          description?: string | null
+          subject?: string | null
+          tutor_id?: string 
+          fee?: number
+          status?: string | null
+          time_slots?: Json[] | [] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_tutor_id_fkey"
+            columns: ["tutor_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_class_enrollments: {
+        Row: {
+          id: string
+          created_at: string | null
+          student_id: string
+          class_id: string
+          enrolled_date: string | null
+        }
+        Insert: {
+          id: string
+          created_at?: string | null
+          student_id: string
+          class_id: string
+          enrolled_date?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string | null
+          student_id?: string
+          class_id?: string
+          enrolled_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_class_enrollments_class_id_fkey"
+            columns: ["class_id"]
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_class_enrollments_student_id_fkey"
+            columns: ["student_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_session_attendance: {
+        Row: {
+          id: string
+          created_at: string | null
+          student_id: string
+          session_id: string
+          time: string | null
+        }
+        Insert: {
+          id: string
+          created_at?: string | null
+          student_id: string
+          session_id: string
+          time?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string | null
+          student_id?: string
+          session_id?: string
+          time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_session_attendance_student_id_fkey"
+            columns: ["student_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_session_attendance_session_id_fkey"
+            columns: ["session_id"]
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_payments: {
+        Row: {
+          id: string
+          created_at: string | null
+          invoice_no: string | null
+          invoice_date: string | null
+          amount : string | null
+          payment_date : string | null
+          class_id : string
+          student_id : string
+          payment_period : string | null
+          status : string | null
+        }
+        Insert: {
+          id: string
+          created_at?: string | null
+          invoice_no?: string | null
+          invoice_date?: string | null
+          amount?: string | null
+          payment_date?: string | null
+          class_id: string
+          student_id: string
+          payment_period?: string | null
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string | null
+          invoice_no?: string | null
+          invoice_date?: string | null
+          amount?: string | null
+          payment_date?: string | null
+          class_id?: string
+          student_id?: string
+          payment_period?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_payments_class_id_fkey"
+            columns: ["class_id"]
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_payments_student_id_fkey"
+            columns: ["student_id"]
             referencedRelation: "users"
             referencedColumns: ["id"]
           },

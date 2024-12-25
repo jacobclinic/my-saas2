@@ -7,11 +7,11 @@ import { SessionsWithTableData, SessionTableData } from '~/lib/sessions/types/se
 import SearchBar from '../base/SearchBar';
 import Filter from '../base/Filter';
 import CreateSessionModal from './CreateSessionModal';
-import useSessionsDataQuery from '~/lib/sessions/hooks/use-fetch-session';
+// import useSessionsDataQuery from '~/lib/sessions/hooks/use-fetch-session';
 import Button from '~/core/ui/Button';
 import { DeleteIcon } from '~/assets/images/react-icons';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import UpdateSessionModal from './UpdateSessionModal';
+// import UpdateSessionModal from './UpdateSessionModal';
 import { deleteSessionAction } from '~/lib/sessions/server-actions';
 
 export default function SessionsList({ sessionData, classId, revalidateSessionsByClassIdDataFetch }: {
@@ -129,10 +129,10 @@ function DataTableExample({
                 size="custom"
                 disabled={isMutating}
               >
-                <UpdateSessionModal
+                {/* <UpdateSessionModal
                   sessionData={sessionData}
                   revalidateSessionsByClassIdDataFetch={revalidateSessionsByClassIdDataFetch}
-                />
+                /> */}
               </Button>
               <Button
                 variant="custom"

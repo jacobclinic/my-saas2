@@ -16,8 +16,8 @@ export async function createSession(client: Client, data: Omit<SessionType, 'id'
     const { data: insertedSession, error } = await client
       .from(SESSIONS_TABLE)
       .insert({
-        startTime: data.startTime,
-        classId: data.classId,
+        start_time: data.startTime,
+        class_id: data.classId,
         title: data?.title,
         description: data?.description,
       })
@@ -44,8 +44,8 @@ export async function createSessions(client: Client, sessions: Omit<SessionType,
     const { data: insertedSessions, error } = await client
       .from(SESSIONS_TABLE)
       .insert(sessions.map((session) => ({
-        startTime: session.startTime,
-        classId: session.classId,
+        start_time: session.startTime,
+        class_id: session.classId,
         title: session?.title,
         description: session?.description,
       })))

@@ -1,33 +1,33 @@
-import loadDynamic from 'next/dynamic';
 import AppHeader from '~/app/(app)/components/AppHeader';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
-
-const ClassesList = loadDynamic(
-  () => import('~/app/(app)/components/classes/ClassesList'),
-  {
-    ssr: false,
-  },
-);
+// import { getAllSessionsData } from '~/lib/sessions/database/queries';
+// import { SessionsWithTableData } from '~/lib/sessions/types/session';
+import ClassesList from '../components/classes/ClassesList';
 
 export const metadata = {
-  title: 'Classes',
+  title: 'Sessions',
 };
 
-function ClassesPage() {
+async function PastSessionsPage() {
+  const client = getSupabaseServerComponentClient();
+  // const sessionData = await getAllSessionsData(client) as SessionsWithTableData[];
+  // console.log("PastSessions-server-component------", sessionData);
+  
   return (
     <>
       <AppHeader
-        title={'Classes'}
+        title={''}
         description={
-          "All the classes."
+          ""
         }
       />
 
-      <PageBody className='overflow-y-auto'>
+      <PageBody>
         <ClassesList />
       </PageBody>
     </>
   );
 }
 
-export default ClassesPage;
+export default PastSessionsPage;

@@ -19,9 +19,14 @@ export async function createClass(client: Client, data: Omit<ClassType, 'id'>) {
         name: data.name,
         description: data.description,
         subject: data.subject,
-        tutorId: data.tutorId,
+        tutor_id: data.tutorId,
         fee: data.fee,
-        timeSlots: data.timeSlots,
+        time_slots: data.timeSlots?.map((slot) => ({
+          day: slot.day,
+          time: slot.time,    
+          duration: slot.duration,    
+          reccurringPattern: slot.reccurringPattern,    
+        })),
       })
       .select('id')
       .throwOnError()
