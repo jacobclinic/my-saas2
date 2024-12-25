@@ -189,7 +189,7 @@ export type Database = {
           meeting_url: string | null
         }
         Insert: {
-          id: string
+          id?: string
           created_at?: string
           class_id: string
           recording_urls?: string[] | [] | null
@@ -242,7 +242,7 @@ export type Database = {
           file_size: string | null
         }
         Insert: {
-          id: string
+          id?: string
           created_at?: string | null
           name?: string | null
           description?: string | null
@@ -329,18 +329,18 @@ export type Database = {
           description: string | null
           subject: string | null
           tutor_id: string
-          fee: string
+          fee: number | null
           status: string | null
           time_slots: Json[] | [] | null
         }
         Insert: {
-          id: string
+          id?: string
           created_at?: string | null
           name: string
           description?: string | null
           subject?: string | null
           tutor_id: string
-          fee: string
+          fee?: number |null
           status?: string | null
           time_slots?: Json[] | [] | null
         }
@@ -351,7 +351,7 @@ export type Database = {
           description?: string | null
           subject?: string | null
           tutor_id?: string 
-          fee?: string
+          fee?: number
           status?: string | null
           time_slots?: Json[] | [] | null
         }
