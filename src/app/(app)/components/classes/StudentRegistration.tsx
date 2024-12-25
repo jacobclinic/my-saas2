@@ -323,7 +323,7 @@ const StudentRegistration = () => {
               <Alert className="bg-green-50 border-green-200">
                 <BookOpen className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-700">
-                  We've sent these details to your email ({formData.email}). Please check your inbox!
+                  We&apos;ve sent these details to your email ({formData.email}). Please check your inbox!
                 </AlertDescription>
               </Alert>
             </div>

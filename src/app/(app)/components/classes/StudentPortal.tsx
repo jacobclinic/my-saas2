@@ -222,7 +222,7 @@ const StudentPortal = () => {
         <Alert className="bg-blue-50 border-blue-200">
           <Info className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-700">
-            Join your class 5 minutes early to ensure a smooth start. Don't forget to check the class materials beforehand!
+            Join your class 5 minutes early to ensure a smooth start. Don&apos;t forget to check the class materials beforehand!
           </AlertDescription>
         </Alert>
 
