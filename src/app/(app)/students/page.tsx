@@ -6,7 +6,7 @@ import { USER_ROLES } from '~/lib/constants';
 import { getAllUsersByUserRoleData } from '~/lib/user/database/queries';
 
 const StudentsList = loadDynamic(
-  () => import('~/app/(app)/components/students/StudentsList'),
+  () => import('~/app/(app)/components/students-old/StudentsList'),
   {
     ssr: false,
   },

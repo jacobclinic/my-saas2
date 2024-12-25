@@ -1,11 +1,11 @@
 import loadDynamic from 'next/dynamic';
 import AppHeader from '~/app/(app)/components/AppHeader';
 import { PageBody } from '~/core/ui/Page';
-import ClassView from '../../components/classes/class-view/ClassView';
+import ClassView from '../../components/classes-old/class-view/ClassView';
 
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { getClassDataById } from '~/lib/classes/database/queries';
-import CreateClassModal from '../../components/classes/CreateClassModal';
+import CreateClassModal from '../../components/classes-old/CreateClassModal';
 import { ClassWithTutorAndEnrollment } from '~/lib/classes/types/class';
 
 interface Params {
