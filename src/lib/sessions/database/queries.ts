@@ -10,7 +10,7 @@ interface SessionsWithTableDataRawData extends Omit<SessionsWithTableData, 'clas
     name: string;
     tutorId: string
     tutor: { id: string; firstName: string; lastName: string };
-    noOfStudents: { count: number }[];
+    students: { id: string }[];
   };  
   noOfAtendedStudents: { count: number }[];
 }
@@ -237,7 +237,7 @@ export async function getAllUpcommingSessionsData(
             name,
             subject,
             tutor_id,
-            no_of_students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
+            students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(id)
           ),
           materials:${RESOURCE_MATERIALS_TABLE}!id (
             id,
@@ -249,7 +249,8 @@ export async function getAllUpcommingSessionsData(
         { count: 'exact' }
       )
       .gt('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true });
+      .order('start_time', { ascending: true })
+      .returns<SessionsWithTableDataRawData[]>();
 
     console.log("getAllSessionsData", data)
 
@@ -266,7 +267,7 @@ export async function getAllUpcommingSessionsData(
       ...sessionData,
       class: {
         ...sessionData?.class,
-        no_of_students: sessionData?.class?.no_of_students[0]?.count || 0,
+        no_of_students: sessionData?.class?.students?.length || 0,
       },
     })) as UpcomingSession[] | [];
 
@@ -318,7 +319,7 @@ export async function getAllUpcommingSessionsByTutorIdData(
             name,
             subject,
             tutor_id,
-            no_of_students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
+            no_of_students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(count)
           ),
           materials:${RESOURCE_MATERIALS_TABLE}!id (
             id,
@@ -331,7 +332,8 @@ export async function getAllUpcommingSessionsByTutorIdData(
       )
       .gt('start_time', new Date().toISOString())
       .in('class_id', classIds)
-      .order('start_time', { ascending: true });
+      .order('start_time', { ascending: true })
+      .returns<SessionsWithTableDataRawData[]>();
 
     console.log("getAllSessionsData", upcomingSessions)
 
@@ -348,7 +350,7 @@ export async function getAllUpcommingSessionsByTutorIdData(
       ...sessionData,
       class: {
         ...sessionData?.class,
-        no_of_students: sessionData?.class?.no_of_students[0]?.count || 0,
+        no_of_students: sessionData?.class?.students?.length || 0,
       },
     })) as UpcomingSession[] | [];
 
@@ -382,7 +384,7 @@ export async function getAllPastSessionsData(
             name,
             subject,
             tutor_id,
-            no_of_students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
+            no_of_students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(count)
           ),
           materials:${RESOURCE_MATERIALS_TABLE}!id (
             id,
@@ -404,7 +406,8 @@ export async function getAllPastSessionsData(
         { count: 'exact' }
       )
       .lt('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true });
+      .order('start_time', { ascending: true })
+      .returns<SessionsWithTableDataRawData[]>();
 
     console.log("getAllSessionsData", data)
 
@@ -421,7 +424,7 @@ export async function getAllPastSessionsData(
       ...sessionData,
       class: {
         ...sessionData?.class,
-        no_of_students: sessionData?.class?.no_of_students[0]?.count || 0,
+        no_of_students: sessionData?.class?.students?.length || 0,
       },
     })) as PastSession[] | [];
 
@@ -472,7 +475,7 @@ export async function getAllPastSessionsByTutorIdData(
             name,
             subject,
             tutor_id,
-            no_of_students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
+            no_of_students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(count)
           ),
           materials:${RESOURCE_MATERIALS_TABLE}!id (
             id,
@@ -495,7 +498,8 @@ export async function getAllPastSessionsByTutorIdData(
       )
       .lt('start_time', new Date().toISOString())
       .in('class_id', classIds)
-      .order('start_time', { ascending: true });
+      .order('start_time', { ascending: true })
+      .returns<SessionsWithTableDataRawData[]>();
 
     console.log("getAllSessionsData", pastSessions)
 
@@ -512,7 +516,7 @@ export async function getAllPastSessionsByTutorIdData(
       ...sessionData,
       class: {
         ...sessionData?.class,
-        no_of_students: sessionData?.class?.no_of_students[0]?.count || 0,
+        no_of_students: sessionData?.class?.students?.length || 0,
       },
     })) as PastSession[] | [];
 

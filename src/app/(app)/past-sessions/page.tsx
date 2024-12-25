@@ -12,9 +12,9 @@ export const metadata = {
 async function PastSessionsPage() {
   const client = getSupabaseServerComponentClient();
   // const sessionData = await getAllUpcommingSessionsData(client,"eeca8510-a96f-45c5-96b3-7b3d35a1a72f") as SessionsWithTableData[];
-  const sessionData = await getAllPastSessionsByTutorIdData(client,"95572317-8cf6-4b15-bd5a-e8ccf420110f") as PastSession[];
+  // const sessionData = await getAllPastSessionsByTutorIdData(client,"95572317-8cf6-4b15-bd5a-e8ccf420110f") as PastSession[];
   // const sessionData = await getAllUpcommingSessionsData(client) as SessionsWithTableData[];
-  console.log("PastSessions-server-component------", sessionData);
+  // console.log("PastSessions-server-component------", sessionData);
   
   return (
     <>

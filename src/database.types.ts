@@ -332,6 +332,7 @@ export type Database = {
           fee: number | null
           status: string | null
           time_slots: Json[] | [] | null
+          no_of_students?: { count: number }[]
         }
         Insert: {
           id?: string
