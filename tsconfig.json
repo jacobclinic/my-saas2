@@ -32,5 +32,5 @@
     ".next/types/**/*.ts",
     ".contentlayer/generated"
 , "src/test/test-sessions-function.js"  ],
-  "exclude": ["node_modules", ".next"]
+  "exclude": ["node_modules", ".next", "supabase/functions/**/*"]
 }

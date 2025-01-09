@@ -109,9 +109,9 @@ function DataTableExample({ studentsData}: { studentsData: UserType[] }) {
 
   const tableData: StudentTableData[] = studentsData.map((studentData) => ({
     id: studentData?.id,
-    name: studentData?.firstName ? `${studentData?.firstName} ${studentData?.lastName}` : "-",
+    name: studentData?.first_name ? `${studentData?.first_name} ${studentData?.last_name}` : "-",
     email: studentData?.email || "-",
-    phoneNumber: studentData?.phoneNumber || "-",
+    phoneNumber: studentData?.phone_number || "-",
     status: studentData?.status || "-",
     action: 'Manage',
   }));

@@ -10,7 +10,7 @@ interface UserType {
   user_role?: string | null;
   first_name?: string | null;
   last_name?: string | null;
-  created_at: string
+  created_at?: string
 }
 
 export default UserType;
