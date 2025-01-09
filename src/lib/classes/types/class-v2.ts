@@ -1,26 +1,66 @@
+import { Json } from "~/database.types";
+
 // types.ts
+
+interface StudentData {
+  id: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  status?: string | null;
+}
+export interface ClassListStudent {
+  id: string;
+  student_id: string;
+  student?: StudentData | StudentData[];
+}
+interface NextSession {
+  id: string;
+  start_time: string;
+}
+
+export interface ClassType {
+  id: string
+  created_at?: string
+  name?: string | null
+  description: string | null
+  subject: string | null
+  tutor_id: string
+  fee: number | null
+  status: string | null  
+  time_slots: { day: string; time: string; }[] | null
+  grade: string | null
+  starting_date: string | null
+  students?: ClassListStudent[] | []
+  upcomingSession: string | null
+}
+
 export interface ClassListData {
-  id: number;
-  name: string;
-  schedule: string;
+  id: string;
+  name?: string | null
+  schedule?: string;
   subject?: string;
   status?: string;
-  students: number;
-  academicYear?: string;
-  registrationLink: string;
+  students?: number;
+  grade?: string;
+  registrationLink?: string;
   nextClass?: string;
+  description?: string;
+  timeSlots?: { day: string; time: string; }[];
+  classRawData?: ClassType;
 }
 
 export interface ClassCardProps {
   classData: ClassListData;
   linkCopied: { [key: string]: boolean };
-  onCopyLink: (classId: number, link: string) => void;
+  onCopyLink: (classId: string, link?: string) => void;
   variant?: 'default' | 'dashboard';
   showViewDetails?: boolean;
 }
 
 export interface NewStudentData {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
 }
@@ -39,7 +79,8 @@ export interface NewClassData {
   yearGrade: string;
   monthlyFee: string;
   startDate: string;
-  timeSlots: TimeSlot[];
+  timeSlots: { day: string; time: string; }[];
+  tutorId: string;
 }
 
 export interface LinkCopiedState {
@@ -51,7 +92,7 @@ export interface EditClassData {
   subject: string;
   description: string;
   yearGrade: string;
-  monthlyFee: string;
+  monthlyFee: number;
   startDate: string;
   timeSlots: { day: string; time: string; }[];
   status: 'active' | 'inactive' | 'draft';

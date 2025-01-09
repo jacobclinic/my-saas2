@@ -1,13 +1,15 @@
 import React from 'react';
+import { UpcomingSession } from './session-v2';
 
 interface Material {
-  id: number;
-  name: string;
-  size: string;
+  id: string;
+  name: string | null;
+  url?: string | null;
+  file_size: string | null;
 }
 
 interface UpcomingSessionTableData {
-  id: number;
+  id: string;
   name: string;
   subject: string;
   date: string;
@@ -18,6 +20,7 @@ interface UpcomingSessionTableData {
   materials?: Material[];
   lessonTitle?: string;
   lessonDescription?: string;
+  sessionRawData?: UpcomingSession;
 }
 
 interface UploadedMaterial {
@@ -26,10 +29,6 @@ interface UploadedMaterial {
   size: string;
   type: string;
   file: File;
-}
-
-interface LinkCopiedState {
-  [key: string]: boolean;
 }
 
 interface EditingLessonState {
@@ -43,6 +42,11 @@ interface LessonDetailsState {
   };
 }
 
+interface LessonDetails {
+  title: string;
+  description: string;
+}
+
 interface MaterialUploadDialogProps {
   showMaterialDialog: boolean;
   setShowMaterialDialog: (show: boolean) => void;
@@ -54,8 +58,6 @@ interface MaterialUploadDialogProps {
 
 interface UpcommingSessionCardProps {
   sessionData: UpcomingSessionTableData;
-  linkCopied: LinkCopiedState;
-  handleCopyLink: (id: number, link: string, type: string) => void;
   variant?: 'default' | 'dashboard';
 }
 
@@ -63,9 +65,9 @@ export type {
   Material,
   UpcomingSessionTableData,
   UploadedMaterial,
-  LinkCopiedState,
   EditingLessonState,
   LessonDetailsState,
+  LessonDetails,
   MaterialUploadDialogProps,
   UpcommingSessionCardProps
 };

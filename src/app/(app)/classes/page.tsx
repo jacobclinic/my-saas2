@@ -1,18 +1,19 @@
 import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
-// import { getAllSessionsData } from '~/lib/sessions/database/queries';
-// import { SessionsWithTableData } from '~/lib/sessions/types/session';
 import ClassesList from '../components/classes/ClassesList';
+import { getAllClassesByTutorIdData } from '~/lib/classes/database/queries';
 
 export const metadata = {
   title: 'Sessions',
 };
 
-async function PastSessionsPage() {
+async function ClassesPage() {
   const client = getSupabaseServerComponentClient();
-  // const sessionData = await getAllSessionsData(client) as SessionsWithTableData[];
-  // console.log("PastSessions-server-component------", sessionData);
+  const { data: user, error } = await client.auth.getUser();
+  console.log('-----ClassesPage-------auth-User:', user);
+  const classesData = await getAllClassesByTutorIdData(client, user?.user?.id || "");
+  console.log("Classes-server-component------", classesData);
   
   return (
     <>
@@ -24,10 +25,10 @@ async function PastSessionsPage() {
       />
 
       <PageBody>
-        <ClassesList />
+        <ClassesList classesData={classesData}/>
       </PageBody>
     </>
   );
 }
 
-export default PastSessionsPage;
+export default ClassesPage;

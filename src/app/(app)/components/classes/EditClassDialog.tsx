@@ -1,20 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import { Input } from "../base-v2/ui/Input";
 import { Textarea } from "../base-v2/ui/Textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../base-v2/ui/Select";
 import { X, Plus, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from "../base-v2/ui/Alert";
 import BaseDialog from '../base-v2/BaseDialog';
-import { TimeSlot, EditClassData, ClassListData } from '~/lib/classes/types/class-v2';
+import { TimeSlot, EditClassData, ClassListData, ClassType } from '~/lib/classes/types/class-v2';
 import { Button } from '../base-v2/ui/Button';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { updateClassAction } from '~/lib/classes/server-actions-v2';
 
 interface EditClassDialogProps {
   open: boolean;
   onClose: () => void;
-  onUpdateClass: (classId: number, classData: EditClassData) => void;
+  onUpdateClass: (classId: string, classData: EditClassData) => void;
   classData: ClassListData | null;
   loading?: boolean;
 }
@@ -26,12 +28,15 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
   classData,
   loading = false
 }) => {
+  const [isPending, startTransition] = useTransition()
+  const csrfToken = useCsrfToken();
+
   const [editedClass, setEditedClass] = useState<EditClassData>({
     name: '',
     subject: '',
     description: '',
     yearGrade: '',
-    monthlyFee: '',
+    monthlyFee: 0,
     startDate: '',
     timeSlots: [{ day: '', time: '' }],
     status: 'active'
@@ -39,43 +44,18 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
 
   useEffect(() => {
     if (classData) {
-      // Parse the schedule string to extract time slots
-      const scheduleTimeSlots = parseScheduleToTimeSlots(classData.schedule);
-      
       setEditedClass({
-        name: classData.name,
-        subject: classData.subject || '',
-        description: '',  // You might want to fetch this from the API
-        yearGrade: classData.academicYear || '',
-        monthlyFee: '', // You might want to fetch this from the API
-        startDate: '', // You might want to fetch this from the API
-        timeSlots: scheduleTimeSlots,
-        status: classData.status as 'active' | 'inactive' | 'draft' || 'active'
+        name: classData?.classRawData?.name || '',
+        subject: classData?.classRawData?.subject || '',
+        description: classData?.classRawData?.description || '', 
+        yearGrade: classData?.classRawData?.grade || '',
+        monthlyFee: classData?.classRawData?.fee || 0,
+        startDate: classData?.classRawData?.starting_date || '',
+        timeSlots: classData?.classRawData?.time_slots || [{ day: '', time: '' }],
+        status: classData?.classRawData?.status as 'active' | 'inactive' | 'draft' || 'active'
       });
     }
   }, [classData]);
-
-  const parseScheduleToTimeSlots = (schedule: string): TimeSlot[] => {
-    // Example schedule: "Every Monday and Wednesday, 4:00 PM"
-    const timeSlots: TimeSlot[] = [];
-    
-    try {
-      const days = schedule.toLowerCase().match(/monday|tuesday|wednesday|thursday|friday|saturday|sunday/g) || [];
-      const time = schedule.match(/\d{1,2}:\d{2}\s?[AP]M/i)?.[0] || '';
-      
-      days.forEach(day => {
-        timeSlots.push({
-          day: day.toLowerCase(),
-          time: time
-        });
-      });
-      
-      return timeSlots.length > 0 ? timeSlots : [{ day: '', time: '' }];
-    } catch (error) {
-      console.error('Error parsing schedule:', error);
-      return [{ day: '', time: '' }];
-    }
-  };
 
   const handleAddTimeSlot = () => {
     setEditedClass(prev => ({
@@ -102,6 +82,25 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
 
   const handleSubmit = () => {
     if (classData) {
+      startTransition(async () => {
+        const transformedClassData: Partial<Omit<ClassType, 'id'>> = {
+          name: editedClass.name,
+          subject: editedClass.subject,
+          description: editedClass.description,
+          grade: editedClass.yearGrade,
+          fee: editedClass.monthlyFee,
+          starting_date: editedClass.startDate,
+          time_slots: editedClass.timeSlots,
+          status: editedClass.status
+        }
+        const result = await updateClassAction({classId: classData.id, classData: transformedClassData, csrfToken})
+        if (result.success) {
+          onClose()
+          // Show success toast/notification
+        } else {
+          // Show error toast/notification
+        }
+      })
       onUpdateClass(classData.id, editedClass);
     }
   };
@@ -119,6 +118,12 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
     { value: 'inactive', label: 'Inactive' },
     { value: 'draft', label: 'Draft' }
   ];
+
+  const formatToDateInput = (isoString: string): string => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    return date.toISOString().split("T")[0]; // Extract the YYYY-MM-DD part
+  };
 
   return (
     <BaseDialog
@@ -219,7 +224,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
               type="number"
               placeholder="Enter fee amount"
               value={editedClass.monthlyFee}
-              onChange={(e) => setEditedClass({ ...editedClass, monthlyFee: e.target.value })}
+              onChange={(e) => setEditedClass({ ...editedClass, monthlyFee: parseInt(e.target.value) })}
             />
           </div>
         </div>
@@ -228,7 +233,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
           <label className="text-sm font-medium">Starting Date</label>
           <Input 
             type="date"
-            value={editedClass.startDate}
+            value={formatToDateInput(editedClass?.startDate)}
             onChange={(e) => setEditedClass({ ...editedClass, startDate: e.target.value })}
           />
         </div>
@@ -248,7 +253,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
           </div>
 
           <div className="space-y-2">
-            {editedClass.timeSlots.map((slot, index) => (
+            {editedClass?.timeSlots?.map((slot, index) => (
               <div key={index} className="flex gap-2 items-start">
                 <Select
                   value={slot.day}

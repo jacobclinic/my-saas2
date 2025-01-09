@@ -41,7 +41,7 @@ type CreateUserByAdminActionParams = {
 
 export const createUserByAdminAction = async (params: CreateUserByAdminActionParams) => {
   const client = getSupabaseServerActionClient({ admin: true });
-  const { email, userRole } = params.userData;
+  const { email, user_role: userRole } = params.userData;
 
   const password = generateSecurePassword();
 

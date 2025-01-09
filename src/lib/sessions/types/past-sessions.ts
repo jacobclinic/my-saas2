@@ -7,14 +7,14 @@ interface AttendanceRecord {
 }
 
 interface Material {
-  id: number;
+  id: string;
   name: string;
-  size: string;
+  file_size: string;
   url: string;
 }
 
 interface PastSessionData {
-  id: number;
+  id: string;
   name: string;
   topic: string;
   date: string;
@@ -23,13 +23,8 @@ interface PastSessionData {
   attendance: AttendanceRecord[];
   materials: Material[];
 }
-
-interface LinkCopiedState {
-  [key: string]: boolean;
-}
-
 interface SelectedSession {
-  id: number;
+  id: string;
   name: string;
   date: string;
   time: string;
@@ -44,15 +39,12 @@ interface AttendanceDialogProps {
 
 interface PastSessionsCardProps {
   sessionData: PastSessionData;
-  linkCopied: LinkCopiedState;
-  handleCopyLink: (id: number, link: string, type: string) => void;
 }
 
 export type {
   AttendanceRecord,
   Material,
   PastSessionData,
-  LinkCopiedState,
   SelectedSession,
   AttendanceDialogProps,
   PastSessionsCardProps

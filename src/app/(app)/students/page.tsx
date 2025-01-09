@@ -18,8 +18,8 @@ export const metadata = {
 
 async function StudentsPage() {
   const client = getSupabaseServerComponentClient();
-  const studentsData = await getAllUsersByUserRoleData(client, USER_ROLES.STUDENT);
-  console.log("sessionData-server-component------", studentsData);
+  // const studentsData = await getAllUsersByUserRoleData(client, USER_ROLES.STUDENT);
+  // console.log("sessionData-server-component------", studentsData);
   return (
     <>
       <AppHeader
@@ -30,7 +30,7 @@ async function StudentsPage() {
       />
 
       <PageBody>
-        <StudentsList studentsData={studentsData}/>
+        {/* <StudentsList studentsData={studentsData}/> */}
       </PageBody>
     </>
   );

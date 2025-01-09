@@ -19,9 +19,9 @@ function getTransporter() {
     return getMockMailTransporter();
   }
 
-  if (!configuration.production) {
-    return getEtherealMailTransporter();
-  }
+  // if (!configuration.production) {
+  //   return getEtherealMailTransporter();
+  // }
 
   return getSMTPTransporter();
 }
@@ -38,7 +38,8 @@ async function getSMTPTransporter() {
   const host = process.env.EMAIL_HOST;
   const port = Number(process.env.EMAIL_PORT);
 
-  const secure = port === 465 && !configuration.production;
+  // const secure = port === 465 && !configuration.production;
+  const secure = port === 465;
 
   // validate that we have all the required configuration
   if (!user || !pass || !host || !port) {

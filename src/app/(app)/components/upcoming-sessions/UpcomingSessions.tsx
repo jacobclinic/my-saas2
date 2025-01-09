@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type {
   UpcomingSessionTableData,
   UploadedMaterial
@@ -10,17 +10,46 @@ import { Input } from "../base-v2/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../base-v2/ui/Select";
 import { Info, Search } from 'lucide-react';
 import UpcommingSessionCard from './UpcommingSessionCard';
+import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 
-
-const UpcomingSessions = () => {
-  const [linkCopied, setLinkCopied] = useState({});
+const UpcomingSessions = ({ upcomingSessionData }: { upcomingSessionData: UpcomingSession[] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('all');
+  const [upcomingSessionTableData, setUpcomingSessionTableData] = useState<UpcomingSessionTableData[]>([]);
+
+  useEffect(() => {
+    if (upcomingSessionData) {
+      const formattedData: UpcomingSessionTableData[] = upcomingSessionData.map((session) => {
+        const formattedDate = new Date(session?.start_time || "").toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })} - 
+          ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
+        return {
+          id: session.id,
+          name: `${session?.class?.name}`,
+          subject: session?.class?.subject || "",
+          date: formattedDate,
+          time: formattedTime,
+          registeredStudents: session?.class?.students?.length || 0,
+          zoomLinkTutor: session?.meeting_url || "",
+          zoomLinkStudent: session?.meeting_url || "",
+          materials: session.materials.map((material) => {
+            return {
+              id: material.id,
+              name: material.name || "",
+              url: material.url || "",
+              file_size: material.file_size || "",
+            };
+          }),
+        };        
+      });
+      setUpcomingSessionTableData(formattedData);
+    }    
+  }, [upcomingSessionData])
 
   // Sample data for upcoming sessions
   const upcomingSessions: UpcomingSessionTableData[] = [
     {
-      id: 1,
+      id: "1",
       name: "2025 A-Levels Batch 1",
       subject: "Accounting",
       date: "Monday, Dec 18, 2024",
@@ -29,12 +58,12 @@ const UpcomingSessions = () => {
       zoomLinkTutor: "https://zoom.us/j/123456789",
       zoomLinkStudent: "https://zoom.us/j/987654321",
       materials: [
-        { id: 1, name: "Chapter 5 - Manufacturing Accounts Notes.pdf", size: "2.5" },
-        { id: 2, name: "Practice Problems Set.pdf", size: "1.8" }
+        { id: "1", name: "Chapter 5 - Manufacturing Accounts Notes.pdf", file_size: "2.5" },
+        { id: "2", name: "Practice Problems Set.pdf", file_size: "1.8" }
       ]
     },
     {
-      id: 2,
+      id: "2",
       name: "2024 A-Levels Revision Batch",
       subject: "Accounting",
       date: "Monday, Dec 18, 2024",
@@ -44,7 +73,7 @@ const UpcomingSessions = () => {
       zoomLinkStudent: "https://zoom.us/j/987654321"
     },
     {
-      id: 3,
+      id: "3",
       name: "2025 A-Levels Batch 2",
       subject: "Accounting",
       lessonTitle: "Partnership Accounts",
@@ -55,21 +84,13 @@ const UpcomingSessions = () => {
       zoomLinkTutor: "https://zoom.us/j/123456789",
       zoomLinkStudent: "https://zoom.us/j/987654321",
       materials: [
-        { id: 1, name: "Partnership Accounts Notes.pdf", size: "3.0" }
+        { id: "1", name: "Partnership Accounts Notes.pdf", file_size: "3.0" }
       ]
     }
   ];
 
-  const handleCopyLink = (id: number, link: string, type: string) => {
-    navigator.clipboard.writeText(link);
-    setLinkCopied({ ...linkCopied, [id]: true });
-    setTimeout(() => {
-      setLinkCopied({ ...linkCopied, [id]: false });
-    }, 2000);
-  };
-
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
       {/* Header & Search */}
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Upcoming Classes</h1>
@@ -108,7 +129,7 @@ const UpcomingSessions = () => {
 
       {/* Classes List */}
       <div className="space-y-6">
-        {upcomingSessions
+        {upcomingSessionTableData
           .filter(cls => {
             if (searchTerm) {
               return cls.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -119,8 +140,6 @@ const UpcomingSessions = () => {
             <UpcommingSessionCard
               key={sessionData.id}
               sessionData={sessionData}
-              linkCopied={linkCopied}
-              handleCopyLink={handleCopyLink}
             />
           ))}
       </div>

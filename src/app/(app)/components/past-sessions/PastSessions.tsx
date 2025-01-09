@@ -1,34 +1,59 @@
 'use client'
 
-import React, { useState } from 'react';
-import type {
-  PastSessionData,
-  LinkCopiedState,
-} from '~/lib/sessions/types/past-sessions';
+import React, { useEffect, useState } from 'react';
+import type { PastSessionData } from '~/lib/sessions/types/past-sessions';
 import { Input } from "../base-v2/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../base-v2/ui/Select";
 import { Alert, AlertDescription } from "../base-v2/ui/Alert";
 import { Search, Info } from 'lucide-react';
 import PastSessionsCard from './PastSessionCard';
+import { PastSession } from '~/lib/sessions/types/session-v2';
 
-const PastSessions = () => {
-  const [linkCopied, setLinkCopied] = useState<LinkCopiedState>({});
+const PastSessions = ({ pastSessionsData }: { pastSessionsData: PastSession[] }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('all');
+  const [pastSessionTableData, setPastSessionTableData] = useState<PastSessionData[]>([]);
 
-  const handleCopyLink = (id: number, link: string, type: string): void => {
-    navigator.clipboard.writeText(link);
-    setLinkCopied({ ...linkCopied, [type + '-' + id]: true });
-    setTimeout(() => {
-      setLinkCopied({ ...linkCopied, [type + '-' + id]: false });
-    }, 2000);
-  };
-
+  useEffect(() => {
+    if (pastSessionsData) {
+      const formattedData: PastSessionData[] = pastSessionsData.map((session) => {
+        const formattedDate = new Date(session?.start_time || "").toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })} - 
+          ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
+        return {
+          id: session.id,
+          name: `${session?.class?.name}`,
+          topic: session?.title || "",
+          date: formattedDate,
+          time: formattedTime,
+          recordingUrl: session?.recording_urls?.[0] ?? "",
+          zoomLinkStudent: session?.meeting_url || "",
+          attendance: session?.attendance.map(attendee => {
+            const formattedTime = `${attendee?.time ? new Date(attendee?.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : ""}`;
+            return {
+              name: `${attendee?.student?.first_name} ${attendee?.student?.last_name}`,
+              joinTime: formattedTime,
+              duration: "",
+            }
+          }) || [],
+          materials: session.materials.map((material) => {
+            return {
+              id: material.id,
+              name: material.name || "",
+              url: material.url || "",
+              file_size: material.file_size || "",
+            };
+          }),
+        };        
+      });
+      setPastSessionTableData(formattedData);
+    }    
+  }, [pastSessionsData])
 
   // Sample past classes data
-  const pastSessions: PastSessionData[] = [
+  const pastSessionsSampleData: PastSessionData[] = [
     {
-      id: 1,
+      id: "1",
       name: "2025 A-Levels Batch 1",
       topic: "Manufacturing Accounts - Part 1",
       date: "Monday, Dec 11, 2024",
@@ -40,12 +65,12 @@ const PastSessions = () => {
         { name: "Carol Smith", joinTime: "4:02 PM", duration: "1h 52m" }
       ],
       materials: [
-        { id: 1, name: "Manufacturing Accounts Notes.pdf", size: "2.5 MB", url: "https://example.com/materials/1" },
-        { id: 2, name: "Practice Problems.pdf", size: "1.8 MB", url: "https://example.com/materials/2" }
+        { id: "1", name: "Manufacturing Accounts Notes.pdf", file_size: "2.5 MB", url: "https://example.com/materials/1" },
+        { id: "2", name: "Practice Problems.pdf", file_size: "1.8 MB", url: "https://example.com/materials/2" }
       ]
     },
     {
-      id: 2,
+      id: "2",
       name: "2024 A-Levels Revision Batch",
       topic: "Financial Statements Analysis",
       date: "Sunday, Dec 10, 2024",
@@ -56,13 +81,13 @@ const PastSessions = () => {
         { name: "Eve Clark", joinTime: "6:29 PM", duration: "1h 57m" }
       ],
       materials: [
-        { id: 3, name: "Financial Analysis Notes.pdf", size: "3.2 MB", url: "https://example.com/materials/3" }
+        { id: "3", name: "Financial Analysis Notes.pdf", file_size: "3.2 MB", url: "https://example.com/materials/3" }
       ]
     }
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
       {/* Header & Search */}
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Past Classes</h1>
@@ -100,7 +125,7 @@ const PastSessions = () => {
 
       {/* Sessions List */}
       <div className="space-y-6">
-        {pastSessions
+        {pastSessionTableData
           .filter(cls => {
             if (searchQuery) {
               return (
@@ -114,8 +139,6 @@ const PastSessions = () => {
             <PastSessionsCard
               key={sessionData.id}
               sessionData={sessionData}
-              linkCopied={linkCopied}
-              handleCopyLink={handleCopyLink}
             />
           ))}
       </div>

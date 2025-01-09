@@ -19,10 +19,21 @@ import AttendanceDialog from './AttendanceDialog';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
   sessionData,
-  linkCopied,
-  handleCopyLink,
 }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
+  const [linkCopied, setLinkCopied] = useState<{
+    recordings?: boolean;
+    materials?: boolean;
+    allMaterials?: boolean;
+  }>({});
+  
+  const handleCopyLink = (link: string, type: 'recordings' | 'materials' | 'allMaterials') => {
+    navigator.clipboard.writeText(link);
+    setLinkCopied({ ...linkCopied, [type]: true });
+    setTimeout(() => {
+      setLinkCopied({ ...linkCopied, [type]: false });
+    }, 2000);
+  };
   return (
     <>
       <Card className="mb-4">
@@ -62,15 +73,15 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
                         sessionData.materials.map(material => 
                           `${material.name}\n${material.url}`
                         ).join('\n\n');
-                      handleCopyLink(sessionData.id, message, 'all-materials');
+                      handleCopyLink(message, 'allMaterials');
                     }}
                   >
-                    {linkCopied['all-materials-' + sessionData.id] ? (
+                    {linkCopied.allMaterials ? (
                       <Check className="h-4 w-4 mr-2" />
                     ) : (
                       <Copy className="h-4 w-4 mr-2" />
                     )}
-                    {linkCopied['all-materials-' + sessionData.id] ? 'All Links Copied!' : 'Copy All Material Links'}
+                    {linkCopied.allMaterials ? 'All Links Copied!' : 'Copy All Material Links'}
                   </Button>
                   <Badge variant="outline">{sessionData.materials.length} files</Badge>
                 </div>
@@ -84,20 +95,20 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
                       <File className="h-4 w-4 text-blue-600 mr-2" />
                       <div>
                         <p className="font-medium">{material.name}</p>
-                        <p className="text-sm text-gray-600">{material.size}</p>
+                        <p className="text-sm text-gray-600">{material.file_size}</p>
                       </div>
                     </div>
                     <Button 
                       variant="outline"
                       size="sm"
-                      onClick={() => handleCopyLink(material.id, material.url, 'material')}
+                      onClick={() => handleCopyLink(material.url, 'materials')}
                     >
-                      {linkCopied['material-' + material.id] ? (
+                      {linkCopied.materials ? (
                         <Check className="h-4 w-4 mr-2" />
                       ) : (
                         <Link2 className="h-4 w-4 mr-2" />
                       )}
-                      {linkCopied['material-' + material.id] ? 'Copied!' : 'Copy Link'}
+                      {linkCopied.materials ? 'Copied!' : 'Copy Link'}
                     </Button>
                   </div>
                 ))}
@@ -112,14 +123,14 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
               </Button>
               
               <Button variant="outline"
-                onClick={() => handleCopyLink(sessionData.id, sessionData.recordingUrl, 'recording')}
+                onClick={() => handleCopyLink(sessionData.recordingUrl, 'recordings')}
               >
-                {linkCopied['recording-' + sessionData.id] ? (
+                {linkCopied.recordings ? (
                   <Check className="h-4 w-4 mr-2" />
                 ) : (
                   <Link2 className="h-4 w-4 mr-2" />
                 )}
-                {linkCopied['recording-' + sessionData.id] ? 'Copied!' : 'Copy Recording Link'}
+                {linkCopied.recordings ? 'Copied!' : 'Copy Recording Link'}
               </Button>
 
               <Button variant="outline" onClick={() => setShowAttendanceDialog(true)}>

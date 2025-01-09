@@ -85,7 +85,7 @@ const TutorPayments = () => {
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Payments</h1>

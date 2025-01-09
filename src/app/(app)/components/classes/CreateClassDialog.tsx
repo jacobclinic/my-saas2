@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import { Input } from "../base-v2/ui/Input";
 import { Textarea } from "../base-v2/ui/Textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../base-v2/ui/Select";
@@ -9,20 +9,28 @@ import BaseDialog from '../base-v2/BaseDialog';
 import { NewClassData, TimeSlot } from '~/lib/classes/types/class-v2';
 import { Button } from '../base-v2/ui/Button';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { createClassAction } from '~/lib/classes/server-actions-v2';
 
 interface CreateClassDialogProps {
   open: boolean;
   onClose: () => void;
   onCreateClass: (classData: NewClassData) => void;
   loading?: boolean;
+  tutorId: string;
 }
 
 const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   open,
   onClose,
   onCreateClass,
-  loading = false
+  loading = false,
+  tutorId,
 }) => {
+  const [isPending, startTransition] = useTransition()
+  const csrfToken = useCsrfToken();
+  const [createClassLoading, setCreateClassLoading] = useState(false);
+  
   const [newClass, setNewClass] = useState<NewClassData>({
     name: '',
     subject: '',
@@ -30,7 +38,8 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     yearGrade: '',
     monthlyFee: '',
     startDate: '',
-    timeSlots: [{ day: '', time: '' }]
+    timeSlots: [{ day: '', time: '' }],
+    tutorId,
   });
 
   const handleAddTimeSlot = () => {
@@ -57,7 +66,18 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   };
 
   const handleSubmit = () => {
+    setCreateClassLoading(true);
+    startTransition(async () => {
+      const result = await createClassAction({classData: newClass, csrfToken})
+      if (result.success) {
+        onClose()
+        // Show success toast/notification
+      } else {
+        // Show error toast/notification
+      }
+    })
     onCreateClass(newClass);
+    setCreateClassLoading(false);
   };
 
   const isValid =
@@ -77,7 +97,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       maxWidth="xl"
       onConfirm={handleSubmit}
       confirmButtonText="Create Class"
-      loading={loading}
+      loading={createClassLoading}
       confirmButtonVariant={isValid ? 'default' : 'secondary'}
     >
       <div className="space-y-4">

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { EditingLessonState, LessonDetailsState, UpcommingSessionCardProps, UploadedMaterial } from '~/lib/sessions/types/upcoming-sessions';
+import { LessonDetails, UpcommingSessionCardProps, UploadedMaterial } from '~/lib/sessions/types/upcoming-sessions';
 import { Card, CardContent, CardHeader, CardTitle } from "../base-v2/ui/Card";
 import { Button } from "../base-v2/ui/Button";
 import { Badge } from "../base-v2/ui/Badge";
@@ -22,19 +22,38 @@ import {
   Calendar
 } from 'lucide-react';
 import MaterialUploadDialog from './MaterialUploadDialog';
+import EditSessionDialog from './EditSessionDialog';
 
 const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,
-  linkCopied,
-  handleCopyLink,
   variant = 'default'
 }) => {
   const isDashboard = variant === 'dashboard';
+
+  const [linkCopied, setLinkCopied] = useState<{
+    student?: boolean;
+    materials?: boolean;
+  }>({});
+
   const [showMaterialDialog, setShowMaterialDialog] = useState(false);
   const [uploadedMaterials, setUploadedMaterials] = useState<UploadedMaterial[]>([]);
   const [materialDescription, setMaterialDescription] = useState('');
-  const [lessonDetails, setLessonDetails] = useState<LessonDetailsState>({});
-  const [editingLesson, setEditingLesson] = useState<EditingLessonState>({});
+  const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
+    title: sessionData?.sessionRawData?.title || '',
+    description: sessionData?.sessionRawData?.description || ''
+  });
+  const [iseditingLesson, setIsEditingLesson] = useState(false);
+
+  const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
+  const [editSessionLoading, setEditSessionLoading] = useState(false);
+
+  const handleCopyLink = (link: string, type: 'student' | 'materials') => {
+    navigator.clipboard.writeText(link);
+    setLinkCopied({ ...linkCopied, [type]: true });
+    setTimeout(() => {
+      setLinkCopied({ ...linkCopied, [type]: false });
+    }, 2000);
+  };
   return (
     <>
       <Card className={cn(
@@ -74,20 +93,17 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
             {/* Lesson Details */}
             <div>
-              {editingLesson[sessionData.id] ? (
+              {iseditingLesson ? (
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Lesson Title
                     </label>
                     <Input
-                      value={lessonDetails[sessionData.id]?.title || ''}
+                      value={lessonDetails?.title || ''}
                       onChange={(e) => setLessonDetails({
                         ...lessonDetails,
-                        [sessionData.id]: {
-                          ...lessonDetails[sessionData.id],
-                          title: e.target.value
-                        }
+                        title: e.target.value
                       })}
                       placeholder="Enter the lesson title..."
                       className="w-full"
@@ -98,13 +114,10 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                       Lesson Description
                     </label>
                     <Textarea
-                      value={lessonDetails[sessionData.id]?.description || ''}
+                      value={lessonDetails?.description || ''}
                       onChange={(e) => setLessonDetails({
                         ...lessonDetails,
-                        [sessionData.id]: {
-                          ...lessonDetails[sessionData.id],
-                          description: e.target.value
-                        }
+                        description: e.target.value
                       })}
                       placeholder="Enter the lesson description..."
                       className="w-full"
@@ -113,15 +126,15 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                   </div>
                   <div className="flex gap-2">
                     <Button onClick={() => {
-                      console.log('Saving lesson details:', lessonDetails[sessionData.id]);
-                      setEditingLesson({ ...editingLesson, [sessionData.id]: false });
+                      console.log('Saving lesson details:', lessonDetails);
+                      setIsEditingLesson(false);
                     }}>
                       <Save className="h-4 w-4 mr-2" />
                       Save Details
                     </Button>
                     <Button 
                       variant="outline" 
-                      onClick={() => setEditingLesson({ ...editingLesson, [sessionData.id]: false })}
+                      onClick={() => setIsEditingLesson(false)}
                     >
                       Cancel
                     </Button>
@@ -129,10 +142,10 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 </div>
               ) : (
                 <div>
-                  {!sessionData.lessonTitle && !lessonDetails[sessionData.id]?.title ? (
+                  {!lessonDetails.title ? (
                     <Button 
                       variant="outline" 
-                      onClick={() => setEditingLesson({ ...editingLesson, [sessionData.id]: true })}
+                      onClick={() => setIsEditingLesson(true)}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Lesson Details
@@ -140,15 +153,15 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                   ) : (
                     <div className="space-y-2">
                       <h3 className="text-lg font-medium">
-                        {lessonDetails[sessionData.id]?.title || sessionData.lessonTitle}
+                      {lessonDetails.title}
                       </h3>
                       <p className="text-gray-600">
-                        {lessonDetails[sessionData.id]?.description || sessionData.lessonDescription}
+                      {lessonDetails.description}
                       </p>
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => setEditingLesson({ ...editingLesson, [sessionData.id]: true })}
+                        onClick={() => setIsEditingLesson(true)}
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Details
@@ -173,7 +186,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                         <File className="h-4 w-4 text-blue-600 mr-2" />
                         <span className="text-sm">{material.name}</span>
                       </div>
-                      <span className="text-sm text-gray-600">{material.size} MB</span>
+                      <span className="text-sm text-gray-600">{material.file_size} MB</span>
                     </div>
                   ))}
                 </div>
@@ -188,13 +201,14 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
               </Button>
               
               <Button variant="outline" 
-                onClick={() => handleCopyLink(sessionData.id, sessionData.zoomLinkStudent, "student")}>
-                {linkCopied['student-' + sessionData.id] ? (
+                onClick={() => handleCopyLink(sessionData.zoomLinkStudent, "student")}
+              >
+                {linkCopied.student ? (
                   <Check className="h-4 w-4 mr-2" />
                 ) : (
                   <Link className="h-4 w-4 mr-2" />
                 )}
-                {linkCopied['student-' + sessionData.id] ? 'Copied!' : 'Copy Student Link'}
+                {linkCopied.student ? 'Copied!' : 'Copy Student Link'}
               </Button>
 
               <Button variant="outline" onClick={() => setShowMaterialDialog(true)}>
@@ -202,7 +216,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 {sessionData.materials?.length ? 'Update Materials' : 'Upload Materials'}
               </Button>
 
-              <Button variant="outline">
+              <Button variant="outline" onClick={() => setShowSessionEditDialog(true)}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Class
               </Button>
@@ -216,16 +230,15 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                       (sessionData.materials || []).map((material, index) => (
                         `${index + 1}. ${material.name}\nDownload: https://commaeducation.com/materials/${sessionData.id}/${material.id}\n`
                       )).join('\n');
-                    navigator.clipboard.writeText(materialsText);
-                    // handleCopyLink('materials-' + sessionData.id);
+                    handleCopyLink(materialsText, 'materials');
                   }}
                 >
-                  {linkCopied['materials-' + sessionData.id] ? (
+                  {linkCopied.materials ? (
                     <Check className="h-4 w-4 mr-2" />
                   ) : (
                     <Copy className="h-4 w-4 mr-2" />
                   )}
-                  {linkCopied['materials-' + sessionData.id] ? 'Materials Links Copied!' : 'Copy Materials Links'}
+                  {linkCopied.materials ? 'Materials Links Copied!' : 'Copy Materials Links'}
                 </Button>
               )}
             </div>
@@ -241,6 +254,21 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         materialDescription={materialDescription}
         setMaterialDescription={setMaterialDescription}
       />
+      <EditSessionDialog 
+        open={showEditSessionDialog}
+        onClose={() => setShowSessionEditDialog(false)}
+        sessionId={sessionData.id}
+        sessionData={{
+          title: sessionData?.sessionRawData?.title || '',
+          description: sessionData?.sessionRawData?.description || '',
+          startTime: sessionData?.sessionRawData?.start_time || '',
+          endTime: sessionData?.sessionRawData?.end_time || '',
+          meetingUrl: sessionData?.sessionRawData?.meeting_url || '',
+          materials: sessionData?.materials || [],
+        }}
+        loading={editSessionLoading}
+      />
+
     </>
   );
 };
