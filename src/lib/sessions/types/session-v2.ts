@@ -1,9 +1,10 @@
 interface Session {
   id: string;
   created_at: string;
-  class_id: string;
-  recording_urls: string | null;
-  start_time: string;
+  class_id: string | null;
+  recording_urls: string[] | null;
+  status: string | null;
+  start_time: string | null;
   end_time: string | null;
   recurring_session_id: string | null;
   title: string | null;
@@ -12,53 +13,37 @@ interface Session {
   meeting_url: string | null;
 }
 
-interface StudentSessionAttendance {
+interface SessionClass {
   id: string;
-  session_id: string;
-  student_id: string;
-  time: string;
-  created_at: string;
+  name: string | null;
+  subject?: string | null;
+  tutor_id: string;
+  students?: { id: string }[] | null;
+}
+
+interface SessionMaterial {
+  id: string;
+  name: string | null;
+  url?: string | null;
+  file_size: string | null;
 }
 
 interface UpcomingSession extends Session {
-  class: {
-    id: string;
-    name: string;
-    subject?: string | null;
-    tutor_id: string;
-    no_of_students?: number | null;
-  };
-  materials: {
-    id: string;
-    name: string | null;
-    url: string;
-    file_size: string | null;
-  }[];
+  class?: SessionClass;
+  materials: SessionMaterial[];
 }
 
-interface PastSession extends Session {
-  class: {
-    id: string;
-    name: string;
-    subject?: string | null;
-    tutor_id: string;
-    no_of_students?: number | null;
-  };
-  materials: {
-    id: string;
-    name: string | null;
-    url: string;
-    file_size: string | null;
-  }[];
+interface PastSessionAttendanceStudent {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+}
+interface PastSession extends UpcomingSession {
   attendance: {
     id: string;
-    student_id: string;
-    time: string;
-    student: {
-      id: string;
-      first_name: string;
-      last_name: string;
-    };
+    student_id: string | null;
+    time: string | null;
+    student: PastSessionAttendanceStudent;
   }[];
 }
 

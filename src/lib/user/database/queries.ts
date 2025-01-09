@@ -40,7 +40,7 @@ export async function fetchUserRole(
 
   const { data, error } = await client
     .from(USERS_TABLE)
-    .select('userRole')
+    .select('user_role')
     .eq('id', userId)
     .single();
 
@@ -48,11 +48,11 @@ export async function fetchUserRole(
     throw error;
   }
 
-  if (!data || !data.userRole) {
-    throw new Error('Unexpected result format: userRole is missing.');
+  if (!data || !data.user_role) {
+    throw new Error('Unexpected result format: user role is missing.');
   }
 
-  return data.userRole;
+  return data.user_role;
 }
 
 
@@ -64,7 +64,7 @@ export async function getAllUsersByUserRoleData(
     const { data, error } = await client
       .from(USERS_TABLE)
       .select()
-      .eq('userRole', userRole)
+      .eq('user_role', userRole)
 
     console.log("getAllUsersData", data)
 

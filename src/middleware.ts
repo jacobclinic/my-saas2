@@ -5,7 +5,6 @@ import HttpStatusCode from '~/core/generic/http-status-code.enum';
 import configuration from '~/configuration';
 import createMiddlewareClient from '~/core/supabase/middleware-client';
 import GlobalRole from '~/core/session/types/global-role';
-import { fetchUserRole } from './lib/user/database/queries';
 
 const CSRF_SECRET_COOKIE = 'csrfSecret';
 const NEXT_ACTION_HEADER = 'next-action';
@@ -21,13 +20,16 @@ export async function middleware(request: NextRequest) {
   const csrfResponse = await withCsrfMiddleware(request, response);
   const sessionResponse = await sessionMiddleware(request, csrfResponse);
 
-  return await adminMiddleware(request, sessionResponse);
+  // return await adminMiddleware(request, sessionResponse);
+  return await roleBasedMiddleware(request, sessionResponse);
 }
 
 async function sessionMiddleware(req: NextRequest, res: NextResponse) {
   const supabase = createMiddlewareClient(req, res);
 
   await supabase.auth.getSession();
+  // const user = await supabase.auth.getSession();
+  // console.log('-----1------User:', user);
 
   return res;
 }
@@ -106,7 +108,7 @@ async function roleBasedMiddleware(request: NextRequest, response: NextResponse)
 
   const supabase = createMiddlewareClient(request, response);
   const { data: user, error } = await supabase.auth.getUser();
-  console.log('User:', user);
+  console.log('-----role----------User:', user);
 
   // If the user is not authenticated, redirect to sign-in
   if (error || !user?.user) {
@@ -120,26 +122,20 @@ async function roleBasedMiddleware(request: NextRequest, response: NextResponse)
     return NextResponse.redirect(configuration.paths.signIn);
   }
 
-  try {
-    // Fetch the user role from the public.users table
-    const userRole = await fetchUserRole(supabase, userId);
+  const userRole = user.user?.user_metadata['role'] || user.user?.user_metadata['userRole'] || user.user?.user_metadata['user_role'] || 'admin';
+  console.log('-----role----------User Role:', userRole, pathname, pathname.startsWith('/tutors') );
 
-    // Restrict access based on user userRole
-    if (pathname.startsWith('/admin') && userRole !== 'admin') {
-      return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
-    }
+  // Restrict access based on user userRole
+  if (pathname.startsWith('/admin') && userRole !== 'admin') {
+    return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
+  }
 
-    if (pathname.startsWith('/tutor') && userRole !== 'tutor' && userRole !== 'admin') {
-      return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
-    }
+  if (pathname.startsWith('/tutors') && userRole !== 'admin') {
+    return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
+  }
 
-    if (pathname.startsWith('/student') && userRole !== 'student' && userRole !== 'tutor' && userRole !== 'admin') {
-      return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
-    }
-
-  } catch (error: any) {
-    console.error('Error fetching user userRole:', error.message);
-    return NextResponse.redirect(configuration.paths.signIn);
+  if (pathname.startsWith('/students') && userRole !== 'tutor' && userRole !== 'admin') {
+    return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
   }
 
   return response;

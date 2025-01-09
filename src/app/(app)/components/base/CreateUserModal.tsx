@@ -30,7 +30,7 @@ export default function CreateUserModal({
     // Create a new class object with the current state values
     const newUser: Omit<UserType, 'id'>  = {
       email,
-      userRole,
+      user_role: userRole,
     }
     console.log("newUser-1",newUser);
     try {

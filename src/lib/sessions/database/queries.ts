@@ -4,17 +4,6 @@ import { CLASSES_TABLE, SESSIONS_TABLE, STUDENT_SESSION_ATTENDANCE_TABLE, STUDEN
 import { SessionsWithTableData } from '../types/session';
 import { PastSession, UpcomingSession } from '../types/session-v2';
 
-interface SessionsWithTableDataRawData extends Omit<SessionsWithTableData, 'class' | 'noOfAtendedStudents'>{
-  class: { 
-    id: string;
-    name: string;
-    tutorId: string
-    tutor: { id: string; firstName: string; lastName: string };
-    students: { id: string }[];
-  };  
-  noOfAtendedStudents: { count: number }[];
-}
-
 // /**
 //  * @description Fetch session object data (not auth!) by ID {@link sessionId}
 //  */
@@ -225,6 +214,7 @@ export async function getAllUpcommingSessionsData(
           created_at,
           class_id,
           recording_urls,
+          status,
           start_time,
           end_time,
           recurring_session_id,
@@ -249,8 +239,7 @@ export async function getAllUpcommingSessionsData(
         { count: 'exact' }
       )
       .gt('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true })
-      .returns<SessionsWithTableDataRawData[]>();
+      .order('start_time', { ascending: true });
 
     console.log("getAllSessionsData", data)
 
@@ -262,14 +251,19 @@ export async function getAllUpcommingSessionsData(
       return [];
     }
 
-    // Transform the data to get the count directly
-    return data?.map((sessionData) => ({
-      ...sessionData,
-      class: {
-        ...sessionData?.class,
-        no_of_students: sessionData?.class?.students?.length || 0,
-      },
-    })) as UpcomingSession[] | [];
+    const transformedData = data?.map((sessionData) => {
+      let classTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+        else classTemp = sessionData.class;
+      }
+      return ({
+        ...sessionData,
+        class: classTemp,
+      })
+    })
+
+    return transformedData;
 
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
@@ -280,6 +274,7 @@ export async function getAllUpcommingSessionsData(
 export async function getAllUpcommingSessionsByTutorIdData(
   client: SupabaseClient<Database>,
   tutor_id: string,
+  isDashboard?: boolean,
 ): Promise<UpcomingSession[] | []> {
   try {
     const { data: tutorClasses, error: classError } = await client
@@ -299,7 +294,8 @@ export async function getAllUpcommingSessionsByTutorIdData(
       return [];
     }
 
-    const { data: upcomingSessions, error: upcomingSessionError } = await client
+    // Create base query
+    let query = client
       .from(SESSIONS_TABLE)
       .select(
         `
@@ -307,6 +303,7 @@ export async function getAllUpcommingSessionsByTutorIdData(
           created_at,
           class_id,
           recording_urls,
+          status,
           start_time,
           end_time,
           recurring_session_id,
@@ -319,7 +316,7 @@ export async function getAllUpcommingSessionsByTutorIdData(
             name,
             subject,
             tutor_id,
-            no_of_students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(count)
+            students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(id)
           ),
           materials:${RESOURCE_MATERIALS_TABLE}!id (
             id,
@@ -332,8 +329,14 @@ export async function getAllUpcommingSessionsByTutorIdData(
       )
       .gt('start_time', new Date().toISOString())
       .in('class_id', classIds)
-      .order('start_time', { ascending: true })
-      .returns<SessionsWithTableDataRawData[]>();
+      .order('start_time', { ascending: true });
+
+    // If isDashboard is true, limit to 1 result
+    if (isDashboard) {
+      query = query.limit(1)
+    }
+
+    const { data: upcomingSessions, error: upcomingSessionError } = await query;
 
     console.log("getAllSessionsData", upcomingSessions)
 
@@ -345,14 +348,19 @@ export async function getAllUpcommingSessionsByTutorIdData(
       return [];
     }
 
-    // Transform the data to get the count directly
-    return upcomingSessions?.map((sessionData) => ({
-      ...sessionData,
-      class: {
-        ...sessionData?.class,
-        no_of_students: sessionData?.class?.students?.length || 0,
-      },
-    })) as UpcomingSession[] | [];
+    const transformedData = upcomingSessions?.map((sessionData) => {
+      let classTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+        else classTemp = sessionData.class;
+      }
+      return ({
+        ...sessionData,
+        class: classTemp,
+      })
+    })
+
+    return transformedData;
 
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
@@ -372,6 +380,7 @@ export async function getAllPastSessionsData(
           created_at,
           class_id,
           recording_urls,
+          status,
           start_time,
           end_time,
           recurring_session_id,
@@ -384,7 +393,7 @@ export async function getAllPastSessionsData(
             name,
             subject,
             tutor_id,
-            no_of_students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(count)
+            students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(id)
           ),
           materials:${RESOURCE_MATERIALS_TABLE}!id (
             id,
@@ -406,8 +415,7 @@ export async function getAllPastSessionsData(
         { count: 'exact' }
       )
       .lt('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true })
-      .returns<SessionsWithTableDataRawData[]>();
+      .order('start_time', { ascending: true });
 
     console.log("getAllSessionsData", data)
 
@@ -420,13 +428,27 @@ export async function getAllPastSessionsData(
     }
 
     // Transform the data to get the count directly
-    return data?.map((sessionData) => ({
-      ...sessionData,
-      class: {
-        ...sessionData?.class,
-        no_of_students: sessionData?.class?.students?.length || 0,
-      },
-    })) as PastSession[] | [];
+    const transformedData = data?.map((sessionData) => {
+      let classTemp;
+      let attendanceTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+        else classTemp = sessionData.class;
+      }
+      if (sessionData?.attendance?.length > 0) {
+        attendanceTemp = sessionData.attendance.map((attendee) => {
+          if (Array.isArray(attendee.student)) return { ...attendee, student: attendee.student[0]};
+          else return { ...attendee, student: attendee.student};          
+        })
+      }
+      return ({
+        ...sessionData,
+        class: classTemp,
+        attendance: attendanceTemp ?? [],
+      })
+    })
+
+    return transformedData;
 
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
@@ -463,6 +485,7 @@ export async function getAllPastSessionsByTutorIdData(
           created_at,
           class_id,
           recording_urls,
+          status,
           start_time,
           end_time,
           recurring_session_id,
@@ -475,7 +498,7 @@ export async function getAllPastSessionsByTutorIdData(
             name,
             subject,
             tutor_id,
-            no_of_students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(count)
+            students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(id)
           ),
           materials:${RESOURCE_MATERIALS_TABLE}!id (
             id,
@@ -498,8 +521,7 @@ export async function getAllPastSessionsByTutorIdData(
       )
       .lt('start_time', new Date().toISOString())
       .in('class_id', classIds)
-      .order('start_time', { ascending: true })
-      .returns<SessionsWithTableDataRawData[]>();
+      .order('start_time', { ascending: true });
 
     console.log("getAllSessionsData", pastSessions)
 
@@ -512,13 +534,27 @@ export async function getAllPastSessionsByTutorIdData(
     }
 
     // Transform the data to get the count directly
-    return pastSessions?.map((sessionData) => ({
-      ...sessionData,
-      class: {
-        ...sessionData?.class,
-        no_of_students: sessionData?.class?.students?.length || 0,
-      },
-    })) as PastSession[] | [];
+    const transformedData = pastSessions?.map((sessionData) => {
+      let classTemp;
+      let attendanceTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+        else classTemp = sessionData.class;
+      }
+      if (sessionData?.attendance?.length > 0) {
+        attendanceTemp = sessionData.attendance.map((attendee) => {
+          if (Array.isArray(attendee.student)) return { ...attendee, student: attendee.student[0]};
+          else return { ...attendee, student: attendee.student};          
+        })
+      }
+      return ({
+        ...sessionData,
+        class: classTemp,
+        attendance: attendanceTemp ?? [],
+      })
+    })
+
+    return transformedData;
 
   } catch (error) {
     console.error('Failed to fetch sessions:', error);

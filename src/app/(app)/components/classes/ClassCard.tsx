@@ -35,7 +35,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
   const [addStudentLoading, setAddStudentLoading] = useState(false);
 
-  const handleUpdateClass = async (classId: number, updatedData: EditClassData) => {
+  const handleUpdateClass = async (classId: string, updatedData: EditClassData) => {
     try {
       setEditLoading(true);
       // Here you would make your API call to update the class
@@ -89,8 +89,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
                 </div>
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline">{classData.students} Students</Badge>
-                  {'academicYear' in classData && (
-                    <Badge variant="secondary">{classData.academicYear}</Badge>
+                  {'grade' in classData && (
+                    <Badge variant="secondary">{classData.grade}</Badge>
                   )}
                 </div>
               </div>
@@ -99,7 +99,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
                 <Button
                   variant="outline"
                   onClick={() =>
-                    onCopyLink(classData.id, classData.registrationLink)
+                    onCopyLink(classData.id, classData?.registrationLink)
                   }
                 >
                   {linkCopied[classData.id] ? (
@@ -139,9 +139,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
               {showViewDetails && (
                 <Button
                   variant="outline"
-                  onClick={() =>
-                    (window.location.href = `/classes/${classData.id}`)
-                  }
+                  // onClick={() =>
+                  //   (window.location.href = `/classes/${classData.id}`)
+                  // }
                 >
                   <ChevronRight className="h-4 w-4 mr-2" />
                   View Details
@@ -155,10 +155,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
       <RegisteredStudentsDialog
         open={showStudentsDialog}
         onClose={() => setShowStudentsDialog(false)}
-        classData={{
-          id: classData.id,
-          name: classData.name,
-        }}
+        classDataName={classData?.name}
+        studentData={classData?.classRawData?.students || []}
       />
       <EditClassDialog
         open={showEditDialog}

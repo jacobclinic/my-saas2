@@ -48,13 +48,16 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className={cn(maxWidthClasses[maxWidth], contentClassName)}>
+      <DialogContent className={cn(maxWidthClasses[maxWidth], "max-h-[90dvh] overflow-y-auto", contentClassName)}>
         <DialogHeader className={headerClassName}>
           <DialogTitle>{title}</DialogTitle>
           {description && <p className="text-sm text-gray-500">{description}</p>}
         </DialogHeader>
         
-        {children}
+        {/* Wrapping content in a scrollable div */}
+        <div className="overflow-y-auto">
+          {children}
+        </div>
 
         <DialogFooter>
           {footer || (

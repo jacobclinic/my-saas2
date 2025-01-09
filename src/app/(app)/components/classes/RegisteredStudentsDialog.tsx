@@ -3,9 +3,10 @@
 import React from 'react';
 import { Badge } from '../base-v2/ui/Badge';
 import BaseDialog from '../base-v2/BaseDialog';
+import { ClassListStudent } from '~/lib/classes/types/class-v2';
 
 interface Student {
-  id: number;
+  id: string;
   name: string;
   email: string;
   status: string;
@@ -14,49 +15,62 @@ interface Student {
 interface RegisteredStudentsDialogProps {
   open: boolean;
   onClose: () => void;
-  className?: string;
-  classData: {
-    id: number;
-    name: string;
-  };
+  classDataName?: string | null;
+  studentData: ClassListStudent[];
 }
 
 const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
   open,
   onClose,
-  classData,
+  classDataName,
+  studentData,
 }) => {
   // Sample students data - in real app, this would come from props or API
-  const students: Student[] = Array.from({ length: 5 }).map((_, i) => ({
-    id: i + 1,
-    name: `Student ${i + 1}`,
-    email: `student${i + 1}@example.com`,
-    status: 'Active',
-  }));
+  const students: Student[] = studentData.map((student) => {
+    let studentTemp;
+    if (student?.student) {
+      if (Array.isArray(student.student)) studentTemp = student.student[0];
+      else studentTemp = student.student;
+    }
+    return ({
+      id: student.student_id,
+      name: `${studentTemp?.first_name} ${studentTemp?.last_name}`,
+      email: studentTemp?.email || '',
+      status: studentTemp?.status || '',    
+    })
+  });
 
   return (
     <BaseDialog
       open={open}
       onClose={onClose}
-      title={`Registered Students - ${classData.name}`}
+      title={`Registered Students - ${classDataName}`}
       maxWidth="2xl"
       showCloseButton={true}
       closeButtonText="Close"
     >
       <div className="space-y-4">
         <div className="border rounded-lg divide-y">
-          {students.map((student) => (
-            <div
-              key={student.id}
-              className="p-4 flex justify-between items-center"
-            >
-              <div>
-                <p className="font-medium">{student.name}</p>
-                <p className="text-sm text-gray-600">{student.email}</p>
+          {students.length > 0 ? (
+            students.map((student) => (
+              <div
+                key={student.id}
+                className="p-4 flex justify-between items-center"
+              >
+                <div>
+                  <p className="font-medium">{student.name}</p>
+                  <p className="text-sm text-gray-600">{student.email}</p>
+                </div>
+                <Badge variant="outline">{student.status}</Badge>
               </div>
-              <Badge variant="outline">{student.status}</Badge>
+            ))
+          ) : (
+            <div className="p-4 flex justify-center items-center">
+              <p className="text-sm text-gray-600">
+                No students registered yet.
+              </p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </BaseDialog>
