@@ -28,7 +28,7 @@ const PastSessions = ({ pastSessionsData }: { pastSessionsData: PastSession[] })
           time: formattedTime,
           recordingUrl: session?.recording_urls?.[0] ?? "",
           zoomLinkStudent: session?.meeting_url || "",
-          attendance: session?.attendance.map(attendee => {
+          attendance: (session?.attendance || []).map(attendee => {
             const formattedTime = `${attendee?.time ? new Date(attendee?.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : ""}`;
             return {
               name: `${attendee?.student?.first_name} ${attendee?.student?.last_name}`,
