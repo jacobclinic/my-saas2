@@ -23,6 +23,20 @@ interface UpcomingSessionTableData {
   sessionRawData?: UpcomingSession;
 }
 
+interface SessionStudentTableData {
+  id: string;
+  name: string;
+  topic?: string | null;
+  date: string;
+  time: string;
+  paymentStatus: 'paid' | 'pending' | string;
+  paymentAmount?: number;
+  zoomLink?: string;
+  recordingUrl?: string;
+  materials?: Material[];
+  sessionRawData?: UpcomingSession;
+}
+
 interface UploadedMaterial {
   id: string;
   name: string;
@@ -54,6 +68,9 @@ interface MaterialUploadDialogProps {
   setUploadedMaterials: React.Dispatch<React.SetStateAction<UploadedMaterial[]>>;
   materialDescription: string;
   setMaterialDescription: (description: string) => void;
+  sessionId: string;
+  onSuccess: (materials: Material[]) => void;
+  existingMaterials?: Material[];
 }
 
 interface UpcommingSessionCardProps {
@@ -64,6 +81,7 @@ interface UpcommingSessionCardProps {
 export type {
   Material,
   UpcomingSessionTableData,
+  SessionStudentTableData,
   UploadedMaterial,
   EditingLessonState,
   LessonDetailsState,

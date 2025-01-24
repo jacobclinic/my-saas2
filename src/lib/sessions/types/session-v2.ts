@@ -18,6 +18,7 @@ interface SessionClass {
   name: string | null;
   subject?: string | null;
   tutor_id: string;
+  fee?: number | null;
   students?: { id: string }[] | null;
 }
 
@@ -31,6 +32,8 @@ interface SessionMaterial {
 interface UpcomingSession extends Session {
   class?: SessionClass;
   materials: SessionMaterial[];
+  payment_status?: string;
+  payment_amount?: number | null;
 }
 
 interface PastSessionAttendanceStudent {
@@ -39,7 +42,7 @@ interface PastSessionAttendanceStudent {
   last_name: string | null;
 }
 interface PastSession extends UpcomingSession {
-  attendance: {
+  attendance?: {
     id: string;
     student_id: string | null;
     time: string | null;

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "../base-v2/ui/Card";
 import { Button } from "../base-v2/ui/Button";
 import { Badge } from "../base-v2/ui/Badge";
@@ -17,10 +17,86 @@ import {
   Info,
   MonitorPlay
 } from 'lucide-react';
+import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 
-const StudentPortal = () => {
+const StudentDashboard = ({
+  upcomingSessionData, pastSessionData
+}: {
+  upcomingSessionData: UpcomingSession[], pastSessionData: PastSession[]
+}) => {
+  const [nextClass, setNextClass] = useState<SessionStudentTableData | null>(null);
+  const [upcomingClasses, setUpcomingClasses] = useState<SessionStudentTableData[]>([]);
+  const [pastClasses, setPastClasses] = useState<SessionStudentTableData[]>([]);
+
+  // Transform upcoming sessions data
+  useEffect(() => {
+    if (upcomingSessionData?.length > 0) {
+      // Format the next class (first upcoming session)
+      const nextSessionData = upcomingSessionData[0];
+      const formattedNextClass = formatSessionData(nextSessionData);
+      setNextClass(formattedNextClass);
+
+      // Format remaining upcoming classes
+      const remainingUpcoming = upcomingSessionData.slice(1).map(formatSessionData);
+      setUpcomingClasses(remainingUpcoming);
+    }
+  }, [upcomingSessionData]);
+
+  // Transform past sessions data
+  useEffect(() => {
+    if (pastSessionData?.length > 0) {
+      const formattedPastClasses = pastSessionData.map(formatSessionData);
+      setPastClasses(formattedPastClasses);
+    }
+  }, [pastSessionData]);
+
+  // Helper function to format session data
+  const formatSessionData = (sessionData: UpcomingSession | PastSession): SessionStudentTableData => {
+    const formattedDate = new Date(sessionData.start_time || "").toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const formattedTime = `${
+      new Date(sessionData.start_time || "").toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      })
+    } - ${
+      new Date(sessionData.end_time || sessionData.start_time || "").toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      })
+    }`;
+
+    return {
+      id: sessionData.id,
+      name: sessionData.class?.name || '',
+      topic: sessionData.title,
+      date: formattedDate,
+      time: formattedTime,
+      paymentStatus: sessionData.payment_status || 'pending',
+      paymentAmount: Number(sessionData.payment_amount) || sessionData.class?.fee || 0,
+      zoomLink: sessionData.meeting_url || undefined,
+      recordingUrl: Array.isArray(sessionData.recording_urls) && sessionData.recording_urls.length > 0 
+        ? sessionData.recording_urls[0] 
+        : undefined,
+      materials: sessionData.materials?.map(material => ({
+        id: material.id,
+        name: material.name,
+        file_size: material.file_size,
+        url: material.url
+      })) || []
+    };
+  };
+
   // Sample data
-  const nextClass = {
+  const nextClassSampleData = {
     id: 1,
     name: "A/L 2025 Accounting Batch 04",
     topic: "Manufacturing Accounts - Part 1",
@@ -30,12 +106,12 @@ const StudentPortal = () => {
     paymentStatus: "pending",
     paymentAmount: 5000,
     materials: [
-      { id: 1, name: "Manufacturing Accounts Notes.pdf", size: "2.5 MB" },
-      { id: 2, name: "Practice Problems Set.pdf", size: "1.8 MB" }
+      { id: 1, name: "Manufacturing Accounts Notes.pdf", file_size: "2.5 MB" },
+      { id: 2, name: "Practice Problems Set.pdf", file_size: "1.8 MB" }
     ]
   };
 
-  const upcomingClasses = [
+  const upcomingClassesSampleData = [
     {
       id: 2,
       name: "A/L 2025 Accounting Batch 04",
@@ -44,12 +120,12 @@ const StudentPortal = () => {
       time: "4:00 PM - 6:00 PM",
       paymentStatus: "paid",
       materials: [
-        { id: 3, name: "Manufacturing Accounts Part 2.pdf", size: "3.0 MB" }
+        { id: 3, name: "Manufacturing Accounts Part 2.pdf", file_size: "3.0 MB" }
       ]
     }
   ];
 
-  const pastClasses = [
+  const pastClassesSampleData = [
     {
       id: 3,
       name: "A/L 2025 Accounting Batch 04",
@@ -58,13 +134,13 @@ const StudentPortal = () => {
       time: "4:00 PM - 6:00 PM",
       recordingUrl: "https://zoom.us/rec/123",
       materials: [
-        { id: 4, name: "Introduction Notes.pdf", size: "2.2 MB" },
-        { id: 5, name: "Homework Problems.pdf", size: "1.5 MB" }
+        { id: 4, name: "Introduction Notes.pdf", file_size: "2.2 MB" },
+        { id: 5, name: "Homework Problems.pdf", file_size: "1.5 MB" }
       ]
     }
   ];
 
-  const NextClassCard = ({ classData }) => (
+  const NextClassCard = ({ classData }: { classData: SessionStudentTableData }) => (
     <Card className="border-2 border-blue-200 bg-blue-50">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
@@ -101,11 +177,11 @@ const StudentPortal = () => {
           </Alert>
         ) : null}
 
-        {classData.materials?.length > 0 && (
+        {classData?.materials && classData?.materials?.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-medium text-blue-900">Class Materials</h4>
             <div className="space-y-2">
-              {classData.materials.map((material) => (
+              {classData?.materials?.map((material) => (
                 <div
                   key={material.id}
                   className="flex items-center justify-between bg-white p-2 rounded"
@@ -114,7 +190,7 @@ const StudentPortal = () => {
                     <File className="h-4 w-4 text-blue-600 mr-2" />
                     <span className="text-sm">{material.name}</span>
                   </div>
-                  <span className="text-sm text-gray-600">{material.size}</span>
+                  <span className="text-sm text-gray-600">{material.file_size}</span>
                 </div>
               ))}
             </div>
@@ -138,7 +214,7 @@ const StudentPortal = () => {
     </Card>
   );
 
-  const ClassCard = ({ classData, type = "upcoming" }) => (
+  const ClassCard = ({ classData, type = "upcoming" }: { classData: SessionStudentTableData; type?: "upcoming" | "completed" | "past" }) => (
     <Card className="mb-4">
       <CardContent className="p-4 space-y-4">
         <div>
@@ -163,11 +239,11 @@ const StudentPortal = () => {
           </div>
         </div>
 
-        {classData.materials?.length > 0 && (
+        {classData?.materials && classData.materials?.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-medium">Class Materials</h4>
             <div className="space-y-2">
-              {classData.materials.map((material) => (
+              {classData?.materials?.map((material) => (
                 <div
                   key={material.id}
                   className="flex items-center justify-between bg-gray-50 p-2 rounded"
@@ -176,7 +252,7 @@ const StudentPortal = () => {
                     <File className="h-4 w-4 text-blue-600 mr-2" />
                     <span className="text-sm">{material.name}</span>
                   </div>
-                  <span className="text-sm text-gray-600">{material.size}</span>
+                  <span className="text-sm text-gray-600">{material.file_size}</span>
                 </div>
               ))}
             </div>
@@ -259,4 +335,4 @@ const StudentPortal = () => {
   );
 };
 
-export default StudentPortal;
+export default StudentDashboard;

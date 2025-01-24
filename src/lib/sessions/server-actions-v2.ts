@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { zoomService } from '../zoom-meeting/zoom.service';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { withSession } from '~/core/generic/actions-utils';
+import { deleteMaterialFromStorage, uploadMaterialToStorage } from '../utils/upload-material-utils';
 
 const supabase = getSupabaseServerActionClient();
 
@@ -108,3 +109,147 @@ function getDurationInMinutes(startTime: string, endTime: string): number {
   const end = new Date(endTime);
   return Math.round((end.getTime() - start.getTime()) / (1000 * 60));
 }
+
+export const uploadSessionMaterialsAction = withSession(
+  async ({ 
+    sessionId,
+    file: {
+      name,
+      type,
+      size,
+      buffer
+    },
+    description,
+    csrfToken 
+  }: {
+    sessionId: string,
+    file: {
+      name: string,
+      type: string,
+      size: number,
+      buffer: number[]
+    },
+    description?: string,
+    csrfToken: string
+  }) => {
+    const client = getSupabaseServerActionClient()
+
+    try {
+      // Convert buffer to Uint8Array
+      const uint8Array = new Uint8Array(buffer)
+      
+      // Generate unique file name
+      const fileExt = name.split('.').pop()
+      const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+      const filePath = `materials/${sessionId}/${uniqueFileName}`
+
+      // Upload directly to Supabase storage
+      const { data: storageData, error: uploadError } = await client
+        .storage
+        .from('class-materials')
+        .upload(filePath, uint8Array, {
+          contentType: type,
+          cacheControl: '3600'
+        })
+
+      if (uploadError) throw uploadError
+
+      // Get the public URL
+      const { data: { publicUrl } } = client
+        .storage
+        .from('class-materials')
+        .getPublicUrl(filePath)
+
+      // Save to database
+      const { data: material, error: dbError } = await client
+        .from('resource_materials')
+        .insert({
+          session_id: sessionId,
+          name: name,
+          url: publicUrl,
+          file_size: (size / 1024 / 1024).toFixed(2),
+          description
+        })
+        .select()
+        .single()
+
+      if (dbError) throw dbError
+
+      revalidatePath('/upcoming-sessions')
+      return { success: true, material }
+    } catch (error: any) {
+      console.error('Server error:', error)
+      return { success: false, error: error.message }
+    }
+  }
+)
+
+export const updateSessionMaterialsAction = withSession(
+  async ({ 
+    materialData,
+    csrfToken 
+  }: {
+    materialData: {
+      session_id: string,
+      name: string,
+      url: string,
+      file_size: string,
+      description: string
+    }[],
+    csrfToken?: string
+  }) => {
+    const client = getSupabaseServerActionClient()
+
+    try {
+      // Save to database
+      const { data: material, error: dbError } = await client
+        .from('resource_materials')
+        .insert(materialData)
+        .select()
+        // .single()
+
+      if (dbError) throw dbError
+
+      revalidatePath('/upcoming-sessions')
+      return { success: true, material }
+    } catch (error: any) {
+      console.error('Server error:', error)
+      return { success: false, error: error.message }
+    }
+  }
+)
+
+export const deleteSessionMaterialAction = withSession(
+  async ({
+    materialId,
+    materialUrl,
+    csrfToken
+  }: {
+    materialId: string,
+    materialUrl: string,
+    csrfToken: string
+  }) => {
+    const client = getSupabaseServerActionClient()
+
+    // Delete from storage
+    const { error: storageError } = await deleteMaterialFromStorage(
+      client,
+      materialUrl
+    )
+    if (storageError) {
+      console.error('Storage error:', storageError)
+      throw storageError
+    }
+
+    // Delete from database
+    const { error: dbError } = await client
+      .from('resource_materials')
+      .delete()
+      .eq('id', materialId)
+
+    if (dbError) throw dbError
+
+    revalidatePath('/upcoming-sessions')
+    return { success: true }
+  }
+)

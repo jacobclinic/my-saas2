@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '~/database.types';
-import { CLASSES_TABLE, SESSIONS_TABLE, STUDENT_SESSION_ATTENDANCE_TABLE, STUDENT_CLASS_ENROLLMENTS_TABLE, USERS_TABLE, RESOURCE_MATERIALS_TABLE } from '~/lib/db-tables';
+import { CLASSES_TABLE, SESSIONS_TABLE, STUDENT_SESSION_ATTENDANCE_TABLE, STUDENT_CLASS_ENROLLMENTS_TABLE, USERS_TABLE, RESOURCE_MATERIALS_TABLE, STUDENT_PAYMENTS_TABLE } from '~/lib/db-tables';
 import { SessionsWithTableData } from '../types/session';
 import { PastSession, UpcomingSession } from '../types/session-v2';
 
@@ -200,7 +200,7 @@ import { PastSession, UpcomingSession } from '../types/session-v2';
 //   }
 // }
 
-// version 2
+// ------------------version 2----------------
 
 export async function getAllUpcommingSessionsData(
   client: SupabaseClient<Database>,
@@ -552,6 +552,266 @@ export async function getAllPastSessionsByTutorIdData(
         class: classTemp,
         attendance: attendanceTemp ?? [],
       })
+    })
+
+    return transformedData;
+
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
+export async function getAllUpcomingSessionsByStudentIdData(
+  client: SupabaseClient<Database>,
+  student_id: string,
+): Promise<UpcomingSession[] | []> {
+  try {
+    const { data: studentClasses, error: classError } = await client
+      .from(STUDENT_CLASS_ENROLLMENTS_TABLE)
+      .select('class_id')
+      .eq('student_id', student_id);
+
+    if (classError) {
+      throw new Error(`Error fetching student classes: ${classError.message}`);
+    }
+
+    // Get the class IDs
+    const classIds = studentClasses.map(c => c.class_id);
+
+    // If no classes found and student_id was provided, return empty array
+    if (student_id && classIds.length === 0) {
+      return [];
+    }
+
+    const today = new Date();
+    const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
+    // Calculate next month
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1).toISOString().slice(0, 7);
+
+    // Create base query
+    let queryForSessionData = client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor_id,
+            fee
+          ),
+          materials:${RESOURCE_MATERIALS_TABLE}!id (
+            id,
+            name,
+            url,
+            file_size
+          )
+        `,
+        { count: 'exact' }
+      )
+      .gt('start_time', new Date().toISOString())
+      .in('class_id', classIds)
+      .order('start_time', { ascending: true });
+
+    let queryForPaymentData = client
+      .from(STUDENT_PAYMENTS_TABLE)
+      .select('*')
+      .eq('student_id', student_id)
+      .in('class_id', classIds)
+      .gte('payment_period', currentMonth)
+
+    const [
+      { data: upcomingSessions, error: upcomingSessionError },
+      { data: upcomingPayments, error: upcomingPaymentError }
+    ] = await Promise.all([queryForSessionData, queryForPaymentData]);
+
+    console.log("getAllSessionsData", upcomingSessions)
+
+    if (upcomingSessionError) {
+      throw new Error(`Error fetching sessions: ${upcomingSessionError.message}`);
+    }
+
+    if (upcomingPaymentError) {
+      throw new Error(`Error fetching payments: ${upcomingPaymentError.message}`);
+    }
+
+    if (!upcomingSessions) {
+      return [];
+    }
+
+    const transformedData = upcomingSessions?.map((sessionData) => {
+      let classTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+        else classTemp = sessionData.class;
+      }
+
+      // Find relevant payment
+      const sessionMonth = new Date(sessionData.start_time || "").toISOString().slice(0, 7);
+      const currentPayment = upcomingPayments.find(payment => 
+        payment.class_id === sessionData.class_id && 
+        payment.payment_period === sessionMonth
+      );
+
+      // Transform materials based on payment status
+      const transformedMaterials = sessionData.materials?.map(material => {
+        if (currentPayment?.status === 'paid') {
+          return material;
+        }
+        const { url, ...materialWithoutUrl } = material;
+        return materialWithoutUrl;
+      });
+
+      return {
+        ...sessionData,
+        class: classTemp,
+        materials: transformedMaterials || [],
+        payment_status: currentPayment?.status || 'pending',
+        payment_amount: currentPayment?.amount || classTemp?.fee || null
+      };
+    })
+
+    return transformedData;
+
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
+export async function getAllPastSessionsByStudentIdData(
+  client: SupabaseClient<Database>,
+  student_id: string,
+): Promise<PastSession[] | []> {
+  try {
+    const { data: studentClasses, error: classError } = await client
+      .from(STUDENT_CLASS_ENROLLMENTS_TABLE)
+      .select('class_id')
+      .eq('student_id', student_id);
+
+    if (classError) {
+      throw new Error(`Error fetching student classes: ${classError.message}`);
+    }
+
+    // Get the class IDs
+    const classIds = studentClasses.map(c => c.class_id);
+
+    // If no classes found and student_id was provided, return empty array
+    if (student_id && classIds.length === 0) {
+      return [];
+    }
+
+    const today = new Date();
+    const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
+    // Calculate next month
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1).toISOString().slice(0, 7);
+
+    // Create base query
+    let queryForSessionData = client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor_id,
+            fee
+          ),
+          materials:${RESOURCE_MATERIALS_TABLE}!id (
+            id,
+            name,
+            url,
+            file_size
+          )
+        `,
+        { count: 'exact' }
+      )
+      .lt('start_time', new Date().toISOString())
+      .in('class_id', classIds)
+      .order('start_time', { ascending: false });
+
+    let queryForPaymentData = client
+      .from(STUDENT_PAYMENTS_TABLE)
+      .select('*')
+      .eq('student_id', student_id)
+      .in('class_id', classIds)
+      .lte('payment_period', currentMonth)
+
+    const [
+      { data: pastSessions, error: pastSessionError },
+      { data: pastPayments, error: pastPaymentError }
+    ] = await Promise.all([queryForSessionData, queryForPaymentData]);
+
+    console.log("getAllSessionsData", pastSessions)
+
+    if (pastSessionError) {
+      throw new Error(`Error fetching sessions: ${pastSessionError.message}`);
+    }
+
+    if (pastPaymentError) {
+      throw new Error(`Error fetching payments: ${pastPaymentError.message}`);
+    }
+
+    if (!pastSessions) {
+      return [];
+    }
+
+    const transformedData = pastSessions?.map((sessionData) => {
+      let classTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+        else classTemp = sessionData.class;
+      }
+
+      // Find relevant payment
+      const sessionMonth = new Date(sessionData.start_time || "").toISOString().slice(0, 7);
+      const currentPayment = pastPayments.find(payment => 
+        payment.class_id === sessionData.class_id && 
+        payment.payment_period === sessionMonth
+      );
+
+      // Transform materials based on payment status
+      const transformedMaterials = sessionData.materials?.map(material => {
+        if (currentPayment?.status === 'paid') {
+          return material;
+        }
+        const { url, ...materialWithoutUrl } = material;
+        return materialWithoutUrl;
+      });
+
+      return {
+        ...sessionData,
+        class: classTemp,
+        materials: transformedMaterials || [],
+        payment_status: currentPayment?.status || 'pending',
+        payment_amount: currentPayment?.amount || classTemp?.fee || null
+      };
     })
 
     return transformedData;

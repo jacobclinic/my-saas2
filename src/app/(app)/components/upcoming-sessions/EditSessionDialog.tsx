@@ -198,85 +198,85 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 
         {/* Materials Section */}
         <div className="space-y-4">
-        <div className="flex justify-between items-center">
-            <h3 className="font-medium">Class Materials</h3>
-            <div>
-            <input
-                type="file"
-                id="material-upload"
-                className="hidden"
-                multiple
-                onChange={handleFileUpload}
-            />
-            <Button 
-                variant="outline"
-                onClick={() => document.getElementById('material-upload')?.click()}
-            >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Materials
-            </Button>
-            </div>
-        </div>
+          {/* <div className="flex justify-between items-center">
+              <h3 className="font-medium">Class Materials</h3>
+              <div>
+              <input
+                  type="file"
+                  id="material-upload"
+                  className="hidden"
+                  multiple
+                  onChange={handleFileUpload}
+              />
+              <Button 
+                  variant="outline"
+                  onClick={() => document.getElementById('material-upload')?.click()}
+              >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Materials
+              </Button>
+              </div>
+          </div> */}
 
-        {/* Existing Materials */}
-        {editedSession.materials.length > 0 && (
-            <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">Existing Materials</h4>
-            {editedSession.materials.map((material) => (
-                !materialsToDelete.includes(material.id) && (
-                <div 
-                    key={material.id} 
-                    className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
-                >
-                    <div className="flex items-center">
-                    <File className="h-4 w-4 text-blue-600 mr-2" />
-                    <div>
-                        <p className="font-medium">{material.name}</p>
-                        <p className="text-sm text-gray-600">{material.file_size}</p>
-                    </div>
-                    </div>
-                    <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteExistingMaterial(material.id)}
-                    className="text-red-500 hover:text-red-700"
-                    >
-                    <Trash className="h-4 w-4" />
-                    </Button>
-                </div>
-                )
-            ))}
-            </div>
-        )}
+          {/* Existing Materials */}
+          {/* {editedSession.materials.length > 0 && (
+              <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-700">Existing Materials</h4>
+              {editedSession.materials.map((material) => (
+                  !materialsToDelete.includes(material.id) && (
+                  <div 
+                      key={material.id} 
+                      className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
+                  >
+                      <div className="flex items-center">
+                      <File className="h-4 w-4 text-blue-600 mr-2" />
+                      <div>
+                          <p className="font-medium">{material.name}</p>
+                          <p className="text-sm text-gray-600">{material.file_size}</p>
+                      </div>
+                      </div>
+                      <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteExistingMaterial(material.id)}
+                      className="text-red-500 hover:text-red-700"
+                      >
+                      <Trash className="h-4 w-4" />
+                      </Button>
+                  </div>
+                  )
+              ))}
+              </div>
+          )} */}
 
-        {/* New Materials */}
-        {uploadedMaterials.length > 0 && (
-            <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">New Materials</h4>
-            {uploadedMaterials.map((material) => (
-                <div 
-                key={material.id} 
-                className="flex items-center justify-between bg-green-50 p-3 rounded-lg"
-                >
-                <div className="flex items-center">
-                    <Upload className="h-4 w-4 text-green-600 mr-2" />
-                    <div>
-                    <p className="font-medium">{material.name}</p>
-                    <p className="text-sm text-gray-600">{material.size} MB</p>
-                    </div>
-                </div>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveUploadedMaterial(material.id)}
-                    className="text-red-500 hover:text-red-700"
-                >
-                    <X className="h-4 w-4" />
-                </Button>
-                </div>
-            ))}
-            </div>
-        )}
+          {/* New Materials */}
+          {/* {uploadedMaterials.length > 0 && (
+              <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-700">New Materials</h4>
+              {uploadedMaterials.map((material) => (
+                  <div 
+                  key={material.id} 
+                  className="flex items-center justify-between bg-green-50 p-3 rounded-lg"
+                  >
+                  <div className="flex items-center">
+                      <Upload className="h-4 w-4 text-green-600 mr-2" />
+                      <div>
+                      <p className="font-medium">{material.name}</p>
+                      <p className="text-sm text-gray-600">{material.size} MB</p>
+                      </div>
+                  </div>
+                  <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveUploadedMaterial(material.id)}
+                      className="text-red-500 hover:text-red-700"
+                  >
+                      <X className="h-4 w-4" />
+                  </Button>
+                  </div>
+              ))}
+              </div>
+          )} */}
         </div>
 
         <Alert className="bg-yellow-50 border-yellow-200">

@@ -253,6 +253,9 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         setUploadedMaterials={setUploadedMaterials}
         materialDescription={materialDescription}
         setMaterialDescription={setMaterialDescription}
+        sessionId={sessionData.id}
+        onSuccess={() => console.log('Material upload success')}
+        existingMaterials={sessionData.materials || []}
       />
       <EditSessionDialog 
         open={showEditSessionDialog}
