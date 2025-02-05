@@ -36,7 +36,7 @@ const PastSessions = ({ pastSessionsData }: { pastSessionsData: PastSession[] })
               duration: "",
             }
           }) || [],
-          materials: session.materials.map((material) => {
+          materials: (session.materials || []).map((material) => {
             return {
               id: material.id,
               name: material.name || "",
