@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '~/database.types';
 import { CLASSES_TABLE, SESSIONS_TABLE, STUDENT_SESSION_ATTENDANCE_TABLE, STUDENT_CLASS_ENROLLMENTS_TABLE, USERS_TABLE, RESOURCE_MATERIALS_TABLE, STUDENT_PAYMENTS_TABLE } from '~/lib/db-tables';
 import { SessionsWithTableData } from '../types/session';
-import { PastSession, UpcomingSession } from '../types/session-v2';
+import { PastSession, Session, UpcomingSession } from '../types/session-v2';
 
 // /**
 //  * @description Fetch session object data (not auth!) by ID {@link sessionId}
@@ -201,6 +201,62 @@ import { PastSession, UpcomingSession } from '../types/session-v2';
 // }
 
 // ------------------version 2----------------
+
+// create a query to get session data by sessions id 
+export async function getSessionDataById(
+  client: SupabaseClient<Database>,
+  sessionId: string
+): Promise<UpcomingSession | null> {
+  try {
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(`
+          *,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor_id,
+            tutor:${USERS_TABLE}!tutor_id(
+              id,
+              first_name,
+              last_name,
+              email
+            )
+          )          
+        `)
+      .eq('id', sessionId)
+      .single();
+
+    console.log("getAllSessionsData", data)
+
+    if (error) {
+      throw new Error(`Error fetching sessions: ${error.message}`);
+    }
+
+    let classTemp;
+    let tutorTemp;
+    if (data?.class) {
+      if (Array.isArray(data.class)) classTemp = data.class[0];
+      else classTemp = data.class;
+    }
+    if (classTemp?.tutor) {
+      if (Array.isArray(classTemp.tutor)) tutorTemp = classTemp.tutor[0];
+      else tutorTemp = classTemp.tutor;
+    }
+
+    return {
+      ...data,
+      class: {
+        ...classTemp,
+        tutor: tutorTemp,
+      },
+    };
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
 
 export async function getAllUpcommingSessionsData(
   client: SupabaseClient<Database>,

@@ -20,11 +20,11 @@ import { ClassCardProps, EditClassData, NewStudentData } from '~/lib/classes/typ
 import RegisteredStudentsDialog from './RegisteredStudentsDialog';
 import EditClassDialog from './EditClassDialog';
 import AddStudentDialog from './AddStudentDialog';
+import { generateRegistrationToken } from '../../../../lib/registration-link';
+import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
 
 const ClassCard: React.FC<ClassCardProps> = ({
   classData,
-  linkCopied,
-  onCopyLink,
   variant = 'default',
   showViewDetails = true,
 }) => {
@@ -34,6 +34,25 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const [editLoading, setEditLoading] = useState(false);
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
   const [addStudentLoading, setAddStudentLoading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleCopyLink = async () => {
+    const classId = classData.id;
+    const registrationData = {
+      classId,
+      className: classData.name || '',
+      nextSession: classData.nextClass || classData.schedule || '',
+      time: classData.schedule || '',
+    };
+
+    const registrationLink = await generateRegistrationLinkAction(registrationData);
+    
+    navigator.clipboard.writeText(registrationLink);
+    setLinkCopied(true);
+    setTimeout(() => {
+      setLinkCopied(false);
+    }, 2000);
+  };
 
   const handleUpdateClass = async (classId: string, updatedData: EditClassData) => {
     try {
@@ -99,15 +118,15 @@ const ClassCard: React.FC<ClassCardProps> = ({
                 <Button
                   variant="outline"
                   onClick={() =>
-                    onCopyLink(classData.id, classData?.registrationLink)
+                    handleCopyLink()
                   }
                 >
-                  {linkCopied[classData.id] ? (
+                  {linkCopied ? (
                     <Check className="h-4 w-4 mr-2" />
                   ) : (
                     <Copy className="h-4 w-4 mr-2" />
                   )}
-                  {linkCopied[classData.id] ? 'Copied!' : 'Registration Link'}
+                  {linkCopied ? 'Copied!' : 'Registration Link'}
                 </Button>
                 <Button
                   variant="outline"

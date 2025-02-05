@@ -32,7 +32,7 @@ const UpcomingSessions = ({ upcomingSessionData }: { upcomingSessionData: Upcomi
           registeredStudents: session?.class?.students?.length || 0,
           zoomLinkTutor: session?.meeting_url || "",
           zoomLinkStudent: session?.meeting_url || "",
-          materials: session.materials.map((material) => {
+          materials: session?.materials?.map((material) => {
             return {
               id: material.id,
               name: material.name || "",
@@ -40,6 +40,9 @@ const UpcomingSessions = ({ upcomingSessionData }: { upcomingSessionData: Upcomi
               file_size: material.file_size || "",
             };
           }),
+          lessonTitle: session?.title || "",
+          lessonDescription: session?.description || "",
+          sessionRawData: session,
         };        
       });
       setUpcomingSessionTableData(formattedData);

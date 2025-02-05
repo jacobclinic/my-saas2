@@ -52,8 +52,6 @@ export interface ClassListData {
 
 export interface ClassCardProps {
   classData: ClassListData;
-  linkCopied: { [key: string]: boolean };
-  onCopyLink: (classId: string, link?: string) => void;
   variant?: 'default' | 'dashboard';
   showViewDetails?: boolean;
 }

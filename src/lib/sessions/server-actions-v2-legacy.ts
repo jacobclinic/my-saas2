@@ -20,8 +20,6 @@ type UpdateSessionParams = {
   csrfToken: string;
 };
 
-
-
 export const updateSessionAction = withSession(
   async (params: UpdateSessionParams) => {
     const { sessionId, sessionData } = params;
