@@ -34,7 +34,7 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
         registeredStudents: session?.class?.students?.length || 0,
         zoomLinkTutor: session?.meeting_url || "",
         zoomLinkStudent: session?.meeting_url || "",
-        materials: session?.materials.map((material) => {
+        materials: (session?.materials || []).map((material) => {
           return {
             id: material.id,
             name: material.name || "",
@@ -154,8 +154,6 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
             <ClassCard
               key={classData.id}
               classData={classData}
-              linkCopied={linkCopied}
-              onCopyLink={handleCopyLink}
               variant="dashboard"
               showViewDetails={false}
             />

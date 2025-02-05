@@ -199,6 +199,9 @@ export type Database = {
           id: string
           meeting_url: string | null
           zoom_meeting_id: string | null
+          zoom_session_name: string | null
+          zoom_host_token: string | null
+          zoom_participant_token: string | null
           recording_urls: string[] | null
           recurring_session_id: string | null
           start_time: string | null
@@ -214,6 +217,9 @@ export type Database = {
           id?: string
           meeting_url?: string | null
           zoom_meeting_id?: string | null
+          zoom_session_name?: string | null
+          zoom_host_token?: string | null
+          zoom_participant_token?: string | null
           recording_urls?: string[] | null
           recurring_session_id?: string | null
           start_time?: string | null
@@ -229,6 +235,9 @@ export type Database = {
           id?: string
           meeting_url?: string | null
           zoom_meeting_id?: string | null
+          zoom_session_name?: string | null
+          zoom_host_token?: string | null
+          zoom_participant_token?: string | null
           recording_urls?: string[] | null
           recurring_session_id?: string | null
           start_time?: string | null

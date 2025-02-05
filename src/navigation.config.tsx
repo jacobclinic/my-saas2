@@ -47,7 +47,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
-      userRole: ['admin', 'tutor'],
+      userRole: ['admin', 'tutor', 'student'],
     },
     // {
     //   label: 'Tutors',
@@ -74,7 +74,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
-      userRole: ['admin', 'tutor', 'student'],
+      userRole: ['admin', 'tutor'],
     },
     {
       label: 'Past Classes',
@@ -83,7 +83,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
-      userRole: ['admin', 'tutor', 'student'],
+      userRole: ['admin', 'tutor'],
     },
     // {
     //   label: 'Sessions',
@@ -101,7 +101,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Squares2X2Icon className={className} />;
       },
       end: true,
-      userRole: ['admin', 'tutor', 'student'],
+      userRole: ['admin', 'tutor'],
     },
     {
       label: 'Settings',

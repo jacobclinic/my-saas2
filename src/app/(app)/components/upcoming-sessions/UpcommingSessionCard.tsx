@@ -195,13 +195,13 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
             {/* Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button onClick={() => window.open(sessionData.zoomLinkTutor, '_blank')}>
+              <Button onClick={() => window.location.href = `/upcoming-sessions/meeting/${sessionData.id}`}>
                 <Camera className="h-4 w-4 mr-2" />
                 Join as Tutor
               </Button>
               
               <Button variant="outline" 
-                onClick={() => handleCopyLink(sessionData.zoomLinkStudent, "student")}
+                onClick={() => handleCopyLink(`${process.env.NEXT_PUBLIC_SITE_URL}/upcoming-sessions/meeting/${sessionData.id}`, "student")}
               >
                 {linkCopied.student ? (
                   <Check className="h-4 w-4 mr-2" />
@@ -253,6 +253,9 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         setUploadedMaterials={setUploadedMaterials}
         materialDescription={materialDescription}
         setMaterialDescription={setMaterialDescription}
+        sessionId={sessionData.id}
+        onSuccess={() => console.log('Material upload success')}
+        existingMaterials={sessionData.materials || []}
       />
       <EditSessionDialog 
         open={showEditSessionDialog}

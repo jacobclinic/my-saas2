@@ -73,73 +73,104 @@ export async function createStudentAction({
   try {
     const client = getSupabaseServerActionClient({ admin: true });
 
-    // Generate a random password
-    const password = generateSecurePassword();
+    // First check if user already exists in public users table
+    const { data: existingUser, error: searchError } = await client
+      .from('users')
+      .select('id')
+      .eq('email', email.toLowerCase())
+      .single();
 
-    // Create auth user with Supabase Admin
-    const { data: authUser, error: authError } = await client.auth.admin.createUser({
-      email,
-      password,
-      user_metadata: {
-        first_name: firstName,
-        last_name: lastName,
-        phone_number: phone,
-        temporary_password: password,
-        user_role: 'student'
-      },
-      email_confirm: true,
-    });
+    if (searchError && searchError.code !== 'PGRST116') { // Ignore "not found" error
+      throw searchError;
+    }
 
-    if (authError) throw authError;
+    let userId: string;
 
-    // Update user with retry mechanism
-    await updateUserWithRetry(
-      client,
-      authUser.user.id,
-      {
-        phone_number: phone,
-        first_name: firstName,
-        last_name: lastName,
-        user_role: 'student',
-      }
-    );
+    if (existingUser?.id) {
+      // User exists, use their ID
+      userId = existingUser.id;
+      
+      // Update their details
+      await updateUserWithRetry(
+        client,
+        userId,
+        {
+          phone_number: phone,
+          first_name: firstName,
+          last_name: lastName,
+          user_role: 'student',
+        }
+      );
+    } else {
+      const password = generateSecurePassword();
 
-    // Create class enrollment with retry mechanism
-    await updateUserWithRetry(
-      client,
-      authUser.user.id,
-      {},  // Empty update, just checking existence
-      5,    // maxRetries
-      1000  // delay in ms
-    );
-
-    const { error: enrollmentError } = await client
-      .from('student_class_enrollments')
-      .insert({
-        student_id: authUser.user.id,
-        class_id: classId,
-        enrolled_date: new Date().toISOString()
+      // User doesn't exist, Create auth user with Supabase Admin
+      const { data: authUser, error: authError } = await client.auth.admin.createUser({
+        email,
+        password,
+        user_metadata: {
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: phone,
+          temporary_password: password,
+          user_role: 'student'
+        },
+        email_confirm: true,
       });
 
-    if (enrollmentError) throw enrollmentError;
+      if (authError) throw authError;
+      userId = authUser.user.id;
 
-    // Send welcome email with credentials
-    const { html, text } = getStudentCredentialsEmailTemplate({
-      studentName: `${firstName} ${lastName}`,
-      email,
-      password,
-      className: nameOfClass,
-      loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`
-    });
+      // Update user with retry mechanism
+      await updateUserWithRetry(
+        client,
+        userId,
+        {
+          phone_number: phone,
+          first_name: firstName,
+          last_name: lastName,
+          user_role: 'student',
+        }
+      );
 
-    // await sendEmail({
-    //   // from: process.env.EMAIL_FROM || 'noreply@yourdomain.com',
-    //   from: 'onboarding@resend.dev',
-    //   to: email,
-    //   subject: 'Welcome to Your Class - Login Credentials',
-    //   html,
-    //   text
-    // });
+      // Send welcome email with credentials
+      const { html, text } = getStudentCredentialsEmailTemplate({
+        studentName: `${firstName} ${lastName}`,
+        email,
+        password,
+        className: nameOfClass,
+        loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`
+      });
+
+      await sendEmail({
+        from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
+        to: email,
+        subject: 'Welcome to Your Class - Login Credentials',
+        html,
+        text
+      });
+    }
+
+    // Check if student is already enrolled in this class
+    const { data: existingEnrollment } = await client
+      .from('student_class_enrollments')
+      .select('id')
+      .eq('student_id', userId)
+      .eq('class_id', classId)
+      .single();
+
+    if (!existingEnrollment) {
+      // Create class enrollment only if not already enrolled
+      const { error: enrollmentError } = await client
+        .from('student_class_enrollments')
+        .insert({
+          student_id: userId,
+          class_id: classId,
+          enrolled_date: new Date().toISOString()
+        });
+
+      if (enrollmentError) throw enrollmentError;
+    }
 
     revalidatePath('/classes');
     revalidatePath('/(app)/classes');

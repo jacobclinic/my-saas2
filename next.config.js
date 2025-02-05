@@ -8,11 +8,42 @@ const nextConfig = {
   images: {
     remotePatterns: getRemotePatterns(),
   },
+  webpack: (config, { isServer }) => {
+    // Add webpack configuration for Zoom SDK
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        crypto: false,
+      };
+    }
+    return config;
+  },
+  headers: async () => {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'require-corp',
+          },
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
+          },
+        ],
+      },
+    ];
+  },
 };
 
-module.exports = withAnalyzer({
+// Compose the configuration with analyzer and contentlayer
+const composedConfig = withAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 })(withContentlayer(nextConfig));
+
+module.exports = composedConfig;
 
 function getRemotePatterns() {
   // add here the remote patterns for your images

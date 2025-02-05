@@ -13,7 +13,7 @@ import { NewStudentData, NewClassData, LinkCopiedState, ClassListData, ClassType
 import ClassCard from './ClassCard';
 import CreateClassDialog from './CreateClassDialog';
 
-const TutorClasses = ({ classesData }: { classesData: ClassType[] }) => {
+const TutorClasses = ({ classesData, userRole } : { classesData: ClassType[], userRole: string }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
   const [linkCopied, setLinkCopied] = useState<LinkCopiedState>({});
@@ -110,10 +110,10 @@ const TutorClasses = ({ classesData }: { classesData: ClassType[] }) => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Your Classes</h1>
-        <Button onClick={() => setShowCreateClass(true)}>
+        {userRole !== 'student' ? <Button onClick={() => setShowCreateClass(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Create New Class
-        </Button>
+        </Button> : null}
       </div>
 
       {/* Filters */}
@@ -157,8 +157,7 @@ const TutorClasses = ({ classesData }: { classesData: ClassType[] }) => {
             <ClassCard 
               key={classData.id} 
               classData={classData}
-              linkCopied={linkCopied}
-              onCopyLink={handleCopyLink}
+              showViewDetails={false}
             />
           ))
         }

@@ -10,14 +10,25 @@ interface Session {
   title: string | null;
   description: string | null;
   updated_at: string | null;
-  meeting_url: string | null;
+  meeting_url: string | null
+  zoom_meeting_id?: string | null
+  zoom_session_name?: string | null
+  zoom_host_token?: string | null
+  zoom_participant_token?: string | null
 }
 
 interface SessionClass {
-  id: string;
-  name: string | null;
+  id?: string;
+  name?: string | null;
   subject?: string | null;
-  tutor_id: string;
+  tutor_id?: string;
+  tutor?: {
+    id: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    email: string | null;
+  };
+  fee?: number | null;
   students?: { id: string }[] | null;
 }
 
@@ -30,7 +41,9 @@ interface SessionMaterial {
 
 interface UpcomingSession extends Session {
   class?: SessionClass;
-  materials: SessionMaterial[];
+  materials?: SessionMaterial[];
+  payment_status?: string;
+  payment_amount?: number | null;
 }
 
 interface PastSessionAttendanceStudent {
@@ -39,7 +52,7 @@ interface PastSessionAttendanceStudent {
   last_name: string | null;
 }
 interface PastSession extends UpcomingSession {
-  attendance: {
+  attendance?: {
     id: string;
     student_id: string | null;
     time: string | null;
