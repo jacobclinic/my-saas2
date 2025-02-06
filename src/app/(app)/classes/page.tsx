@@ -50,32 +50,9 @@ async function ClassesPage() {
       />
 
       <PageBody>
-        {userRole !== 'student' ? <ClassesList classesData={classesData} userRole={userRole}/> : 
-        // <StudentRegistrationForm />
-        <RegistrationSuccess
-          studentDetails = {{
-            username: 'Kalum',
-            password: 'password',
-            email: 'kalum@gmail.com',
-            nextClass: {
-              date: '2023-12-12',
-              time: '10:00 AM',
-              zoomLink: 'https://zoom.us/j/1234567890',
-            },
-            materials: [
-              {
-                name: 'Class 1 Material',
-                link: 'https://example.com/material1',
-              },
-              {
-                name: 'Class 2 Material',
-                link: 'https://example.com/material2',
-              }
-            ]
-          }}
-        />
-
-        }
+        {userRole !== 'student' ? (
+          <ClassesList classesData={classesData} userRole={userRole}/>
+        ) : null}
       </PageBody>
     </>
   );
