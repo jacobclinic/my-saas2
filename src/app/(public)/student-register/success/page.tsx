@@ -1,7 +1,7 @@
 // app/registration/success/page.tsx
 import React from "react";
 import getSupabaseServerComponentClient from "../../../../core/supabase/server-component-client";
-import RegistrationSuccess from '../../components/student-registration/RegistrationSuccess';
+import RegistrationSuccess from '../../../(app)/components/student-registration/RegistrationSuccess';
 
 interface PageProps {
   searchParams: {

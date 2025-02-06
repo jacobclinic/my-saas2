@@ -123,7 +123,7 @@ const RegistrationSuccess = ({ studentDetails }: RegistrationSuccessProps) => {
                </AlertDescription>
              </Alert>
 
-             <Button className="w-full" onClick={() => window.location.href = '/portal/login'}>
+             <Button className="w-full" onClick={() => window.open('/auth/sign-in', '_blank')}>
                <LogIn className="h-4 w-4 mr-2" />
                Go to Student Portal
              </Button>
