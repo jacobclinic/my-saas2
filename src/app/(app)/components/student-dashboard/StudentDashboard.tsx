@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
+import PaymentDialog from '../student-payments/PaymentDialog';
 
 const StudentDashboard = ({
   upcomingSessionData, pastSessionData
@@ -28,6 +29,9 @@ const StudentDashboard = ({
   const [nextClass, setNextClass] = useState<SessionStudentTableData | null>(null);
   const [upcomingClasses, setUpcomingClasses] = useState<SessionStudentTableData[]>([]);
   const [pastClasses, setPastClasses] = useState<SessionStudentTableData[]>([]);
+
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<SessionStudentTableData | null>(null);
 
   // Transform upcoming sessions data
   useEffect(() => {
@@ -199,7 +203,13 @@ const StudentDashboard = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {classData.paymentStatus === "pending" ? (
-            <Button className="w-full bg-red-600 hover:bg-red-700" onClick={() => window.location.href = `/payment/${classData.id}`}>
+            <Button
+              className="w-full bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                setSelectedSession(classData);
+                setShowPaymentDialog(true);
+              }}
+            >
               <DollarSign className="h-4 w-4 mr-2" />
               Make Payment
             </Button>
@@ -263,7 +273,13 @@ const StudentDashboard = ({
           {type === "upcoming" ? (
             <>
               {classData.paymentStatus === "pending" ? (
-                <Button className="bg-red-600 hover:bg-red-700" onClick={() => window.location.href = `/payment/${classData.id}`}>
+                <Button
+                  className="bg-red-600 hover:bg-red-700" 
+                  onClick={() => {
+                    setSelectedSession(classData);
+                    setShowPaymentDialog(true);
+                  }}
+                >
                   <DollarSign className="h-4 w-4 mr-2" />
                   Make Payment
                 </Button>
@@ -329,6 +345,15 @@ const StudentDashboard = ({
               <ClassCard key={classData.id} classData={classData} type="past" />
             ))}
           </div>
+        )}
+
+        {/* Past Classes */}
+        {showPaymentDialog && selectedSession && (
+          <PaymentDialog
+            open={showPaymentDialog}
+            onClose={() => setShowPaymentDialog(false)}
+            sessionData={selectedSession}
+          />
         )}
       </div>
     </div>
