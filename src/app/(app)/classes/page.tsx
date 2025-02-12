@@ -2,10 +2,11 @@ import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
 import ClassesList from '../components/classes/ClassesList';
-import { getAllClassesByTutorIdData } from '~/lib/classes/database/queries';
+import { getAllClassesByStudentIdData, getAllClassesByTutorIdData } from '~/lib/classes/database/queries';
 import { redirect } from 'next/navigation';
 import StudentRegistrationForm from '../components/student-registration/RegistrationFormData';
 import RegistrationSuccess from '../components/student-registration/RegistrationSuccess';
+import StudentClassList from '../components/student-classes/StudentClassList';
 
 export const metadata = {
   title: 'Sessions',
@@ -36,9 +37,16 @@ async function ClassesPage() {
   const userRole = userData?.user_role || "admin";
   // const userRole = userData?.user_role || "student";
 
+  let classesData: any[] = [];
+  let studentClassesData: any[] = [];
 
-  const classesData = await getAllClassesByTutorIdData(client, user?.id || "");
-  console.log("Classes-server-component------", classesData);
+  if (userRole === "student") {
+    studentClassesData = await getAllClassesByStudentIdData(client, user?.id || "");
+    console.log("Classes-server-component------", studentClassesData);
+  } else if (userRole === "tutor") {
+    classesData = await getAllClassesByTutorIdData(client, user?.id || ""); 
+    console.log("Classes-server-component------", classesData);
+  }
   
   return (
     <>
@@ -50,9 +58,11 @@ async function ClassesPage() {
       />
 
       <PageBody>
-        {userRole !== 'student' ? (
+        {userRole === 'student' ? (
+          <StudentClassList studentClassesData={studentClassesData} />
+        ) : (
           <ClassesList classesData={classesData} userRole={userRole}/>
-        ) : null}
+        )}
       </PageBody>
     </>
   );

@@ -1,8 +1,9 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js';
 import { Database } from '~/database.types';
 import { CLASSES_TABLE, SESSIONS_TABLE, STUDENT_CLASS_ENROLLMENTS_TABLE, USERS_TABLE } from '~/lib/db-tables';
 import { ClassWithTutorAndEnrollment } from '../types/class';
-import { ClassType } from '../types/class-v2';
+import { ClassForStudentType, ClassType } from '../types/class-v2';
+import { unknown } from 'zod';
 
 interface ClassWithTutorAndEnrollmentRawData extends Omit<ClassWithTutorAndEnrollment, 'noOfStudents'> {
   noOfStudents: { count: number }[];
@@ -84,7 +85,7 @@ export async function getAllClassesData(
     console.log("getAllClassesData", data)
 
     if (error) {
-      throw new Error(`Error fetching classes: ${error.message}`);
+      throw new Error(`Error fetching classes: ${(error as PostgrestError).message}`);
     }
 
     // Transform the data to get the count directly
@@ -153,7 +154,7 @@ export async function getAllClassesByTutorIdData(
     console.log("getAllSessionsData", data)
 
     if (error) {
-      throw new Error(`Error fetching sessions: ${error.message}`);
+      throw new Error(`Error fetching sessions: ${(error as PostgrestError).message}`);
     }
 
     if (!data) {
@@ -191,6 +192,79 @@ export async function getAllClassesByTutorIdData(
 
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
+
+export async function getAllClassesByStudentIdData(
+  client: SupabaseClient<Database>,
+  student_id: string,
+): Promise<ClassForStudentType[] | []> {
+  try {
+    // Create base query
+    let query = client
+      .from(STUDENT_CLASS_ENROLLMENTS_TABLE)
+      .select(
+        `
+          id,
+          class_id,
+          student_id,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            description,
+            subject,
+            tutor_id,
+            tutor:${USERS_TABLE}!tutor_id (
+              id,
+              first_name,
+              last_name
+            ),
+            fee,
+            status,            
+            grade
+          )
+        `
+      )
+      .eq('student_id', student_id)
+      .order('created_at', { ascending: false })
+
+    const { data, error } = await query;
+
+    console.log("getAllClassesByStudentIdData", data)
+
+    if (!data) {
+      return [];
+    }
+
+    const transformedData = data?.map((classData) => {
+      let classTemp;
+      let tutorTemp;
+      if (classData?.class) {
+        if (Array.isArray(classData.class)) classTemp = classData.class[0];
+        else classTemp = classData.class;
+      }
+      if (classTemp?.tutor) {
+        if (Array.isArray(classTemp.tutor)) tutorTemp = classTemp.tutor[0];
+        else tutorTemp = classTemp.tutor;
+      }
+      return {
+        ...classData,
+        class: {
+          ...classTemp,
+          tutor: tutorTemp,
+        },
+      };
+    });
+
+    if (error) {
+      throw new Error(`Error fetching classes: ${(error as PostgrestError).message}`);
+    }
+
+    return transformedData;
+  } catch (error) {
+    console.error('Failed to fetch classes:', error);
     throw error;
   }
 }
