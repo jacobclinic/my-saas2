@@ -20,11 +20,12 @@ import {
 import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import PaymentDialog from '../student-payments/PaymentDialog';
+import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 
 const StudentDashboard = ({
-  upcomingSessionData, pastSessionData
+  upcomingSessionData, pastSessionData, studentId
 }: {
-  upcomingSessionData: UpcomingSession[], pastSessionData: PastSession[]
+  upcomingSessionData: UpcomingSession[], pastSessionData: PastSession[], studentId: string
 }) => {
   const [nextClass, setNextClass] = useState<SessionStudentTableData | null>(null);
   const [upcomingClasses, setUpcomingClasses] = useState<SessionStudentTableData[]>([]);
@@ -95,7 +96,9 @@ const StudentDashboard = ({
         name: material.name,
         file_size: material.file_size,
         url: material.url
-      })) || []
+      })) || [],
+      classId: sessionData.class?.id,
+      sessionRawData: sessionData,
     };
   };
 
@@ -152,9 +155,14 @@ const StudentDashboard = ({
             <CardTitle className="text-xl text-blue-800">Next Class</CardTitle>
             <p className="text-blue-700 font-medium mt-1">{classData.name}</p>
           </div>
-          {classData.paymentStatus === "pending" && (
-            <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100">
+          {classData.paymentStatus === PAYMENT_STATUS.PENDING && (
+            <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100 border-red-500">
               Payment Pending
+            </Badge>
+          )}
+          {classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION && (
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-500">
+              Payment pending verification
             </Badge>
           )}
         </div>
@@ -172,11 +180,18 @@ const StudentDashboard = ({
           </div>
         </div>
 
-        {classData.paymentStatus === "pending" ? (
-          <Alert className="border-red-200 bg-red-50">
+        {classData.paymentStatus === PAYMENT_STATUS.PENDING ? (
+          <Alert className="border-red-500 bg-red-50">
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-700">
               Please complete the payment of Rs. {classData.paymentAmount} to access the class
+            </AlertDescription>
+          </Alert>
+        ) : classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
+          <Alert className="border-yellow-500 bg-yellow-50">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-700">
+              Payment is pending for verification from the admin. Please wait for the admin to verify the payment.
             </AlertDescription>
           </Alert>
         ) : null}
@@ -202,7 +217,7 @@ const StudentDashboard = ({
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {classData.paymentStatus === "pending" ? (
+          {classData.paymentStatus === PAYMENT_STATUS.PENDING ? (
             <Button
               className="w-full bg-red-600 hover:bg-red-700"
               onClick={() => {
@@ -213,6 +228,8 @@ const StudentDashboard = ({
               <DollarSign className="h-4 w-4 mr-2" />
               Make Payment
             </Button>
+          ) : classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
+            null
           ) : (
             <Button className="w-full" onClick={() => window.open(classData.zoomLink, '_blank')}>
               <Camera className="h-4 w-4 mr-2" />
@@ -233,9 +250,14 @@ const StudentDashboard = ({
               <h3 className="font-medium">{classData.name}</h3>
               <p className="text-blue-600">{classData.topic}</p>
             </div>
-            {classData.paymentStatus === "pending" && type === "upcoming" && (
-              <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100">
+            {classData.paymentStatus === PAYMENT_STATUS.PENDING && type === "upcoming" && (
+              <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100 border-red-500">
                 Payment Pending
+              </Badge>
+            )}
+            {classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION && type === "upcoming" && (
+              <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-500">
+                Payment pending verification
               </Badge>
             )}
           </div>
@@ -272,7 +294,7 @@ const StudentDashboard = ({
         <div className="flex flex-wrap gap-2">
           {type === "upcoming" ? (
             <>
-              {classData.paymentStatus === "pending" ? (
+              {classData.paymentStatus === PAYMENT_STATUS.PENDING ? (
                 <Button
                   className="bg-red-600 hover:bg-red-700" 
                   onClick={() => {
@@ -283,6 +305,8 @@ const StudentDashboard = ({
                   <DollarSign className="h-4 w-4 mr-2" />
                   Make Payment
                 </Button>
+              ) : classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
+                null
               ) : (
                 <Button onClick={() => window.open(classData.zoomLink, '_blank')}>
                   <Camera className="h-4 w-4 mr-2" />
@@ -353,6 +377,7 @@ const StudentDashboard = ({
             open={showPaymentDialog}
             onClose={() => setShowPaymentDialog(false)}
             sessionData={selectedSession}
+            studentId={studentId}
           />
         )}
       </div>

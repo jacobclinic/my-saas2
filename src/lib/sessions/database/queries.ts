@@ -3,6 +3,7 @@ import { Database } from '~/database.types';
 import { CLASSES_TABLE, SESSIONS_TABLE, STUDENT_SESSION_ATTENDANCE_TABLE, STUDENT_CLASS_ENROLLMENTS_TABLE, USERS_TABLE, RESOURCE_MATERIALS_TABLE, STUDENT_PAYMENTS_TABLE } from '~/lib/db-tables';
 import { SessionsWithTableData } from '../types/session';
 import { PastSession, Session, UpcomingSession } from '../types/session-v2';
+import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 
 // /**
 //  * @description Fetch session object data (not auth!) by ID {@link sessionId}
@@ -695,6 +696,7 @@ export async function getAllUpcomingSessionsByStudentIdData(
     ] = await Promise.all([queryForSessionData, queryForPaymentData]);
 
     console.log("getAllSessionsData", upcomingSessions)
+    console.log("--------upcomingPayments----------", upcomingPayments)
 
     if (upcomingSessionError) {
       throw new Error(`Error fetching sessions: ${upcomingSessionError.message}`);
@@ -735,7 +737,7 @@ export async function getAllUpcomingSessionsByStudentIdData(
         ...sessionData,
         class: classTemp,
         materials: transformedMaterials || [],
-        payment_status: currentPayment?.status || 'pending',
+        payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
         payment_amount: currentPayment?.amount || classTemp?.fee || null
       };
     })

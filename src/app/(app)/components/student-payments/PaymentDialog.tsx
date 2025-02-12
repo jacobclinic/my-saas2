@@ -4,28 +4,97 @@ import React, { useState } from 'react';
 import { Card, CardContent } from "../base-v2/ui/Card";
 import { Button } from "../base-v2/ui/Button";
 import { Alert, AlertDescription } from "../base-v2/ui/Alert";
-import { DollarSign, Upload, MessageCircle, Clock, Info, Building, Copy, Check } from 'lucide-react';
+import { DollarSign, Upload, MessageCircle, Clock, Info, Building, Copy, Check, AlertTriangle } from 'lucide-react';
 import BaseDialog from '../base-v2/BaseDialog';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { uploadPaymentSlipAction } from '~/lib/student-payments/server-actions';
+import { getFileBuffer } from '~/lib/utils/upload-material-utils';
+import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
+
+interface UploadingFile {
+  file: File;
+  progress: number;
+  status: 'uploading' | 'error' | 'complete' | 'waiting';
+  error?: string;
+}
 
 interface PaymentDialogProps {
   open: boolean;
   onClose: () => void;
-  sessionData: {
-    id: string | number;
-    name: string;
-    date: string;
-    time: string;
-    paymentAmount?: number;
-  };
+  sessionData: SessionStudentTableData;
+  studentId: string;
 }
 
 const PaymentDialog: React.FC<PaymentDialogProps> = ({
   open,
   onClose,
-  sessionData
+  sessionData,
+  studentId
 }) => {
-  const [uploadedReceipt, setUploadedReceipt] = useState<File | null>(null);
+  const csrfToken = useCsrfToken();
+  const [uploadingFile, setUploadingFile] = useState<UploadingFile | null>(null);
   const [copied, setCopied] = useState(false);
+  console.log('-----PaymentDialog-------sessionData:', sessionData.sessionRawData?.start_time?.slice(0, 7));
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingFile({
+        file,
+        progress: 0,
+        status: 'uploading'
+      });
+
+      // Convert file to buffer
+      const buffer = await getFileBuffer(file);
+      
+      setUploadingFile(prev => prev ? { ...prev, progress: 50 } : null);
+
+      // payment period is the date of the session eg: 2025-02
+      const paymentPeriod = sessionData.sessionRawData?.start_time?.slice(0, 7);
+
+      if (!paymentPeriod) {
+        throw new Error('Payment period not found');
+      }
+
+      // Upload to server
+      const result = await uploadPaymentSlipAction({
+        studentId,
+        classId: sessionData.classId || '',
+        paymentPeriod,
+        file: {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          buffer: Array.from(new Uint8Array(buffer))
+        },
+        csrfToken
+      });
+
+      if (result.success) {
+        setUploadingFile(prev => prev ? {
+          ...prev,
+          status: 'complete',
+          progress: 100
+        } : null);
+
+        // Show success message and close dialog after delay
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      setUploadingFile(prev => prev ? {
+        ...prev,
+        status: 'error',
+        error: 'Upload failed. Please try again.'
+      } : null);
+    }
+  };
 
   const whatsappMessage = 
     `Payment Details:\n` +
@@ -84,33 +153,46 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
             </CardContent>
           </Card>
         </div>
-
-        {/* Upload Options */}
+        {/* Upload Section */}
         <div className="space-y-4">
           <h2 className="font-medium">Submit Payment Proof</h2>
           
-          {/* Direct Upload */}
           <div>
             <input
               type="file"
               id="receipt"
               className="hidden"
               accept="image/*"
-              onChange={(e) => setUploadedReceipt(e.target.files?.[0] || null)}
+              onChange={handleFileUpload}
             />
             <Button 
               variant="outline" 
               className="w-full"
               onClick={() => document.getElementById('receipt')?.click()}
+              disabled={uploadingFile?.status === 'uploading'}
             >
               <Upload className="h-4 w-4 mr-2" />
-              Upload Payment Receipt
+              {uploadingFile?.status === 'uploading' 
+                ? `Uploading... ${uploadingFile.progress}%`
+                : 'Upload Payment Receipt'
+              }
             </Button>
-            {uploadedReceipt && (
-              <p className="text-sm text-green-600 mt-2 flex items-center">
-                <Check className="h-4 w-4 mr-1" />
-                Receipt uploaded successfully
-              </p>
+
+            {uploadingFile && (
+              <div className="mt-2">
+                {uploadingFile.status === 'complete' && (
+                  <p className="text-sm text-green-600 flex items-center">
+                    <Check className="h-4 w-4 mr-1" />
+                    Receipt uploaded successfully
+                  </p>
+                )}
+                {uploadingFile.status === 'error' && (
+                  <p className="text-sm text-red-600 flex items-center">
+                    <AlertTriangle className="h-4 w-4 mr-1" />
+                    {uploadingFile.error}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
