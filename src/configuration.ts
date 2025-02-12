@@ -10,12 +10,12 @@ enum Themes {
 
 const configuration = {
   site: {
-    name: 'Awesomely - Your SaaS Title',
+    name: 'Comma Education',
     description: 'Your SaaS Description',
     themeColor: '#ffffff',
     themeColorDark: '#0a0a0a',
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://makerkit.dev",
-    siteName: 'Awesomely',
+    siteName: 'Comma Education',
     twitterHandle: '',
     githubHandle: '',
     convertKitFormId: '',
