@@ -6,7 +6,7 @@ import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { ClassType, NewClassData } from './types/class-v2';
 import { getNextNOccurrences } from '../utils/date-utils';
-import { zoomVideoService, ZoomVideoService } from '../zoom-meeting/video-sdk.service';
+import { zoomService } from '../zoom/zoom.service';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -28,7 +28,6 @@ export const createClassAction = withSession(
   async (params: CreateClassParams) => {
     const { classData, csrfToken } = params;
     const client = getSupabaseServerActionClient();
-    const zoomService = new ZoomVideoService();
 
     const classResult = await createClass(client, classData);
     
@@ -58,15 +57,16 @@ export const createClassAction = withSession(
         endTime.setHours(endTime.getHours() + 2);
 
         // Initialize Zoom session
-        const zoomSession = await zoomVideoService.initializeSession({
-          sessionName: `${classData.name}_${occurrence.toISOString()}`,
-          startTime: occurrence.toISOString(),
-          duration: 120, // 2 hours
-          tutorId: classData.tutorId,
-          className: classData.name
-        });
+        // TODO: Need add the correct tutorZoomId
+        const zoomMeeting = await zoomService.createMeeting({
+          topic: `${classData.name}_${occurrence.toISOString()}`,
+          start_time: occurrence.toISOString(),
+          duration: 120,
+          timezone: 'Asia/Colombo',
+          type: 2,
+        }, '');
 
-        if (!zoomSession.success) {
+        if (!zoomMeeting) {
           throw new Error('Failed to initialize Zoom session');
         }
 
@@ -74,9 +74,7 @@ export const createClassAction = withSession(
           class_id: classResult.id,
           start_time: occurrence.toISOString(),
           end_time: endTime.toISOString(),
-          zoom_session_name: zoomSession.sessionName,
-          zoom_host_token: zoomSession.hostToken,
-          zoom_participant_token: zoomSession.participantToken
+          zoom_meeting_id: zoomMeeting?.id
         };
       }));
     }));

@@ -17,6 +17,7 @@ interface UpcomingSessionTableData {
   registeredStudents: number;
   zoomLinkTutor: string;
   zoomLinkStudent: string;
+  zoomMeetingId: string;
   materials?: Material[];
   lessonTitle?: string;
   lessonDescription?: string;

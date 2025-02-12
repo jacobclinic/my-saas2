@@ -278,6 +278,7 @@ export async function getAllUpcommingSessionsData(
           description,
           updated_at,
           meeting_url,
+          zoom_meeting_id,
           class:${CLASSES_TABLE}!class_id (
             id,
             name,
@@ -367,6 +368,7 @@ export async function getAllUpcommingSessionsByTutorIdData(
           description,
           updated_at,
           meeting_url,
+          zoom_meeting_id,
           class:${CLASSES_TABLE}!class_id (
             id,
             name,
@@ -444,6 +446,7 @@ export async function getAllPastSessionsData(
           description,
           updated_at,
           meeting_url,
+          zoom_meeting_id,
           class:${CLASSES_TABLE}!class_id (
             id,
             name,
@@ -549,6 +552,7 @@ export async function getAllPastSessionsByTutorIdData(
           description,
           updated_at,
           meeting_url,
+          zoom_meeting_id,
           class:${CLASSES_TABLE}!class_id (
             id,
             name,
@@ -662,6 +666,7 @@ export async function getAllUpcomingSessionsByStudentIdData(
           description,
           updated_at,
           meeting_url,
+          zoom_meeting_id,
           class:${CLASSES_TABLE}!class_id (
             id,
             name,
@@ -792,6 +797,7 @@ export async function getAllPastSessionsByStudentIdData(
           description,
           updated_at,
           meeting_url,
+          zoom_meeting_id,
           class:${CLASSES_TABLE}!class_id (
             id,
             name,
