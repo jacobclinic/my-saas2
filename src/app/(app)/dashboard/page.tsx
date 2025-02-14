@@ -105,6 +105,7 @@ async function DashboardPage() {
               <StudentDashboard 
                 upcomingSessionData={upcomingSessions} 
                 pastSessionData={pastSessions}
+                studentId={user.id}
               />
             )}
           </PageBody>

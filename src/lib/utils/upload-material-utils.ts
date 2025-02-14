@@ -56,10 +56,54 @@ export async function deleteMaterialFromStorage(
 }
 
 export async function getFileBuffer(file: File): Promise<ArrayBuffer> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as ArrayBuffer);
-      reader.onerror = reject;
-      reader.readAsArrayBuffer(file);
-    });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+export async function uploadPaymentSlip(
+  supabase: SupabaseClient,
+  fileData: {
+    name: string,
+    type: string,
+    buffer: number[]
+  },
+  studentId: string,
+  classId: string,
+  paymentPeriod: string
+): Promise<{url: string, error: Error | null}> {
+  try {
+    const uint8Array = new Uint8Array(fileData.buffer)
+    const fileExt = fileData.name.split('.').pop()
+    const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+    const filePath = `payment-slips/${studentId}/${paymentPeriod}/${uniqueFileName}`
+
+    console.log('-----uploadPaymentSlip-----1--filePath:', filePath);
+
+    const { error: uploadError } = await supabase
+      .storage
+      .from('payment-slips')
+      .upload(filePath, uint8Array, {
+        contentType: fileData.type,
+        cacheControl: '3600'
+      })
+
+    if (uploadError) throw uploadError
+
+    console.log('-----uploadPaymentSlip-----2--uploadError:', uploadError);
+
+    const { data: { publicUrl } } = supabase
+      .storage
+      .from('payment-slips')
+      .getPublicUrl(filePath)
+
+    console.log('-----uploadPaymentSlip-----3--publicUrl:', publicUrl);
+
+    return { url: publicUrl, error: null }
+  } catch (error) {
+    return { url: '', error: error as Error }
   }
+}

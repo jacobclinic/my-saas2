@@ -11,7 +11,7 @@ async function SiteLayout(props: React.PropsWithChildren) {
 
       {props.children}
 
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 }

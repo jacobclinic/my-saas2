@@ -311,6 +311,7 @@ export type Database = {
           invoice_no: string | null
           payment_date: string | null
           payment_period: string | null
+          payment_proof_url: string | null
           status: string | null
           student_id: string | null
         }
@@ -323,6 +324,7 @@ export type Database = {
           invoice_no?: string | null
           payment_date?: string | null
           payment_period?: string | null
+          payment_proof_url?: string | null
           status?: string | null
           student_id?: string | null
         }
@@ -335,6 +337,7 @@ export type Database = {
           invoice_no?: string | null
           payment_date?: string | null
           payment_period?: string | null
+          payment_proof_url?: string | null
           status?: string | null
           student_id?: string | null
         }

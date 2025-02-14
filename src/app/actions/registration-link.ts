@@ -10,5 +10,5 @@ export async function generateRegistrationLinkAction(registrationData: {
   time: string;
 }) {
   const token = generateRegistrationToken(registrationData);
-  return `${process.env.NEXT_PUBLIC_SITE_URL}/student-register/${token}`;
+  return `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration/${token}`;
 }
