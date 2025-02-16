@@ -13,7 +13,7 @@ import { NewStudentData, NewClassData, LinkCopiedState, ClassListData, ClassType
 import ClassCard from './ClassCard';
 import CreateClassDialog from './CreateClassDialog';
 
-const TutorClasses = ({ classesData, userRole } : { classesData: ClassType[], userRole: string }) => {
+const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassType[], userRole: string, tutorId?: string }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
   const [linkCopied, setLinkCopied] = useState<LinkCopiedState>({});
@@ -168,7 +168,7 @@ const TutorClasses = ({ classesData, userRole } : { classesData: ClassType[], us
         open={showCreateClass}
         onClose={() => setShowCreateClass(false)}
         onCreateClass={handleCreateClass}
-        tutorId={classesData?.[0]?.tutor_id}
+        tutorId={tutorId || classesData?.[0]?.tutor_id}
       />
     </div>
   );

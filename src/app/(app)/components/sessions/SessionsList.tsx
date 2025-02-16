@@ -181,7 +181,7 @@ function DataTableExample({
     <div className='flex flex-col gap-4'>
       <div className='flex justify-between items-center gap-24'>
         <div className='flex gap-3 w-1/2'>
-          <SearchBar name="Search" plaseholder='Enter a search term'/>
+          <SearchBar name="Search" placeholder='Enter a search term'/>
           <Filter
             name="Search Filter"
             placeholder="Search by an attribute"

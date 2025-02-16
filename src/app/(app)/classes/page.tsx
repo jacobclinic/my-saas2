@@ -39,12 +39,14 @@ async function ClassesPage() {
 
   let classesData: any[] = [];
   let studentClassesData: any[] = [];
+  let tutorId;
 
   if (userRole === "student") {
     studentClassesData = await getAllClassesByStudentIdData(client, user?.id || "");
     console.log("Classes-server-component------", studentClassesData);
   } else if (userRole === "tutor" || userRole === "admin") {
     classesData = await getAllClassesByTutorIdData(client, user?.id || ""); 
+    tutorId = user?.id;
     console.log("Classes-server-component------", classesData);
   }
   
@@ -61,7 +63,7 @@ async function ClassesPage() {
         {userRole === 'student' ? (
           <StudentClassList studentClassesData={studentClassesData} />
         ) : (
-          <ClassesList classesData={classesData} userRole={userRole}/>
+          <ClassesList classesData={classesData} userRole={userRole} tutorId={tutorId}/>
         )}
       </PageBody>
     </>
