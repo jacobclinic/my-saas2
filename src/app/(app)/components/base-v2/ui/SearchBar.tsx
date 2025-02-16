@@ -2,16 +2,20 @@ import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 
 interface SearchBarProps {
     name: string;
-    plaseholder?: string;
+    value?: string;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    placeholder?: string;
 }
 
 export default function SearchBar(props: SearchBarProps) {
-    const { name, plaseholder = 'Enter your name' } = props;
+    const { name, value, onChange, placeholder = 'Enter your name' } = props;
     return ( 
         <TextFieldLabel className='flex flex-col items-start justify-start'>
         {name}
         <TextFieldInput
-            placeholder={plaseholder}
+            placeholder={placeholder}
+            value={value}
+            onChange={onChange}
         />
         </TextFieldLabel>
     )

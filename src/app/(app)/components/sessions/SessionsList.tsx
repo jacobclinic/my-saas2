@@ -4,7 +4,7 @@ import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
 import { useState, useTransition } from 'react';
 import { SessionsWithTableData, SessionTableData } from '~/lib/sessions/types/session';
-import SearchBar from '../base/SearchBar';
+import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
 import CreateSessionModal from './CreateSessionModal';
 // import useSessionsDataQuery from '~/lib/sessions/hooks/use-fetch-session';
@@ -181,7 +181,7 @@ function DataTableExample({
     <div className='flex flex-col gap-4'>
       <div className='flex justify-between items-center gap-24'>
         <div className='flex gap-3 w-1/2'>
-          <SearchBar name="Search" plaseholder='Enter a search term'/>
+          <SearchBar name="Search" placeholder='Enter a search term'/>
           <Filter
             name="Search Filter"
             placeholder="Search by an attribute"
