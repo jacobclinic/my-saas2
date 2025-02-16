@@ -125,8 +125,8 @@ function DataTableExample({ tutorsData}: { tutorsData: UserType[] }) {
   ];
 
   const filteredData = useMemo(() => {
-    const testData = [...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData];
-    return testData.filter((tutor) => {
+    // const testData = [...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData];
+    return tableData.filter((tutor) => {
       if (!searchQuery) return true;
       
       const searchTerm = searchQuery.toLowerCase();
