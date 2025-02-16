@@ -4,7 +4,7 @@ import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
 import { useState, useTransition } from 'react';
 import { SessionsWithTableData, SessionTableData } from '~/lib/sessions/types/session';
-import SearchBar from '../base/SearchBar';
+import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
 import CreateSessionModal from './CreateSessionModal';
 // import useSessionsDataQuery from '~/lib/sessions/hooks/use-fetch-session';

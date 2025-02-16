@@ -5,7 +5,7 @@ import { useMemo, useState, useTransition } from 'react';
 import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
 import Filter from '../base/Filter';
-import SearchBar from '../base/SearchBar';
+import SearchBar from '../base-v2/ui/SearchBar';
 import UserType from '~/lib/user/types/user';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { StudentTableData } from '~/lib/user/types/student';

@@ -18,8 +18,8 @@ export const metadata = {
 
 async function TutorsPage() {
   const client = getSupabaseServerComponentClient();
-  const tutorsData = await getAllUsersByUserRoleData(client, USER_ROLES.TUTOR);
-  console.log("sessionData-server-component------", tutorsData);
+  // const tutorsData = await getAllUsersByUserRoleData(client, USER_ROLES.TUTOR);
+  // console.log("sessionData-server-component------", tutorsData);
   return (
     <>
       <AppHeader
@@ -30,7 +30,7 @@ async function TutorsPage() {
       />
 
       <PageBody>
-        <TutorsList tutorsData={tutorsData}/>
+        {/* <TutorsList tutorsData={tutorsData}/> */}
       </PageBody>
     </>
   );

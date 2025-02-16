@@ -43,7 +43,7 @@ async function ClassesPage() {
   if (userRole === "student") {
     studentClassesData = await getAllClassesByStudentIdData(client, user?.id || "");
     console.log("Classes-server-component------", studentClassesData);
-  } else if (userRole === "tutor") {
+  } else if (userRole === "tutor" || userRole === "admin") {
     classesData = await getAllClassesByTutorIdData(client, user?.id || ""); 
     console.log("Classes-server-component------", classesData);
   }
