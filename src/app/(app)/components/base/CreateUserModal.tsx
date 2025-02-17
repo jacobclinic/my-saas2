@@ -18,18 +18,23 @@ export default function CreateUserModal({
 }: CreateUserModalProps) {
   const userRoleCapitalized = userRole.charAt(0).toUpperCase() + userRole.slice(1);
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   
   const [isMutating, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
 
   const resetToDefaultValues = () => {
     setEmail('');
+    setFirstName('');
+    setLastName('');
   }
 
   const handleCreateClass = useCallback(async () => {
-    // Create a new class object with the current state values
     const newUser: Omit<UserType, 'id'>  = {
       email,
+      first_name: firstName,
+      last_name: lastName,
       user_role: userRole,
     }
     console.log("newUser-1",newUser);
@@ -44,7 +49,7 @@ export default function CreateUserModal({
     }
 
     resetToDefaultValues();    
-  }, [csrfToken, email, userRole])
+  }, [csrfToken, email, firstName, lastName, userRole])
  
   return (
     <div>
@@ -56,11 +61,35 @@ export default function CreateUserModal({
       >
         <Section>
           <SectionHeader
-            title={'Tutor Details'}
-            description={`Please enter the details for the new ${userRole}. The Tutor will get a email with their credentials to sign in.`}
+            title={`${userRoleCapitalized} Details`}
+            description={`Please enter the details for the new ${userRole}. They will receive an email with their credentials to sign in.`}
           />
         
           <SectionBody className={'space-y-4'}>
+            <div className="grid grid-cols-2 gap-4">
+              <TextFieldLabel className='flex flex-col items-start justify-start'>
+                First Name
+                <TextFieldInput
+                  type="text"
+                  placeholder="Enter first name"
+                  value={firstName}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
+                  required
+                />
+              </TextFieldLabel>
+
+              <TextFieldLabel className='flex flex-col items-start justify-start'>
+                Last Name
+                <TextFieldInput
+                  type="text"
+                  placeholder="Enter last name"
+                  value={lastName}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
+                  required
+                />
+              </TextFieldLabel>
+            </div>
+
             <TextFieldLabel className='flex flex-col items-start justify-start'>
               Email Address
               <TextFieldInput
