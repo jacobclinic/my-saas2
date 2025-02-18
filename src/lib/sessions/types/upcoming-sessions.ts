@@ -33,6 +33,7 @@ interface SessionStudentTableData {
   paymentStatus: 'paid' | 'pending' | string;
   paymentAmount?: number;
   zoomLink?: string;
+  zoomMeetingId: string;
   recordingUrl?: string;
   materials?: Material[];
   sessionRawData?: UpcomingSession | PastSession;

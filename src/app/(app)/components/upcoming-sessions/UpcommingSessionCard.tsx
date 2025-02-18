@@ -64,10 +64,8 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       });
       if (result.success) {
         window.open(result.start_url, "_blank");
-        // Show success toast/notification
       } else {
         alert("Failed to generate join link");
-        // Show error toast/notification
       }
     })
   }, [sessionData])

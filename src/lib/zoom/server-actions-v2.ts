@@ -28,7 +28,7 @@ export const joinMeetingAsHost = withSession(
   }
 );
 
-export const joinMeetingAsStudent = withSession(
+export const joinMeetingAsUser = withSession(
     async (params: JoinMeetingAsStudentParams) => {
       const response = await zoomService.joinMeetingAsStudent(params.meetingId, params.studentData);
       

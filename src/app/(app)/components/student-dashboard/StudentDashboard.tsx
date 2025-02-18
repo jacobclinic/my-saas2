@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "../base-v2/ui/Card";
 import { Button } from "../base-v2/ui/Button";
 import { Badge } from "../base-v2/ui/Badge";
@@ -21,12 +21,14 @@ import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import PaymentDialog from '../student-payments/PaymentDialog';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
+import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
 
 const StudentDashboard = ({
   upcomingSessionData, pastSessionData, studentId
 }: {
   upcomingSessionData: UpcomingSession[], pastSessionData: PastSession[], studentId: string
 }) => {
+  const [isPending, startTransition] = useTransition();
   const [nextClass, setNextClass] = useState<SessionStudentTableData | null>(null);
   const [upcomingClasses, setUpcomingClasses] = useState<SessionStudentTableData[]>([]);
   const [pastClasses, setPastClasses] = useState<SessionStudentTableData[]>([]);
@@ -88,6 +90,7 @@ const StudentDashboard = ({
       paymentStatus: sessionData.payment_status || 'pending',
       paymentAmount: Number(sessionData.payment_amount) || sessionData.class?.fee || 0,
       zoomLink: sessionData.meeting_url || undefined,
+      zoomMeetingId: sessionData.zoom_meeting_id || '',
       recordingUrl: Array.isArray(sessionData.recording_urls) && sessionData.recording_urls.length > 0 
         ? sessionData.recording_urls[0] 
         : undefined,
@@ -101,6 +104,24 @@ const StudentDashboard = ({
       sessionRawData: sessionData,
     };
   };
+
+  const joinMeetingAsStudent = useCallback(async (classData: any) => {
+    startTransition(async () => {
+      const result = await joinMeetingAsUser({
+        meetingId: classData?.zoomMeetingId,
+        studentData: {
+          first_name: "suchira",
+          last_name: "Student",
+          email: "suchira.1@telzee.io"
+        }
+      });
+      if (result.success) {
+        window.open(result.start_url, "_blank");
+      } else {
+        alert("Failed to generate join link");
+      }
+    })
+  }, [])
 
   // Sample data
   const nextClassSampleData = {
@@ -231,7 +252,7 @@ const StudentDashboard = ({
           ) : classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
             null
           ) : (
-            <Button className="w-full" onClick={() => window.open(classData.zoomLink, '_blank')}>
+            <Button className="w-full" onClick={() => joinMeetingAsStudent(classData)} disabled={isPending}>
               <Camera className="h-4 w-4 mr-2" />
               Join Class
             </Button>
