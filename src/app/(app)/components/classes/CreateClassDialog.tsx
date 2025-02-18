@@ -11,11 +11,11 @@ import { Button } from '../base-v2/ui/Button';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { createClassAction } from '~/lib/classes/server-actions-v2';
+import { useToast } from '../../lib/hooks/use-toast';
 
 interface CreateClassDialogProps {
   open: boolean;
   onClose: () => void;
-  onCreateClass: (classData: NewClassData) => void;
   loading?: boolean;
   tutorId: string;
 }
@@ -23,13 +23,12 @@ interface CreateClassDialogProps {
 const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   open,
   onClose,
-  onCreateClass,
   loading = false,
   tutorId,
 }) => {
   const [isPending, startTransition] = useTransition()
   const csrfToken = useCsrfToken();
-  const [createClassLoading, setCreateClassLoading] = useState(false);
+  const { toast } = useToast();
   
   const [newClass, setNewClass] = useState<NewClassData>({
     name: '',
@@ -66,18 +65,23 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   };
 
   const handleSubmit = () => {
-    setCreateClassLoading(true);
     startTransition(async () => {
       const result = await createClassAction({classData: newClass, csrfToken})
       if (result.success) {
-        onClose()
-        // Show success toast/notification
+        toast({
+          title: "Success",
+          description: "New class created successfully",
+          variant: "success",
+        });
+        onClose();
       } else {
-        // Show error toast/notification
+        toast({
+          title: "Error",
+          description: "Failed to create class",
+          variant: "destructive",
+        });
       }
     })
-    onCreateClass(newClass);
-    setCreateClassLoading(false);
   };
 
   const isValid =
@@ -97,7 +101,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       maxWidth="xl"
       onConfirm={handleSubmit}
       confirmButtonText="Create Class"
-      loading={createClassLoading}
+      loading={isPending}
       confirmButtonVariant={isValid ? 'default' : 'secondary'}
     >
       <div className="space-y-4">
