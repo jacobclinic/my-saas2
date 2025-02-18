@@ -34,6 +34,7 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
         registeredStudents: session?.class?.students?.length || 0,
         zoomLinkTutor: session?.meeting_url || "",
         zoomLinkStudent: session?.meeting_url || "",
+        zoomMeetingId: session?.zoom_meeting_id || "",
         materials: (session?.materials || []).map((material) => {
           return {
             id: material.id,

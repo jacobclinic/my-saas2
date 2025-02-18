@@ -10,9 +10,11 @@ import ErrorBoundary from '~/core/ui/ErrorBoundary';
 import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import { useFormStatus } from 'react-dom';
 import Alert from '~/core/ui/Alert';
+import { deleteStudentEnrollment } from '~/lib/user/actions/student';
 
 interface Student {
   id: string;
+  enrollmentId: string;
   name: string;
   email: string;
   phone_number: string;
@@ -32,6 +34,7 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
   classDataName,
   studentData,
 }) => {
+  console.log('studentData', studentData)
   // Sample students data - in real app, this would come from props or API
   const students: Student[] = studentData.map((student) => {
     let studentTemp;
@@ -41,6 +44,7 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
     }
     return ({
       id: student.student_id,
+      enrollmentId: student.id,
       name: `${studentTemp?.first_name} ${studentTemp?.last_name}`,
       email: studentTemp?.email || '',
       phone_number: studentTemp?.phone_number || '',
@@ -71,7 +75,7 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
                   <p className="text-sm text-gray-600">{student.phone_number}</p>
                 </div>
                 <div>
-                  <RemoveStudentModal />
+                  <RemoveStudentModal enrollmentId={student?.enrollmentId} />
                 </div>
                 {/* <Badge variant="outline">{student.status}</Badge> */}
               </div>
@@ -91,7 +95,7 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
 
 export default RegisteredStudentsDialog;
 
-function RemoveStudentModal() {
+function RemoveStudentModal({ enrollmentId }: { enrollmentId: string }) {
   return (
     <Modal
       heading={`Remove student`}
@@ -102,16 +106,18 @@ function RemoveStudentModal() {
       }
     >
       <ErrorBoundary fallback={<RemoveStudentErrorAlert />}>
-        <RemoveStudentForm />
+        <RemoveStudentForm enrollmentId={enrollmentId} />
       </ErrorBoundary>
     </Modal>
   );
 }
 
-function RemoveStudentForm() {
+function RemoveStudentForm({ enrollmentId }: { enrollmentId: string }) {
   return (
     <form
-      action={() => console.log()}
+      action={() => deleteStudentEnrollment({
+        enrollmentId: enrollmentId
+      })}
       className={'flex flex-col space-y-4'}
     >
       <div className={'flex flex-col space-y-6'}>
