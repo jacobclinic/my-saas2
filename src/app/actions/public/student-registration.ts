@@ -9,6 +9,50 @@ import getSupabaseServerActionClient from '../../../core/supabase/action-client'
 import sendEmail from '../../../core/email/send-email';
 import { getStudentCredentialsEmailTemplate } from '../../../core/email/templates/student-credentials';
 
+// Helper function to wait
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Helper function to check if user exists in public table
+async function checkUserExists(client: any, userId: string) {
+  const { data, error } = await client
+    .from('users')
+    .select('id')
+    .eq('id', userId)
+    .single();
+  
+  return !!data;
+}
+
+// Helper function to update user with retry
+async function updateUserWithRetry(
+  client: any, 
+  userId: string, 
+  updateData: any, 
+  maxRetries = 5,
+  delay = 1000
+) {
+  for (let i = 0; i < maxRetries; i++) {
+    // Check if user exists
+    const exists = await checkUserExists(client, userId);
+    
+    if (exists) {
+      // User exists, proceed with update
+      const { error } = await client
+        .from('users')
+        .update(updateData)
+        .eq('id', userId);
+      
+      if (!error) return { success: true };
+      throw error;
+    }
+    
+    // User doesn't exist yet, wait before retrying
+    await wait(delay);
+  }
+  
+  throw new Error('Failed to update user after maximum retries');
+}
+
 const registrationSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
@@ -48,6 +92,17 @@ export async function registerStudentAction(formData: z.infer<typeof registratio
 
     if (existingUser?.id) {
       userId = existingUser.id;
+      // Update their details
+      await updateUserWithRetry(
+        client,
+        userId,
+        {
+          phone_number: validated.phone,
+          first_name: validated.firstName,
+          last_name: validated.lastName,
+          user_role: 'student',
+        }
+      );
     } else {
       // Create new user
       password = generateSecurePassword();

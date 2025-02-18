@@ -22,12 +22,14 @@ import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions'
 import PaymentDialog from '../student-payments/PaymentDialog';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
+import useUserSession from '~/core/hooks/use-user-session';
 
 const StudentDashboard = ({
   upcomingSessionData, pastSessionData, studentId
 }: {
   upcomingSessionData: UpcomingSession[], pastSessionData: PastSession[], studentId: string
 }) => {
+  const userSession = useUserSession();
   const [isPending, startTransition] = useTransition();
   const [nextClass, setNextClass] = useState<SessionStudentTableData | null>(null);
   const [upcomingClasses, setUpcomingClasses] = useState<SessionStudentTableData[]>([]);
@@ -110,9 +112,9 @@ const StudentDashboard = ({
       const result = await joinMeetingAsUser({
         meetingId: classData?.zoomMeetingId,
         studentData: {
-          first_name: "suchira",
-          last_name: "Student",
-          email: "suchira.1@telzee.io"
+          first_name: userSession?.data?.first_name || "",
+          last_name: userSession?.data?.last_name || "",
+          email: userSession?.auth?.user?.email || ""
         }
       });
       if (result.success) {
@@ -121,7 +123,7 @@ const StudentDashboard = ({
         alert("Failed to generate join link");
       }
     })
-  }, [])
+  }, [userSession])
 
   // Sample data
   const nextClassSampleData = {
@@ -238,7 +240,11 @@ const StudentDashboard = ({
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {classData.paymentStatus === PAYMENT_STATUS.PENDING ? (
+        <Button className="w-full" onClick={() => joinMeetingAsStudent(classData)} disabled={isPending}>
+                  <Camera className="h-4 w-4 mr-2" />
+                  Join Class
+                </Button>
+          {/* {classData.paymentStatus === PAYMENT_STATUS.PENDING ? (
             <Button
               className="w-full bg-red-600 hover:bg-red-700"
               onClick={() => {
@@ -256,7 +262,7 @@ const StudentDashboard = ({
               <Camera className="h-4 w-4 mr-2" />
               Join Class
             </Button>
-          )}
+          )} */}
         </div>
       </CardContent>
     </Card>
