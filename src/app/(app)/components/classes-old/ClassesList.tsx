@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
-import SearchBar from '../base/SearchBar';
+import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
 import CreateClassModal from './CreateClassModal';
 import useClassesDataQuery from '~/lib/classes/hooks/use-fetch-class';

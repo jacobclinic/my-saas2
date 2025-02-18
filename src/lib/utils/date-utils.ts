@@ -3,7 +3,10 @@ import { TimeSlot } from '../classes/types/class-v2';
 
 export function getNextNOccurrences(timeSlot: TimeSlot, startDate: string, count: number): Date[] {
   // Parse the starting date
-  const start = new Date(startDate);
+  let start = new Date(startDate);
+  if (start.getTime() < Date.now()) {
+    start = new Date();
+  }
   
   // Get the day number (0-6, where 0 is Sunday)
   const dayMap: { [key: string]: number } = {

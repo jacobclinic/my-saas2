@@ -1,5 +1,5 @@
 import React from 'react';
-import { UpcomingSession } from './session-v2';
+import { PastSession, UpcomingSession } from './session-v2';
 
 interface Material {
   id: string;
@@ -35,7 +35,8 @@ interface SessionStudentTableData {
   zoomLink?: string;
   recordingUrl?: string;
   materials?: Material[];
-  sessionRawData?: UpcomingSession;
+  sessionRawData?: UpcomingSession | PastSession;
+  classId?: string;
 }
 
 interface UploadedMaterial {

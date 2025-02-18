@@ -49,15 +49,15 @@ const NAVIGATION_CONFIG: NavigationConfig = {
       end: true,
       userRole: ['admin', 'tutor', 'student'],
     },
-    // {
-    //   label: 'Tutors',
-    //   path: '/tutors',
-    //   Icon: ({ className }: { className: string }) => {
-    //     return <Squares2X2Icon className={className} />;
-    //   },
-    //   end: true,
-    //   userRole: ['admin'],
-    // },
+    {
+      label: 'Tutors',
+      path: '/tutors',
+      Icon: ({ className }: { className: string }) => {
+        return <Squares2X2Icon className={className} />;
+      },
+      end: true,
+      userRole: ['admin'],
+    },
     // {
     //   label: 'Students',
     //   path: '/students',

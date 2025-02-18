@@ -176,6 +176,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
             type="date"
             value={newClass.startDate}
             onChange={(e) => setNewClass({ ...newClass, startDate: e.target.value })}
+            min={new Date().toISOString().split('T')[0]}
           />
         </div>
 

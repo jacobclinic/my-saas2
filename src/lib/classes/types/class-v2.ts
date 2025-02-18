@@ -35,6 +35,46 @@ export interface ClassType {
   upcomingSession: string | null
 }
 
+export interface ClassForStudentType {
+  id: string | null;
+  class_id: string | null;
+  student_id: string | null;
+  class: {
+    id?: string | null;
+    name?: string | null;
+    description?: string | null;
+    subject?: string | null;
+    tutor_id?: string | null;
+    tutor?: {
+      id: string | null;
+      first_name: string | null;
+      last_name: string | null;
+    };
+    fee?: number | null;
+    status?: string | null;
+    grade?: string | null;
+  };
+}
+
+export interface StudentPayment {
+  id: string;
+  period: string;
+  status: string;
+  date: string;
+}
+
+export interface StudentClassListType {
+  id: string;
+  name?: string | null
+  schedule?: string;
+  nextClass?: string;
+  subject?: string;
+  status?: string;
+  students?: number;
+  grade?: string;
+  fee?: number;
+  payments?: StudentPayment[];
+}
 export interface ClassListData {
   id: string;
   name?: string | null

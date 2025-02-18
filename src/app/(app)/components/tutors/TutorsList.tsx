@@ -5,7 +5,7 @@ import { useMemo, useState, useTransition } from 'react';
 import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
 import Filter from '../base/Filter';
-import SearchBar from '../base/SearchBar';
+import SearchBar from '../base-v2/ui/SearchBar';
 import { TutorTableData } from '~/lib/user/types/tutor';
 import UserType from '~/lib/user/types/user';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
@@ -13,10 +13,11 @@ import Button from '~/core/ui/Button';
 import { DeleteIcon } from '~/assets/images/react-icons';
 import { USER_ROLES } from '~/lib/constants';
 import CreateUserModal from '../base/CreateUserModal';
+import { useTablePagination } from '~/core/hooks/use-table-pagination';
 
 export default function TutorsList({ tutorsData}: { tutorsData: UserType[] }) { 
   return (
-    <div className={'flex flex-col space-y-6 pb-36'}>
+    <div className={'flex flex-col space-y-6 pb-36 h-[calc(100dvh-100px)]'}>
       <div>
         <Tile>
           <Tile.Heading>Tutors</Tile.Heading>
@@ -32,7 +33,7 @@ export default function TutorsList({ tutorsData}: { tutorsData: UserType[] }) {
  
 function DataTableExample({ tutorsData}: { tutorsData: UserType[] }) {
   const [searchFilter, setSearchFilter] = useState('all');
-
+  const [searchQuery, setSearchQuery] = useState('');
   const [isMutating, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
 
@@ -117,27 +118,77 @@ function DataTableExample({ tutorsData}: { tutorsData: UserType[] }) {
 
   const filterOptions = [
     { label: 'All', value: 'all' },
-    { label: 'Class', value: 'class' },
-    { label: 'Tutor', value: 'tutor' },
-    { label: 'Student', value: 'student' },
-  ]
- 
+    { label: 'Name', value: 'name' },
+    { label: 'Email', value: 'email' },
+    { label: 'Phone Number', value: 'phoneNumber' },
+    { label: 'Status', value: 'status' },
+  ];
+
+  const filteredData = useMemo(() => {
+    // const testData = [...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData, ...tableData];
+    return tableData.filter((tutor) => {
+      if (!searchQuery) return true;
+      
+      const searchTerm = searchQuery.toLowerCase();
+
+      switch (searchFilter) {
+        case 'name':
+          return tutor.name.toLowerCase().includes(searchTerm);
+        case 'email':
+          return tutor.email.toLowerCase().includes(searchTerm);
+        case 'phoneNumber':
+          return tutor.phoneNumber.toLowerCase().includes(searchTerm);
+        case 'status':
+          return tutor.status.toLowerCase().includes(searchTerm);
+        case 'all':
+        default:
+          return (
+            tutor.name.toLowerCase().includes(searchTerm) ||
+            tutor.email.toLowerCase().includes(searchTerm) ||
+            tutor.phoneNumber.toLowerCase().includes(searchTerm) ||
+            tutor.status.toLowerCase().includes(searchTerm)
+          );
+      }
+    });
+  }, [tableData, searchQuery, searchFilter]);
+
+  const {
+    paginatedData,
+    pageIndex,
+    pageSize,
+    pageCount,
+    handlePaginationChange,
+  } = useTablePagination({ data: filteredData });
+
   return (
     <div>
       <div className="flex justify-between items-center">
         <div className="flex gap-3 w-1/2">
-          <SearchBar name="Search" />
+          <SearchBar 
+            name="Search" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={`Search tutors by ${searchFilter === 'all' ? 'any field' : searchFilter}...`}
+          />
           <Filter
             name="Search Filter"
             placeholder="Search by an attribute"
             width="150px"
             options={filterOptions}
             value={searchFilter}
+            onChange={setSearchFilter}
           />
         </div>
         <CreateUserModal userRole={USER_ROLES.TUTOR}/>
       </div>
-      <DataTable data={tableData} columns={columns} />
+      <DataTable 
+        data={paginatedData} 
+        columns={columns}
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        pageCount={pageCount}
+        onPaginationChange={handlePaginationChange}
+      />
     </div>
   );
 }
