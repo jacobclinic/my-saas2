@@ -11,6 +11,7 @@ import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import { useFormStatus } from 'react-dom';
 import Alert from '~/core/ui/Alert';
 import { deleteStudentEnrollment } from '~/lib/user/actions/student';
+import { generateStudentPDF } from '~/lib/utils/pdfGenerator';
 
 interface Student {
   id: string;
@@ -60,6 +61,8 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
       maxWidth="2xl"
       showCloseButton={true}
       closeButtonText="Close"
+      onConfirm={() => generateStudentPDF(students, classDataName || "")}
+      confirmButtonText="Export Students List"
     >
       <div className="space-y-4">
         <div className="border rounded-lg divide-y">
