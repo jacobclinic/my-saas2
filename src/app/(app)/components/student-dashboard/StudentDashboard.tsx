@@ -329,7 +329,7 @@ const StudentDashboard = ({
               ) : classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
                 null
               ) : (
-                <Button onClick={() => window.open(classData.zoomLink, '_blank')}>
+                <Button className="w-full" onClick={() => joinMeetingAsStudent(classData)} disabled={isPending}>
                   <Camera className="h-4 w-4 mr-2" />
                   Join Class
                 </Button>
