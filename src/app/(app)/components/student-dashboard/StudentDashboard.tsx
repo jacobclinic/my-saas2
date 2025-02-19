@@ -240,11 +240,7 @@ const StudentDashboard = ({
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Button className="w-full" onClick={() => joinMeetingAsStudent(classData)} disabled={isPending}>
-                  <Camera className="h-4 w-4 mr-2" />
-                  Join Class
-                </Button>
-          {/* {classData.paymentStatus === PAYMENT_STATUS.PENDING ? (
+          {classData.paymentStatus === PAYMENT_STATUS.PENDING ? (
             <Button
               className="w-full bg-red-600 hover:bg-red-700"
               onClick={() => {
@@ -262,7 +258,7 @@ const StudentDashboard = ({
               <Camera className="h-4 w-4 mr-2" />
               Join Class
             </Button>
-          )} */}
+          )}
         </div>
       </CardContent>
     </Card>
