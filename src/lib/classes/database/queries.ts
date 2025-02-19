@@ -136,6 +136,7 @@ export async function getAllClassesByTutorIdData(
               first_name,
               last_name,
               email,
+              phone_number,
               status
             )
           )

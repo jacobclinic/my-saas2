@@ -18,7 +18,6 @@ const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassT
   const [selectedYear, setSelectedYear] = useState('all');
   const [linkCopied, setLinkCopied] = useState<LinkCopiedState>({});
   const [showCreateClass, setShowCreateClass] = useState(false);
-  const [createClassLoading, setCreateClassLoading] = useState(false);
   const [classTableData, setClassTableData] = useState<ClassListData[]>([]);
 
   useEffect(() => {
@@ -78,22 +77,6 @@ const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassT
       nextClass: "Tue, Dec 19, 2024"
     }
   ];
-
-  const handleCreateClass = async (classData: NewClassData) => {
-    try {
-      setCreateClassLoading(true);
-      // Simulate API call
-      // await new Promise(resolve => setTimeout(resolve, 1000));
-      // console.log('Creating new class:', classData);
-      setShowCreateClass(false);
-      // Add success notification here if needed
-    } catch (error) {
-      console.error('Error creating class:', error);
-      // Add error notification here if needed
-    } finally {
-      setCreateClassLoading(false);
-    }
-  };
 
   const handleCopyLink = (classId: string, link?: string): void => {
     if (link) {
@@ -167,7 +150,6 @@ const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassT
       <CreateClassDialog
         open={showCreateClass}
         onClose={() => setShowCreateClass(false)}
-        onCreateClass={handleCreateClass}
         tutorId={tutorId || classesData?.[0]?.tutor_id}
       />
     </div>

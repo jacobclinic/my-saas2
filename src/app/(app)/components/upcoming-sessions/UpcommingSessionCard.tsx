@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useCallback, useState, useTransition } from 'react';
 import { LessonDetails, UpcommingSessionCardProps, UploadedMaterial } from '~/lib/sessions/types/upcoming-sessions';
 import { Card, CardContent, CardHeader, CardTitle } from "../base-v2/ui/Card";
 import { Button } from "../base-v2/ui/Button";
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import MaterialUploadDialog from './MaterialUploadDialog';
 import EditSessionDialog from './EditSessionDialog';
+import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 
 const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,
@@ -34,6 +35,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
     student?: boolean;
     materials?: boolean;
   }>({});
+  const [isPending, startTransition] = useTransition()
 
   const [showMaterialDialog, setShowMaterialDialog] = useState(false);
   const [uploadedMaterials, setUploadedMaterials] = useState<UploadedMaterial[]>([]);
@@ -54,6 +56,19 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       setLinkCopied({ ...linkCopied, [type]: false });
     }, 2000);
   };
+
+  const joinMeetingAsTutor = useCallback(async () => {
+    startTransition(async () => {
+      const result = await joinMeetingAsHost({
+        meetingId: sessionData?.zoomMeetingId
+      });
+      if (result.success) {
+        window.open(result.start_url, "_blank");
+      } else {
+        alert("Failed to generate join link");
+      }
+    })
+  }, [sessionData])
   return (
     <>
       <Card className={cn(
@@ -195,7 +210,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
             {/* Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button onClick={() => window.location.href = `/upcoming-sessions/meeting/${sessionData.id}`}>
+              <Button onClick={joinMeetingAsTutor} disabled={isPending}>
                 <Camera className="h-4 w-4 mr-2" />
                 Join as Tutor
               </Button>

@@ -30,6 +30,7 @@ const UpcomingSessions = ({ upcomingSessionData }: { upcomingSessionData: Upcomi
           date: formattedDate,
           time: formattedTime,
           registeredStudents: session?.class?.students?.length || 0,
+          zoomMeetingId: session?.zoom_meeting_id || "",
           zoomLinkTutor: session?.meeting_url || "",
           zoomLinkStudent: session?.meeting_url || "",
           materials: session?.materials?.map((material) => {

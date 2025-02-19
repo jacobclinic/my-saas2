@@ -17,6 +17,7 @@ interface UpcomingSessionTableData {
   registeredStudents: number;
   zoomLinkTutor: string;
   zoomLinkStudent: string;
+  zoomMeetingId: string;
   materials?: Material[];
   lessonTitle?: string;
   lessonDescription?: string;
@@ -32,6 +33,7 @@ interface SessionStudentTableData {
   paymentStatus: 'paid' | 'pending' | string;
   paymentAmount?: number;
   zoomLink?: string;
+  zoomMeetingId: string;
   recordingUrl?: string;
   materials?: Material[];
   sessionRawData?: UpcomingSession | PastSession;

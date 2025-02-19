@@ -16,7 +16,9 @@ export async function getUserDataById(
       `
       id,
       displayName: display_name,
-      photoUrl: photo_url
+      photoUrl: photo_url,
+      first_name,
+      last_name
     `,
     )
     .eq('id', userId)
