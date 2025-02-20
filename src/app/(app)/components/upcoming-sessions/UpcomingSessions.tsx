@@ -61,6 +61,7 @@ const UpcomingSessions = ({ upcomingSessionData }: { upcomingSessionData: Upcomi
       registeredStudents: 25,
       zoomLinkTutor: "https://zoom.us/j/123456789",
       zoomLinkStudent: "https://zoom.us/j/987654321",
+      zoomMeetingId: "987654321",
       materials: [
         { id: "1", name: "Chapter 5 - Manufacturing Accounts Notes.pdf", file_size: "2.5" },
         { id: "2", name: "Practice Problems Set.pdf", file_size: "1.8" }
@@ -74,7 +75,8 @@ const UpcomingSessions = ({ upcomingSessionData }: { upcomingSessionData: Upcomi
       time: "6:30 PM - 8:30 PM",
       registeredStudents: 30,
       zoomLinkTutor: "https://zoom.us/j/123456789",
-      zoomLinkStudent: "https://zoom.us/j/987654321"
+      zoomLinkStudent: "https://zoom.us/j/987654321",
+      zoomMeetingId: "987654321",
     },
     {
       id: "3",
@@ -87,6 +89,7 @@ const UpcomingSessions = ({ upcomingSessionData }: { upcomingSessionData: Upcomi
       registeredStudents: 28,
       zoomLinkTutor: "https://zoom.us/j/123456789",
       zoomLinkStudent: "https://zoom.us/j/987654321",
+      zoomMeetingId: "987654321",
       materials: [
         { id: "1", name: "Partnership Accounts Notes.pdf", file_size: "3.0" }
       ]
