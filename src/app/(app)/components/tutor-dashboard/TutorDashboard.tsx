@@ -80,38 +80,6 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
 
   console.log('nextSessionData and activeClassesData:', nextSessionData, activeClassesData);
 
-  const nextSessionSampleData: UpcomingSessionTableData = {
-    id: "1",
-    name: "2025 A-Levels Batch 1",
-    subject: "Accounting",
-    date: "Monday, Dec 18, 2024",
-    time: "4:00 PM - 6:00 PM",
-    registeredStudents: 25,
-    zoomLinkTutor: "https://zoom.us/j/123456789",
-    zoomLinkStudent: "https://zoom.us/j/987654321",
-    materials: [
-      { id: "1", name: "Chapter 5 - Manufacturing Accounts Notes.pdf", file_size: "2.5" },
-      { id: "2", name: "Practice Problems Set.pdf", file_size: "1.8" }
-    ]
-  };
-
-  const activeClassesSampleData: ClassListData[] = [
-    {
-      id: "2",
-      name: "2025 A-Levels Batch 1",
-      schedule: "Every Monday, 4:00 PM",
-      students: 25,
-      registrationLink: "https://commaeducation.com/class/register/123"
-    },
-    {
-      id: "3",
-      name: "2024 A-Levels Revision Batch 2",
-      schedule: "Every Wednesday, 2:00 PM",
-      students: 18,
-      registrationLink: "https://commaeducation.com/class/register/456"
-    }
-  ];
-
   const handleCopyLink = (classId: string, link?: string): void => {
     if (link) {
       navigator.clipboard.writeText(link);
