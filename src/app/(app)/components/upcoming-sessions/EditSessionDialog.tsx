@@ -23,6 +23,7 @@ interface EditSessionData {
   startTime: string;
   endTime: string;
   materials: Material[];
+  meetingUrl?: string;
 }
 
 interface EditSessionDialogProps {
@@ -48,7 +49,8 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     description: '',
     startTime: '',
     endTime: '',
-    materials: []
+    materials: [],
+    meetingUrl: ''
   });
 
   const [uploadedMaterials, setUploadedMaterials] = useState<{
@@ -68,7 +70,8 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         description: sessionData.description || '',
         startTime: sessionData.startTime || '',
         endTime: sessionData.endTime || '',
-        materials: sessionData.materials || []
+        materials: sessionData.materials || [],
+        meetingUrl: sessionData.meetingUrl || ''
       });
     }
     console.log("sessionData-----------1---------", sessionData);
