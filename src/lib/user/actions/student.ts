@@ -61,6 +61,10 @@ interface CreateStudentParams {
   csrfToken: string;
 }
 
+interface DeleteStudentEnrollmentParams {
+  enrollmentId: string
+}
+
 export async function createStudentAction({
   firstName,
   lastName,
@@ -183,5 +187,35 @@ export async function createStudentAction({
         success: false,
         error: error instanceof Error ? error.message : 'An unknown error occurred.' 
     };
+  }
+}
+
+export async function deleteStudentEnrollment({
+  enrollmentId,
+}: DeleteStudentEnrollmentParams) {
+  try {
+    const client = getSupabaseServerActionClient({ admin: true });
+
+    // Check if student is already enrolled in this class
+    const { data: existingEnrollment } = await client
+      .from('student_class_enrollments')
+      .select('id')
+      .eq('id', enrollmentId)
+      .single();
+
+    if (existingEnrollment) {
+      // Create class enrollment only if not already enrolled
+      const { error: dbError } = await client
+        .from('student_class_enrollments')
+        .delete()
+        .eq('id', enrollmentId)
+
+      if (dbError) throw dbError;
+    }
+
+    revalidatePath('/classes');
+    revalidatePath('/(app)/classes');
+  } catch (error) {
+    console.error('Error deleting enrollment student:', error);
   }
 }

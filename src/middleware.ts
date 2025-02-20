@@ -16,6 +16,9 @@ export const config = {
 };
 
 export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith('/api/zoom/webhook')) {
+    return NextResponse.next();
+  }
   const response = NextResponse.next();
   const csrfResponse = await withCsrfMiddleware(request, response);
   const sessionResponse = await sessionMiddleware(request, csrfResponse);

@@ -20,7 +20,7 @@ export interface CreateZoomMeetingRequest {
 }
 
 export interface ZoomMeetingResponse {
-  id: number;
+  id: string;
   host_id: string;
   topic: string;
   type: number;
@@ -30,6 +30,7 @@ export interface ZoomMeetingResponse {
   timezone: string;
   created_at: string;
   join_url: string;
+  start_url: string;
   password?: string;
   settings: ZoomMeetingSettings;
 }

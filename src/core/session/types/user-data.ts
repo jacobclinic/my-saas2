@@ -7,6 +7,8 @@ interface UserData {
   id: string;
   photoUrl: string | null;
   displayName: string | null;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 export default UserData;

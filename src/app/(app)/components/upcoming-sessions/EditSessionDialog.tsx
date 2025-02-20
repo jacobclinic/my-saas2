@@ -22,8 +22,8 @@ interface EditSessionData {
   description: string;
   startTime: string;
   endTime: string;
-  meetingUrl: string;
   materials: Material[];
+  meetingUrl?: string;
 }
 
 interface EditSessionDialogProps {
@@ -49,8 +49,8 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     description: '',
     startTime: '',
     endTime: '',
-    meetingUrl: '',
-    materials: []
+    materials: [],
+    meetingUrl: ''
   });
 
   const [uploadedMaterials, setUploadedMaterials] = useState<{
@@ -70,10 +70,11 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         description: sessionData.description || '',
         startTime: sessionData.startTime || '',
         endTime: sessionData.endTime || '',
-        meetingUrl: sessionData.meetingUrl || '',
-        materials: sessionData.materials || []
+        materials: sessionData.materials || [],
+        meetingUrl: sessionData.meetingUrl || ''
       });
     }
+    console.log("sessionData-----------1---------", sessionData);
   }, [sessionData]);
 
   const handleSubmit = () => {
@@ -125,14 +126,23 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   };
 
   const isValid =
-    editedSession.title &&
     editedSession.startTime &&
     editedSession.endTime;
 
   const formatToDateTimeInput = (isoString: string): string => {
     if (!isoString) return '';
+    
+    // Create a date object from the ISO string
+    // This will automatically convert to local timezone
     const date = new Date(isoString);
-    return date.toISOString().slice(0, 16); // Format for datetime-local input
+    
+    // Get local ISO string
+    const localISOString = new Date(
+      date.getTime() - (date.getTimezoneOffset() * 60000)
+    ).toISOString();
+    
+    // Return the formatted string for datetime-local input
+    return localISOString.slice(0, 16);
   };
 
   return (
@@ -185,15 +195,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               onChange={(e) => setEditedSession({ ...editedSession, endTime: e.target.value })}
             />
           </div>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">Meeting URL</label>
-          <Input 
-            placeholder="Enter Zoom meeting URL"
-            value={editedSession.meetingUrl}
-            onChange={(e) => setEditedSession({ ...editedSession, meetingUrl: e.target.value })}
-          />
         </div>
 
         {/* Materials Section */}

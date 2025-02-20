@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache';
-import { zoomService } from '../zoom-meeting/zoom.service';
+import { zoomService } from '../zoom/zoom.service';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { withSession } from '~/core/generic/actions-utils';
 import { deleteMaterialFromStorage, uploadMaterialToStorage } from '../utils/upload-material-utils';
@@ -69,7 +69,7 @@ export const updateSessionAction = withSession(
           ),
           timezone: 'Asia/Colombo',
           type: 2,
-        });
+        }, '');
         meetingUrl = zoomMeeting.join_url;
         zoomMeetingId = zoomMeeting.id.toString();
       }
