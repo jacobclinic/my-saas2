@@ -181,7 +181,7 @@ export async function getAllClassesByTutorIdData(
       const upcomingSession = sessionsData?.find(
         (session) => session.class_id === classData.id,
       );
-      const timeSlots = classData?.time_slots as { day: string; time: string }[] | null;
+      const timeSlots = classData?.time_slots as { day: string; startTime: string; endTime: string; }[] | null;
       return {
         ...classData,
         upcomingSession: upcomingSession ? upcomingSession.start_time : null,
