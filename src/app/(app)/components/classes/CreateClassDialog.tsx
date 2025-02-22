@@ -16,6 +16,7 @@ import { useToast } from '../../lib/hooks/use-toast';
 interface CreateClassDialogProps {
   open: boolean;
   onClose: () => void;
+  onCreateClass?: (classData: NewClassData) => void;
   loading?: boolean;
   tutorId: string;
 }
@@ -23,6 +24,7 @@ interface CreateClassDialogProps {
 const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   open,
   onClose,
+  onCreateClass,
   loading = false,
   tutorId,
 }) => {
@@ -37,14 +39,14 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     yearGrade: '',
     monthlyFee: '',
     startDate: '',
-    timeSlots: [{ day: '', time: '' }],
+    timeSlots: [{ day: '', startTime: '', endTime: '' }],
     tutorId,
   });
 
   const handleAddTimeSlot = () => {
     setNewClass(prev => ({
       ...prev,
-      timeSlots: [...prev.timeSlots, { day: '', time: '' }]
+      timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }]
     }));
   };
 
@@ -68,12 +70,12 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     startTransition(async () => {
       const result = await createClassAction({classData: newClass, csrfToken})
       if (result.success) {
+        onClose();
         toast({
           title: "Success",
           description: "New class created successfully",
           variant: "success",
         });
-        onClose();
       } else {
         toast({
           title: "Error",
@@ -82,6 +84,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
         });
       }
     })
+    onCreateClass?.(newClass);
   };
 
   const isValid =
@@ -90,7 +93,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     newClass.monthlyFee &&
     newClass.yearGrade &&
     newClass.startDate &&
-    newClass.timeSlots.every((slot) => slot.day && slot.time);
+    newClass.timeSlots.every((slot) => slot.day && slot.startTime && slot.endTime);
 
   return (
     <BaseDialog
@@ -198,14 +201,18 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
             </Button>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 flex flex-col">
+            <div className="flex self-end gap-[75px] mr-14">
+              <label className="text-sm font-medium">Start Time</label>
+              <label className="text-sm font-medium">End Time</label>
+            </div>
             {newClass.timeSlots.map((slot, index) => (
               <div key={index} className="flex gap-2 items-start">
                 <Select
                   value={slot.day}
                   onValueChange={(value) => updateTimeSlot(index, 'day', value)}
                 >
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Select day" />
                   </SelectTrigger>
                   <SelectContent>
@@ -217,12 +224,21 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
                   </SelectContent>
                 </Select>
 
-                <Input
-                  type="time"
-                  value={slot.time}
-                  onChange={(e) => updateTimeSlot(index, 'time', e.target.value)}
-                  className="flex-1"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    type="time"
+                    value={slot.startTime}
+                    onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
+                    placeholder="Start time"
+                  />
+                  
+                  <Input
+                    type="time"
+                    value={slot.endTime}
+                    onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
+                    placeholder="End time"
+                  />
+                </div>
 
                 {newClass.timeSlots.length > 1 && (
                   <Button

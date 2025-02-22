@@ -29,7 +29,11 @@ export interface ClassType {
   tutor_id: string
   fee: number | null
   status: string | null  
-  time_slots: { day: string; time: string; }[] | null
+  time_slots: {
+    day: string;
+    startTime: string;
+    endTime: string;
+  }[] | null
   grade: string | null
   starting_date: string | null
   students?: ClassListStudent[] | []
@@ -106,7 +110,8 @@ export interface NewStudentData {
 
 export interface TimeSlot {
   day: string;
-  time: string;
+  startTime: string;
+  endTime: string;
 }
 
 export interface NewClassData {
@@ -118,7 +123,11 @@ export interface NewClassData {
   yearGrade: string;
   monthlyFee: string;
   startDate: string;
-  timeSlots: { day: string; time: string; }[];
+  timeSlots: {
+    day: string;
+    startTime: string;
+    endTime: string;
+  }[];
   tutorId: string;
 }
 
@@ -133,6 +142,6 @@ export interface EditClassData {
   yearGrade: string;
   monthlyFee: number;
   startDate: string;
-  timeSlots: { day: string; time: string; }[];
+  timeSlots: TimeSlot[];
   status: 'active' | 'inactive' | 'draft';
 }

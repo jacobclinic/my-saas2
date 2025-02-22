@@ -1,7 +1,13 @@
 import { addDays, format, parse, startOfWeek } from 'date-fns';
 import { TimeSlot } from '../classes/types/class-v2';
 
-export function getNextNOccurrences(timeSlot: TimeSlot, startDate: string, count: number): Date[] {
+// export function getNextNOccurrences(timeSlot: TimeSlot, startDate: string, count: number): Date[] {
+
+export function getNextNOccurrences(
+    timeSlot: TimeSlot, startDate: string, count: number
+  ) : {
+    startTime: Date, endTime: Date
+  }[] {
   // Parse the starting date
   let start = new Date(startDate);
   if (start.getTime() < Date.now()) {
@@ -24,16 +30,25 @@ export function getNextNOccurrences(timeSlot: TimeSlot, startDate: string, count
   }
   
   // Generate the next N occurrences
-  const occurrences: Date[] = [];
+  const occurrences: {startTime: Date, endTime: Date}[] = [];
   let currentDate = firstOccurrence;
   
   for (let i = 0; i < count; i++) {
-    // Parse the time from the time slot
-    const [hours, minutes] = timeSlot.time.split(':').map(Number);
-    const dateWithTime = new Date(currentDate);
-    dateWithTime.setHours(hours, minutes, 0, 0);
+    // Parse the start time from the time slot
+    const [startHours, startMinutes] = timeSlot.startTime.split(':').map(Number);
+    const dateWithStartTime = new Date(currentDate);
+    dateWithStartTime.setHours(startHours, startMinutes, 0, 0);
     
-    occurrences.push(dateWithTime);
+    // Parse the end time from the time slot
+    const [endHours, endMinutes] = timeSlot.endTime.split(':').map(Number);
+    const dateWithEndTime = new Date(currentDate);
+    dateWithEndTime.setHours(endHours, endMinutes, 0, 0);
+    
+    occurrences.push({
+      startTime: dateWithStartTime,
+      endTime: dateWithEndTime
+    });
+    
     currentDate = addDays(currentDate, 7);
   }
   

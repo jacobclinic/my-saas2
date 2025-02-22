@@ -12,6 +12,7 @@ import { Button } from '../base-v2/ui/Button';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { updateClassAction } from '~/lib/classes/server-actions-v2';
+import { useToast } from '../../lib/hooks/use-toast';
 
 interface EditClassDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
 }) => {
   const [isPending, startTransition] = useTransition()
   const csrfToken = useCsrfToken();
+  const { toast } = useToast();
 
   const [editedClass, setEditedClass] = useState<EditClassData>({
     name: '',
@@ -38,12 +40,36 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
     yearGrade: '',
     monthlyFee: 0,
     startDate: '',
-    timeSlots: [{ day: '', time: '' }],
+    timeSlots: [{ day: '', startTime: '', endTime: '' }],
     status: 'active'
   });
 
   useEffect(() => {
     if (classData) {
+      const addMinutes = (time: any, minutesToAdd: any) => {
+        // Split the time into hours and minutes
+        let [hours, minutes] = time.split(':').map(Number);
+        // Convert to total minutes and add the extra minutes
+        let totalMinutes = hours * 60 + minutes + minutesToAdd;
+        // Wrap around if total minutes exceed 24 hours (1440 minutes)
+        totalMinutes %= 1440;
+        // Convert back to hours and minutes
+        const newHours = Math.floor(totalMinutes / 60);
+        const newMinutes = totalMinutes % 60;
+        // Format to "HH:mm"
+        return `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+      }
+
+      // Transform the incoming time slots format to include startTime and endTime
+      const transformedTimeSlots = classData?.classRawData?.time_slots?.map((slot: any) => {
+        // Handle both old format (time) and new format (startTime, endTime)
+        return {
+          day: slot.day || '',
+          startTime: slot.startTime || slot.time || '', // Support old format
+          endTime: slot.endTime || slot.startTime ? addMinutes(slot.startTime, 120) : '' // Will be empty for old format data
+        }
+      }) || [{ day: '', startTime: '', endTime: '' }];
+
       setEditedClass({
         name: classData?.classRawData?.name || '',
         subject: classData?.classRawData?.subject || '',
@@ -51,7 +77,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
         yearGrade: classData?.classRawData?.grade || '',
         monthlyFee: classData?.classRawData?.fee || 0,
         startDate: classData?.classRawData?.starting_date || '',
-        timeSlots: classData?.classRawData?.time_slots || [{ day: '', time: '' }],
+        timeSlots: classData?.classRawData?.time_slots || [{ day: '', startTime: '', endTime: '' }],
         status: classData?.classRawData?.status as 'active' | 'inactive' | 'draft' || 'active'
       });
     }
@@ -60,7 +86,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
   const handleAddTimeSlot = () => {
     setEditedClass(prev => ({
       ...prev,
-      timeSlots: [...prev.timeSlots, { day: '', time: '' }]
+      timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }]
     }));
   };
 
@@ -80,6 +106,8 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
     }));
   };
 
+  console.log("-------editedClass--------", editedClass)
+
   const handleSubmit = () => {
     if (classData) {
       startTransition(async () => {
@@ -96,9 +124,17 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
         const result = await updateClassAction({classId: classData.id, classData: transformedClassData, csrfToken})
         if (result.success) {
           onClose()
-          // Show success toast/notification
+          toast({
+            title: "Success",
+            description: "Class edited successfully",
+            variant: "success",
+          });
         } else {
-          // Show error toast/notification
+          toast({
+            title: "Error",
+            description: "Failed to edit class",
+            variant: "destructive",
+          });
         }
       })
       onUpdateClass(classData.id, editedClass);
@@ -111,7 +147,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
     editedClass.monthlyFee &&
     editedClass.yearGrade &&
     editedClass.startDate &&
-    editedClass.timeSlots.every((slot) => slot.day && slot.time);
+    editedClass.timeSlots.every((slot) => slot.day && slot.startTime  && slot.endTime);
 
   const statuses = [
     { value: 'active', label: 'Active' },
@@ -252,14 +288,18 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
             </Button>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 flex flex-col">
+            <div className="flex self-end gap-[75px] mr-14">
+              <label className="text-sm font-medium">Start Time</label>
+              <label className="text-sm font-medium">End Time</label>
+            </div>
             {editedClass?.timeSlots?.map((slot, index) => (
               <div key={index} className="flex gap-2 items-start">
                 <Select
                   value={slot.day}
                   onValueChange={(value) => updateTimeSlot(index, 'day', value)}
                 >
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Select day" />
                   </SelectTrigger>
                   <SelectContent>
@@ -271,12 +311,21 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
                   </SelectContent>
                 </Select>
 
-                <Input
-                  type="time"
-                  value={slot.time}
-                  onChange={(e) => updateTimeSlot(index, 'time', e.target.value)}
-                  className="flex-1"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    type="time"
+                    value={slot.startTime}
+                    onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
+                    placeholder="Start time"
+                  />
+                  
+                  <Input
+                    type="time"
+                    value={slot.endTime}
+                    onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
+                    placeholder="End time"
+                  />
+                </div>
 
                 {editedClass.timeSlots.length > 1 && (
                   <Button

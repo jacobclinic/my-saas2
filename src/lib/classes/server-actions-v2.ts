@@ -53,14 +53,14 @@ export const createClassAction = withSession(
       //   };
       // });
       return Promise.all(nextOccurrences.map(async occurrence => {
-        const endTime = new Date(occurrence);
-        endTime.setHours(endTime.getHours() + 2);
+        const start_time = occurrence.startTime.toISOString();
+        const end_time = occurrence.endTime.toISOString();
 
         // Initialize Zoom session
         // TODO: Need add the correct tutorZoomId
         const zoomMeeting = await zoomService.createMeeting({
-          topic: `${classData.name}_${occurrence.toISOString()}`,
-          start_time: occurrence.toISOString(),
+          topic: `${classData.name}_${start_time}`,
+          start_time,
           duration: 120,
           timezone: 'Asia/Colombo',
           type: 2,
@@ -72,8 +72,8 @@ export const createClassAction = withSession(
 
         return {
           class_id: classResult.id,
-          start_time: occurrence.toISOString(),
-          end_time: endTime.toISOString(),
+          start_time,
+          end_time,
           zoom_meeting_id: zoomMeeting?.id
         };
       }));
