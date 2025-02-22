@@ -29,7 +29,11 @@ export interface ClassType {
   tutor_id: string
   fee: number | null
   status: string | null  
-  time_slots: TimeSlot[] | null
+  time_slots: {
+    day: string;
+    startTime: string;
+    endTime: string;
+  }[] | null
   grade: string | null
   starting_date: string | null
   students?: ClassListStudent[] | []
@@ -119,7 +123,11 @@ export interface NewClassData {
   yearGrade: string;
   monthlyFee: string;
   startDate: string;
-  timeSlots: TimeSlot[];
+  timeSlots: {
+    day: string;
+    startTime: string;
+    endTime: string;
+  }[];
   tutorId: string;
 }
 
