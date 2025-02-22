@@ -12,6 +12,7 @@ import { format as dateFnsFormat } from "date-fns";
 import { NewStudentData, NewClassData, LinkCopiedState, ClassListData, ClassType, TimeSlot } from '~/lib/classes/types/class-v2';
 import ClassCard from './ClassCard';
 import CreateClassDialog from './CreateClassDialog';
+import { GRADES } from '~/lib/constants-v2';
 
 const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassType[], userRole: string, tutorId?: string }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -117,8 +118,11 @@ const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassT
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Years</SelectItem>
-            <SelectItem value="2024/2025">2024/2025</SelectItem>
-            <SelectItem value="2023/2024">2023/2024</SelectItem>
+            {GRADES.map(grade => {
+              return (
+                <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+              )
+            })}
           </SelectContent>
         </Select>
       </div>
