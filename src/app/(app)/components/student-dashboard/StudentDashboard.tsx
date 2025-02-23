@@ -23,6 +23,8 @@ import PaymentDialog from '../student-payments/PaymentDialog';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
+import StudentSessionCard from './StudentSessionCard';
+import StudentNextSessionCard from './StudentNextSessionCard';
 
 const StudentDashboard = ({
   upcomingSessionData, pastSessionData, studentId
@@ -31,9 +33,9 @@ const StudentDashboard = ({
 }) => {
   const userSession = useUserSession();
   const [isPending, startTransition] = useTransition();
-  const [nextClass, setNextClass] = useState<SessionStudentTableData | null>(null);
-  const [upcomingClasses, setUpcomingClasses] = useState<SessionStudentTableData[]>([]);
-  const [pastClasses, setPastClasses] = useState<SessionStudentTableData[]>([]);
+  const [nextSession, setNextSession] = useState<SessionStudentTableData | null>(null);
+  const [upcomingSessions, setUpcomingSessions] = useState<SessionStudentTableData[]>([]);
+  const [pastSessions, setPastSessions] = useState<SessionStudentTableData[]>([]);
 
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedSession, setSelectedSession] = useState<SessionStudentTableData | null>(null);
@@ -41,22 +43,22 @@ const StudentDashboard = ({
   // Transform upcoming sessions data
   useEffect(() => {
     if (upcomingSessionData?.length > 0) {
-      // Format the next class (first upcoming session)
+      // Format the next Sessions (first upcoming session)
       const nextSessionData = upcomingSessionData[0];
-      const formattedNextClass = formatSessionData(nextSessionData);
-      setNextClass(formattedNextClass);
+      const formattedNextSession = formatSessionData(nextSessionData);
+      setNextSession(formattedNextSession);
 
-      // Format remaining upcoming classes
+      // Format remaining upcoming sessions
       const remainingUpcoming = upcomingSessionData.slice(1).map(formatSessionData);
-      setUpcomingClasses(remainingUpcoming);
+      setUpcomingSessions(remainingUpcoming);
     }
   }, [upcomingSessionData]);
 
   // Transform past sessions data
   useEffect(() => {
     if (pastSessionData?.length > 0) {
-      const formattedPastClasses = pastSessionData.map(formatSessionData);
-      setPastClasses(formattedPastClasses);
+      const formattedPastSessions = pastSessionData.map(formatSessionData);
+      setPastSessions(formattedPastSessions);
     }
   }, [pastSessionData]);
 
@@ -107,10 +109,10 @@ const StudentDashboard = ({
     };
   };
 
-  const joinMeetingAsStudent = useCallback(async (classData: any) => {
+  const joinMeetingAsStudent = useCallback(async (sessionData: any) => {
     startTransition(async () => {
       const result = await joinMeetingAsUser({
-        meetingId: classData?.zoomMeetingId,
+        meetingId: sessionData?.zoomMeetingId,
         studentData: {
           first_name: userSession?.data?.first_name || "",
           last_name: userSession?.data?.last_name || "",
@@ -126,7 +128,7 @@ const StudentDashboard = ({
   }, [userSession])
 
   // Sample data
-  const nextClassSampleData = {
+  const nextSessionsSampleData = {
     id: 1,
     name: "A/L 2025 Accounting Batch 04",
     topic: "Manufacturing Accounts - Part 1",
@@ -141,7 +143,7 @@ const StudentDashboard = ({
     ]
   };
 
-  const upcomingClassesSampleData = [
+  const upcomingSessionsSampleData = [
     {
       id: 2,
       name: "A/L 2025 Accounting Batch 04",
@@ -155,7 +157,7 @@ const StudentDashboard = ({
     }
   ];
 
-  const pastClassesSampleData = [
+  const pastSessionsSampleData = [
     {
       id: 3,
       name: "A/L 2025 Accounting Batch 04",
@@ -170,190 +172,6 @@ const StudentDashboard = ({
     }
   ];
 
-  const NextClassCard = ({ classData }: { classData: SessionStudentTableData }) => (
-    <Card className="border-2 border-blue-200 bg-blue-50">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-xl text-blue-800">Next Class</CardTitle>
-            <p className="text-blue-700 font-medium mt-1">{classData.name}</p>
-          </div>
-          {classData.paymentStatus === PAYMENT_STATUS.PENDING && (
-            <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100 border-red-500">
-              Payment Pending
-            </Badge>
-          )}
-          {classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION && (
-            <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-500">
-              Payment pending verification
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <h3 className="font-medium text-blue-900">{classData.topic}</h3>
-          <div className="flex items-center text-blue-700">
-            <Calendar className="h-4 w-4 mr-2" />
-            {classData.date}
-          </div>
-          <div className="flex items-center text-blue-700">
-            <Clock className="h-4 w-4 mr-2" />
-            {classData.time}
-          </div>
-        </div>
-
-        {classData.paymentStatus === PAYMENT_STATUS.PENDING ? (
-          <Alert className="border-red-500 bg-red-50">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-700">
-              Please complete the payment of Rs. {classData.paymentAmount} to access the class
-            </AlertDescription>
-          </Alert>
-        ) : classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
-          <Alert className="border-yellow-500 bg-yellow-50">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-700">
-              Payment is pending for verification from the admin. Please wait for the admin to verify the payment.
-            </AlertDescription>
-          </Alert>
-        ) : null}
-
-        {classData?.materials && classData?.materials?.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-blue-900">Class Materials</h4>
-            <div className="space-y-2">
-              {classData?.materials?.map((material) => (
-                <div
-                  key={material.id}
-                  className="flex items-center justify-between bg-white p-2 rounded"
-                >
-                  <div className="flex items-center">
-                    <File className="h-4 w-4 text-blue-600 mr-2" />
-                    <span className="text-sm">{material.name}</span>
-                  </div>
-                  <span className="text-sm text-gray-600">{material.file_size}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {classData.paymentStatus === PAYMENT_STATUS.PENDING ? (
-            <Button
-              className="w-full bg-red-600 hover:bg-red-700"
-              onClick={() => {
-                setSelectedSession(classData);
-                setShowPaymentDialog(true);
-              }}
-            >
-              <DollarSign className="h-4 w-4 mr-2" />
-              Make Payment
-            </Button>
-          ) : classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
-            null
-          ) : (
-            <Button className="w-full" onClick={() => joinMeetingAsStudent(classData)} disabled={isPending}>
-              <Camera className="h-4 w-4 mr-2" />
-              Join Class
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const ClassCard = ({ classData, type = "upcoming" }: { classData: SessionStudentTableData; type?: "upcoming" | "completed" | "past" }) => (
-    <Card className="mb-4">
-      <CardContent className="p-4 space-y-4">
-        <div>
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-medium">{classData.name}</h3>
-              <p className="text-blue-600">{classData.topic}</p>
-            </div>
-            {classData.paymentStatus === PAYMENT_STATUS.PENDING && type === "upcoming" && (
-              <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100 border-red-500">
-                Payment Pending
-              </Badge>
-            )}
-            {classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION && type === "upcoming" && (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-500">
-                Payment pending verification
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center mt-2 text-gray-600">
-            <Calendar className="h-4 w-4 mr-2" />
-            {classData.date}
-          </div>
-          <div className="flex items-center mt-1 text-gray-600">
-            <Clock className="h-4 w-4 mr-2" />
-            {classData.time}
-          </div>
-        </div>
-
-        {classData?.materials && classData.materials?.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium">Class Materials</h4>
-            <div className="space-y-2">
-              {classData?.materials?.map((material) => (
-                <div
-                  key={material.id}
-                  className="flex items-center justify-between bg-gray-50 p-2 rounded"
-                >
-                  <div className="flex items-center">
-                    <File className="h-4 w-4 text-blue-600 mr-2" />
-                    <span className="text-sm">{material.name}</span>
-                  </div>
-                  <span className="text-sm text-gray-600">{material.file_size}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-2">
-          {type === "upcoming" ? (
-            <>
-              {classData.paymentStatus === PAYMENT_STATUS.PENDING ? (
-                <Button
-                  className="bg-red-600 hover:bg-red-700" 
-                  onClick={() => {
-                    setSelectedSession(classData);
-                    setShowPaymentDialog(true);
-                  }}
-                >
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Make Payment
-                </Button>
-              ) : classData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
-                null
-              ) : (
-                <Button className="w-full" onClick={() => joinMeetingAsStudent(classData)} disabled={isPending}>
-                  <Camera className="h-4 w-4 mr-2" />
-                  Join Class
-                </Button>
-              )}
-            </>
-          ) : (
-            <>
-              <Button onClick={() => window.open(classData.recordingUrl, '_blank')}>
-                <Video className="h-4 w-4 mr-2" />
-                Watch Recording
-              </Button>
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Download Materials
-              </Button>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -365,36 +183,61 @@ const StudentDashboard = ({
           </AlertDescription>
         </Alert>
 
-        {/* Next Class */}
-        {nextClass && <NextClassCard classData={nextClass} />}
+        {/* Next ClaSessionsss */}
+        {nextSession && 
+          <StudentNextSessionCard
+            key={nextSession.id}
+            sessionData={nextSession}
+            isPending={isPending}
+            setSelectedSession={setSelectedSession}
+            setShowPaymentDialog={setShowPaymentDialog}
+            joinMeetingAsStudent={joinMeetingAsStudent}
+          />
+        }
 
-        {/* Upcoming Classes */}
-        {upcomingClasses.length > 0 && (
+        {/* Upcoming Sessions */}
+        {upcomingSessions.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center">
               <Calendar className="h-5 w-5 mr-2" />
               <h2 className="text-xl font-bold">Upcoming Classes</h2>
             </div>
-            {upcomingClasses.map(classData => (
-              <ClassCard key={classData.id} classData={classData} type="upcoming" />
+            {upcomingSessions.map(sessionData => (
+              <StudentSessionCard
+                key={sessionData.id}
+                sessionData={sessionData}
+                type="upcoming"
+                isPending={isPending}
+                setSelectedSession={setSelectedSession}
+                setShowPaymentDialog={setShowPaymentDialog}
+                joinMeetingAsStudent={joinMeetingAsStudent}
+              />
             ))}
           </div>
         )}
 
-        {/* Past Classes */}
-        {pastClasses.length > 0 && (
+        {/* Past Sessions */}
+        {pastSessions.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center">
               <MonitorPlay className="h-5 w-5 mr-2" />
               <h2 className="text-xl font-bold">Past Classes</h2>
             </div>
-            {pastClasses.map(classData => (
-              <ClassCard key={classData.id} classData={classData} type="past" />
+            {pastSessions.map(sessionData => (
+              <StudentSessionCard
+                key={sessionData.id}
+                sessionData={sessionData}
+                type="past"
+                isPending={isPending}
+                setSelectedSession={setSelectedSession}
+                setShowPaymentDialog={setShowPaymentDialog}
+                joinMeetingAsStudent={joinMeetingAsStudent}
+              />
             ))}
           </div>
         )}
 
-        {/* Past Classes */}
+        {/* Past Sessions */}
         {showPaymentDialog && selectedSession && (
           <PaymentDialog
             open={showPaymentDialog}
