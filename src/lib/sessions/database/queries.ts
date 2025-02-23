@@ -701,7 +701,6 @@ export async function getAllUpcomingSessionsByStudentIdData(
     ] = await Promise.all([queryForSessionData, queryForPaymentData]);
 
     console.log("getAllSessionsData", upcomingSessions)
-    console.log("--------upcomingPayments----------", upcomingPayments)
 
     if (upcomingSessionError) {
       throw new Error(`Error fetching sessions: ${upcomingSessionError.message}`);
@@ -873,10 +872,107 @@ export async function getAllPastSessionsByStudentIdData(
         ...sessionData,
         class: classTemp,
         materials: transformedMaterials || [],
-        payment_status: currentPayment?.status || 'pending',
+        payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
         payment_amount: currentPayment?.amount || classTemp?.fee || null
       };
     })
+
+    return transformedData;
+
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
+export async function getSessionByStudentIdData(
+  client: SupabaseClient<Database>,
+  student_id: string,
+  session_id: string,
+): Promise<UpcomingSession | PastSession | null> {
+  try {
+    // Get session data with all related info
+    const { data: sessionData, error: sessionError } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor_id,
+            fee
+          ),
+          materials:${RESOURCE_MATERIALS_TABLE}!id (
+            id,
+            name,
+            url,
+            file_size
+          )
+        `,
+        { count: 'exact' }
+      )
+      .eq('id', session_id)
+      .single();
+
+    if (sessionError) {
+      throw new Error(`Error fetching session: ${sessionError.message}`);
+    }
+
+    if (!sessionData) {
+      return null;
+    }
+
+    // Get payment data for the session month
+    const sessionMonth = new Date(sessionData.start_time || "").toISOString().slice(0, 7);
+    const { data: paymentData, error: paymentError } = await client
+      .from(STUDENT_PAYMENTS_TABLE)
+      .select('*')
+      .eq('student_id', student_id)
+      .eq('class_id', sessionData.class_id || "")
+      .eq('payment_period', sessionMonth)
+      .single();
+
+    if (paymentError && paymentError.code !== 'PGRST116') { // Ignore "not found" error
+      throw paymentError;
+    }
+
+    // Format class data
+    let classTemp = Array.isArray(sessionData.class) 
+      ? sessionData.class[0] 
+      : sessionData.class;
+
+    // Transform materials based on payment status
+    const transformedMaterials = sessionData.materials?.map(material => {
+      if (paymentData?.status === 'paid') {
+        return material;
+      }
+      const { url, ...materialWithoutUrl } = material;
+      return materialWithoutUrl;
+    });
+
+    const transformedData = {
+      ...sessionData,
+      class: classTemp,
+      materials: transformedMaterials || [],
+      payment_status: paymentData?.status || PAYMENT_STATUS.PENDING,
+      payment_amount: paymentData?.amount || classTemp?.fee || null
+    };
+
+    console.log("---------------getSessionByStudentIdData-------", transformedData)
 
     return transformedData;
 
