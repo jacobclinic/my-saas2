@@ -216,7 +216,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
               </Button>
               
               <Button variant="outline" 
-                onClick={() => handleCopyLink(`${process.env.NEXT_PUBLIC_SITE_URL}/upcoming-sessions/meeting/${sessionData.id}`, "student")}
+                onClick={() => handleCopyLink(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming`, "student")}
               >
                 {linkCopied.student ? (
                   <Check className="h-4 w-4 mr-2" />
