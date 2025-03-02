@@ -8,7 +8,8 @@ import { Alert, AlertDescription } from "../base-v2/ui/Alert";
 import BaseDialog from '../base-v2/BaseDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { Button } from '../base-v2/ui/Button';
-// import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
+import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
+import { useToast } from '../../lib/hooks/use-toast';
 
 interface Material {
   id: string;
@@ -43,6 +44,8 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 }) => {
   const [isPending, startTransition] = useTransition()
   const csrfToken = useCsrfToken();
+  const { toast } = useToast();
+
 
   const [editedSession, setEditedSession] = useState<EditSessionData>({
     title: '',
@@ -74,31 +77,39 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         meetingUrl: sessionData.meetingUrl || ''
       });
     }
-    console.log("sessionData-----------1---------", sessionData);
   }, [sessionData]);
 
   const handleSubmit = () => {
+    console.log("--------------sessionId--------", sessionId)
     if (sessionId) {
-    //   startTransition(async () => {
-    //     // Here you would typically:
-    //     // 1. Upload any new materials first
-    //     // 2. Delete any materials marked for deletion
-    //     // 3. Update the session details
-    //     const result = await updateSessionAction({
-    //       sessionId,
-    //       sessionData: editedSession,
-    //       newMaterials: uploadedMaterials,
-    //       deleteMaterials: materialsToDelete,
-    //       csrfToken
-    //     });
+      startTransition(async () => {
+        // Here you would typically:
+        // 1. Upload any new materials first
+        // 2. Delete any materials marked for deletion
+        // 3. Update the session details
+        const result = await updateSessionAction({
+          sessionId,
+          sessionData: editedSession,
+          // newMaterials: uploadedMaterials,
+          // deleteMaterials: materialsToDelete,
+          csrfToken
+        });
         
-    //     if (result.success) {
-    //       onClose();
-    //       // Show success toast/notification
-    //     } else {
-    //       // Show error toast/notification
-    //     }
-    //   });
+        if (result.success) {
+          onClose();
+          toast({
+            title: "Success",
+            description: "Session edited successfully",
+            variant: "success",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to edit session",
+            variant: "destructive",
+          });
+        }
+      });
     }
   };
 
@@ -129,8 +140,43 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     editedSession.startTime &&
     editedSession.endTime;
 
+  console.log("--------------sessionId-----------", sessionId)
+
+  const convertToIST = (utcTimeString: string) => {
+    // Parse the UTC time
+    const utcDate = new Date(utcTimeString);
+    
+    // Add 5 hours and 30 minutes
+    const istTime = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+    
+    // Format the date to desired string
+    const year = istTime.getUTCFullYear();
+    const month = String(istTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(istTime.getUTCDate()).padStart(2, '0');
+    const hours = String(istTime.getUTCHours()).padStart(2, '0');
+    const minutes = String(istTime.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(istTime.getUTCSeconds()).padStart(2, '0');
+    
+    const istFormatedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}+5:30`;
+    // Get local ISO string
+    const localISOString = new Date(istFormatedTime).toLocaleDateString();
+    
+    // Return the formatted string for datetime-local input
+    return localISOString.slice(0, 16);
+  }
+
   const formatToDateTimeInput = (isoString: string): string => {
     if (!isoString) return '';
+  
+  // Create date object from UTC string
+  const utcDate = new Date(isoString);
+  
+  // Convert to IST (UTC+5:30)
+  const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+  const istDate = new Date(utcDate.getTime() + istOffset);
+  
+  // Format to datetime-local input format (YYYY-MM-DDThh:mm)
+  return istDate.toISOString().slice(0, 16);
     
     // Create a date object from the ISO string
     // This will automatically convert to local timezone
@@ -182,7 +228,7 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
             <label className="text-sm font-medium">Start Time</label>
             <Input 
               type="datetime-local"
-              value={formatToDateTimeInput(editedSession.startTime)}
+              value={convertToIST(editedSession.startTime)}
               onChange={(e) => setEditedSession({ ...editedSession, startTime: e.target.value })}
             />
           </div>
@@ -191,7 +237,7 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
             <label className="text-sm font-medium">End Time</label>
             <Input 
               type="datetime-local"
-              value={formatToDateTimeInput(editedSession.endTime)}
+              value={convertToIST(editedSession.endTime)}
               onChange={(e) => setEditedSession({ ...editedSession, endTime: e.target.value })}
             />
           </div>

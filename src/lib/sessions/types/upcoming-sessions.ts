@@ -1,5 +1,6 @@
 import React from 'react';
 import { PastSession, UpcomingSession } from './session-v2';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
 interface Material {
   id: string;
@@ -30,7 +31,7 @@ interface SessionStudentTableData {
   topic?: string | null;
   date: string;
   time: string;
-  paymentStatus: 'paid' | 'pending' | string;
+  paymentStatus: PaymentStatus;
   paymentAmount?: number;
   zoomLink?: string;
   zoomMeetingId: string;

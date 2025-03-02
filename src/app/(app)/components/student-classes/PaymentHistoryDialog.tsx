@@ -1,6 +1,7 @@
 import { StudentPayment } from '~/lib/classes/types/class-v2';
 import BaseDialog from '../base-v2/BaseDialog';
 import { Badge } from '../base-v2/ui/Badge';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
 // components/classes/PaymentHistoryDialog.tsx
 const PaymentHistoryDialog = ({
@@ -30,7 +31,7 @@ const PaymentHistoryDialog = ({
               <p className="text-sm text-gray-600">Paid on {payment.date}</p>
             </div>
             <Badge
-              variant={payment.status === 'paid' ? 'secondary' : 'destructive'}
+              variant={payment.status === PaymentStatus.VERIFIED ? 'secondary' : 'destructive'}
             >
               {payment.status}
             </Badge>

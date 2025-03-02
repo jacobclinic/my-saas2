@@ -4,6 +4,7 @@ import { CLASSES_TABLE, SESSIONS_TABLE, STUDENT_SESSION_ATTENDANCE_TABLE, STUDEN
 import { SessionsWithTableData } from '../types/session';
 import { PastSession, Session, UpcomingSession } from '../types/session-v2';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
 // /**
 //  * @description Fetch session object data (not auth!) by ID {@link sessionId}
@@ -730,7 +731,7 @@ export async function getAllUpcomingSessionsByStudentIdData(
 
       // Transform materials based on payment status
       const transformedMaterials = sessionData.materials?.map(material => {
-        if (currentPayment?.status === 'paid') {
+        if (currentPayment?.status === PaymentStatus.VERIFIED) {
           return material;
         }
         const { url, ...materialWithoutUrl } = material;
@@ -861,7 +862,7 @@ export async function getAllPastSessionsByStudentIdData(
 
       // Transform materials based on payment status
       const transformedMaterials = sessionData.materials?.map(material => {
-        if (currentPayment?.status === 'paid') {
+        if (currentPayment?.status === PaymentStatus.VERIFIED) {
           return material;
         }
         const { url, ...materialWithoutUrl } = material;
@@ -957,7 +958,7 @@ export async function getSessionByStudentIdData(
 
     // Transform materials based on payment status
     const transformedMaterials = sessionData.materials?.map(material => {
-      if (paymentData?.status === 'paid') {
+      if (paymentData?.status === PaymentStatus.VERIFIED) {
         return material;
       }
       const { url, ...materialWithoutUrl } = material;
