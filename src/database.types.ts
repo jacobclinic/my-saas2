@@ -314,6 +314,9 @@ export type Database = {
           payment_proof_url: string | null
           status: string | null
           student_id: string | null
+          notes: string | null
+          verified_date: string | null
+          rejected_date: string | null
         }
         Insert: {
           amount?: number | null
@@ -327,6 +330,9 @@ export type Database = {
           payment_proof_url?: string | null
           status?: string | null
           student_id?: string | null
+          notes?: string | null
+          verified_date?: string | null
+          rejected_date?: string | null
         }
         Update: {
           amount?: number | null
@@ -340,6 +346,9 @@ export type Database = {
           payment_proof_url?: string | null
           status?: string | null
           student_id?: string | null
+          notes?: string | null
+          verified_date?: string | null
+          rejected_date?: string | null
         }
         Relationships: [
           {

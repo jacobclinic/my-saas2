@@ -46,10 +46,6 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
     '2xl': 'max-w-2xl'
   };
 
-  if (contentClassName) {
-    console.log(contentClassName);
-  }
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className={cn(maxWidthClasses[maxWidth], "max-h-[90dvh] overflow-y-auto")}>
