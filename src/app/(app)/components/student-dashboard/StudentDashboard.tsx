@@ -25,6 +25,7 @@ import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
 import StudentSessionCard from './StudentSessionCard';
 import StudentNextSessionCard from './StudentNextSessionCard';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
 const StudentDashboard = ({
   upcomingSessionData, pastSessionData, studentId
@@ -91,7 +92,7 @@ const StudentDashboard = ({
       topic: sessionData.title,
       date: formattedDate,
       time: formattedTime,
-      paymentStatus: sessionData.payment_status || 'pending',
+      paymentStatus: sessionData.payment_status as PaymentStatus || PaymentStatus.PENDING,
       paymentAmount: Number(sessionData.payment_amount) || sessionData.class?.fee || 0,
       zoomLink: sessionData.meeting_url || undefined,
       zoomMeetingId: sessionData.zoom_meeting_id || '',
@@ -135,7 +136,7 @@ const StudentDashboard = ({
     date: "Monday, Dec 18, 2024",
     time: "4:00 PM - 6:00 PM",
     zoomLink: "https://zoom.us/j/123456789",
-    paymentStatus: "pending",
+    paymentStatus: PaymentStatus.PENDING,
     paymentAmount: 5000,
     materials: [
       { id: 1, name: "Manufacturing Accounts Notes.pdf", file_size: "2.5 MB" },
@@ -150,7 +151,7 @@ const StudentDashboard = ({
       topic: "Manufacturing Accounts - Part 2",
       date: "Monday, Dec 25, 2024",
       time: "4:00 PM - 6:00 PM",
-      paymentStatus: "paid",
+      paymentStatus: PaymentStatus.VERIFIED,
       materials: [
         { id: 3, name: "Manufacturing Accounts Part 2.pdf", file_size: "3.0 MB" }
       ]

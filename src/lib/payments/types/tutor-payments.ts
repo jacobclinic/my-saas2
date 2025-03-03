@@ -1,5 +1,7 @@
 // types.ts
 
+import { PaymentStatus } from "./admin-payments";
+
 export interface ClassDetail {
   name: string;
   schedule: string;
@@ -17,7 +19,7 @@ export interface Payment {
   totalAmount: number;
   platformFee: number;
   netAmount: number;
-  status: 'pending' | 'paid';
+  status: PaymentStatus;
   transactionId?: string;
   classes: ClassDetail[];
 }
