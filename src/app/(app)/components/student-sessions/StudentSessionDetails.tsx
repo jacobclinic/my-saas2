@@ -10,6 +10,7 @@ import StudentSessionDetailsMaterials from './StudentSessionDetailsMaterials';
 import StudentSessionDetailsActions from './StudentSessionDetailsActions';
 import PaymentDialog from '../student-payments/PaymentDialog';
 import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
 interface StudentSessionDetailsProps {
   sessionData: UpcomingSession | PastSession;
@@ -58,7 +59,7 @@ const StudentSessionDetails = ({ sessionData, type, studentId }: StudentSessionD
       topic: sessionData.title,
       date: formattedDate,
       time: formattedTime,
-      paymentStatus: sessionData.payment_status || 'pending',
+      paymentStatus: sessionData.payment_status as PaymentStatus || PaymentStatus.PENDING,
       paymentAmount: Number(sessionData.payment_amount) || sessionData.class?.fee || 0,
       zoomLink: sessionData.meeting_url || undefined,
       zoomMeetingId: sessionData.zoom_meeting_id || '',
