@@ -15,6 +15,7 @@ import {
   Check,
   AlertTriangle
 } from 'lucide-react';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
 const TutorPaymentCard: React.FC<PaymentCardProps> = ({
   payment,
@@ -57,7 +58,7 @@ const TutorPaymentCard: React.FC<PaymentCardProps> = ({
         </div>
 
         <div className="space-y-2">
-          {payment.status === 'pending' ? (
+          {payment.status === PaymentStatus.PENDING ? (
             <div className="text-sm text-amber-600 flex items-center">
               <AlertTriangle className="h-4 w-4 mr-1" />
               Payment Pending

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import TutorPaymentCard from './TutorPaymentCard';
 import InvoiceDialog from './InvoiceDialog';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
 const TutorPayments = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,7 +40,7 @@ const TutorPayments = () => {
       totalAmount: 80000,
       platformFee: 16000,
       netAmount: 64000,
-      status: "pending",
+      status: PaymentStatus.PENDING,
       classes: [
         {
           name: "Advanced Mathematics",
@@ -65,7 +66,7 @@ const TutorPayments = () => {
       totalAmount: 85000,
       platformFee: 17000,
       netAmount: 68000,
-      status: "paid",
+      status: PaymentStatus.VERIFIED, 
       transactionId: "TXN-123456",
       classes: [
         {

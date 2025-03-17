@@ -33,10 +33,10 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   onConfirm,
   confirmButtonText = 'Confirm',
   confirmButtonVariant = 'default',
-  contentClassName,
+  contentClassName = '',
   description,
   loading = false,
-  headerClassName
+  headerClassName = ''
 }) => {
   const maxWidthClasses = {
     sm: 'max-w-sm',
@@ -48,14 +48,14 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className={cn(maxWidthClasses[maxWidth], "max-h-[90dvh] overflow-y-auto", contentClassName)}>
+      <DialogContent className={cn(maxWidthClasses[maxWidth], "max-h-[90dvh] overflow-y-auto")}>
         <DialogHeader className={headerClassName}>
           <DialogTitle>{title}</DialogTitle>
           {description && <p className="text-sm text-gray-500">{description}</p>}
         </DialogHeader>
         
         {/* Wrapping content in a scrollable div */}
-        <div className="overflow-y-auto">
+        <div className={cn("overflow-y-auto", contentClassName)}>
           {children}
         </div>
 

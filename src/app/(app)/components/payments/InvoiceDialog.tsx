@@ -7,6 +7,7 @@ import { Button } from "../base-v2/ui/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../base-v2/ui/Dialog";
 import { Download } from 'lucide-react';
 import BaseDialog from '../base-v2/BaseDialog';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
 const InvoiceDialog: React.FC<InvoiceDialogProps> = ({ selectedInvoice, onClose }) => {
   if (!selectedInvoice) return null;
@@ -49,12 +50,12 @@ const InvoiceDialog: React.FC<InvoiceDialogProps> = ({ selectedInvoice, onClose 
             <div>
               <p className="text-sm text-gray-600">Status</p>
               <p className={`font-medium ${
-                selectedInvoice.status === 'paid' ? 'text-green-600' : 'text-amber-600'
+                selectedInvoice.status === PaymentStatus.VERIFIED ? 'text-green-600' : 'text-amber-600'
               }`}>
-                {selectedInvoice.status === 'paid' ? 'Paid' : 'Pending'}
+                {selectedInvoice.status === PaymentStatus.VERIFIED ? 'Paid' : 'Pending'}
               </p>
             </div>
-            {selectedInvoice.status === 'paid' && (
+            {selectedInvoice.status === PaymentStatus.VERIFIED && (
               <div>
                 <p className="text-sm text-gray-600">Payment Date</p>
                 <p className="font-medium">{selectedInvoice.paidDate}</p>
@@ -100,7 +101,7 @@ const InvoiceDialog: React.FC<InvoiceDialogProps> = ({ selectedInvoice, onClose 
         </CardContent>
       </Card>
 
-      {selectedInvoice.status === 'paid' && selectedInvoice.transactionId && (
+      {selectedInvoice.status === PaymentStatus.VERIFIED && selectedInvoice.transactionId && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Payment Receipt</CardTitle>

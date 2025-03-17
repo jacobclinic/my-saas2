@@ -1,4 +1,5 @@
 import { Json } from "~/database.types";
+import { PaymentStatus } from "~/lib/payments/types/admin-payments";
 
 // types.ts
 
@@ -64,7 +65,7 @@ export interface ClassForStudentType {
 export interface StudentPayment {
   id: string;
   period: string;
-  status: string;
+  status: PaymentStatus;
   date: string;
 }
 

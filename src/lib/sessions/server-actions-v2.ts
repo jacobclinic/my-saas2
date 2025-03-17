@@ -41,40 +41,40 @@ export const updateSessionAction = withSession(
         (sessionData.endTime && new Date(session.end_time || "").getTime() !== new Date(sessionData.endTime).getTime())
       );
       
-      let meetingUrl = sessionData.meetingUrl ?? session.meeting_url;
-      let zoomMeetingId = session.zoom_meeting_id;
+      // let meetingUrl = sessionData.meetingUrl ?? session.meeting_url;
+      // let zoomMeetingId = session.zoom_meeting_id;
 
-      if (timeChanged && session.zoom_meeting_id) {
-        // Update existing Zoom meeting only if time has changed
-        const zoomMeeting = await zoomService.updateMeeting(
-          session.zoom_meeting_id,
-          {
-            topic: sessionData.title || session.title || `${session?.classes?.name} - ${new Date(sessionData.startTime || session.start_time || "").toLocaleDateString()}`,
-            start_time: sessionData.startTime || session.start_time || "",
-            duration: getDurationInMinutes(
-              sessionData.startTime || session.start_time || "",
-              sessionData.endTime || session.end_time || ""
-            ),
-            type: 2,
-            timezone: 'Asia/Colombo'
-          }
-        );
-        meetingUrl = zoomMeeting.join_url;
-      } else if (!session.zoom_meeting_id && (sessionData.startTime || sessionData.endTime)) {
-        // Create new Zoom meeting only if times are provided and no meeting exists
-        const zoomMeeting = await zoomService.createMeeting({
-          topic: sessionData.title || session.title || `${session?.classes?.name} - ${new Date(sessionData.startTime || session.start_time || "").toLocaleDateString()}`,
-          start_time: sessionData.startTime || session.start_time || "",
-          duration: getDurationInMinutes(
-            sessionData.startTime || session.start_time || "",
-            sessionData.endTime || session.end_time || ""
-          ),
-          timezone: 'Asia/Colombo',
-          type: 2,
-        }, '');
-        meetingUrl = zoomMeeting.join_url;
-        zoomMeetingId = zoomMeeting.id.toString();
-      }
+      // if (timeChanged && session.zoom_meeting_id) {
+      //   // Update existing Zoom meeting only if time has changed
+      //   const zoomMeeting = await zoomService.updateMeeting(
+      //     session.zoom_meeting_id,
+      //     {
+      //       topic: sessionData.title || session.title || `${session?.classes?.name} - ${new Date(sessionData.startTime || session.start_time || "").toLocaleDateString()}`,
+      //       start_time: sessionData.startTime || session.start_time || "",
+      //       duration: getDurationInMinutes(
+      //         sessionData.startTime || session.start_time || "",
+      //         sessionData.endTime || session.end_time || ""
+      //       ),
+      //       type: 2,
+      //       timezone: 'Asia/Colombo'
+      //     }
+      //   );
+      //   meetingUrl = zoomMeeting.join_url;
+      // } else if (!session.zoom_meeting_id && (sessionData.startTime || sessionData.endTime)) {
+      //   // Create new Zoom meeting only if times are provided and no meeting exists
+      //   const zoomMeeting = await zoomService.createMeeting({
+      //     topic: sessionData.title || session.title || `${session?.classes?.name} - ${new Date(sessionData.startTime || session.start_time || "").toLocaleDateString()}`,
+      //     start_time: sessionData.startTime || session.start_time || "",
+      //     duration: getDurationInMinutes(
+      //       sessionData.startTime || session.start_time || "",
+      //       sessionData.endTime || session.end_time || ""
+      //     ),
+      //     timezone: 'Asia/Colombo',
+      //     type: 2,
+      //   }, '');
+      //   meetingUrl = zoomMeeting.join_url;
+      //   zoomMeetingId = zoomMeeting.id.toString();
+      // }
 
       // Build update object with only provided fields
       const updateData: Record<string, any> = {
@@ -86,8 +86,8 @@ export const updateSessionAction = withSession(
       if (sessionData.description !== undefined) updateData.description = sessionData.description;
       if (sessionData.startTime !== undefined) updateData.start_time = sessionData.startTime;
       if (sessionData.endTime !== undefined) updateData.end_time = sessionData.endTime;
-      if (meetingUrl !== session.meeting_url) updateData.meeting_url = meetingUrl;
-      if (zoomMeetingId !== session.zoom_meeting_id) updateData.zoom_meeting_id = zoomMeetingId;
+      // if (meetingUrl !== session.meeting_url) updateData.meeting_url = meetingUrl;
+      // if (zoomMeetingId !== session.zoom_meeting_id) updateData.zoom_meeting_id = zoomMeetingId;
 
       // Update session with only the changed fields
       const { error: updateError } = await supabase
