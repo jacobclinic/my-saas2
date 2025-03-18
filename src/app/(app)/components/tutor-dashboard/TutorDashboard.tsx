@@ -53,7 +53,7 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
       const formattedData = activeClassesData.map((classData) => {
         // Ensure time_slots is an array before reducing
         const schedule = classData?.time_slots?.reduce((acc: string, slot: any, index: number, array) => {
-          const timeSlotString = `${slot.day}, ${slot.time}`;
+          const timeSlotString = `${slot.day}, ${slot.startTime}-${slot.endTime}`;
           // Add a separator for all except the last item
           return acc + timeSlotString + (index < array.length - 1 ? "; " : "");
         }, "") || "No schedule available";
@@ -131,7 +131,7 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
       </div>
 
       {/* Tutorial Video */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>How to Use the Platform</CardTitle>
         </CardHeader>
@@ -145,7 +145,7 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
             />
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 };

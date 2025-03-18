@@ -7,7 +7,6 @@ import NAVIGATION_CONFIG from '~/navigation.config';
 
 function AppSidebarNavigation() {
   const { data: userRole } = useUserRole();
-  console.log('userRole', userRole);
 
   // Helper function to check if the role has access
   const hasAccess = (itemRoles?: string[]) => {

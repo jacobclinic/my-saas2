@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import StudentRegistrationForm from '../components/student-registration/RegistrationFormData';
 import RegistrationSuccess from '../components/student-registration/RegistrationSuccess';
 import StudentClassList from '../components/student-classes/StudentClassList';
+import { useEffect } from 'react';
 
 export const metadata = {
   title: 'Sessions',
@@ -40,25 +41,30 @@ async function ClassesPage() {
   let classesData: any[] = [];
   let studentClassesData: any[] = [];
   let tutorId;
-
+  
   if (userRole === "student") {
+    
     studentClassesData = await getAllClassesByStudentIdData(client, user?.id || "");
-    console.log("Classes-server-component------", studentClassesData);
   } else if (userRole === "tutor" || userRole === "admin") {
+    
+    
     classesData = await getAllClassesByTutorIdData(client, user?.id || ""); 
+    
+    
     tutorId = user?.id;
-    console.log("Classes-server-component------", classesData);
   }
   
   return (
     <>
+    
       <AppHeader
         title={''}
         description={
           ""
         }
       />
-
+    
+    
       <PageBody>
         {userRole === 'student' ? (
           <StudentClassList studentClassesData={studentClassesData} />

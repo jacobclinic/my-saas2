@@ -20,13 +20,15 @@ const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassT
   const [linkCopied, setLinkCopied] = useState<LinkCopiedState>({});
   const [showCreateClass, setShowCreateClass] = useState(false);
   const [classTableData, setClassTableData] = useState<ClassListData[]>([]);
-
+  
   useEffect(() => {
     if (classesData) {
       const formattedData = classesData.map((classData) => {
         // Ensure time_slots is an array before reducing
         const schedule = classData?.time_slots?.reduce((acc: string, slot: any, index: number, array) => {
-          const timeSlotString = `${slot.day}, ${slot.time}`;
+          console.log(slot);
+          
+          const timeSlotString = `${slot.day}, ${slot.startTime} - ${slot.endTime}`;
           // Add a separator for all except the last item
           return acc + timeSlotString + (index < array.length - 1 ? "; " : "");
         }, "") || "No schedule available";
@@ -52,7 +54,7 @@ const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassT
   }, [classesData]);
 
 
-  console.log('classesData:', classesData);
+ 
 
 
   // Sample class data with Sri Lankan context
@@ -88,6 +90,7 @@ const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassT
       }, 2000);
     }
   };
+console.log("cls",classTableData);
 
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
