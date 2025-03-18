@@ -379,27 +379,19 @@ const PastSessions = ({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
-            <DatePicker
-              selected={startDate}
-              onChange={(date: Date | null) => setStartDate(date)}
-              selectsStart
-              startDate={startDate}
-              endDate={endDate}
-              placeholderText="Start Date"
-              className="border rounded-md p-2"
-            />
-            <DatePicker
-              selected={endDate}
-              onChange={(date: Date | null) => setEndDate(date)}
-              selectsEnd
-              startDate={startDate}
-              endDate={endDate}
-              minDate={startDate || undefined}
-              placeholderText="End Date"
-              className="border rounded-md p-2"
-            />
-          </div>
+          <DatePicker
+            selectsRange // Enable range selection
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(dates: [Date | null, Date | null]) => {
+              const [start, end] = dates;
+              setStartDate(start);
+              setEndDate(end);
+            }}
+            isClearable // Allow clearing the selection
+            placeholderText="Select a date range"
+            className="border rounded-md p-2"
+          />
         </div>
 
         <div>
@@ -428,7 +420,7 @@ const PastSessions = ({
 
       {/* Sessions List */}
       <div className="space-y-6">
-        {pastSessionTableData
+        {pastSessionsSampleData
           .filter((session) => {
             // Filter by search query
             if (searchQuery) {
