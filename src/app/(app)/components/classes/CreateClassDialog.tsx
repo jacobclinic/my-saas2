@@ -43,19 +43,19 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     tutorId,
   });
 
-  const handleAddTimeSlot = () => {
-    setNewClass(prev => ({
-      ...prev,
-      timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }]
-    }));
-  };
+  // const handleAddTimeSlot = () => {
+  //   setNewClass(prev => ({
+  //     ...prev,
+  //     timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }]
+  //   }));
+  // };
 
-  const handleRemoveTimeSlot = (index: number) => {
-    setNewClass(prev => ({
-      ...prev,
-      timeSlots: prev.timeSlots.filter((_, i) => i !== index)
-    }));
-  };
+  // const handleRemoveTimeSlot = (index: number) => {
+  //   setNewClass(prev => ({
+  //     ...prev,
+  //     timeSlots: prev.timeSlots.filter((_, i) => i !== index)
+  //   }));
+  // };
 
   const updateTimeSlot = (index: number, field: keyof TimeSlot, value: string) => {
     setNewClass(prev => ({
@@ -99,7 +99,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     <BaseDialog
       open={open}
       onClose={onClose}
-      title="Create Your First Class"
+      title="Create Class Group"
       description="Set up your class details and schedule"
       maxWidth="xl"
       onConfirm={handleSubmit}
@@ -188,7 +188,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
         </div>
 
         <div>
-          <div className="flex justify-between items-center mb-2">
+          {/* <div className="flex justify-between items-center mb-2">
             <label className="text-sm font-medium">Class Schedule</label>
             <Button
               type="button"
@@ -199,7 +199,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               <Plus className="h-4 w-4 mr-2" />
               Add Time Slot
             </Button>
-          </div>
+          </div> */}
 
           <div className="space-y-2 flex flex-col">
             <div className="flex self-end gap-[75px] mr-14">
@@ -240,7 +240,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
                   />
                 </div>
 
-                {newClass.timeSlots.length > 1 && (
+                {/* {newClass.timeSlots.length > 1 && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -250,7 +250,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
                   >
                     <X className="h-4 w-4" />
                   </Button>
-                )}
+                )} */}
               </div>
             ))}
           </div>

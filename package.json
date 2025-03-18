@@ -80,6 +80,7 @@
     "nodemailer": "^6.9.12",
     "pino": "^8.19.0",
     "react": "18.2.0",
+    "react-datepicker": "^8.2.1",
     "react-dom": "18.2.0",
     "react-dropzone": "^14.3.5",
     "react-hook-form": "^7.51.0",
