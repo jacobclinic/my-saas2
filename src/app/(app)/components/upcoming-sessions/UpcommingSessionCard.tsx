@@ -88,7 +88,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     {isDashboard ? 'Next Class' : sessionData.name}
                   </h2>                
                   {sessionData.subject && (
-                    <Badge variant="secondary">{sessionData.subject}</Badge>
+                    <Badge variant="secondary">{sessionData.subject?.replace(/\b([a-z])/,(match)=>match.toUpperCase())}</Badge>
                   )}
                 </div>
                 {isDashboard && <p className="text-sm text-gray-600 mt-1">{sessionData.name}</p>}
