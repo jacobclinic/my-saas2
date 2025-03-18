@@ -428,7 +428,7 @@ const PastSessions = ({
 
       {/* Sessions List */}
       <div className="space-y-6">
-        {pastSessionsSampleData
+        {pastSessionTableData
           .filter((session) => {
             // Filter by search query
             if (searchQuery) {
