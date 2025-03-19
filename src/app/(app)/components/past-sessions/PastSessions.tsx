@@ -420,28 +420,27 @@ const PastSessions = ({
 
       {/* Sessions List */}
       <div className="space-y-6">
-        {pastSessionsSampleData
+        {pastSessionTableData
           .filter((session) => {
-            // Filter by search query
-            if (searchQuery) {
-              const matchesSearchQuery =
-                session.name
-                  .toLowerCase()
-                  .includes(searchQuery.toLowerCase()) ||
-                session.topic.toLowerCase().includes(searchQuery.toLowerCase());
-              if (!matchesSearchQuery) return false;
-            }
+            // Apply both search term and date range filters
+            const matchesSearchTerm = searchQuery
+              ? session.name.toLowerCase().includes(searchQuery.toLowerCase())
+              : true;
 
-            // Filter by date range
-            if (startDate && endDate) {
-              const sessionDate = new Date(session.date);
-              return sessionDate >= startDate && sessionDate <= endDate;
-            }
+            const matchesDateRange =
+              startDate && endDate
+                ? new Date(session.date) >= startDate &&
+                  new Date(session.date) <= endDate
+                : true;
 
-            return true;
+            // Return true only if both conditions are satisfied
+            return matchesSearchTerm && matchesDateRange;
           })
           .map((sessionData) => (
-            <PastSessionsCard key={sessionData.id} sessionData={sessionData} />
+            <PastSessionsCard
+              key={sessionData.id}
+              sessionData={sessionData}
+            />
           ))}
       </div>
     </div>

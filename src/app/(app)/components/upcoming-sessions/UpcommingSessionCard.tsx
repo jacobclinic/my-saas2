@@ -248,12 +248,12 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     handleCopyLink(materialsText, 'materials');
                   }}
                 >
-                  {linkCopied.materials ? (
+                  {/* {linkCopied.materials ? (
                     <Check className="h-4 w-4 mr-2" />
                   ) : (
                     <Copy className="h-4 w-4 mr-2" />
                   )}
-                  {linkCopied.materials ? 'Materials Links Copied!' : 'Copy Materials Links'}
+                  {linkCopied.materials ? 'Materials Links Copied!' : 'Copy Materials Links'} */}
                 </Button>
               )}
             </div>

@@ -2,7 +2,7 @@ import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
 import { getAllPastSessionsByTutorIdData } from '~/lib/sessions/database/queries';
-import PastSessionsClient from './PastSessionClient';
+import PastSessionsClient from '../components/past-sessions/PastSessionClient';
 
 export const metadata = {
   title: 'Sessions',

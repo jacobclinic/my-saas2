@@ -7,6 +7,8 @@ import { redirect } from 'next/navigation';
 import StudentRegistrationForm from '../components/student-registration/RegistrationFormData';
 import RegistrationSuccess from '../components/student-registration/RegistrationSuccess';
 import StudentClassList from '../components/student-classes/StudentClassList';
+import StudentClassClient from '../components/student-classes/StudentClassClient';
+import ClassesListClient from '../components/classes/ClassesListClient';
 
 export const metadata = {
   title: 'Sessions',
@@ -61,9 +63,9 @@ async function ClassesPage() {
 
       <PageBody>
         {userRole === 'student' ? (
-          <StudentClassList studentClassesData={studentClassesData} />
+          <StudentClassClient studentClassesData={studentClassesData} />
         ) : (
-          <ClassesList classesData={classesData} userRole={userRole} tutorId={tutorId}/>
+          <ClassesListClient classesData={classesData} userRole={userRole} tutorId={tutorId}/>
         )}
       </PageBody>
     </>
