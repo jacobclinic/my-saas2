@@ -1,7 +1,11 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClass, deleteClass, updateClass } from '~/lib/classes/database/mutations-v2';
+import {
+  createClass,
+  deleteClass,
+  updateClass,
+} from '~/lib/classes/database/mutations-v2';
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { ClassType, NewClassData } from './types/class-v2';
@@ -30,32 +34,32 @@ export const createClassAction = withSession(
     const client = getSupabaseServerActionClient();
 
     const classResult = await createClass(client, classData);
-    
+
     // Get tutor's email for Zoom meeting setup
     const { data: tutorData } = await client
       .from('users')
       .select('email')
       .eq('id', classData.tutorId)
       .single();
-    
-    // Generate initial 4 sessions per time slot
-    const initialSessions = await Promise.all(classData.timeSlots.flatMap(async timeSlot => {
-      const nextOccurrences = getUpcomingOccurrencesForYear(timeSlot, classData.startDate);
-      
-      // return nextOccurrences.map(occurrence => {
-      //   const endTime = new Date(occurrence);
-      //   endTime.setHours(endTime.getHours() + 2);
 
-      //   return {
-      //     class_id: classResult.id,
-      //     start_time: occurrence.toISOString(),
-      //     end_time: endTime.toISOString()
-      //   };
-      // });
-      // Usage
-      const meetings = await createZoomMeetingsBatch(classResult?.id, classData, nextOccurrences);
-      return meetings;
-    }));
+    // Generate initial 4 sessions per time slot
+    const initialSessions = await Promise.all([
+      // Use the single timeSlot instead of timeSlots
+      (async () => {
+        const nextOccurrences = getUpcomingOccurrencesForYear(
+          classData.timeSlot, // Use the single timeSlot
+          classData.startDate,
+        );
+
+        // Create Zoom meetings for the occurrences
+        const meetings = await createZoomMeetingsBatch(
+          classResult?.id,
+          classData,
+          nextOccurrences,
+        );
+        return meetings;
+      })(),
+    ]);
 
     // Insert all initial sessions
     const { error: sessionError } = await client
@@ -66,12 +70,12 @@ export const createClassAction = withSession(
 
     revalidatePath('/classes');
     revalidatePath('/(app)/classes');
-    
+
     return {
       success: true,
       class: classResult,
     };
-  }
+  },
 );
 
 export const updateClassAction = withSession(
@@ -83,12 +87,12 @@ export const updateClassAction = withSession(
     revalidatePath('/classes');
     revalidatePath(`/classes/${result?.id}`);
     revalidatePath('/(app)/classes');
-    
+
     return {
       success: true,
       class: result,
     };
-  }
+  },
 );
 
 export const deleteClassAction = withSession(
@@ -99,32 +103,42 @@ export const deleteClassAction = withSession(
 
     revalidatePath('/classes');
     revalidatePath('/(app)/classes');
-    
+
     return {
       success: true,
       classId: result,
     };
-  }
+  },
 );
 
-const createZoomMeetingsBatch = async (classId: string, classData: NewClassData, occurrences: { startTime: Date; endTime: Date }[] ) => {
+const createZoomMeetingsBatch = async (
+  classId: string,
+  classData: NewClassData,
+  occurrences: { startTime: Date; endTime: Date }[],
+) => {
   const results = [];
 
-  for (let i = 0; i < occurrences.length; i++) {
+  for (let i = 0; i < 1; i++) {
     const occurrence = occurrences[i];
 
     const start_time = occurrence.startTime.toISOString();
     const end_time = occurrence.endTime.toISOString();
-    
+
     try {
       // Create Zoom meeting
-      const zoomMeeting = await zoomService.createMeeting({
-        topic: `${classData.name}_${start_time}`,
-        start_time,
-        duration: (new Date(occurrence.endTime).getTime() - new Date(occurrence.startTime).getTime()) / (1000 * 60),
-        timezone: 'Asia/Colombo',
-        type: 2,
-      }, '');
+      const zoomMeeting = await zoomService.createMeeting(
+        {
+          topic: `${classData.name}_${start_time}`,
+          start_time,
+          duration:
+            (new Date(occurrence.endTime).getTime() -
+              new Date(occurrence.startTime).getTime()) /
+            (1000 * 60),
+          timezone: 'Asia/Colombo',
+          type: 2,
+        },
+        '',
+      );
 
       if (!zoomMeeting) {
         throw new Error('Failed to initialize Zoom session');
@@ -134,19 +148,21 @@ const createZoomMeetingsBatch = async (classId: string, classData: NewClassData,
         class_id: classId,
         start_time,
         end_time,
-        zoom_meeting_id: zoomMeeting?.id
+        zoom_meeting_id: zoomMeeting?.id,
       });
 
       // Introduce a delay after every 9 requests
       if ((i + 1) % 9 === 0) {
-        console.log("Rate limit reached, waiting for 1 second...");
-        await new Promise(resolve => setTimeout(resolve, 1000)); // 1-second delay
+        console.log('Rate limit reached, waiting for 1 second...');
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second delay
       }
-
     } catch (error) {
-      console.error(`Error creating Zoom meeting for occurrence ${i + 1}:`, error);
+      console.error(
+        `Error creating Zoom meeting for occurrence ${i + 1}:`,
+        error,
+      );
     }
   }
 
   return results;
-}
+};

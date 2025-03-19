@@ -18,7 +18,7 @@ export async function createClass(client: Client, data: NewClassData) {
         grade: data.yearGrade,
         fee: parseInt(data.monthlyFee),
         starting_date: data.startDate,
-        time_slots: data.timeSlots,
+        time_slots: data.timeSlot,
         status: 'active',
         tutor_id: data.tutorId
       })
