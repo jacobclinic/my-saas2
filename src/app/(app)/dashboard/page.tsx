@@ -95,7 +95,7 @@ async function DashboardPage() {
             }`}
           />
           <PageBody>
-            {(!upcomingSessions.length) ? (
+            {/* {(!upcomingSessions.length) ? (
               <Alert className="bg-blue-50 border-blue-200">
                 <Info className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-blue-700">
@@ -108,7 +108,12 @@ async function DashboardPage() {
                 pastSessionData={pastSessions}
                 studentId={user.id}
               />
-            )}
+            )} */}
+            <StudentDashboard 
+                upcomingSessionData={upcomingSessions} 
+                pastSessionData={pastSessions}
+                studentId={user.id}
+              />
           </PageBody>
         </>
       );
