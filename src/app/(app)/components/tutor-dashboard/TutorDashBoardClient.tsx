@@ -10,6 +10,7 @@ import { AlertDescription } from '../base-v2/ui/Alert';
 import UpcomingClassesSection from './tutor-db-sections/UpcomingClasses';
 import ActiveClassesSection from './tutor-db-sections/ActiveClasses';
 import TutorialVideoSection from './tutor-db-sections/TutorialVideoSection';
+import PaginationControls from '../PaginationControls';
 
 const TutorDBClient = ({
   nextSessionData,
@@ -20,7 +21,7 @@ const TutorDBClient = ({
 }) => {
   //Pagination controls for UpcomingClassesSection
   const [currentPage1, setCurrentPage1] = useState(1); // Current page number
-  const [itemsPerPage1, setItemsPerPage1] = useState(5); // Items per page
+  const itemsPerPage1 = 5; // Items per page
 
   // Calculate the total number of pages
   const totalPages1 = Math.ceil(nextSessionData.length / itemsPerPage1);
@@ -77,49 +78,11 @@ const TutorDBClient = ({
 
       {/* Pagination Controls 1*/}
       {totalPages1 > 1 && (
-        <div className="flex justify-center content-end mt-auto mb-5">
-          <nav className="flex gap-2">
-            {/* Previous Button */}
-            <button
-              onClick={() => handlePageChange1(currentPage1 - 1)}
-              disabled={currentPage1 === 1}
-              className="px-4 py-2 border rounded-md disabled:opacity-50"
-            >
-              Previous
-            </button>
-
-            {/* Page Numbers */}
-            {Array.from(
-              { length: Math.ceil(nextSessionData.length / itemsPerPage1) },
-              (_, i) => (
-                <button
-                  key={i + 1}
-                  onClick={() => handlePageChange1(i + 1)}
-                  className={`px-4 py-2 border rounded-md ${
-                    currentPage1 === i + 1 ? 'bg-blue-500 text-white' : ''
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ),
-            )}
-
-            {/* Next Button */}
-            <button
-              onClick={() => handlePageChange1(currentPage1 + 1)}
-              disabled={
-                currentPage1 ===
-                Math.max(
-                  Math.ceil(nextSessionData.length / itemsPerPage1),
-                  Math.ceil(activeClassesData.length / itemsPerPage1),
-                )
-              }
-              className="px-4 py-2 border rounded-md disabled:opacity-50"
-            >
-              Next
-            </button>
-          </nav>
-        </div>
+        <PaginationControls
+          currentPage={currentPage1}
+          totalPages={totalPages1}
+          onPageChange={handlePageChange1}
+        />
       )}
 
       {/* Render the ActiveClasses component with paginated data */}
@@ -127,43 +90,11 @@ const TutorDBClient = ({
 
       {/* Pagination Controls 2*/}
       {totalPages2 > 1 && (
-        <div className="flex justify-center content-end mt-auto mb-5">
-          <nav className="flex gap-2">
-            <button
-              onClick={() => handlePageChange2(currentPage2 - 1)}
-              disabled={currentPage1 === 1}
-              className="px-4 py-2 border rounded-md disabled:opacity-50"
-            >
-              Previous
-            </button>
-
-            {Array.from(
-              { length: Math.ceil(activeClassesData.length / itemsPerPage2) },
-              (_, i) => (
-                <button
-                  key={i + 1}
-                  onClick={() => handlePageChange2(i + 1)}
-                  className={`px-4 py-2 border rounded-md ${
-                    currentPage2 === i + 1 ? 'bg-blue-500 text-white' : ''
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ),
-            )}
-
-            <button
-              onClick={() => handlePageChange2(currentPage2 + 1)}
-              disabled={
-                currentPage2 ===
-                Math.ceil(activeClassesData.length / itemsPerPage2)
-              }
-              className="px-4 py-2 border rounded-md disabled:opacity-50"
-            >
-              Next
-            </button>
-          </nav>
-        </div>
+        <PaginationControls
+          currentPage={currentPage2}
+          totalPages={totalPages2}
+          onPageChange={handlePageChange2}
+        />
       )}
 
       <TutorialVideoSection />
