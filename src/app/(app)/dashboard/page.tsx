@@ -8,6 +8,7 @@ import { getAllClassesByTutorIdData } from '~/lib/classes/database/queries';
 import { Alert, AlertDescription } from '../components/base-v2/ui/Alert';
 import { Info } from 'lucide-react';
 import StudentDashboard from '../components/student-dashboard/StudentDashboard';
+import TutorDBClient from '../components/tutor-dashboard/TutorDashBoardClient';
 
 export const metadata = {
   title: 'Dashboard',
@@ -68,7 +69,7 @@ async function DashboardPage() {
                 </AlertDescription>
               </Alert>
             ) : (
-              <TutorDashboard 
+              <TutorDBClient 
                 nextSessionData={sessionData} 
                 activeClassesData={classesData} 
               />
