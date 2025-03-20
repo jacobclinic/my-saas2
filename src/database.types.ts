@@ -20,7 +20,7 @@ export type Database = {
           starting_date: string | null
           status: string | null
           subject: string | null
-          time_slots: Json[] | null
+          time_slots: Json| null
           tutor_id: string
         }
         Insert: {
@@ -33,7 +33,7 @@ export type Database = {
           starting_date?: string | null
           status?: string | null
           subject?: string | null
-          time_slots?: Json[] | null
+          time_slots?: Json | null
           tutor_id: string
         }
         Update: {
@@ -46,7 +46,7 @@ export type Database = {
           starting_date?: string | null
           status?: string | null
           subject?: string | null
-          time_slots?: Json[] | null
+          time_slots?: Json | null
           tutor_id?: string
         }
         Relationships: [

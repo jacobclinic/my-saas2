@@ -3,6 +3,7 @@ import getSupabaseServerComponentClient from '~/core/supabase/server-component-c
 import { PageBody } from '~/core/ui/Page';
 import { getAllUpcommingSessionsByTutorIdData } from '~/lib/sessions/database/queries';
 import UpcomingClasses from '../components/upcoming-sessions/UpcomingSessions';
+import UpcomingSessionClient from '../components/upcoming-sessions/UpcomingSessionClient';
 
 export const metadata = {
   title: 'Sessions',
@@ -12,20 +13,18 @@ async function UpcomingSessionsPage() {
   const client = getSupabaseServerComponentClient();
   const { data: user, error } = await client.auth.getUser();
   console.log('-----UpcomingSessionsPage-------auth-User:', user);
-  const sessionData = await getAllUpcommingSessionsByTutorIdData(client, user?.user?.id || "");
-  console.log("UpcomingSessions-server-component------", sessionData);
-  
+  const sessionData = await getAllUpcommingSessionsByTutorIdData(
+    client,
+    user?.user?.id || '',
+  );
+  console.log('UpcomingSessions-server-component------', sessionData);
+
   return (
     <>
-      <AppHeader
-        title={''}
-        description={
-          ""
-        }
-      />
+      <AppHeader title={''} description={''} />
 
       <PageBody>
-        <UpcomingClasses upcomingSessionData={sessionData}/>
+        <UpcomingSessionClient upcomingSessionData={sessionData} />
       </PageBody>
     </>
   );

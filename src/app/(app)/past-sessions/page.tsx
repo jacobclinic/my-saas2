@@ -2,7 +2,7 @@ import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
 import { getAllPastSessionsByTutorIdData } from '~/lib/sessions/database/queries';
-import PastSessions from '../components/past-sessions/PastSessions';
+import PastSessionsClient from '../components/past-sessions/PastSessionClient';
 
 export const metadata = {
   title: 'Sessions',
@@ -10,22 +10,19 @@ export const metadata = {
 
 async function PastSessionsPage() {
   const client = getSupabaseServerComponentClient();
-  const { data: user, error } = await client.auth.getUser();
-  console.log('-----PastSessionsPage-------auth-User:', user);
-  const sessionData = await getAllPastSessionsByTutorIdData(client, user?.user?.id || "");
-  console.log("PastSessions-server-component------", sessionData);
-  
+  const { data: user } = await client.auth.getUser();
+
+  // Fetch all sessions (without pagination)
+  const sessionData = await getAllPastSessionsByTutorIdData(
+    client,
+    user?.user?.id || ''
+  );
+
   return (
     <>
-      <AppHeader
-        title={''}
-        description={
-          ""
-        }
-      />
-
+      <AppHeader title={''} description={''} />
       <PageBody>
-        <PastSessions pastSessionsData={sessionData}/>
+        <PastSessionsClient initialSessions={sessionData} />
       </PageBody>
     </>
   );

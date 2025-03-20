@@ -27,7 +27,7 @@ export function PageBody(
   }>,
 ) {
   const className = classNames(
-    'w-full px-container flex flex-col flex-1',
+    'w-full h-full px-container flex flex-col flex-1',
     props.className,
   );
 

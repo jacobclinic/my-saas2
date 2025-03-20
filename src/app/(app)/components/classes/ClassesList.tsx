@@ -9,7 +9,7 @@ import {
   Search,
 } from 'lucide-react';
 import { format as dateFnsFormat } from "date-fns";
-import { NewStudentData, NewClassData, LinkCopiedState, ClassListData, ClassType, TimeSlot } from '~/lib/classes/types/class-v2';
+import { LinkCopiedState, ClassListData, ClassType } from '~/lib/classes/types/class-v2';
 import ClassCard from './ClassCard';
 import CreateClassDialog from './CreateClassDialog';
 import { GRADES } from '~/lib/constants-v2';

@@ -60,61 +60,6 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
               </div>
             </div>
 
-            {/* Materials Section */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">Class Materials</h4>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      const message = `Class Materials - ${sessionData.name} (${sessionData.date})\n\n` +
-                        sessionData.materials.map(material => 
-                          `${material.name}\n${material.url}`
-                        ).join('\n\n');
-                      handleCopyLink(message, 'allMaterials');
-                    }}
-                  >
-                    {linkCopied.allMaterials ? (
-                      <Check className="h-4 w-4 mr-2" />
-                    ) : (
-                      <Copy className="h-4 w-4 mr-2" />
-                    )}
-                    {linkCopied.allMaterials ? 'All Links Copied!' : 'Copy All Material Links'}
-                  </Button>
-                  <Badge variant="outline">{sessionData.materials.length} files</Badge>
-                </div>
-              </div>
-              <div className="space-y-2">
-                {sessionData.materials.map((material) => (
-                  <div key={material.id} 
-                    className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
-                  >
-                    <div className="flex items-center">
-                      <File className="h-4 w-4 text-blue-600 mr-2" />
-                      <div>
-                        <p className="font-medium">{material.name}</p>
-                        <p className="text-sm text-gray-600">{material.file_size}</p>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCopyLink(material.url, 'materials')}
-                    >
-                      {linkCopied.materials ? (
-                        <Check className="h-4 w-4 mr-2" />
-                      ) : (
-                        <Link2 className="h-4 w-4 mr-2" />
-                      )}
-                      {linkCopied.materials ? 'Copied!' : 'Copy Link'}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Actions */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Button onClick={() => window.open(sessionData.recordingUrl, '_blank')}>
@@ -130,7 +75,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
                 ) : (
                   <Link2 className="h-4 w-4 mr-2" />
                 )}
-                {linkCopied.recordings ? 'Copied!' : 'Copy Recording Link'}
+                {linkCopied.recordings ? 'Copied!' : 'Copy Student Link'}
               </Button>
 
               <Button variant="outline" onClick={() => setShowAttendanceDialog(true)}>
