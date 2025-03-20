@@ -36,6 +36,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const [addStudentLoading, setAddStudentLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
+
   const handleCopyLink = async () => {
     const classId = classData.id;
     const registrationData = {
@@ -85,7 +86,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
       setAddStudentLoading(false);
     }
   };
-
+  
   return (
     <>
       <Card className={cn('mb-4', isDashboard && 'border-blue-200 bg-blue-50')}>
@@ -95,9 +96,12 @@ const ClassCard: React.FC<ClassCardProps> = ({
               <div className="space-y-2">
                 <div className="space-y-1">
                   <h3 className="text-lg font-semibold">{classData.name}</h3>
+                 
                   <div className="flex items-center text-sm text-gray-600">
+                  
                     <CalendarDays className="h-4 w-4 mr-2" />
-                    {classData.schedule}
+                    
+                    {classData.schedule?.replace(/\b([a-z])/,(match)=>match.toUpperCase())}
                   </div>
                   {'nextClass' in classData && (
                     <div className="flex items-center text-sm text-gray-600">
@@ -114,7 +118,25 @@ const ClassCard: React.FC<ClassCardProps> = ({
                 </div>
               </div>
 
-              <div className="space-x-2">
+              
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowStudentsDialog(true)}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                View Students
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setShowEditDialog(true)}
+              >
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit Class
+              </Button>
                 <Button
                   variant="outline"
                   onClick={() =>
@@ -135,25 +157,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
                   <Plus className="h-4 w-4 mr-2" />
                   Add Student
                 </Button>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowStudentsDialog(true)}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                View Students
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setShowEditDialog(true)}
-              >
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit Class
-              </Button>
+             
 
               {showViewDetails && (
                 <Button
