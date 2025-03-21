@@ -37,16 +37,36 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     yearGrade: '',
     monthlyFee: '',
     startDate: '',
-    timeSlot: { day: '', startTime: '', endTime: '' }, // Single time slot
+    timeSlots: [{ day: '', startTime: '', endTime: '' }], // Single time slot
     tutorId,
   });
 
-  const updateTimeSlot = (field: keyof TimeSlot, value: string) => {
-    setNewClass(prev => ({
-      ...prev,
-      timeSlot: { ...prev.timeSlot, [field]: value }, // Update the single time slot
-    }));
-  };
+    // const handleAddTimeSlot = () => {
+  //   setNewClass(prev => ({
+  //     ...prev,
+  //     timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }]
+  //   }));
+  // };
+
+  // const handleRemoveTimeSlot = (index: number) => {
+  //   setNewClass(prev => ({
+  //     ...prev,
+  //     timeSlots: prev.timeSlots.filter((_, i) => i !== index)
+  //   }));
+  // };
+
+  const updateTimeSlot = (index: number, field: keyof TimeSlot, value: string) => {
+      setNewClass((prev: NewClassData) => {
+        const updatedTimeSlots = prev.timeSlots.map((slot, i) =>
+          i === index ? { ...slot, [field]: value } : slot
+        );
+        
+        return {
+          ...prev,
+          timeSlots: updatedTimeSlots as [TimeSlot], // Type assertion to match the expected tuple type
+        };
+      });
+    };
 
   const handleSubmit = () => {
     startTransition(async () => {
@@ -75,9 +95,8 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     newClass.monthlyFee &&
     newClass.yearGrade &&
     newClass.startDate &&
-    newClass.timeSlot.day && // Validate the single time slot
-    newClass.timeSlot.startTime &&
-    newClass.timeSlot.endTime;
+    newClass.timeSlots.every((slot) => slot.day && slot.startTime && slot.endTime);
+
 
   return (
     <BaseDialog
@@ -172,12 +191,24 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
         </div>
 
         <div>
+          {/* <div className="flex justify-between items-center mb-2">
+            <label className="text-sm font-medium">Class Schedule</label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAddTimeSlot}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Time Slot
+            </Button>
+          </div> */}
           <div className="space-y-2 flex flex-col">
             <div className="flex self-end gap-[75px] mr-14">
               <label className="text-sm font-medium">Start Time</label>
               <label className="text-sm font-medium">End Time</label>
             </div>
-            <div className="flex gap-2 items-start">
+            {/* <div className="flex gap-2 items-start">
               <Select
                 value={newClass.timeSlot.day}
                 onValueChange={(value) => updateTimeSlot('day', value)}
@@ -197,7 +228,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               <div className="flex gap-2">
                 <Input
                   type="time"
-                  value={newClass.timeSlot.startTime}
+                  value={newClass.timeSlots.startTime}
                   onChange={(e) => updateTimeSlot('startTime', e.target.value)}
                   placeholder="Start time"
                 />
@@ -209,7 +240,54 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
                   placeholder="End time"
                 />
               </div>
-            </div>
+            </div> */}
+            {newClass.timeSlots.map((slot, index) => (
+              <div key={index} className="flex gap-2 items-start">
+                <Select
+                  value={slot.day}
+                  onValueChange={(value) => updateTimeSlot(index, 'day', value)}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAYS_OF_WEEK.map(day => (
+                      <SelectItem key={day} value={day.toLowerCase()}>
+                        {day}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="flex gap-2">
+                  <Input
+                    type="time"
+                    value={slot.startTime}
+                    onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
+                    placeholder="Start time"
+                  />
+                  
+                  <Input
+                    type="time"
+                    value={slot.endTime}
+                    onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
+                    placeholder="End time"
+                  />
+                </div>
+
+                {/* {newClass.timeSlots.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoveTimeSlot(index)}
+                    className="text-red-500 hover:text-red-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )} */}
+              </div>
+            ))}
           </div>
         </div>
       </div>

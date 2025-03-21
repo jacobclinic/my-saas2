@@ -43,23 +43,23 @@ export const createClassAction = withSession(
       .single();
 
     // Generate initial 4 sessions per time slot
-    const initialSessions = await Promise.all([
-      // Use the single timeSlot instead of timeSlots
-      (async () => {
-        const nextOccurrences = getUpcomingOccurrencesForYear(
-          classData.timeSlot, // Use the single timeSlot
-          classData.startDate,
-        );
+    const initialSessions = await Promise.all(classData.timeSlots.flatMap(async timeSlot => {
+      const nextOccurrences = getUpcomingOccurrencesForYear(timeSlot, classData.startDate);
+      
+      // return nextOccurrences.map(occurrence => {
+      //   const endTime = new Date(occurrence);
+      //   endTime.setHours(endTime.getHours() + 2);
 
-        // Create Zoom meetings for the occurrences
-        const meetings = await createZoomMeetingsBatch(
-          classResult?.id,
-          classData,
-          nextOccurrences,
-        );
-        return meetings;
-      })(),
-    ]);
+      //   return {
+      //     class_id: classResult.id,
+      //     start_time: occurrence.toISOString(),
+      //     end_time: endTime.toISOString()
+      //   };
+      // });
+      // Usage
+      const meetings = await createZoomMeetingsBatch(classResult?.id, classData, nextOccurrences);
+      return meetings;
+    }));
 
     // Insert all initial sessions
     const { error: sessionError } = await client
@@ -118,7 +118,7 @@ const createZoomMeetingsBatch = async (
 ) => {
   const results = [];
 
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < occurrences.length; i++) {
     const occurrence = occurrences[i];
 
     const start_time = occurrence.startTime.toISOString();

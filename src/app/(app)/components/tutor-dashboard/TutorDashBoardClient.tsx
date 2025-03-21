@@ -66,7 +66,7 @@ const TutorDBClient = ({
         />
       )}
 
-      <TutorialVideoSection />
+      {/* <TutorialVideoSection />  */}
     </div>
   );
 };
