@@ -124,11 +124,11 @@ export interface NewClassData {
   yearGrade: string;
   monthlyFee: string;
   startDate: string;
-  timeSlot: {
+  timeSlots: [{
     day: string;
     startTime: string;
     endTime: string;
-  };
+  }];
   tutorId: string;
 }
 
