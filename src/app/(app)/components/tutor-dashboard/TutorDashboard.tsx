@@ -80,16 +80,6 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
 
   console.log('nextSessionData and activeClassesData:', nextSessionData, activeClassesData);
 
-  const handleCopyLink = (classId: string, link?: string): void => {
-    if (link) {
-      navigator.clipboard.writeText(link);
-      setLinkCopied({ ...linkCopied, [classId]: true });
-      setTimeout(() => {
-        setLinkCopied({ ...linkCopied, [classId]: false });
-      }, 2000);
-    }
-  };
-
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8">
       {/* Quick Actions Alert */}
@@ -129,9 +119,9 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
           ))}
         </div>
       </div>
-
+      
       {/* Tutorial Video */}
-      {/* <Card>
+      <Card>
         <CardHeader>
           <CardTitle>How to Use the Platform</CardTitle>
         </CardHeader>
@@ -145,7 +135,7 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
             />
           </div>
         </CardContent>
-      </Card> */}
+      </Card>
     </div>
   );
 };
