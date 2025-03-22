@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import UpcomingSessions from './UpcomingSessions';
 import PaginationControls from '../PaginationControls';
@@ -10,30 +10,47 @@ const UpcomingSessionClient = ({
 }: {
   upcomingSessionData: UpcomingSession[];
 }) => {
-  const [currentPage, setCurrentPage] = useState(1); // Current page number
-  const itemsPerPage = 5; // Items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const [filteredData, setFilteredData] = useState<UpcomingSession[]>(upcomingSessionData);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-  // Calculate pagination indices
+  // Calculate current page data
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentSessions = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
-  const currentSessions = upcomingSessionData.slice(
-    indexOfFirstItem,
-    indexOfLastItem,
-  );
+  // Handler for when filters are applied in the child component
+  const handleFilterChange = (newFilteredData: UpcomingSession[]) => {
+    setFilteredData(newFilteredData);
+    
+    // Reset to first page when filters change
+    if (currentPage > Math.ceil(newFilteredData.length / itemsPerPage) && newFilteredData.length > 0) {
+      setCurrentPage(1);
+    }
+  };
 
-  const totalPages = Math.ceil(upcomingSessionData.length / itemsPerPage);
+  // Reset to page 1 when filtered data changes
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [filteredData, totalPages, currentPage]);
 
   return (
     <>
-      {/* Render the PastSessions component with paginated data */}
-      <UpcomingSessions upcomingSessionData={currentSessions} />
+      {/* Render the UpcomingSessions component */}
+      <UpcomingSessions 
+        upcomingSessionData={currentSessions} 
+        onFilterChange={handleFilterChange}
+        allSessionData={upcomingSessionData}
+      />
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {/* Pagination Controls - show even when there's only 1 page, for consistency */}
+      {totalPages >= 1 && (
         <PaginationControls
           currentPage={currentPage}
-          totalPages={Math.ceil(upcomingSessionData.length / itemsPerPage)}
+          totalPages={totalPages}
           onPageChange={setCurrentPage}
         />
       )}

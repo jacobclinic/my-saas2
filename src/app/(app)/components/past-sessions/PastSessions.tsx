@@ -9,6 +9,7 @@ import PastSessionsCard from './PastSessionCard';
 import { PastSession } from '~/lib/sessions/types/session-v2';
 import 'react-datepicker/dist/react-datepicker.css';
 import { DateRangePicker } from '@heroui/date-picker';
+import { initial } from 'cypress/types/lodash';
 
 interface DateRange {
   start?: {
@@ -25,8 +26,12 @@ interface DateRange {
 
 const PastSessions = ({
   pastSessionsData,
+  onFilterChange,
+  allSessionData,
 }: {
   pastSessionsData: PastSession[];
+  onFilterChange: (filteredData: PastSession[]) => void;
+  allSessionData: PastSession[];
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAlertVisible, setIsAlertVisible] = useState(true);
@@ -38,49 +43,50 @@ const PastSessions = ({
 
   useEffect(() => {
     if (pastSessionsData) {
-      const formattedData: PastSessionData[] = pastSessionsData.map(
-        (session) => {
-          const formattedDate = new Date(
-            session?.start_time || '',
-          ).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          });
-          const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })} - 
-          ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
-          return {
-            id: session.id,
-            name: `${session?.class?.name}`,
-            topic: session?.title || '',
-            date: formattedDate,
-            time: formattedTime,
-            recordingUrl: session?.recording_urls?.[0] ?? '',
-            zoomLinkStudent: session?.meeting_url || '',
-            attendance:
-              (session?.attendance || []).map((attendee) => {
-                const formattedTime = `${attendee?.time ? new Date(attendee?.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : ''}`;
-                return {
-                  name: `${attendee?.student?.first_name} ${attendee?.student?.last_name}`,
-                  joinTime: formattedTime,
-                  duration: '',
-                };
-              }) || [],
-            materials: (session.materials || []).map((material) => {
-              return {
-                id: material.id,
-                name: material.name || '',
-                url: material.url || '',
-                file_size: material.file_size || '',
-              };
-            }),
-          };
-        },
+      const formattedData: PastSessionData[] = pastSessionsData.map((session) =>
+        formatSessionData(session),
       );
       setPastSessionTableData(formattedData);
     }
   }, [pastSessionsData]);
+
+  const formatSessionData = (session: PastSession): PastSessionData => {
+    const formattedDate = new Date(
+      session?.start_time || '',
+    ).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })} - 
+          ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
+    return {
+      id: session.id,
+      name: `${session?.class?.name}`,
+      topic: session?.title || '',
+      date: formattedDate,
+      time: formattedTime,
+      recordingUrl: session?.recording_urls?.[0] ?? '',
+      attendance:
+        (session?.attendance || []).map((attendee) => {
+          const formattedTime = `${attendee?.time ? new Date(attendee?.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : ''}`;
+          return {
+            name: `${attendee?.student?.first_name} ${attendee?.student?.last_name}`,
+            joinTime: formattedTime,
+            duration: '',
+          };
+        }) || [],
+      materials: (session.materials || []).map((material) => {
+        return {
+          id: material.id,
+          name: material.name || '',
+          url: material.url || '',
+          file_size: material.file_size || '',
+        };
+      }),
+    };
+  };
 
   const handleDateRangeChange = (value: any) => {
     setDateRange(value);
@@ -91,299 +97,37 @@ const PastSessions = ({
     return new Date(dateObj.year, dateObj.month - 1, dateObj.day);
   };
 
-  // Sample past classes data
-  const pastSessionsSampleData: PastSessionData[] = [
-    {
-      id: '1',
-      name: '2025 A-Levels Batch 1',
-      topic: 'Manufacturing Accounts - Part 1',
-      date: 'Monday, Dec 11, 2024',
-      time: '4:00 PM - 6:00 PM',
-      recordingUrl: 'https://zoom.us/rec/123',
-      attendance: [
-        { name: 'Alice Johnson', joinTime: '3:58 PM', duration: '1h 55m' },
-        { name: 'Bob Wilson', joinTime: '3:59 PM', duration: '1h 54m' },
-        { name: 'Carol Smith', joinTime: '4:02 PM', duration: '1h 52m' },
-      ],
-      materials: [
-        {
-          id: '1',
-          name: 'Manufacturing Accounts Notes.pdf',
-          file_size: '2.5 MB',
-          url: 'https://example.com/materials/1',
-        },
-        {
-          id: '2',
-          name: 'Practice Problems.pdf',
-          file_size: '1.8 MB',
-          url: 'https://example.com/materials/2',
-        },
-      ],
-    },
-    {
-      id: '2',
-      name: '2024 A-Levels Revision Batch',
-      topic: 'Financial Statements Analysis',
-      date: 'Sunday, Dec 10, 2024',
-      time: '6:30 PM - 8:30 PM',
-      recordingUrl: 'https://zoom.us/rec/456',
-      attendance: [
-        { name: 'David Brown', joinTime: '6:28 PM', duration: '1h 58m' },
-        { name: 'Eve Clark', joinTime: '6:29 PM', duration: '1h 57m' },
-      ],
-      materials: [
-        {
-          id: '3',
-          name: 'Financial Analysis Notes.pdf',
-          file_size: '3.2 MB',
-          url: 'https://example.com/materials/3',
-        },
-      ],
-    },
-    {
-      id: '3',
-      name: '2025 A-Levels Batch 1',
-      topic: 'Manufacturing Accounts - Part 1',
-      date: 'Monday, Jan 11, 2025',
-      time: '4:00 PM - 6:00 PM',
-      recordingUrl: 'https://zoom.us/rec/123',
-      attendance: [
-        { name: 'Alice Johnson', joinTime: '3:58 PM', duration: '1h 55m' },
-        { name: 'Bob Wilson', joinTime: '3:59 PM', duration: '1h 54m' },
-        { name: 'Carol Smith', joinTime: '4:02 PM', duration: '1h 52m' },
-      ],
-      materials: [
-        {
-          id: '1',
-          name: 'Manufacturing Accounts Notes.pdf',
-          file_size: '2.5 MB',
-          url: 'https://example.com/materials/1',
-        },
-        {
-          id: '2',
-          name: 'Practice Problems.pdf',
-          file_size: '1.8 MB',
-          url: 'https://example.com/materials/2',
-        },
-      ],
-    },
-    {
-      id: '4',
-      name: '2025 A-Levels Batch 1',
-      topic: 'Manufacturing Accountsssssss - Part 1',
-      date: 'Monday, Jan 20, 2025',
-      time: '4:00 PM - 6:00 PM',
-      recordingUrl: 'https://zoom.us/rec/123',
-      attendance: [
-        { name: 'Alice Johnson', joinTime: '3:58 PM', duration: '1h 55m' },
-        { name: 'Bob Wilson', joinTime: '3:59 PM', duration: '1h 54m' },
-        { name: 'Carol Smith', joinTime: '4:02 PM', duration: '1h 52m' },
-      ],
-      materials: [
-        {
-          id: '1',
-          name: 'Manufacturing Accounts Notes.pdf',
-          file_size: '2.5 MB',
-          url: 'https://example.com/materials/1',
-        },
-        {
-          id: '2',
-          name: 'Practice Problems.pdf',
-          file_size: '1.8 MB',
-          url: 'https://example.com/materials/2',
-        },
-      ],
-    },
-    {
-      id: '5',
-      name: '2025 A-Levels Batch 1',
-      topic: 'Manufacturing Accounts - Part 1',
-      date: 'Monday, Feb 11, 2025',
-      time: '4:00 PM - 6:00 PM',
-      recordingUrl: 'https://zoom.us/rec/123',
-      attendance: [
-        { name: 'Alice Johnson', joinTime: '3:58 PM', duration: '1h 55m' },
-        { name: 'Bob Wilson', joinTime: '3:59 PM', duration: '1h 54m' },
-        { name: 'Carol Smith', joinTime: '4:02 PM', duration: '1h 52m' },
-      ],
-      materials: [
-        {
-          id: '1',
-          name: 'Manufacturing Accounts Notes.pdf',
-          file_size: '2.5 MB',
-          url: 'https://example.com/materials/1',
-        },
-        {
-          id: '2',
-          name: 'Practice Problems.pdf',
-          file_size: '1.8 MB',
-          url: 'https://example.com/materials/2',
-        },
-      ],
-    },
-    {
-      id: '6',
-      name: '2025 A-Levels Batch 1',
-      topic: 'Manufacturing Accounts - Part 1',
-      date: 'Monday, Mar 10, 2025',
-      time: '4:00 PM - 6:00 PM',
-      recordingUrl: 'https://zoom.us/rec/123',
-      attendance: [
-        { name: 'Alice Johnson', joinTime: '3:58 PM', duration: '1h 55m' },
-        { name: 'Bob Wilson', joinTime: '3:59 PM', duration: '1h 54m' },
-        { name: 'Carol Smith', joinTime: '4:02 PM', duration: '1h 52m' },
-      ],
-      materials: [
-        {
-          id: '1',
-          name: 'Manufacturing Accounts Notes.pdf',
-          file_size: '2.5 MB',
-          url: 'https://example.com/materials/1',
-        },
-        {
-          id: '2',
-          name: 'Practice Problems.pdf',
-          file_size: '1.8 MB',
-          url: 'https://example.com/materials/2',
-        },
-      ],
-    },
-    {
-      id: '7',
-      name: '2025 A-Levels Batch 1',
-      topic: 'Manufacturing Accounts - Part 1',
-      date: 'Monday, Dec 11, 2024',
-      time: '4:00 PM - 6:00 PM',
-      recordingUrl: 'https://zoom.us/rec/123',
-      attendance: [
-        { name: 'Alice Johnson', joinTime: '3:58 PM', duration: '1h 55m' },
-        { name: 'Bob Wilson', joinTime: '3:59 PM', duration: '1h 54m' },
-        { name: 'Carol Smith', joinTime: '4:02 PM', duration: '1h 52m' },
-      ],
-      materials: [
-        {
-          id: '1',
-          name: 'Manufacturing Accounts Notes.pdf',
-          file_size: '2.5 MB',
-          url: 'https://example.com/materials/1',
-        },
-        {
-          id: '2',
-          name: 'Practice Problems.pdf',
-          file_size: '1.8 MB',
-          url: 'https://example.com/materials/2',
-        },
-      ],
-    },
-    {
-      id: '8',
-      name: '2025 A-Levels Batch 1',
-      topic: 'Manufacturing Accounts - Part 1',
-      date: 'Monday, Dec 11, 2024',
-      time: '4:00 PM - 6:00 PM',
-      recordingUrl: 'https://zoom.us/rec/123',
-      attendance: [
-        { name: 'Alice Johnson', joinTime: '3:58 PM', duration: '1h 55m' },
-        { name: 'Bob Wilson', joinTime: '3:59 PM', duration: '1h 54m' },
-        { name: 'Carol Smith', joinTime: '4:02 PM', duration: '1h 52m' },
-      ],
-      materials: [
-        {
-          id: '1',
-          name: 'Manufacturing Accounts Notes.pdf',
-          file_size: '2.5 MB',
-          url: 'https://example.com/materials/1',
-        },
-        {
-          id: '2',
-          name: 'Practice Problems.pdf',
-          file_size: '1.8 MB',
-          url: 'https://example.com/materials/2',
-        },
-      ],
-    },
-    {
-      id: '9',
-      name: '2025 A-Levels Batch 1',
-      topic: 'Manufacturing Accounts - Part 1',
-      date: 'Monday, Dec 11, 2024',
-      time: '4:00 PM - 6:00 PM',
-      recordingUrl: 'https://zoom.us/rec/123',
-      attendance: [
-        { name: 'Alice Johnson', joinTime: '3:58 PM', duration: '1h 55m' },
-        { name: 'Bob Wilson', joinTime: '3:59 PM', duration: '1h 54m' },
-        { name: 'Carol Smith', joinTime: '4:02 PM', duration: '1h 52m' },
-      ],
-      materials: [
-        {
-          id: '1',
-          name: 'Manufacturing Accounts Notes.pdf',
-          file_size: '2.5 MB',
-          url: 'https://example.com/materials/1',
-        },
-        {
-          id: '2',
-          name: 'Practice Problems.pdf',
-          file_size: '1.8 MB',
-          url: 'https://example.com/materials/2',
-        },
-      ],
-    },
-    {
-      id: '10',
-      name: '2025 A-Levels Batch 1',
-      topic: 'Manufacturing Accounts - Part 1',
-      date: 'Monday, Dec 11, 2024',
-      time: '4:00 PM - 6:00 PM',
-      recordingUrl: 'https://zoom.us/rec/123',
-      attendance: [
-        { name: 'Alice Johnson', joinTime: '3:58 PM', duration: '1h 55m' },
-        { name: 'Bob Wilson', joinTime: '3:59 PM', duration: '1h 54m' },
-        { name: 'Carol Smith', joinTime: '4:02 PM', duration: '1h 52m' },
-      ],
-      materials: [
-        {
-          id: '1',
-          name: 'Manufacturing Accounts Notes.pdf',
-          file_size: '2.5 MB',
-          url: 'https://example.com/materials/1',
-        },
-        {
-          id: '2',
-          name: 'Practice Problems.pdf',
-          file_size: '1.8 MB',
-          url: 'https://example.com/materials/2',
-        },
-      ],
-    },
-    {
-      id: '11',
-      name: '2025 A-Levels Batch 1',
-      topic: 'Manufacturing Accounts - Part 1',
-      date: 'Monday, Dec 11, 2024',
-      time: '4:00 PM - 6:00 PM',
-      recordingUrl: 'https://zoom.us/rec/123',
-      attendance: [
-        { name: 'Alice Johnson', joinTime: '3:58 PM', duration: '1h 55m' },
-        { name: 'Bob Wilson', joinTime: '3:59 PM', duration: '1h 54m' },
-        { name: 'Carol Smith', joinTime: '4:02 PM', duration: '1h 52m' },
-      ],
-      materials: [
-        {
-          id: '1',
-          name: 'Manufacturing Accounts Notes.pdf',
-          file_size: '2.5 MB',
-          url: 'https://example.com/materials/1',
-        },
-        {
-          id: '2',
-          name: 'Practice Problems.pdf',
-          file_size: '1.8 MB',
-          url: 'https://example.com/materials/2',
-        },
-      ],
-    },
-  ];
+  useEffect(() => {
+    // Apply filters to the FULL dataset
+    const filteredSessions = allSessionData.filter((session) => {
+      // Apply search term filter
+      const matchesSearchTerm = searchQuery
+        ? (session?.class?.name || '')
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())
+        : true;
+
+      // Apply date range filter if dateRange is selected
+      let matchesDateRange = true;
+
+      if (dateRange && dateRange.start && dateRange.end) {
+        const sessionDate = new Date(session?.start_time || '');
+        const startDate = dateObjectToDate(dateRange.start);
+        const endDate = dateObjectToDate(dateRange.end);
+
+        if (startDate && endDate) {
+          matchesDateRange = sessionDate >= startDate && sessionDate <= endDate;
+        }
+      }
+
+      // Return true only if both conditions are satisfied
+      return matchesSearchTerm && matchesDateRange;
+    });
+
+    // Call the parent's onFilterChange with the filtered data
+    onFilterChange(filteredSessions);
+  }, [searchQuery, dateRange, allSessionData, onFilterChange]);
+
 
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
@@ -405,7 +149,6 @@ const PastSessions = ({
             value={dateRange as any}
             onChange={handleDateRangeChange}
             className="w-full sm:w-auto border rounded-lg border-gray-300"
-            
           />
         </div>
 
@@ -435,32 +178,18 @@ const PastSessions = ({
 
       {/* Sessions List */}
       <div className="space-y-6">
-        {pastSessionTableData
-          .filter((session) => {
-            // Apply both search term and date range filters
-            const matchesSearchTerm = searchQuery
-              ? session.name.toLowerCase().includes(searchQuery.toLowerCase())
-              : true;
-
-            // Apply date range filter if dateRange is selected
-            const sessionDate = new Date(session.date);
-            let matchesDateRange = true;
-            
-            if (dateRange && dateRange.start && dateRange.end) {
-              const startDate = dateObjectToDate(dateRange.start);
-              const endDate = dateObjectToDate(dateRange.end);
-              
-              if (startDate && endDate) {
-                matchesDateRange = sessionDate >= startDate && sessionDate <= endDate;
-              }
-            }
-
-            // Return true only if both conditions are satisfied
-            return matchesSearchTerm && matchesDateRange;
-          })
-          .map((sessionData) => (
-            <PastSessionsCard key={sessionData.id} sessionData={sessionData} />
-          ))}
+        {pastSessionTableData.length > 0 ? (
+          pastSessionTableData.map((sessionData) => (
+            <PastSessionsCard
+              key={sessionData.id}
+              sessionData={sessionData}
+            />
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            No upcoming classes match your search criteria.
+          </div>
+        )}
       </div>
     </div>
   );
