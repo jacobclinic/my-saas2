@@ -9,7 +9,21 @@ import { Input } from '../base-v2/ui/Input';
 import { Info, Search, X } from 'lucide-react';
 import UpcommingSessionCard from './UpcommingSessionCard';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
-import DatePicker from 'react-datepicker';
+import { DateRangePicker } from '@heroui/date-picker';
+
+// Define simplified interfaces based on what the component actually uses
+interface DateRange {
+  start?: {
+    year: number;
+    month: number;
+    day: number;
+  } | null;
+  end?: {
+    year: number;
+    month: number;
+    day: number;
+  } | null;
+}
 
 const UpcomingSessions = ({
   upcomingSessionData,
@@ -18,8 +32,7 @@ const UpcomingSessions = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAlertVisible, setIsAlertVisible] = useState(true);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [upcomingSessionTableData, setUpcomingSessionTableData] = useState<
     UpcomingSessionTableData[]
   >([]);
@@ -66,56 +79,16 @@ const UpcomingSessions = ({
     }
   }, [upcomingSessionData]);
 
-  // Sample data for upcoming sessions
-  const upcomingSessions: UpcomingSessionTableData[] = [
-    {
-      id: '1',
-      name: '2025 A-Levels Batch 1',
-      subject: 'Accounting',
-      date: 'Monday, Dec 18, 2024',
-      time: '4:00 PM - 6:00 PM',
-      registeredStudents: 25,
-      zoomLinkTutor: 'https://zoom.us/j/123456789',
-      zoomLinkStudent: 'https://zoom.us/j/987654321',
-      zoomMeetingId: '987654321',
-      materials: [
-        {
-          id: '1',
-          name: 'Chapter 5 - Manufacturing Accounts Notes.pdf',
-          file_size: '2.5',
-        },
-        { id: '2', name: 'Practice Problems Set.pdf', file_size: '1.8' },
-      ],
-    },
-    {
-      id: '2',
-      name: '2024 A-Levels Revision Batch',
-      subject: 'Accounting',
-      date: 'Monday, Dec 18, 2024',
-      time: '6:30 PM - 8:30 PM',
-      registeredStudents: 30,
-      zoomLinkTutor: 'https://zoom.us/j/123456789',
-      zoomLinkStudent: 'https://zoom.us/j/987654321',
-      zoomMeetingId: '987654321',
-    },
-    {
-      id: '3',
-      name: '2025 A-Levels Batch 2',
-      subject: 'Accounting',
-      lessonTitle: 'Partnership Accounts',
-      lessonDescription:
-        'Understanding partnership agreements, profit sharing ratios, and capital accounts.',
-      date: 'Tuesday, Dec 19, 2024',
-      time: '4:00 PM - 6:00 PM',
-      registeredStudents: 28,
-      zoomLinkTutor: 'https://zoom.us/j/123456789',
-      zoomLinkStudent: 'https://zoom.us/j/987654321',
-      zoomMeetingId: '987654321',
-      materials: [
-        { id: '1', name: 'Partnership Accounts Notes.pdf', file_size: '3.0' },
-      ],
-    },
-  ];
+  // Handle date range change - use any for now to avoid type issues
+  const handleDateRangeChange = (value: any) => {
+    setDateRange(value);
+  };
+
+  // Helper function to convert date object to JavaScript Date
+  const dateObjectToDate = (dateObj: any): Date | null => {
+    if (!dateObj) return null;
+    return new Date(dateObj.year, dateObj.month - 1, dateObj.day);
+  };
 
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
@@ -133,18 +106,12 @@ const UpcomingSessions = ({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <DatePicker
-            selectsRange // Enable range selection
-            startDate={startDate}
-            endDate={endDate}
-            onChange={(dates: [Date | null, Date | null]) => {
-              const [start, end] = dates;
-              setStartDate(start);
-              setEndDate(end);
-            }}
-            isClearable // Allow clearing the selection
-            placeholderText="Select a date range"
-            className="border rounded-md p-2"
+          
+          {/* HeroUI DateRangePicker */}
+          <DateRangePicker
+            value={dateRange as any}
+            onChange={handleDateRangeChange}
+            className="w-full sm:w-auto"
           />
         </div>
       </div>
@@ -163,7 +130,7 @@ const UpcomingSessions = ({
           onClick={() => setIsAlertVisible(false)} // Hide the alert on click
           className="absolute top-2 right-2 p-1 rounded-full hover:bg-blue-100 transition-colors"
         >
-          <X className="h-4 w-4 text-blue-600" /> {/* "X" icon */}
+          <X className="h-4 w-4 text-blue-600" />
         </button>
       </Alert>
 
@@ -171,16 +138,23 @@ const UpcomingSessions = ({
       <div className="space-y-6">
         {upcomingSessionTableData
           .filter((cls) => {
-            // Apply both search term and date range filters
+            // Apply search term filter
             const matchesSearchTerm = searchTerm
               ? cls.name.toLowerCase().includes(searchTerm.toLowerCase())
               : true;
 
-            const matchesDateRange =
-              startDate && endDate
-                ? new Date(cls.date) >= startDate &&
-                  new Date(cls.date) <= endDate
-                : true;
+            // Apply date range filter if dateRange is selected
+            const sessionDate = new Date(cls.date);
+            let matchesDateRange = true;
+            
+            if (dateRange && dateRange.start && dateRange.end) {
+              const startDate = dateObjectToDate(dateRange.start);
+              const endDate = dateObjectToDate(dateRange.end);
+              
+              if (startDate && endDate) {
+                matchesDateRange = sessionDate >= startDate && sessionDate <= endDate;
+              }
+            }
 
             // Return true only if both conditions are satisfied
             return matchesSearchTerm && matchesDateRange;

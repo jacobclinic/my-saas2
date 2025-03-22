@@ -7,8 +7,21 @@ import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Search, Info, X } from 'lucide-react';
 import PastSessionsCard from './PastSessionCard';
 import { PastSession } from '~/lib/sessions/types/session-v2';
-import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { DateRangePicker } from '@heroui/date-picker';
+
+interface DateRange {
+  start?: {
+    year: number;
+    month: number;
+    day: number;
+  } | null;
+  end?: {
+    year: number;
+    month: number;
+    day: number;
+  } | null;
+}
 
 const PastSessions = ({
   pastSessionsData,
@@ -17,8 +30,8 @@ const PastSessions = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAlertVisible, setIsAlertVisible] = useState(true);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | null>(null); // Default range is null
+
   const [pastSessionTableData, setPastSessionTableData] = useState<
     PastSessionData[]
   >([]);
@@ -68,6 +81,15 @@ const PastSessions = ({
       setPastSessionTableData(formattedData);
     }
   }, [pastSessionsData]);
+
+  const handleDateRangeChange = (value: any) => {
+    setDateRange(value);
+  };
+
+  const dateObjectToDate = (dateObj: any): Date | null => {
+    if (!dateObj) return null;
+    return new Date(dateObj.year, dateObj.month - 1, dateObj.day);
+  };
 
   // Sample past classes data
   const pastSessionsSampleData: PastSessionData[] = [
@@ -379,18 +401,10 @@ const PastSessions = ({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <DatePicker
-            selectsRange // Enable range selection
-            startDate={startDate}
-            endDate={endDate}
-            onChange={(dates: [Date | null, Date | null]) => {
-              const [start, end] = dates;
-              setStartDate(start);
-              setEndDate(end);
-            }}
-            isClearable // Allow clearing the selection
-            placeholderText="Select a date range"
-            className="border rounded-md p-2"
+          <DateRangePicker
+            value={dateRange as any}
+            onChange={handleDateRangeChange}
+            className="w-full sm:w-auto"
           />
         </div>
 
@@ -427,20 +441,24 @@ const PastSessions = ({
               ? session.name.toLowerCase().includes(searchQuery.toLowerCase())
               : true;
 
-            const matchesDateRange =
-              startDate && endDate
-                ? new Date(session.date) >= startDate &&
-                  new Date(session.date) <= endDate
-                : true;
+            // Apply date range filter if dateRange is selected
+            const sessionDate = new Date(session.date);
+            let matchesDateRange = true;
+            
+            if (dateRange && dateRange.start && dateRange.end) {
+              const startDate = dateObjectToDate(dateRange.start);
+              const endDate = dateObjectToDate(dateRange.end);
+              
+              if (startDate && endDate) {
+                matchesDateRange = sessionDate >= startDate && sessionDate <= endDate;
+              }
+            }
 
             // Return true only if both conditions are satisfied
             return matchesSearchTerm && matchesDateRange;
           })
           .map((sessionData) => (
-            <PastSessionsCard
-              key={sessionData.id}
-              sessionData={sessionData}
-            />
+            <PastSessionsCard key={sessionData.id} sessionData={sessionData} />
           ))}
       </div>
     </div>
