@@ -404,7 +404,8 @@ const PastSessions = ({
           <DateRangePicker
             value={dateRange as any}
             onChange={handleDateRangeChange}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto border rounded-lg border-gray-300"
+            
           />
         </div>
 
