@@ -13,32 +13,30 @@ import TutorialVideoSection from './tutor-db-sections/TutorialVideoSection';
 import PaginationControls from '../PaginationControls';
 
 const TutorDBClient = ({
-  nextSessionData,
-  activeClassesData,
+  upcomingSessionDataPerWeek
 }: {
-  nextSessionData: UpcomingSession[];
-  activeClassesData: ClassType[];
+  upcomingSessionDataPerWeek: UpcomingSession[];
 }) => {
 
   //Pagination controls for ActiveClassesSection
   const [currentPage, setCurrentPage] = useState(1); // Current page number
-  const itemsPerPage = 3; // Items per page
+  const itemsPerPage = 5; // Items per page
 
   // Calculate the total number of pages
-  const totalPages = Math.ceil(activeClassesData.length / itemsPerPage);
+  const totalPages = Math.ceil(upcomingSessionDataPerWeek.length / itemsPerPage);
 
-  // Calculate pagination indices
+  // // Calculate pagination indices
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
   // Get the current page's data
-  const currentActiveClasses = activeClassesData.slice(
+  const currentUpcomingClasses = upcomingSessionDataPerWeek.slice(
     indexOfFirstItem,
     indexOfLastItem,
   );
 
   // Function to handle page change
-  const handlePageChange2 = (pageNumber: number) => {
+  const handlePageChange = (pageNumber: number) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
     setCurrentPage(pageNumber);
   };
@@ -52,19 +50,19 @@ const TutorDBClient = ({
         </AlertDescription>
       </Alert>
       {/* Render the Upcoming component */}
-      <UpcomingClassesSection nextSessionData={nextSessionData} />
+      <UpcomingClassesSection upcomingSessionDataPerWeek={currentUpcomingClasses} />
 
-      {/* Render the ActiveClasses component with paginated data */}
-      <ActiveClassesSection activeClassesData={currentActiveClasses} />
-
-      {/* Pagination Controls 2*/}
       {totalPages > 1 && (
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={handlePageChange2}
+          onPageChange={handlePageChange}
         />
       )}
+
+      {/* Render the ActiveClasses component with paginated data */}
+      {/* <ActiveClassesSection activeClassesData={currentActiveClasses} /> */}
+
 
       {/* <TutorialVideoSection />  */}
     </div>

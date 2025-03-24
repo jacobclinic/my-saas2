@@ -391,9 +391,15 @@ export async function getAllUpcommingSessionsByTutorIdData(
       .in('class_id', classIds)
       .order('start_time', { ascending: true });
 
-    // If isDashboard is true, limit to 1 result
+    // If isDashboard is true, get sessions within the next week
     if (isDashboard) {
-      query = query.limit(1)
+      const now = new Date();
+      const nextWeek = new Date();
+      nextWeek.setDate(now.getDate() + 7);
+      
+      query = query
+        .lt('start_time', nextWeek.toISOString())
+        .order('start_time', { ascending: true });
     }
 
     const { data: upcomingSessions, error: upcomingSessionError } = await query;
