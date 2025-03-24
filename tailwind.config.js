@@ -1,8 +1,12 @@
+const { heroui } = require('@heroui/theme');
 const colors = require('tailwindcss/colors');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./src/**/*.{ts,tsx,jsx,js}'],
+  content: [
+    './src/**/*.{ts,tsx,jsx,js}',
+    './node_modules/@heroui/theme/dist/components/(date-picker|button|ripple|spinner|calendar|date-input|form|popover).js',
+  ],
   darkMode: 'class',
   theme: {
     container: {
@@ -89,5 +93,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'), heroui()],
 };

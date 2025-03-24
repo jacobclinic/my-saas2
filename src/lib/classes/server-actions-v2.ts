@@ -9,7 +9,7 @@ import {
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { ClassType, NewClassData } from './types/class-v2';
-import { getUpcomingOccurrencesForYear } from '../utils/date-utils';
+import { getUpcomingOccurrencesForMonth, getUpcomingOccurrencesForYear } from '../utils/date-utils';
 import { zoomService } from '../zoom/zoom.service';
 
 type CreateClassParams = {
@@ -44,7 +44,7 @@ export const createClassAction = withSession(
 
     // Generate initial 4 sessions per time slot
     const initialSessions = await Promise.all(classData.timeSlots.flatMap(async timeSlot => {
-      const nextOccurrences = getUpcomingOccurrencesForYear(timeSlot, classData.startDate);
+    const nextOccurrences = getUpcomingOccurrencesForMonth(timeSlot, classData.startDate);
       
       // return nextOccurrences.map(occurrence => {
       //   const endTime = new Date(occurrence);

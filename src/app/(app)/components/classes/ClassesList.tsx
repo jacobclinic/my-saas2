@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Button } from "../base-v2/ui/Button";
 import { Input } from "../base-v2/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../base-v2/ui/Select";
@@ -14,20 +14,31 @@ import ClassCard from './ClassCard';
 import CreateClassDialog from './CreateClassDialog';
 import { GRADES } from '~/lib/constants-v2';
 
-const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassType[], userRole: string, tutorId?: string }) => {
+const TutorClasses = ({ 
+  classesData, 
+  userRole, 
+  tutorId,
+  setFilteredData,
+  allClassesData
+}: { 
+  classesData: ClassType[], 
+  userRole: string, 
+  tutorId?: string,
+  setFilteredData: React.Dispatch<React.SetStateAction<ClassType[]>>,
+  allClassesData: ClassType[]
+}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
   const [linkCopied, setLinkCopied] = useState<LinkCopiedState>({});
   const [showCreateClass, setShowCreateClass] = useState(false);
   const [classTableData, setClassTableData] = useState<ClassListData[]>([]);
   
+  // Format the current page data for display
   useEffect(() => {
     if (classesData) {
       const formattedData = classesData.map((classData) => {
         // Ensure time_slots is an array before reducing
         const schedule = classData?.time_slots?.reduce((acc: string, slot: any, index: number, array) => {
-          console.log(slot);
-          
           const timeSlotString = `${slot.day}, ${slot.startTime} - ${slot.endTime}`;
           // Add a separator for all except the last item
           return acc + timeSlotString + (index < array.length - 1 ? "; " : "");
@@ -53,44 +64,27 @@ const TutorClasses = ({ classesData, userRole, tutorId } : { classesData: ClassT
     }
   }, [classesData]);
 
+  // Memoize the filter function to avoid reruns
+  const applyFilters = useCallback(() => {
+    const filtered = allClassesData.filter(cls => {
+      const nameMatch = searchQuery 
+        ? (cls?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+        
+      const yearMatch = selectedYear !== 'all'
+        ? cls.grade === selectedYear
+        : true;
+        
+      return nameMatch && yearMatch;
+    });
+    
+    setFilteredData(filtered);
+  }, [searchQuery, selectedYear, allClassesData, setFilteredData]);
 
- 
-
-
-  // Sample class data with Sri Lankan context
-  const classesSampleData: ClassListData[] = [
-    {
-      id: "1",
-      name: "2025 A/L Accounting - Batch 1",
-      schedule: "Every Monday and Wednesday, 4:00 PM",
-      status: "Active",
-      students: 25,
-      grade: "2024/2025",
-      registrationLink: "https://commaeducation.com/classes/123/register",
-      nextClass: "Mon, Dec 18, 2024"
-    },
-    {
-      id: "2",
-      name: "2024 A/L Accounting Revision - Batch 2",
-      schedule: "Every Tuesday and Thursday, 2:00 PM",
-      status: "Active",
-      students: 18,
-      grade: "2023/2024",
-      registrationLink: "https://commaeducation.com/classes/456/register",
-      nextClass: "Tue, Dec 19, 2024"
-    }
-  ];
-
-  const handleCopyLink = (classId: string, link?: string): void => {
-    if (link) {
-      navigator.clipboard.writeText(link);
-      setLinkCopied({ ...linkCopied, [classId]: true });
-      setTimeout(() => {
-        setLinkCopied({ ...linkCopied, [classId]: false });
-      }, 2000);
-    }
-  };
-console.log("cls",classTableData);
+  // Apply filters when search query or year selection changes
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
@@ -132,25 +126,19 @@ console.log("cls",classTableData);
 
       {/* Classes List */}
       <div>
-        {classTableData
-          .filter(cls => {
-            if (searchQuery) {
-              if (!cls?.name) return false;
-              return cls.name.toLowerCase().includes(searchQuery.toLowerCase());
-            }
-            if (selectedYear !== 'all') {
-              return cls.grade === selectedYear;
-            }
-            return true;
-          })
-          .map(classData => (
+        {classTableData.length > 0 ? (
+          classTableData.map(classData => (
             <ClassCard 
               key={classData.id} 
               classData={classData}
               showViewDetails={false}
             />
           ))
-        }
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            No classes match your search criteria.
+          </div>
+        )}
       </div>
 
       {/* Dialogs */}

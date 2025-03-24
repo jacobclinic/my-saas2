@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
 import ClassesList from '../../components/classes/ClassesList';
 import { ClassType } from '~/lib/classes/types/class-v2';
 import PaginationControls from '../PaginationControls';
@@ -15,30 +14,38 @@ const ClassesListClient = ({
   userRole: string;
   tutorId?: string;
 }) => {
-  const [currentPage, setCurrentPage] = useState(1); // Current page number
-  const itemsPerPage = 5; // Items per page
-
-  // Calculate the total number of pages
-  const totalPages = Math.ceil(classesData.length / itemsPerPage);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const [filteredData, setFilteredData] = useState<ClassType[]>(classesData);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   // Calculate pagination indices
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
   // Get the current page's data
-  const currentClasses = classesData.slice(indexOfFirstItem, indexOfLastItem);
+  const currentClasses = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset to page 1 when filtered data changes significantly
+  useEffect(() => {
+    if (currentPage > Math.ceil(filteredData.length / itemsPerPage) && filteredData.length > 0) {
+      setCurrentPage(1);
+    }
+  }, [filteredData.length, currentPage, itemsPerPage]);
 
   return (
     <>
-      {/* Render the PastSessions component with paginated data */}
+      {/* Render the ClassesList component with paginated data */}
       <ClassesList
         classesData={currentClasses}
         userRole={userRole}
         tutorId={tutorId}
+        setFilteredData={setFilteredData}
+        allClassesData={classesData}
       />
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {/* Pagination Controls - show when there's at least 1 page of data */}
+      {filteredData.length > 1 && (
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
