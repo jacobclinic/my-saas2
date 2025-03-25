@@ -8,10 +8,6 @@ import { SESSIONS_TABLE } from '~/lib/db-tables';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Supabase URL and/or Anon Key are not set in environment variables');
-}
-
 export async function POST(req: NextRequest) {
   console.log("testFunctionWorks");
   try {
