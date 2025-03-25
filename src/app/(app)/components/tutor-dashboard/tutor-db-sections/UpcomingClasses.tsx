@@ -15,31 +15,34 @@ const UpcomingClassesSection = ({
 }: {
   upcomingSessionDataPerWeek: UpcomingSession[];
 }) => {
-  const [upcomingSessionTableData, setUpcomingSessionTableData] =
-    useState<UpcomingSessionTableData[]>([]);
+  const [upcomingSessionTableData, setUpcomingSessionTableData] = useState<
+    UpcomingSessionTableData[]
+  >([]);
 
   useEffect(() => {
     if (upcomingSessionDataPerWeek && upcomingSessionDataPerWeek.length > 0) {
       const formattedData = upcomingSessionDataPerWeek.map((session) => {
         const formattedDate = new Date(
-          session?.start_time || ''
+          session?.start_time || '',
         ).toLocaleDateString('en-US', {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
           day: 'numeric',
         });
-        
-        const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: 'numeric', 
-          hour12: true 
-        })} - ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: 'numeric', 
-          hour12: true 
+
+        const formattedTime = `${new Date(
+          session?.start_time || '',
+        ).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true,
+        })} - ${new Date(session?.end_time || '').toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true,
         })}`;
-  
+
         return {
           id: session.id,
           name: `${session?.class?.name}`,
@@ -58,14 +61,17 @@ const UpcomingClassesSection = ({
           })),
         };
       });
-  
+
       setUpcomingSessionTableData(formattedData);
     } else {
       setUpcomingSessionTableData([]);
     }
   }, [upcomingSessionDataPerWeek]);
-  
-  console.log('upcomingSessionDataPerWeek and activeClassesData:', upcomingSessionDataPerWeek);
+
+  console.log(
+    'upcomingSessionDataPerWeek and activeClassesData:',
+    upcomingSessionDataPerWeek,
+  );
 
   return (
     <>
@@ -78,6 +84,7 @@ const UpcomingClassesSection = ({
         {upcomingSessionTableData.length > 0 ? (
           upcomingSessionTableData.map((sessionData) => (
             <UpcommingSessionClassCard
+              key={sessionData.id}
               variant="dashboard"
               sessionData={sessionData}
             />

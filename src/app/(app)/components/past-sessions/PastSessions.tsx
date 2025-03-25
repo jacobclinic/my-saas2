@@ -124,7 +124,6 @@ const PastSessions = ({
       return matchesSearchTerm && matchesDateRange;
     });
 
-    // Call the parent's onFilterChange with the filtered data
     onFilterChange(filteredSessions);
   }, [searchQuery, dateRange, allSessionData]);
 
