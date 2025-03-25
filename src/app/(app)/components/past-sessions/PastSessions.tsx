@@ -126,7 +126,7 @@ const PastSessions = ({
 
     // Call the parent's onFilterChange with the filtered data
     onFilterChange(filteredSessions);
-  }, [searchQuery, dateRange, allSessionData, onFilterChange]);
+  }, [searchQuery, dateRange, allSessionData]);
 
 
   return (
@@ -147,6 +147,7 @@ const PastSessions = ({
           </div>
           <DateRangePicker
             value={dateRange as any}
+            aria-label='Date Range'
             onChange={handleDateRangeChange}
             className="w-full sm:w-auto border rounded-lg border-gray-300"
           />
