@@ -4,7 +4,6 @@ import { PageBody } from '~/core/ui/Page';
 import TutorDashboard from '../components/tutor-dashboard/TutorDashboard';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { getAllUpcommingSessionsByTutorIdData, getAllUpcomingSessionsByStudentIdData, getAllPastSessionsByStudentIdData } from '~/lib/sessions/database/queries';
-import { getAllClassesByTutorIdData } from '~/lib/classes/database/queries';
 import { Alert, AlertDescription } from '../components/base-v2/ui/Alert';
 import { Info } from 'lucide-react';
 import StudentDashboard from '../components/student-dashboard/StudentDashboard';
@@ -44,24 +43,21 @@ async function DashboardPage() {
 
     // Fetch appropriate data based on user role
     if (userRole === 'tutor' || userRole === 'admin') {
-      const [sessionData, classesData] = await Promise.all([
+      const [sessionData] = await Promise.all([
         getAllUpcommingSessionsByTutorIdData(client, user.id, true),
-        getAllClassesByTutorIdData(client, user.id, true)
+        // getAllClassesByTutorIdDataPerWeek(client, user.id, true)
       ]);
-      console.log("DashboardPage-UpcomingSession-server-component------", sessionData);
-      console.log("DashboardPage-Classes-server-component------", classesData);
+      // console.log("DashboardPage-UpcomingSession-server-component------", sessionData);
+      // console.log("DashboardPage-Classes-server-component------", classesData);
 
       // Render tutor dashboard
       return (
         <>
           <AppHeader
             title="Tutor Dashboard"
-            description={`Welcome back! You have ${classesData.length} active ${
-              classesData.length === 1 ? 'class' : 'classes'
-            }${sessionData.length ? ', and the nearest upcoming session is displayed here' : ' and no upcoming sessions'}.`}
           />
           <PageBody>
-            {(!sessionData.length && !classesData.length) ? (
+            {(!sessionData.length) ? (
               <Alert className="bg-blue-50 border-blue-200">
                 <Info className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-blue-700">
@@ -70,8 +66,8 @@ async function DashboardPage() {
               </Alert>
             ) : (
               <TutorDBClient 
-                nextSessionData={sessionData} 
-                activeClassesData={classesData} 
+              upcomingSessionDataPerWeek={sessionData} 
+                // activeClassesData={classesData} 
               />
             )}
           </PageBody>

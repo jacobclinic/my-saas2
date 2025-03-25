@@ -85,13 +85,12 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     "text-xl font-semibold",
                     isDashboard && "text-green-800"
                   )}>
-                    {isDashboard ? 'Next Class' : sessionData.name}
+                    {sessionData.name}
                   </h2>                
                   {sessionData.subject && (
                     <Badge variant="secondary">{sessionData.subject?.replace(/\b([a-z])/,(match)=>match.toUpperCase())}</Badge>
                   )}
                 </div>
-                {isDashboard && <p className="text-sm text-gray-600 mt-1">{sessionData.name}</p>}
                 <div className="flex items-center mt-2 text-gray-600">
                   <Calendar className="h-4 w-4 mr-2" />
                   <span>{sessionData.date}</span>

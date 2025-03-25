@@ -122,7 +122,7 @@ const UpcomingSessions = ({
     // Call the parent's onFilterChange with the filtered data
     onFilterChange(filteredSessions);
     
-  }, [searchTerm, dateRange, allSessionData, onFilterChange]);
+  }, [searchTerm, dateRange, allSessionData]);
 
   // Handle date range change
   const handleDateRangeChange = (value: any) => {
@@ -149,6 +149,7 @@ const UpcomingSessions = ({
           {/* HeroUI DateRangePicker */}
           <DateRangePicker
             value={dateRange as any}
+            aria-label='Date Range'
             onChange={handleDateRangeChange} 
             className="w-full sm:w-auto border rounded-lg border-gray-300"
           />
