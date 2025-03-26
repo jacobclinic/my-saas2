@@ -1,9 +1,15 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { Input } from "../base-v2/ui/Input";
-import { Textarea } from "../base-v2/ui/Textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../base-v2/ui/Select";
+import { Input } from '../base-v2/ui/Input';
+import { Textarea } from '../base-v2/ui/Textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../base-v2/ui/Select';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { createClassAction } from '~/lib/classes/server-actions-v2';
@@ -37,11 +43,12 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     yearGrade: '',
     monthlyFee: '',
     startDate: '',
+    endDate: new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0], // End of current year
     timeSlots: [{ day: '', startTime: '', endTime: '' }], // Single time slot
     tutorId,
   });
 
-    // const handleAddTimeSlot = () => {
+  // const handleAddTimeSlot = () => {
   //   setNewClass(prev => ({
   //     ...prev,
   //     timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }]
@@ -55,34 +62,41 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   //   }));
   // };
 
-  const updateTimeSlot = (index: number, field: keyof TimeSlot, value: string) => {
-      setNewClass((prev: NewClassData) => {
-        const updatedTimeSlots = prev.timeSlots.map((slot, i) =>
-          i === index ? { ...slot, [field]: value } : slot
-        );
-        
-        return {
-          ...prev,
-          timeSlots: updatedTimeSlots as [TimeSlot], // Type assertion to match the expected tuple type
-        };
-      });
-    };
+  const updateTimeSlot = (
+    index: number,
+    field: keyof TimeSlot,
+    value: string,
+  ) => {
+    setNewClass((prev: NewClassData) => {
+      const updatedTimeSlots = prev.timeSlots.map((slot, i) =>
+        i === index ? { ...slot, [field]: value } : slot,
+      );
+
+      return {
+        ...prev,
+        timeSlots: updatedTimeSlots as [TimeSlot], // Type assertion to match the expected tuple type
+      };
+    });
+  };
 
   const handleSubmit = () => {
     startTransition(async () => {
-      const result = await createClassAction({ classData: newClass, csrfToken });
+      const result = await createClassAction({
+        classData: newClass,
+        csrfToken,
+      });
       if (result.success) {
         onClose();
         toast({
-          title: "Success",
-          description: "New class created successfully",
-          variant: "success",
+          title: 'Success',
+          description: 'New class created successfully',
+          variant: 'success',
         });
       } else {
         toast({
-          title: "Error",
-          description: "Failed to create class",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to create class',
+          variant: 'destructive',
         });
       }
     });
@@ -95,8 +109,9 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     newClass.monthlyFee &&
     newClass.yearGrade &&
     newClass.startDate &&
-    newClass.timeSlots.every((slot) => slot.day && slot.startTime && slot.endTime);
-
+    newClass.timeSlots.every(
+      (slot) => slot.day && slot.startTime && slot.endTime,
+    );
 
   return (
     <BaseDialog
@@ -124,13 +139,15 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           <label className="text-sm font-medium">Subject</label>
           <Select
             value={newClass.subject}
-            onValueChange={(value) => setNewClass({ ...newClass, subject: value })}
+            onValueChange={(value) =>
+              setNewClass({ ...newClass, subject: value })
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Select subject" />
             </SelectTrigger>
             <SelectContent>
-              {SUBJECTS.map(subject => (
+              {SUBJECTS.map((subject) => (
                 <SelectItem key={subject} value={subject.toLowerCase()}>
                   {subject}
                 </SelectItem>
@@ -144,7 +161,9 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           <Textarea
             placeholder="Describe what students will learn in this class..."
             value={newClass.description}
-            onChange={(e) => setNewClass({ ...newClass, description: e.target.value })}
+            onChange={(e) =>
+              setNewClass({ ...newClass, description: e.target.value })
+            }
             className="h-24"
           />
         </div>
@@ -154,13 +173,15 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
             <label className="text-sm font-medium">Year/Grade</label>
             <Select
               value={newClass.yearGrade}
-              onValueChange={(value) => setNewClass({ ...newClass, yearGrade: value })}
+              onValueChange={(value) =>
+                setNewClass({ ...newClass, yearGrade: value })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select year" />
               </SelectTrigger>
               <SelectContent>
-                {GRADES.map(year => (
+                {GRADES.map((year) => (
                   <SelectItem key={year} value={year}>
                     {year}
                   </SelectItem>
@@ -175,19 +196,37 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               type="number"
               placeholder="Enter fee amount"
               value={newClass.monthlyFee}
-              onChange={(e) => setNewClass({ ...newClass, monthlyFee: e.target.value })}
+              onChange={(e) =>
+                setNewClass({ ...newClass, monthlyFee: e.target.value })
+              }
             />
           </div>
         </div>
 
-        <div>
-          <label className="text-sm font-medium">Starting Date</label>
-          <Input
-            type="date"
-            value={newClass.startDate}
-            onChange={(e) => setNewClass({ ...newClass, startDate: e.target.value })}
-            min={new Date().toISOString().split('T')[0]}
-          />
+        <div className='flex justify-between gap-4'>
+          <div>
+            <label className="text-sm font-medium">Starting Date</label>
+            <Input
+              type="date"
+              value={newClass.startDate}
+              onChange={(e) =>
+                setNewClass({ ...newClass, startDate: e.target.value })
+              }
+              min={new Date().toISOString().split('T')[0]}
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">End Date</label>
+            <Input
+              type="date"
+              value={newClass.endDate}
+              onChange={(e) =>
+                setNewClass({ ...newClass, endDate: e.target.value })
+              }
+              min={new Date().toISOString().split('T')[0]}
+            />
+          </div>
         </div>
 
         <div>
@@ -251,7 +290,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
                     <SelectValue placeholder="Select day" />
                   </SelectTrigger>
                   <SelectContent>
-                    {DAYS_OF_WEEK.map(day => (
+                    {DAYS_OF_WEEK.map((day) => (
                       <SelectItem key={day} value={day.toLowerCase()}>
                         {day}
                       </SelectItem>
@@ -263,14 +302,18 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
                   <Input
                     type="time"
                     value={slot.startTime}
-                    onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
+                    onChange={(e) =>
+                      updateTimeSlot(index, 'startTime', e.target.value)
+                    }
                     placeholder="Start time"
                   />
-                  
+
                   <Input
                     type="time"
                     value={slot.endTime}
-                    onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
+                    onChange={(e) =>
+                      updateTimeSlot(index, 'endTime', e.target.value)
+                    }
                     placeholder="End time"
                   />
                 </div>

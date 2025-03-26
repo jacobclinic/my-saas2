@@ -505,6 +505,111 @@ export async function getAllUpcommingSessionsByTutorIdData(
   }
 }
 
+export async function getAllUpcommingSessionsByTutorIdDataPerWeek(
+  client: SupabaseClient<Database>,
+  tutor_id: string,
+  isDashboard?: boolean,
+): Promise<UpcomingSession[] | []> {
+  try {
+    const { data: tutorClasses, error: classError } = await client
+      .from(CLASSES_TABLE)
+      .select('id')
+      .eq('tutor_id', tutor_id);
+
+    if (classError) {
+      throw new Error(`Error fetching tutor classes: ${classError.message}`);
+    }
+
+    // Get the class IDs
+    const classIds = tutorClasses.map(c => c.id);
+
+    // If no classes found and tutor_id was provided, return empty array
+    if (tutor_id && classIds.length === 0) {
+      return [];
+    }
+
+    // Create base query
+    let query = client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor_id,
+            students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(id)
+          ),
+          materials:${RESOURCE_MATERIALS_TABLE}!id (
+            id,
+            name,
+            url,
+            file_size
+          )
+        `,
+        { count: 'exact' }
+      )
+      .gt('start_time', new Date().toISOString())
+      .lt('start_time', new Date(new Date().getTime() + 6 * 24 * 60 * 60 * 1000).toISOString())
+      .in('class_id', classIds)
+      .order('start_time', { ascending: true });
+
+    // If isDashboard is true, get sessions within the next week
+    if (isDashboard) {
+      const now = new Date();
+      const nextWeek = new Date();
+      nextWeek.setDate(now.getDate() + 7);
+      
+      query = query
+        .lt('start_time', nextWeek.toISOString())
+        .order('start_time', { ascending: true });
+    }
+
+    const { data: upcomingSessions, error: upcomingSessionError } = await query;
+
+    console.log("getAllSessionsData", upcomingSessions)
+
+    if (upcomingSessionError) {
+      throw new Error(`Error fetching sessions: ${upcomingSessionError.message}`);
+    }
+
+    if (!upcomingSessions) {
+      return [];
+    }
+
+    const transformedData = upcomingSessions?.map((sessionData) => {
+      let classTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+        else classTemp = sessionData.class;
+      }
+      return ({
+        ...sessionData,
+        class: classTemp,
+      })
+    })
+
+    return transformedData;
+
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
 export async function getAllPastSessionsData(
   client: SupabaseClient<Database>,
 ): Promise<PastSession[] | []> {

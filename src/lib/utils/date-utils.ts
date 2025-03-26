@@ -52,7 +52,7 @@ export function getNextNOccurrences(
 
 export function getUpcomingOccurrencesForYear(
   timeSlot: TimeSlot,
-  startDate: string
+  startDate: string,
 ): { startTime: Date; endTime: Date }[] {
   // Parse the starting date
   let start = new Date(startDate);
@@ -77,6 +77,57 @@ export function getUpcomingOccurrencesForYear(
   let currentDate = firstOccurrence;
 
   while (currentDate <= endOfYearDate) {
+    // Parse the start time from the time slot
+    const [startHours, startMinutes] = timeSlot.startTime
+      .split(":")
+      .map(Number);
+    const dateWithStartTime = new Date(currentDate);
+    dateWithStartTime.setHours(startHours, startMinutes, 0, 0);
+
+    // Parse the end time from the time slot
+    const [endHours, endMinutes] = timeSlot.endTime.split(":").map(Number);
+    const dateWithEndTime = new Date(currentDate);
+    dateWithEndTime.setHours(endHours, endMinutes, 0, 0);
+
+    occurrences.push({
+      startTime: dateWithStartTime,
+      endTime: dateWithEndTime,
+    });
+
+    currentDate = addDays(currentDate, 7);
+  }
+
+  return occurrences;
+}
+
+export function getUpcomingOccurrences(
+  timeSlot: TimeSlot,
+  startDate: string,
+  endDate: string
+): { startTime: Date; endTime: Date }[] {
+  // Parse the starting date
+  let start = new Date(startDate);
+  if (start.getTime() < Date.now()) {
+    start = new Date();
+  }
+
+  const targetDay = dayMap[timeSlot.day.toLowerCase()];
+
+  // Find the first occurrence of the day from the start date
+  let firstOccurrence = startOfWeek(start);
+  firstOccurrence = addDays(firstOccurrence, targetDay);
+  if (firstOccurrence < start) {
+    firstOccurrence = addDays(firstOccurrence, 7);
+  }
+
+  // Get the last date of the current year
+  const end_Date = endDate;
+
+  // Generate occurrences until the end of the year
+  const occurrences: { startTime: Date; endTime: Date }[] = [];
+  let currentDate = firstOccurrence;
+
+  while (currentDate.toISOString() <= end_Date) {
     // Parse the start time from the time slot
     const [startHours, startMinutes] = timeSlot.startTime
       .split(":")

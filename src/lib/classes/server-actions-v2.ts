@@ -9,7 +9,7 @@ import {
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { ClassType, NewClassData } from './types/class-v2';
-import { getUpcomingOccurrencesForYear } from '../utils/date-utils';
+import { getUpcomingOccurrences, getUpcomingOccurrencesForYear } from '../utils/date-utils';
 import { zoomService } from '../zoom/zoom.service';
 import { SESSIONS_TABLE } from '../db-tables';
 
@@ -107,9 +107,10 @@ export const createClassAction = withSession(
     const initialSessions = await Promise.all(
       classData.timeSlots.map(async (timeSlot) => {
         // Get all upcoming occurrences for the month
-        const nextOccurrences = getUpcomingOccurrencesForYear(
+        const nextOccurrences = getUpcomingOccurrences(
           timeSlot,
           classData.startDate,
+          classData.endDate,
         );
 
         // Take the first occurrence for Zoom meeting creation
@@ -125,6 +126,7 @@ export const createClassAction = withSession(
             yearGrade: classData.yearGrade || '',
             monthlyFee: classData.monthlyFee || '',
             startDate: classData.startDate || '',
+            endDate: classData.endDate || '',
             timeSlots: [timeSlot],
             tutorId: classData.tutorId || '',
           },

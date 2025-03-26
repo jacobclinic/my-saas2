@@ -124,6 +124,7 @@ export interface NewClassData {
   yearGrade: string;
   monthlyFee: string;
   startDate: string;
+  endDate: string;
   timeSlots: [{
     day: string;
     startTime: string;
