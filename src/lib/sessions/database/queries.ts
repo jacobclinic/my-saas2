@@ -230,7 +230,7 @@ export async function getSessionDataById(
       .eq('id', sessionId)
       .single();
 
-    console.log("getAllSessionsData", data)
+    // console.log("getAllSessionsData", data)
 
     if (error) {
       throw new Error(`Error fetching sessions: ${error.message}`);
@@ -300,7 +300,78 @@ export async function getAllUpcommingSessionsData(
       .gt('start_time', new Date().toISOString())
       .order('start_time', { ascending: true });
 
-    console.log("getAllSessionsData", data)
+    // console.log("getAllSessionsData", data)
+
+    if (error) {
+      throw new Error(`Error fetching sessions: ${error.message}`);
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    const transformedData = data?.map((sessionData) => {
+      let classTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+        else classTemp = sessionData.class;
+      }
+      return ({
+        ...sessionData,
+        class: classTemp,
+      })
+    })
+
+    return transformedData;
+
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
+export async function getAllUpcommingSessionsDataPerWeek(
+  client: SupabaseClient<Database>,
+): Promise<UpcomingSession[] | []> {
+  try {
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor_id,
+            students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(id)
+          ),
+          materials:${RESOURCE_MATERIALS_TABLE}!id (
+            id,
+            name,
+            url,
+            file_size
+          )
+        `,
+        { count: 'exact' }
+      )
+      .gt('start_time', new Date().toISOString())
+      .lt('start_time', new Date(new Date().getTime() + 9 * 24 * 60 * 60 * 1000).toISOString())
+      .order('start_time', { ascending: true });
+
+    // console.log("getAllSessionsData", data)
 
     if (error) {
       throw new Error(`Error fetching sessions: ${error.message}`);

@@ -11,12 +11,12 @@ const NEXT_ACTION_HEADER = 'next-action';
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|locales|assets|api/stripe/webhook).*)',
+    '/((?!_next/static|_next/image|favicon.ico|locales|assets|api/stripe/webhook|cron).*)',
   ],
 };
 
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith('/api/zoom/webhook')) {
+  if (request.nextUrl.pathname.startsWith('/api/public')) {
     return NextResponse.next();
   }
   const response = NextResponse.next();
