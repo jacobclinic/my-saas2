@@ -1,7 +1,7 @@
 import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
-import { getAllUpcommingSessionsByTutorIdData } from '~/lib/sessions/database/queries';
+import { getAllUpcommingSessionsByTutorIdDataPerWeek } from '~/lib/sessions/database/queries';
 import UpcomingClasses from '../components/upcoming-sessions/UpcomingSessions';
 import UpcomingSessionClient from '../components/upcoming-sessions/UpcomingSessionClient';
 
@@ -13,7 +13,7 @@ async function UpcomingSessionsPage() {
   const client = getSupabaseServerComponentClient();
   const { data: user, error } = await client.auth.getUser();
   console.log('-----UpcomingSessionsPage-------auth-User:', user);
-  const sessionData = await getAllUpcommingSessionsByTutorIdData(
+  const sessionData = await getAllUpcommingSessionsByTutorIdDataPerWeek(
     client,
     user?.user?.id || '',
   );
