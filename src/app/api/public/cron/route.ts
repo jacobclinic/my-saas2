@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
               yearGrade: '',
               monthlyFee: '',
               startDate: '',
+              endDate: '',
               timeSlots: [
                 {
                   day: new Date(session.start_time || '').toLocaleDateString(
