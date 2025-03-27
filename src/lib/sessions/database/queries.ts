@@ -368,7 +368,7 @@ export async function getAllUpcommingSessionsDataPerWeek(
         { count: 'exact' }
       )
       .gt('start_time', new Date().toISOString())
-      .lt('start_time', new Date(new Date().getTime() + 9 * 24 * 60 * 60 * 1000).toISOString())
+      .lt('start_time', new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000).toISOString())
       .order('start_time', { ascending: true });
 
     // console.log("getAllSessionsData", data)
@@ -563,7 +563,7 @@ export async function getAllUpcommingSessionsByTutorIdDataPerWeek(
         { count: 'exact' }
       )
       .gt('start_time', new Date().toISOString())
-      .lt('start_time', new Date(new Date().getTime() + 6 * 24 * 60 * 60 * 1000).toISOString())
+      .lt('start_time', new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000).toISOString())
       .in('class_id', classIds)
       .order('start_time', { ascending: true });
 
@@ -660,7 +660,7 @@ export async function getAllPastSessionsData(
       .lt('start_time', new Date().toISOString())
       .order('start_time', { ascending: true });
 
-    console.log("getAllSessionsData", data)
+    // console.log("getAllSessionsData", data)
 
     if (error) {
       throw new Error(`Error fetching sessions: ${error.message}`);
@@ -767,7 +767,7 @@ export async function getAllPastSessionsByTutorIdData(
       .in('class_id', classIds)
       .order('start_time', { ascending: true });
 
-    console.log("getAllSessionsData", pastSessions)
+    // console.log("getAllSessionsData", pastSessions)
 
     if (pastSessionError) {
       throw new Error(`Error fetching sessions: ${pastSessionError.message}`);
@@ -1014,7 +1014,7 @@ export async function getAllPastSessionsByStudentIdData(
       { data: pastPayments, error: pastPaymentError }
     ] = await Promise.all([queryForSessionData, queryForPaymentData]);
 
-    console.log("getAllSessionsData", pastSessions)
+    // console.log("getAllSessionsData", pastSessions)
 
     if (pastSessionError) {
       throw new Error(`Error fetching sessions: ${pastSessionError.message}`);
@@ -1155,7 +1155,7 @@ export async function getSessionByStudentIdData(
       payment_amount: paymentData?.amount || classTemp?.fee || null
     };
 
-    console.log("---------------getSessionByStudentIdData-------", transformedData)
+    // console.log("---------------getSessionByStudentIdData-------", transformedData)
 
     return transformedData;
 

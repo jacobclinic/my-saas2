@@ -19,6 +19,7 @@ type JoinMeetingAsStudentParams = {
 
 export const joinMeetingAsHost = withSession(
   async (params: JoinMeetingAsHostParams) => {
+    // console.log(`Getting meeting ID-Joining meeting as host: ${params.meetingId}`);
     const response = await zoomService.joinMeetingAsHost(params.meetingId);
     
     return {

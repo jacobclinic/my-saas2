@@ -60,7 +60,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
       setEditLoading(true);
       // Here you would make your API call to update the class
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      console.log('Updating class:', classId, updatedData);
+      // console.log('Updating class:', classId, updatedData);
       
       // Close dialog and show success message
       setShowEditDialog(false);
@@ -78,7 +78,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
     try {
       setAddStudentLoading(true);
       await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Adding student:', studentData, 'to class:', classData.id);
+      // console.log('Adding student:', studentData, 'to class:', classData.id);
       setShowAddStudentDialog(false);
     } catch (error) {
       console.error('Error adding student:', error);

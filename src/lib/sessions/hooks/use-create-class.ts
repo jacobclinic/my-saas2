@@ -28,7 +28,7 @@ function useCreateClassMutation() {
   return useSWRMutation(
     key,
     async (_, { arg: classData }: { arg: Omit<ClassType, 'id'> }) => {
-        console.log("classData-1",classData);
+        // console.log("classData-1",classData);
       return createClass(client, classData);
     },
     {

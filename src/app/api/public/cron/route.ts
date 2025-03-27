@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
             // Update the session with the Zoom meeting URL in the database
             const { error: updateError } = await supabase
               .from(SESSIONS_TABLE)
-              .update({ meeting_url: zoomMeeting.join_url })
+              .update({ meeting_url: zoomMeeting.zoomMeeting.join_url , zoom_meeting_id: zoomMeeting.zoomMeeting.id})
               .eq('id', session.id);
     
             if (updateError) {

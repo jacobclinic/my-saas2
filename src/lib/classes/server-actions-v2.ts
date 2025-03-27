@@ -141,7 +141,8 @@ export const createClassAction = withSession(
           class_id: classResult?.id,
           start_time: new Date(occurrence.startTime).toISOString(),
           end_time: new Date(occurrence.endTime).toISOString(),
-          meeting_url: index === 0 ? zoomMeeting?.join_url : '', // Only first session gets the Zoom URL
+          meeting_url: index === 0 ? zoomMeeting?.zoomMeeting.join_url : '', // Only first session gets the Zoom URL
+          zoom_meeting_id: zoomMeeting?.zoomMeeting.id,
           status: 'scheduled',
           created_at: new Date().toISOString(),
         }));
@@ -264,7 +265,6 @@ export const createZoomMeeting = async (
 ) => {
   const start_time = occurrence.startTime.toISOString();
   const end_time = occurrence.endTime.toISOString();
-
   try {
     // Create Zoom meeting
     const zoomMeeting = await zoomService.createMeeting(
@@ -283,7 +283,13 @@ export const createZoomMeeting = async (
     if (!zoomMeeting) {
       throw new Error('Failed to initialize Zoom session');
     }
-    return zoomMeeting;
+    return {
+      zoomMeeting: zoomMeeting,
+      class_id: classId,
+      start_time,
+      end_time,
+      zoom_meeting_id: zoomMeeting?.id,
+    };
   } catch (error) {
     console.error(`Error creating Zoom meeting`, error);
   }

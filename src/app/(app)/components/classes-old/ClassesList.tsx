@@ -18,7 +18,7 @@ import { deleteClassAction } from '~/lib/classes/server-actions';
 export default function ClassesList() {  
   const { data: classes, error, isLoading, revalidate: revalidateClassesDataFetch } = useClassesDataQuery();
 
-  console.log('classes', classes);
+  // console.log('classes', classes);
 
   if (isLoading) {
     return <div>Loading classes...</div>;
@@ -71,7 +71,7 @@ function DataTableExample({
           revalidateClassesDataFetch();
         });
         // await deleteClass(classData.id);
-        console.log(`Class ${classData.name} deleted successfully`);
+        // console.log(`Class ${classData.name} deleted successfully`);
       } catch (error: any) {
         console.error(`Failed to delete class: ${error?.message}`);
       }
@@ -146,7 +146,7 @@ function DataTableExample({
     action: 'Manage',
   }))
 
-  console.log("tableData",tableData)
+  // console.log("tableData",tableData)
 
   const filterOptions = [
     { label: 'All', value: 'all' },
