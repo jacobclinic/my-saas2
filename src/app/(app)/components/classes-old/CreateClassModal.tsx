@@ -42,12 +42,12 @@ export default function CreateClassModal() {
 
   const handleSelectSubjectChange = (value: string) => {
     setSubject(value); // Update state with the selected value
-    console.log('Selected fruit:', value); // Log the selected value
+    // console.log('Selected fruit:', value); // Log the selected value
   };
 
   const handleSelectTutorChange = (value: string) => {
     setTutor(value); // Update state with the selected value
-    console.log('Selected fruit:', value); // Log the selected value
+    // console.log('Selected fruit:', value); // Log the selected value
   };
 
   const subjectOptions = [
@@ -76,13 +76,13 @@ export default function CreateClassModal() {
       fee,
       timeSlots: filteredTimeSlots,
     }
-    console.log("newClass-1",newClass);
+    // console.log("newClass-1",newClass);
 
     startTransition(async () => {
       const createdClass = await createClassAction({ classData: newClass, csrfToken });
-      console.log("createdClass-1",createdClass);
+      // console.log("createdClass-1",createdClass);
       if (createdClass.success && createdClass?.class?.id) {
-        console.log("createdClass-2",filteredTimeSlots,timeSlots);
+        // console.log("createdClass-2",filteredTimeSlots,timeSlots);
 
         if (filteredTimeSlots.length > 0) {
           let newSessions: Omit<SessionsType, 'id'>[] = []
@@ -104,7 +104,7 @@ export default function CreateClassModal() {
               
             });
           });
-          console.log("newSession-1",newSessions);
+          // console.log("newSession-1",newSessions);
           await createSessionsAction({ sessionsData: newSessions, csrfToken });
         }
 
@@ -126,7 +126,7 @@ export default function CreateClassModal() {
     const updatedTimeSlots: TimeSlot[] = [...timeSlots];
     updatedTimeSlots[index][field] = value;
     setTimeSlots(updatedTimeSlots);
-    console.log("updatedTimeSlots",updatedTimeSlots);
+    // console.log("updatedTimeSlots",updatedTimeSlots);
   };
 
   // Add a new empty time slot

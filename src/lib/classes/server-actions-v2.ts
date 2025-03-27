@@ -9,7 +9,7 @@ import {
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { ClassType, NewClassData } from './types/class-v2';
-import { getUpcomingOccurrencesForYear } from '../utils/date-utils';
+import { getUpcomingOccurrences, getUpcomingOccurrencesForYear } from '../utils/date-utils';
 import { zoomService } from '../zoom/zoom.service';
 import { SESSIONS_TABLE } from '../db-tables';
 
@@ -107,9 +107,10 @@ export const createClassAction = withSession(
     const initialSessions = await Promise.all(
       classData.timeSlots.map(async (timeSlot) => {
         // Get all upcoming occurrences for the month
-        const nextOccurrences = getUpcomingOccurrencesForYear(
+        const nextOccurrences = getUpcomingOccurrences(
           timeSlot,
           classData.startDate,
+          classData.endDate,
         );
 
         // Take the first occurrence for Zoom meeting creation
@@ -125,6 +126,7 @@ export const createClassAction = withSession(
             yearGrade: classData.yearGrade || '',
             monthlyFee: classData.monthlyFee || '',
             startDate: classData.startDate || '',
+            endDate: classData.endDate || '',
             timeSlots: [timeSlot],
             tutorId: classData.tutorId || '',
           },
@@ -139,7 +141,8 @@ export const createClassAction = withSession(
           class_id: classResult?.id,
           start_time: new Date(occurrence.startTime).toISOString(),
           end_time: new Date(occurrence.endTime).toISOString(),
-          meeting_url: index === 0 ? zoomMeeting?.join_url : '', // Only first session gets the Zoom URL
+          meeting_url: index === 0 ? zoomMeeting?.zoomMeeting.join_url : '', // Only first session gets the Zoom URL
+          zoom_meeting_id: zoomMeeting?.zoomMeeting.id,
           status: 'scheduled',
           created_at: new Date().toISOString(),
         }));
@@ -262,7 +265,6 @@ export const createZoomMeeting = async (
 ) => {
   const start_time = occurrence.startTime.toISOString();
   const end_time = occurrence.endTime.toISOString();
-
   try {
     // Create Zoom meeting
     const zoomMeeting = await zoomService.createMeeting(
@@ -281,7 +283,13 @@ export const createZoomMeeting = async (
     if (!zoomMeeting) {
       throw new Error('Failed to initialize Zoom session');
     }
-    return zoomMeeting;
+    return {
+      zoomMeeting: zoomMeeting,
+      class_id: classId,
+      start_time,
+      end_time,
+      zoom_meeting_id: zoomMeeting?.id,
+    };
   } catch (error) {
     console.error(`Error creating Zoom meeting`, error);
   }

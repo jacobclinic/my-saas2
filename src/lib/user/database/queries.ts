@@ -68,7 +68,7 @@ export async function getAllUsersByUserRoleData(
       .select()
       .eq('user_role', userRole)
 
-    console.log("getAllUsersData", data)
+    // console.log("getAllUsersData", data)
 
     if (error) {
       throw new Error(`Error fetching all users: ${error.message}`);

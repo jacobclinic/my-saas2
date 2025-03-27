@@ -81,7 +81,7 @@ export async function uploadPaymentSlip(
     const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
     const filePath = `payment-slips/${studentId}/${paymentPeriod}/${uniqueFileName}`
 
-    console.log('-----uploadPaymentSlip-----1--filePath:', filePath);
+    // console.log('-----uploadPaymentSlip-----1--filePath:', filePath);
 
     const { error: uploadError } = await supabase
       .storage
@@ -93,14 +93,14 @@ export async function uploadPaymentSlip(
 
     if (uploadError) throw uploadError
 
-    console.log('-----uploadPaymentSlip-----2--uploadError:', uploadError);
+    // console.log('-----uploadPaymentSlip-----2--uploadError:', uploadError);
 
     const { data: { publicUrl } } = supabase
       .storage
       .from('payment-slips')
       .getPublicUrl(filePath)
 
-    console.log('-----uploadPaymentSlip-----3--publicUrl:', publicUrl);
+    // console.log('-----uploadPaymentSlip-----3--publicUrl:', publicUrl);
 
     return { url: publicUrl, error: null }
   } catch (error) {

@@ -106,7 +106,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
     }));
   };
 
-  console.log("-------editedClass--------", editedClass)
+  // console.log("-------editedClass--------", editedClass)
 
   const handleSubmit = () => {
     if (classData) {

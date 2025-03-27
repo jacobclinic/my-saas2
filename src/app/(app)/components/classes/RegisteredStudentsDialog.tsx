@@ -35,7 +35,7 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
   classDataName,
   studentData,
 }) => {
-  console.log('studentData', studentData)
+  // console.log('studentData', studentData)
   // Sample students data - in real app, this would come from props or API
   const students: Student[] = studentData.map((student) => {
     let studentTemp;

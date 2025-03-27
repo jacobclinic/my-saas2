@@ -12,7 +12,7 @@ function useUpdateClassMutation() {
   return useSWRMutation(
     key,
     async (_, { arg: { classId, classData } }: { arg: { classId: string; classData: Partial<ClassType> } }) => {
-      console.log('Updating class data:', classData);
+      // console.log('Updating class data:', classData);
       return updateClass(client, classId, classData);
     },
     {

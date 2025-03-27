@@ -47,7 +47,7 @@ const UpcomingSessionClient = ({
       />
 
       {/* Pagination Controls - show even when there's only 1 page, for consistency */}
-      {totalPages >= 1 && (
+      {totalPages > 1 && (
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
