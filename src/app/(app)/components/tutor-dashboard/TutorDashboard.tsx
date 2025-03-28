@@ -78,7 +78,7 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
     }
   }, [activeClassesData]);
 
-  console.log('nextSessionData and activeClassesData:', nextSessionData, activeClassesData);
+  // console.log('nextSessionData and activeClassesData:', nextSessionData, activeClassesData);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8">

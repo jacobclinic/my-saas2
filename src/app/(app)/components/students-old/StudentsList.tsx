@@ -51,7 +51,7 @@ function DataTableExample({ studentsData}: { studentsData: UserType[] }) {
           // revalidateSessionsByClassIdDataFetch && revalidateSessionsByClassIdDataFetch();
         });
         // await deleteClass(studentData.id);
-        console.log(`Class ${studentData.name} deleted successfully`);
+        // console.log(`Class ${studentData.name} deleted successfully`);
       } catch (error: any) {
         console.error(`Failed to delete class: ${error?.message}`);
       }

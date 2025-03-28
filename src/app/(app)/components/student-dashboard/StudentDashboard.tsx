@@ -49,12 +49,12 @@ const StudentDashboard = ({
   const itemsPerPage = 3; // Items per page
 
   const handleUpcomingPageChange = (page: number) => {
-    console.log('Upcoming Page Changed:', page);
+    // console.log('Upcoming Page Changed:', page);
     setUpcomingCurrentPage(page);
   };
 
   const handlePastPageChange = (page: number) => {
-    console.log('Previous Page Changed:', page);
+    // console.log('Previous Page Changed:', page);
     setPastCurrentPage(page);
   };
 

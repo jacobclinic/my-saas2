@@ -37,7 +37,7 @@ export default function CreateSessionModal({ classId, revalidateSessionsByClassI
 
   const handleSelectClassChange = (value: string) => {
     setClassForSession(value); // Update state with the selected value
-    console.log('Selected fruit:', value); // Log the selected value
+    // console.log('Selected fruit:', value); // Log the selected value
   };
 
   const classForSessionOptions = [
@@ -53,13 +53,13 @@ export default function CreateSessionModal({ classId, revalidateSessionsByClassI
       title,
       description,
     }
-    console.log("newSession-1",newSession);
+    // console.log("newSession-1",newSession);
 
     startTransition(async () => {
       await createSessionAction({ sessionData: newSession, csrfToken });
       // revalidateSessionsDataFetch();
       revalidateSessionsByClassIdDataFetch && revalidateSessionsByClassIdDataFetch();
-      console.log("newSession-2------222-----",newSession, revalidateSessionsByClassIdDataFetch);
+      // console.log("newSession-2------222-----",newSession, revalidateSessionsByClassIdDataFetch);
     });
 
 

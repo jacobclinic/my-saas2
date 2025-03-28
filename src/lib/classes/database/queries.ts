@@ -82,7 +82,7 @@ export async function getAllClassesData(
     )
     .returns<ClassWithTutorAndEnrollmentRawData[]>();
 
-    console.log("getAllClassesData", data)
+    // console.log("getAllClassesData", data)
 
     if (error) {
       throw new Error(`Error fetching classes: ${(error as PostgrestError).message}`);
@@ -152,7 +152,7 @@ export async function getAllClassesByTutorIdData(
 
     const { data, error } = await query;
 
-    console.log("getAllSessionsData", data)
+    // console.log("getAllSessionsData", data)
 
     if (error) {
       throw new Error(`Error fetching sessions: ${(error as PostgrestError).message}`);
@@ -248,7 +248,7 @@ export async function getAllClassesByTutorIdDataPerWeek(
 
     const { data, error } = await query;
 
-    console.log("getAllSessionsData", data)
+    // console.log("getAllSessionsData", data)
 
     if (error) {
       throw new Error(`Error fetching sessions: ${(error as PostgrestError).message}`);

@@ -475,7 +475,7 @@ export async function getAllUpcommingSessionsByTutorIdData(
 
     const { data: upcomingSessions, error: upcomingSessionError } = await query;
 
-    console.log("getAllSessionsData", upcomingSessions)
+    // console.log("getAllSessionsData", upcomingSessions)
 
     if (upcomingSessionError) {
       throw new Error(`Error fetching sessions: ${upcomingSessionError.message}`);
@@ -580,7 +580,7 @@ export async function getAllUpcommingSessionsByTutorIdDataPerWeek(
 
     const { data: upcomingSessions, error: upcomingSessionError } = await query;
 
-    console.log("getAllSessionsData", upcomingSessions)
+    // console.log("getAllSessionsData", upcomingSessions)
 
     if (upcomingSessionError) {
       throw new Error(`Error fetching sessions: ${upcomingSessionError.message}`);

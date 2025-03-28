@@ -85,7 +85,7 @@ export default function UpdateClassModal({ classData }: { classData: ClassWithTu
       fee,
       timeSlots: filteredTimeSlots,
     };
-    console.log('updatedClass:', updatedClass);
+    // console.log('updatedClass:', updatedClass);
 
     try {
       startTransition(async () => {

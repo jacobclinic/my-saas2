@@ -10,7 +10,7 @@ interface StudentSessionDetailsMaterialsProps {
 
 const StudentSessionDetailsMaterials = ({ materials, type }: StudentSessionDetailsMaterialsProps) => { 
 
-	console.log("materials", materials)
+	// console.log("materials", materials)
 	return (
 		<div className="space-y-3">
 			<h2 className="text-lg font-semibold">Class Materials</h2>
