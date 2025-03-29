@@ -68,10 +68,10 @@ const UpcomingClassesSection = ({
     }
   }, [upcomingSessionDataPerWeek]);
 
-  console.log(
-    'upcomingSessionDataPerWeek and activeClassesData:',
-    upcomingSessionDataPerWeek,
-  );
+  // console.log(
+  //   'upcomingSessionDataPerWeek and activeClassesData:',
+  //   upcomingSessionDataPerWeek,
+  // );
 
   return (
     <>

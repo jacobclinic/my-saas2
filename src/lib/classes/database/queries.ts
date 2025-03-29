@@ -46,7 +46,7 @@ export async function getClassDataById(
     .eq('id', classId)
     .maybeSingle()) as { data: ClassWithTutorAndEnrollmentRawData | null };
 
-  console.log('getClassDataById - data - ', result?.data);
+  // console.log('getClassDataById - data - ', result?.data);
 
   if (!result.data) {
     return null;
@@ -58,7 +58,7 @@ export async function getClassDataById(
     noOfStudents: result.data.noOfStudents[0]?.count || 0, // Use length of the noOfStudents array
   };
 
-  console.log('getAllClassesData-2', transformedData);
+  // console.log('getAllClassesData-2', transformedData);
 
   return transformedData;
 }
@@ -104,7 +104,7 @@ export async function getAllClassesData(
       noOfStudents: classData.noOfStudents[0]?.count || 0, // Use length of the noOfStudents array
     }));
 
-    console.log('getAllClassesData-2', transformedData);
+    // console.log('getAllClassesData-2', transformedData);
 
     return transformedData;
   } catch (error) {
@@ -338,7 +338,7 @@ export async function getAllClassesByStudentIdData(
 
     const { data, error } = await query;
 
-    console.log('getAllClassesByStudentIdData', data);
+    // console.log('getAllClassesByStudentIdData', data);
 
     if (!data) {
       return [];

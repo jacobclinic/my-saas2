@@ -1033,7 +1033,7 @@ export async function getAllUpcomingSessionsByStudentIdData(
       { data: upcomingPayments, error: upcomingPaymentError },
     ] = await Promise.all([queryForSessionData, queryForPaymentData]);
 
-    console.log('getAllSessionsData', upcomingSessions);
+    // console.log('getAllSessionsData', upcomingSessions);
 
     if (upcomingSessionError) {
       throw new Error(

@@ -20,7 +20,6 @@ import { ClassCardProps, EditClassData, NewStudentData } from '~/lib/classes/typ
 import RegisteredStudentsDialog from './RegisteredStudentsDialog';
 import EditClassDialog from './EditClassDialog';
 import AddStudentDialog from './AddStudentDialog';
-import { generateRegistrationToken } from '../../../../lib/registration-link';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
 
 const ClassCard: React.FC<ClassCardProps> = ({

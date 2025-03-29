@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import AppHeader from '~/app/(app)/components/AppHeader';
 import { PageBody } from '~/core/ui/Page';
-import TutorDashboard from '../components/tutor-dashboard/TutorDashboard';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { getAllUpcommingSessionsByTutorIdData, getAllUpcomingSessionsByStudentIdData, getAllPastSessionsByStudentIdData } from '~/lib/sessions/database/queries';
 import { Alert, AlertDescription } from '../components/base-v2/ui/Alert';
@@ -19,7 +18,7 @@ async function DashboardPage() {
   try {
     // Get user and handle authentication
     const { data: { user }, error: authError } = await client.auth.getUser();
-    console.log('-----DashboardPage-------auth-User:', user);
+    // console.log('-----DashboardPage-------auth-User:', user);
 
     // Handle authentication error
     if (authError || !user?.id) {
