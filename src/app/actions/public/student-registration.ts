@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { rateLimit } from '../../../lib/rate-limit';
-import { generateSecurePassword } from '../../../lib/utility-functions';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
 import sendEmail from '../../../core/email/send-email';
 import { getStudentCredentialsEmailTemplate } from '../../../core/email/templates/student-credentials';
@@ -21,7 +20,6 @@ async function checkUserExists(client: any, userId: string) {
 
   return !!data;
 }
-
 
 // Helper function to update user with retry
 async function updateUserWithRetry(
@@ -59,6 +57,7 @@ const registrationSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(9),
   classId: z.string().uuid(),
+  password: z.string().min(6),
   nameOfClass: z.string().min(1),
 });
 
@@ -66,8 +65,6 @@ export async function registerStudentAction(
   formData: z.infer<typeof registrationSchema>,
 ) {
   try {
-
-
     // Rate limiting
     const identifier = formData.email.toLowerCase();
     const { success: rateOk } = await rateLimit(identifier);
@@ -96,7 +93,7 @@ export async function registerStudentAction(
     }
 
     let userId: string;
-    let password: string = '123456';
+    let password: string | undefined;
 
     if (existingUser?.id) {
       userId = existingUser.id;
@@ -109,7 +106,7 @@ export async function registerStudentAction(
       });
     } else {
       // Create new user
-      password = generateSecurePassword();
+      password = formData.password;
       const { data: authUser, error: authError } =
         await client.auth.admin.createUser({
           email: validated.email,
@@ -130,7 +127,6 @@ export async function registerStudentAction(
       const { html, text } = getStudentCredentialsEmailTemplate({
         studentName: `${validated.firstName} ${validated.lastName}`,
         email: validated.email,
-        password,
         className: validated.nameOfClass,
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
       });
@@ -169,7 +165,10 @@ export async function registerStudentAction(
     revalidatePath('/classes');
     return {
       success: true,
-      userData: { userId, email: validated.email, password },
+      userData: {
+        userId,
+        email: validated.email,
+      },
     };
   } catch (error) {
     console.error('Registration error:', error);

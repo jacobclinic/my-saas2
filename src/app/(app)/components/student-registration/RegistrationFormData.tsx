@@ -9,6 +9,7 @@ import { registerStudentAction } from '../../../actions/public/student-registrat
 import { ClassRegistrationData } from '~/lib/registration-link';
 import RegistrationSuccess from './RegistrationSuccess';
 import useSignUpWithEmailAndPasswordMutation from '~/core/hooks/use-sign-up-with-email-password';
+import StudentRegistrationViaLogin from './RegisterViaLogin';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 
@@ -39,6 +40,7 @@ const StudentRegistrationForm = ({
   const [errors, setErrors] = useState<Partial<RegistrationFormData>>({});
   const [isRegistrationSuccess, setIsRegistrationSuccess] = useState(false);
   const [registeredUserData, setRegisteredUserData] = useState<any>(null);
+  const [ isRegisterViaLogin, setIsRegisterViaLogin ] = useState(false);
 
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -62,7 +64,6 @@ const StudentRegistrationForm = ({
     if (validateForm()) {
       if (validateForm()) {
         try {
-          console.log('Form data before signup:', formData);
           // Check if the user already exists in the database
           const registerResult = await signUpMutation.trigger({
             email: formData.email,
@@ -71,11 +72,11 @@ const StudentRegistrationForm = ({
           });
 
           if (!registerResult) {
-			throw new Error('User already exists');
+            throw new Error('User already exists');
           }
           console.log('User registered successfully:', registerResult);
         } catch (error) {
-          setErrors({email: 'User already exists'});
+          setErrors({ email: 'User already exists' });
           return;
         }
 
@@ -91,7 +92,6 @@ const StudentRegistrationForm = ({
           setIsRegistrationSuccess(true);
           setRegisteredUserData({
             username: result.userData?.email,
-            password: result.userData?.password,
             email: result.userData?.email,
             nextClass: {
               date: classData.nextSession,
@@ -106,6 +106,10 @@ const StudentRegistrationForm = ({
       }
     }
   };
+
+  if (isRegisterViaLogin) {
+    return <StudentRegistrationViaLogin classData={classData} />
+  }
 
   if (isRegistrationSuccess) {
     return <RegistrationSuccess studentDetails={registeredUserData} />;
@@ -157,8 +161,10 @@ const StudentRegistrationForm = ({
               <h2 className="font-semibold text-lg mb-2">
                 {classData.className}
               </h2>
-              <p className="text-blue-600">{classData.nextSession}</p>
-              <p className="text-blue-600">{classData.time}</p>
+              <p className="text-blue-600">
+                Next class : {classData.nextSession}
+              </p>
+              <p className="text-blue-600">Class time: {classData.time}</p>
             </div>
 
             {/* Personal Information */}
@@ -273,6 +279,18 @@ const StudentRegistrationForm = ({
               <div className="flex items-center justify-center gap-2">
                 Complete Registration
                 {/* lets add right arrow icon */}
+                <ArrowRight className="h-4 w-4 text-white" />
+              </div>
+            </Button>
+            {/* Button to login if already have an account, set isRegisterViaLogin true when clicked */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => setIsRegisterViaLogin(true)}
+            >
+              <div className="flex items-center justify-center gap-2">
+                Already have an account? Login
                 <ArrowRight className="h-4 w-4 text-white" />
               </div>
             </Button>
