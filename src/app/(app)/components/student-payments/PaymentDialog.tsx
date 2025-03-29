@@ -1,10 +1,20 @@
-'use client'
+'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent } from "../base-v2/ui/Card";
-import { Button } from "../base-v2/ui/Button";
-import { Alert, AlertDescription } from "../base-v2/ui/Alert";
-import { DollarSign, Upload, MessageCircle, Clock, Info, Building, Copy, Check, AlertTriangle } from 'lucide-react';
+import { Card, CardContent } from '../base-v2/ui/Card';
+import { Button } from '../base-v2/ui/Button';
+import { Alert, AlertDescription } from '../base-v2/ui/Alert';
+import {
+  DollarSign,
+  Upload,
+  MessageCircle,
+  Clock,
+  Info,
+  Building,
+  Copy,
+  Check,
+  AlertTriangle,
+} from 'lucide-react';
 import BaseDialog from '../base-v2/BaseDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { uploadPaymentSlipAction } from '~/lib/student-payments/server-actions';
@@ -29,12 +39,24 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   open,
   onClose,
   sessionData,
-  studentId
+  studentId,
 }) => {
   const csrfToken = useCsrfToken();
-  const [uploadingFile, setUploadingFile] = useState<UploadingFile | null>(null);
+  const [uploadingFile, setUploadingFile] = useState<UploadingFile | null>(
+    null,
+  );
   const [copied, setCopied] = useState(false);
-  console.log('-----PaymentDialog-------sessionData:', sessionData.sessionRawData?.start_time?.slice(0, 7));
+  console.log(
+    '-----PaymentDialog-------sessionData:',
+    sessionData.sessionRawData?.start_time?.slice(0, 7),
+  );
+
+  const bankDetails = {
+    bankName: 'Commercial Bank',
+    accountName: 'Comma Education',
+    accountNumber: '1234567890',
+    branch: 'Colombo',
+  }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,13 +66,13 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       setUploadingFile({
         file,
         progress: 0,
-        status: 'uploading'
+        status: 'uploading',
       });
 
       // Convert file to buffer
       const buffer = await getFileBuffer(file);
-      
-      setUploadingFile(prev => prev ? { ...prev, progress: 50 } : null);
+
+      setUploadingFile((prev) => (prev ? { ...prev, progress: 50 } : null));
 
       // payment period is the date of the session eg: 2025-02
       const paymentPeriod = sessionData.sessionRawData?.start_time?.slice(0, 7);
@@ -68,17 +90,21 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
           name: file.name,
           type: file.type,
           size: file.size,
-          buffer: Array.from(new Uint8Array(buffer))
+          buffer: Array.from(new Uint8Array(buffer)),
         },
-        csrfToken
+        csrfToken,
       });
 
       if (result.success) {
-        setUploadingFile(prev => prev ? {
-          ...prev,
-          status: 'complete',
-          progress: 100
-        } : null);
+        setUploadingFile((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: 'complete',
+                progress: 100,
+              }
+            : null,
+        );
 
         // Show success message and close dialog after delay
         setTimeout(() => {
@@ -88,15 +114,19 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         throw new Error(result.error);
       }
     } catch (error) {
-      setUploadingFile(prev => prev ? {
-        ...prev,
-        status: 'error',
-        error: 'Upload failed. Please try again.'
-      } : null);
+      setUploadingFile((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: 'error',
+              error: 'Upload failed. Please try again.',
+            }
+          : null,
+      );
     }
   };
 
-  const whatsappMessage = 
+  const whatsappMessage =
     `Payment Details:\n` +
     `Class: ${sessionData.name}\n` +
     `Date: ${sessionData.date}\n` +
@@ -109,6 +139,34 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Function to extract month and year
+  const getMonthAndYear = (dateString: string) => {
+    const date = new Date(dateString);
+    const month = date.getMonth() + 1; // Adding 1 because getMonth() returns 0-11
+    const year = date.getFullYear();
+
+    // Optionally, get the month name instead of the number
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    const monthName = monthNames[date.getMonth()];
+
+    return { year, monthName };
+  };
+
+  const { year, monthName } = getMonthAndYear(sessionData.date);
+
   return (
     <BaseDialog
       open={open}
@@ -116,6 +174,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       title="Payment Details"
       maxWidth="lg"
       showCloseButton={true}
+      headerClassName='text-amber-600'
     >
       <div className="space-y-6">
         {/* Payment Details */}
@@ -123,11 +182,18 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
           <div className="flex justify-between items-start">
             <div>
               <h2 className="font-medium">{sessionData.name}</h2>
-              <p className="text-sm text-gray-600">{sessionData.date}</p>
-              <p className="text-sm text-gray-600">{sessionData.time}</p>
+              <p className="text-sm text-gray-600">
+                {year} {monthName}
+              </p>
             </div>
             <div className="text-right">
-              <div className="text-lg font-medium">Rs. {sessionData.paymentAmount}</div>
+              <div className="text-lg font-medium">
+                Rs. {sessionData.paymentAmount}
+              </div>
+              <div>
+                <p className="text-xs text-amber-600">Payment Due: 8 { monthName} {year}</p>
+
+              </div>
             </div>
           </div>
         </div>
@@ -142,13 +208,13 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
             <CardContent className="p-4 space-y-3">
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="text-gray-600">Bank:</div>
-                <div className="font-medium">Commercial Bank</div>
+                <div className="font-medium">{bankDetails.bankName}</div>
                 <div className="text-gray-600">Account Name:</div>
-                <div className="font-medium">Comma Education</div>
+                <div className="font-medium">{bankDetails.accountName}</div>
                 <div className="text-gray-600">Account Number:</div>
-                <div className="font-medium">1234567890</div>
+                <div className="font-medium">{bankDetails.accountNumber}</div>
                 <div className="text-gray-600">Branch:</div>
-                <div className="font-medium">Colombo</div>
+                <div className="font-medium">{bankDetails.branch}</div>
               </div>
             </CardContent>
           </Card>
@@ -156,7 +222,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         {/* Upload Section */}
         <div className="space-y-4">
           <h2 className="font-medium">Submit Payment Proof</h2>
-          
+
           <div>
             <input
               type="file"
@@ -165,17 +231,16 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
               accept="image/*"
               onChange={handleFileUpload}
             />
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full"
               onClick={() => document.getElementById('receipt')?.click()}
               disabled={uploadingFile?.status === 'uploading'}
             >
               <Upload className="h-4 w-4 mr-2" />
-              {uploadingFile?.status === 'uploading' 
+              {uploadingFile?.status === 'uploading'
                 ? `Uploading... ${uploadingFile.progress}%`
-                : 'Upload Payment Receipt'
-              }
+                : 'Upload Payment Receipt'}
             </Button>
 
             {uploadingFile && (
@@ -202,9 +267,11 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
             <Alert className="bg-green-50 border-green-200">
               <div className="space-y-3 w-full">
                 <div className="flex items-center justify-between">
-                  <p className="text-green-800 font-medium">WhatsApp: +94 XX XXX XXXX</p>
-                  <Button 
-                    variant="ghost" 
+                  <p className="text-green-800 font-medium">
+                    WhatsApp: +94 XX XXX XXXX
+                  </p>
+                  <Button
+                    variant="ghost"
                     size="sm"
                     className="text-green-700"
                     onClick={copyWhatsappMessage}
@@ -221,9 +288,14 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
                 </pre>
               </div>
             </Alert>
-            <Button 
+            <Button
               className="w-full bg-green-600 hover:bg-green-700"
-              onClick={() => window.open(`https://wa.me/94XXXXXXXX?text=${encodeURIComponent(whatsappMessage)}`, '_blank')}
+              onClick={() =>
+                window.open(
+                  `https://wa.me/94XXXXXXXX?text=${encodeURIComponent(whatsappMessage)}`,
+                  '_blank',
+                )
+              }
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               Send via WhatsApp
@@ -235,7 +307,8 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         <Alert className="bg-blue-50 border-blue-200">
           <Info className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-700">
-            Need help? Contact our support team via WhatsApp or call +94 XX XXX XXXX
+            Need help? Contact our support team via WhatsApp or call +94 XX XXX
+            XXXX
           </AlertDescription>
         </Alert>
       </div>

@@ -127,7 +127,7 @@ const TutorClasses = ({
       {/* Classes List */}
       <div>
         {classTableData.length > 0 ? (
-          classTableData.map(classData => (
+          classTableData.map((classData: ClassListData) => (
             <ClassCard 
               key={classData.id} 
               classData={classData}
