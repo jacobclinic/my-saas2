@@ -58,6 +58,9 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     branch: 'Colombo',
   }
 
+  const whatsappNumber = '+947XXXXXXX';
+  const whatsappLink = `https://wa.me/${whatsappNumber}`;
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -268,7 +271,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
               <div className="space-y-3 w-full">
                 <div className="flex items-center justify-between">
                   <p className="text-green-800 font-medium">
-                    WhatsApp: +94 XX XXX XXXX
+                    WhatsApp: {whatsappNumber}
                   </p>
                   <Button
                     variant="ghost"
@@ -292,7 +295,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
               className="w-full bg-green-600 hover:bg-green-700"
               onClick={() =>
                 window.open(
-                  `https://wa.me/94XXXXXXXX?text=${encodeURIComponent(whatsappMessage)}`,
+                  `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`,
                   '_blank',
                 )
               }
