@@ -715,7 +715,6 @@ export async function getAllUpcommingSessionsByTutorIdPerWeekByIndices(
   }
 }
 
-
 export async function getNoOfUpcomingSessionsByStudentIdDataPerWeek(
   client: SupabaseClient<Database>,
   tutor_id: string,
@@ -1018,6 +1017,149 @@ export async function getAllUpcomingSessionsByStudentIdData(
         { count: 'exact' },
       )
       .gt('start_time', new Date().toISOString())
+      .in('class_id', classIds)
+      .order('start_time', { ascending: true });
+
+    let queryForPaymentData = client
+      .from(STUDENT_PAYMENTS_TABLE)
+      .select('*')
+      .eq('student_id', student_id)
+      .in('class_id', classIds)
+      .gte('payment_period', currentMonth);
+
+    const [
+      { data: upcomingSessions, error: upcomingSessionError },
+      { data: upcomingPayments, error: upcomingPaymentError },
+    ] = await Promise.all([queryForSessionData, queryForPaymentData]);
+
+    // console.log('getAllSessionsData', upcomingSessions);
+
+    if (upcomingSessionError) {
+      throw new Error(
+        `Error fetching sessions: ${upcomingSessionError.message}`,
+      );
+    }
+
+    if (upcomingPaymentError) {
+      throw new Error(
+        `Error fetching payments: ${upcomingPaymentError.message}`,
+      );
+    }
+
+    if (!upcomingSessions) {
+      return [];
+    }
+
+    const transformedData = upcomingSessions?.map((sessionData) => {
+      let classTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+        else classTemp = sessionData.class;
+      }
+
+      // Find relevant payment
+      const sessionMonth = new Date(sessionData.start_time || '')
+        .toISOString()
+        .slice(0, 7);
+      const currentPayment = upcomingPayments.find(
+        (payment) =>
+          payment.class_id === sessionData.class_id &&
+          payment.payment_period === sessionMonth,
+      );
+
+      // Transform materials based on payment status
+      const transformedMaterials = sessionData.materials?.map((material) => {
+        if (currentPayment?.status === PaymentStatus.VERIFIED) {
+          return material;
+        }
+        const { url, ...materialWithoutUrl } = material;
+        return materialWithoutUrl;
+      });
+
+      return {
+        ...sessionData,
+        class: classTemp,
+        materials: transformedMaterials || [],
+        payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
+        payment_amount: currentPayment?.amount || classTemp?.fee || null,
+      };
+    });
+
+    return transformedData;
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
+export async function getAllUpcomingSessionsByStudentIdPerWeek(
+  client: SupabaseClient<Database>,
+  student_id: string,
+): Promise<UpcomingSession[] | []> {
+  try {
+    const { data: studentClasses, error: classError } = await client
+      .from(STUDENT_CLASS_ENROLLMENTS_TABLE)
+      .select('class_id')
+      .eq('student_id', student_id);
+
+    if (classError) {
+      throw new Error(`Error fetching student classes: ${classError.message}`);
+    }
+
+    // Get the class IDs
+    const classIds = studentClasses.map((c) => c.class_id);
+
+    // If no classes found and student_id was provided, return empty array
+    if (student_id && classIds.length === 0) {
+      return [];
+    }
+
+    const today = new Date();
+    const currentMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
+    // Calculate next month
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1)
+      .toISOString()
+      .slice(0, 7);
+
+    // Create base query
+    let queryForSessionData = client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor_id,
+            fee
+          ),
+          materials:${RESOURCE_MATERIALS_TABLE}!id (
+            id,
+            name,
+            url,
+            file_size
+          )
+        `,
+        { count: 'exact' },
+      )
+      .gt('start_time', new Date().toISOString())
+      .lt(
+        'start_time',
+        new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000).toISOString(),
+      )
       .in('class_id', classIds)
       .order('start_time', { ascending: true });
 
