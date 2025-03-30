@@ -116,26 +116,28 @@ function CollapsibleButton({
 
   return (
     <Tooltip>
-      <TooltipTrigger
-        className={className}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        onClick={() => onClick(!collapsed)}
-      >
-        <ArrowRightCircleIcon
-          className={classNames(iconClassName, {
-            hidden: !collapsed,
-          })}
-        />
+  <TooltipTrigger
+    className={className}
+    aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+    onClick={() => onClick(!collapsed)}
+  >
+    <ArrowRightCircleIcon
+      className={classNames(iconClassName, {
+        hidden: !collapsed,
+      })}
+    />
 
-        <ArrowLeftCircleIcon
-          className={classNames(iconClassName, {
-            hidden: collapsed,
-          })}
-        />
-      </TooltipTrigger>
+    <ArrowLeftCircleIcon
+      className={classNames(iconClassName, {
+        hidden: collapsed,
+      })}
+    />
+  </TooltipTrigger>
 
-      <TooltipContent sideOffset={20}>Expand sidebar</TooltipContent>
-    </Tooltip>
+  <TooltipContent sideOffset={20}>
+    {collapsed ? "Expand sidebar" : "Collapse sidebar"}
+  </TooltipContent>
+</Tooltip>
   );
 }
 
