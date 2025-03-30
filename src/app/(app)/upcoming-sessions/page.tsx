@@ -26,10 +26,10 @@ async function UpcomingSessionsPage() {
     user?.user?.id || '',
   );
 
-  const studentSessionData = await getAllUpcomingSessionsByStudentIdData(
+  const studentSessionData = await getAllUpcomingSessionsByStudentIdPerWeek(
     client,
     user?.user?.id || '',
-  )
+  );
 
   if (authError || !user?.user.id) {
     console.error('Authentication error:', authError);
@@ -54,11 +54,13 @@ async function UpcomingSessionsPage() {
       <AppHeader title={''} description={''} />
 
       <PageBody>
-
         {userRole === 'student' ? (
-          <StudentUpcomingSessionClient upcomingSessionData={studentSessionData} userId={user.user.id}/>
+          <StudentUpcomingSessionClient
+            upcomingSessionData={studentSessionData}
+            userId={user.user.id}
+          />
         ) : (
-          <UpcomingSessionClient upcomingSessionData={tutorSessionData}/>
+          <UpcomingSessionClient upcomingSessionData={tutorSessionData} />
         )}
       </PageBody>
     </>
