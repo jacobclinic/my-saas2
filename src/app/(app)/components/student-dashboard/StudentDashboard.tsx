@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Calendar, Info, MonitorPlay } from 'lucide-react';
-import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import PaymentDialog from '../student-payments/PaymentDialog';
 import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
@@ -21,11 +21,9 @@ import PaginationControls from '../../components/PaginationControls';
 
 const StudentDashboard = ({
   upcomingSessionData,
-  pastSessionData,
   studentId,
 }: {
   upcomingSessionData: UpcomingSession[];
-  pastSessionData: PastSession[];
   studentId: string;
 }) => {
   const userSession = useUserSession();
@@ -35,9 +33,6 @@ const StudentDashboard = ({
   const [upcomingSessions, setUpcomingSessions] = useState<
     SessionStudentTableData[]
   >([]);
-  const [pastSessions, setPastSessions] = useState<SessionStudentTableData[]>(
-    [],
-  );
 
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedSession, setSelectedSession] =
@@ -45,17 +40,11 @@ const StudentDashboard = ({
 
   // Pagination state
   const [upcomingCurrentPage, setUpcomingCurrentPage] = useState(1);
-  const [pastCurrentPage, setPastCurrentPage] = useState(1);
   const itemsPerPage = 3; // Items per page
 
   const handleUpcomingPageChange = (page: number) => {
-    console.log('Upcoming Page Changed:', page);
+    // console.log('Upcoming Page Changed:', page);
     setUpcomingCurrentPage(page);
-  };
-
-  const handlePastPageChange = (page: number) => {
-    console.log('Previous Page Changed:', page);
-    setPastCurrentPage(page);
   };
 
   // Sample data
@@ -151,242 +140,6 @@ const StudentDashboard = ({
         ],
         recurring_session_id: null,
       },
-      {
-        id: '5',
-        created_at: new Date().toISOString(),
-        class_id: '1',
-        recording_urls: [],
-        status: 'scheduled',
-        start_time: '2025-01-08T16:00:00Z',
-        end_time: '2025-01-08T18:00:00Z',
-        title: 'Partnership Accounts - Part 2',
-        description: '',
-        updated_at: new Date().toISOString(),
-        meeting_url: 'https://zoom.us/j/123456789',
-        zoom_meeting_id: '123456789',
-        payment_status: PaymentStatus.VERIFIED,
-        payment_amount: 5000,
-        class: {
-          id: '1',
-          name: 'A/L 2025 Accounting Batch 04',
-          subject: 'Accounting',
-          tutor_id: '1',
-          fee: 5000,
-        },
-        materials: [
-          {
-            id: '7',
-            name: 'Partnership Accounts Part 2.pdf',
-            file_size: '3.0 MB',
-            url: 'https://example.com/materials/7',
-          },
-        ],
-        recurring_session_id: null,
-      },
-      {
-        id: '6',
-        created_at: new Date().toISOString(),
-        class_id: '1',
-        recording_urls: [],
-        status: 'scheduled',
-        start_time: '2025-01-15T16:00:00Z',
-        end_time: '2025-01-15T18:00:00Z',
-        title: 'Introduction to Company Accounts',
-        description: '',
-        updated_at: new Date().toISOString(),
-        meeting_url: 'https://zoom.us/j/123456789',
-        zoom_meeting_id: '123456789',
-        payment_status: PaymentStatus.PENDING,
-        payment_amount: 5000,
-        class: {
-          id: '1',
-          name: 'A/L 2025 Accounting Batch 04',
-          subject: 'Accounting',
-          tutor_id: '1',
-          fee: 5000,
-        },
-        materials: [
-          {
-            id: '8',
-            name: 'Company Accounts Notes.pdf',
-            file_size: '2.5 MB',
-            url: 'https://example.com/materials/8',
-          },
-          {
-            id: '9',
-            name: 'Practice Problems Set.pdf',
-            file_size: '1.8 MB',
-            url: 'https://example.com/materials/9',
-          },
-        ],
-        recurring_session_id: null,
-      },
-      {
-        id: '7',
-        created_at: new Date().toISOString(),
-        class_id: '1',
-        recording_urls: [],
-        status: 'scheduled',
-        start_time: '2025-01-22T16:00:00Z',
-        end_time: '2025-01-22T18:00:00Z',
-        title: 'Company Accounts - Part 2',
-        description: '',
-        updated_at: new Date().toISOString(),
-        meeting_url: 'https://zoom.us/j/123456789',
-        zoom_meeting_id: '123456789',
-        payment_status: PaymentStatus.VERIFIED,
-        payment_amount: 5000,
-        class: {
-          id: '1',
-          name: 'A/L 2025 Accounting Batch 04',
-          subject: 'Accounting',
-          tutor_id: '1',
-          fee: 5000,
-        },
-        materials: [
-          {
-            id: '10',
-            name: 'Company Accounts Part 2.pdf',
-            file_size: '3.0 MB',
-            url: 'https://example.com/materials/10',
-          },
-        ],
-        recurring_session_id: null,
-      },
-    ],
-    [],
-  );
-
-  const pastSessionsSampleData = useMemo(
-    () => [
-      {
-        id: '3',
-        name: 'A/L 2025 Accounting Batch 04',
-        topic: 'Introduction to Manufacturing Accounts',
-        date: 'Monday, Dec 11, 2024',
-        time: '4:00 PM - 6:00 PM',
-        paymentStatus: PaymentStatus.VERIFIED,
-        paymentAmount: 5000,
-        zoomLink: 'https://zoom.us/j/123456789',
-        zoomMeetingId: '123456789',
-        recordingUrl: 'https://zoom.us/rec/123',
-        materials: [
-          {
-            id: '4',
-            name: 'Introduction Notes.pdf',
-            file_size: '2.2 MB',
-            url: 'https://example.com/materials/4',
-          },
-          {
-            id: '5',
-            name: 'Homework Problems.pdf',
-            file_size: '1.5 MB',
-            url: 'https://example.com/materials/5',
-          },
-        ],
-        classId: '1',
-        sessionRawData: {} as PastSession, // Placeholder for raw session data
-      },
-      {
-        id: '8',
-        name: 'A/L 2025 Accounting Batch 04',
-        topic: 'Manufacturing Accounts - Part 1',
-        date: 'Monday, Dec 18, 2024',
-        time: '4:00 PM - 6:00 PM',
-        paymentStatus: PaymentStatus.VERIFIED,
-        paymentAmount: 5000,
-        zoomLink: 'https://zoom.us/j/123456789',
-        zoomMeetingId: '123456789',
-        recordingUrl: 'https://zoom.us/rec/456',
-        materials: [
-          {
-            id: '11',
-            name: 'Manufacturing Accounts Notes.pdf',
-            file_size: '2.5 MB',
-            url: 'https://example.com/materials/11',
-          },
-          {
-            id: '12',
-            name: 'Practice Problems Set.pdf',
-            file_size: '1.8 MB',
-            url: 'https://example.com/materials/12',
-          },
-        ],
-        classId: '1',
-        sessionRawData: {} as PastSession, // Placeholder for raw session data
-      },
-      {
-        id: '9',
-        name: 'A/L 2025 Accounting Batch 04',
-        topic: 'Manufacturing Accounts - Part 2',
-        date: 'Monday, Dec 25, 2024',
-        time: '4:00 PM - 6:00 PM',
-        paymentStatus: PaymentStatus.VERIFIED,
-        paymentAmount: 5000,
-        zoomLink: 'https://zoom.us/j/123456789',
-        zoomMeetingId: '123456789',
-        recordingUrl: 'https://zoom.us/rec/789',
-        materials: [
-          {
-            id: '13',
-            name: 'Manufacturing Accounts Part 2.pdf',
-            file_size: '3.0 MB',
-            url: 'https://example.com/materials/13',
-          },
-        ],
-        classId: '1',
-        sessionRawData: {} as PastSession, // Placeholder for raw session data
-      },
-      {
-        id: '10',
-        name: 'A/L 2025 Accounting Batch 04',
-        topic: 'Introduction to Partnership Accounts',
-        date: 'Monday, Jan 1, 2025',
-        time: '4:00 PM - 6:00 PM',
-        paymentStatus: PaymentStatus.VERIFIED,
-        paymentAmount: 5000,
-        zoomLink: 'https://zoom.us/j/123456789',
-        zoomMeetingId: '123456789',
-        recordingUrl: 'https://zoom.us/rec/101112',
-        materials: [
-          {
-            id: '14',
-            name: 'Partnership Accounts Notes.pdf',
-            file_size: '2.5 MB',
-            url: 'https://example.com/materials/14',
-          },
-          {
-            id: '15',
-            name: 'Practice Problems Set.pdf',
-            file_size: '1.8 MB',
-            url: 'https://example.com/materials/15',
-          },
-        ],
-        classId: '1',
-        sessionRawData: {} as PastSession, // Placeholder for raw session data
-      },
-      {
-        id: '11',
-        name: 'A/L 2025 Accounting Batch 04',
-        topic: 'Partnership Accounts - Part 2',
-        date: 'Monday, Jan 8, 2025',
-        time: '4:00 PM - 6:00 PM',
-        paymentStatus: PaymentStatus.VERIFIED,
-        paymentAmount: 5000,
-        zoomLink: 'https://zoom.us/j/123456789',
-        zoomMeetingId: '123456789',
-        recordingUrl: 'https://zoom.us/rec/131415',
-        materials: [
-          {
-            id: '16',
-            name: 'Partnership Accounts Part 2.pdf',
-            file_size: '3.0 MB',
-            url: 'https://example.com/materials/16',
-          },
-        ],
-        classId: '1',
-        sessionRawData: {} as PastSession, // Placeholder for raw session data
-      },
     ],
     [],
   );
@@ -409,20 +162,9 @@ const StudentDashboard = ({
     }
   }, [upcomingSessionData]);
 
-  // Transform past sessions data
-  useEffect(() => {
-    if (pastSessionData?.length > 0) {
-      const formattedPastSessions = pastSessionData.map(formatSessionData);
-      setPastSessions(formattedPastSessions);
-    } else {
-      // Reset if there's no data
-      setPastSessions([]);
-    }
-  }, [pastSessionData]); // Only run when `pastSessionData` changes
-
   // Helper function to format session data
   const formatSessionData = (
-    sessionData: UpcomingSession | PastSession,
+    sessionData: UpcomingSession,
   ): SessionStudentTableData => {
     const formattedDate = new Date(
       sessionData.start_time || '',
@@ -509,17 +251,6 @@ const StudentDashboard = ({
     upcomingSessions.length / itemsPerPage,
   );
 
-  const indexOfLastPast = pastCurrentPage * itemsPerPage;
-  const indexOfFirstPast = indexOfLastPast - itemsPerPage;
-  const currentPastSessions = pastSessions.slice(
-    indexOfFirstPast,
-    indexOfLastPast,
-  );
-
-  const totalPagesOfPastSessions = Math.ceil(
-    pastSessions.length / itemsPerPage,
-  );
-
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -572,36 +303,6 @@ const StudentDashboard = ({
             )}
           </div>
         )}
-
-        {/* Past Sessions */}
-        {pastSessions.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <MonitorPlay className="h-5 w-5 mr-2" />
-              <h2 className="text-xl font-bold">Past Classes</h2>
-            </div>
-            {currentPastSessions.map((sessionData) => (
-              <StudentSessionCard
-                key={sessionData.id}
-                sessionData={sessionData}
-                type="past"
-                isPending={isPending}
-                setSelectedSession={setSelectedSession}
-                setShowPaymentDialog={setShowPaymentDialog}
-                joinMeetingAsStudent={joinMeetingAsStudent}
-              />
-            ))}
-            {/* Pagination Controls for Past Sessions */}
-            {totalPagesOfPastSessions > 1 && (
-              <PaginationControls
-                currentPage={pastCurrentPage}
-                totalPages={totalPagesOfPastSessions}
-                onPageChange={handlePastPageChange}
-              />
-            )}
-          </div>
-        )}
-
         {showPaymentDialog && selectedSession && (
           <PaymentDialog
             open={showPaymentDialog}

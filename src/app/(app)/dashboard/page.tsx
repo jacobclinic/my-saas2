@@ -1,9 +1,13 @@
 import { redirect } from 'next/navigation';
 import AppHeader from '~/app/(app)/components/AppHeader';
 import { PageBody } from '~/core/ui/Page';
-import TutorDashboard from '../components/tutor-dashboard/TutorDashboard';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
-import { getAllUpcommingSessionsByTutorIdData, getAllUpcomingSessionsByStudentIdData, getAllPastSessionsByStudentIdData } from '~/lib/sessions/database/queries';
+import {
+  getAllUpcommingSessionsByTutorIdData,
+  getAllUpcomingSessionsByStudentIdData,
+  getAllPastSessionsByStudentIdData,
+  getAllUpcomingSessionsByStudentIdPerWeek,
+} from '~/lib/sessions/database/queries';
 import { Alert, AlertDescription } from '../components/base-v2/ui/Alert';
 import { Info } from 'lucide-react';
 import StudentDashboard from '../components/student-dashboard/StudentDashboard';
@@ -18,8 +22,11 @@ async function DashboardPage() {
 
   try {
     // Get user and handle authentication
-    const { data: { user }, error: authError } = await client.auth.getUser();
-    console.log('-----DashboardPage-------auth-User:', user);
+    const {
+      data: { user },
+      error: authError,
+    } = await client.auth.getUser();
+    // console.log('-----DashboardPage-------auth-User:', user);
 
     // Handle authentication error
     if (authError || !user?.id) {
@@ -38,7 +45,7 @@ async function DashboardPage() {
       throw userError;
     }
 
-    const userRole = userData?.user_role || "admin";
+    const userRole = userData?.user_role || 'admin';
     // const userRole = userData?.user_role || "student";
 
     // Fetch appropriate data based on user role
@@ -53,31 +60,30 @@ async function DashboardPage() {
       // Render tutor dashboard
       return (
         <>
-          <AppHeader
-            title="Tutor Dashboard"
-          />
+          <AppHeader title="Tutor Dashboard" />
           <PageBody>
-            {(!sessionData.length) ? (
+            {!sessionData.length ? (
               <Alert className="bg-blue-50 border-blue-200">
                 <Info className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-blue-700">
-                  You haven&apos;t created any classes yet. Create your first class to get started!
+                  You haven&apos;t created any classes yet. Create your first
+                  class to get started!
                 </AlertDescription>
               </Alert>
             ) : (
-              <TutorDBClient 
-              upcomingSessionDataPerWeek={sessionData} 
-                // activeClassesData={classesData} 
+              <TutorDBClient
+                upcomingSessionDataPerWeek={sessionData}
+                // activeClassesData={classesData}
               />
             )}
           </PageBody>
         </>
       );
     } else if (userRole === 'student') {
-      const [upcomingSessions, pastSessions] = await Promise.all([
-        getAllUpcomingSessionsByStudentIdData(client, user.id),
-        getAllPastSessionsByStudentIdData(client, user.id),
-      ]);
+      const upcomingSessions = await getAllUpcomingSessionsByStudentIdPerWeek(
+        client,
+        user.id,
+      );
 
       // Render student dashboard
       return (
@@ -87,21 +93,21 @@ async function DashboardPage() {
             description={`Welcome back! ${
               upcomingSessions.length
                 ? 'You have upcoming sessions. Get ready!'
-                : 'You don\'t have any upcoming sessions. Check back soon or explore new classes!'
+                : "You don't have any upcoming sessions. Check back soon or explore new classes!"
             }`}
           />
           <PageBody>
-            {(!upcomingSessions.length) ? (
+            {!upcomingSessions.length ? (
               <Alert className="bg-blue-50 border-blue-200">
                 <Info className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-blue-700">
-                  You aren&apos;t enrolled in any classes yet. Browse available classes to get started!
+                  You aren&apos;t enrolled in any classes yet. Browse available
+                  classes to get started!
                 </AlertDescription>
               </Alert>
             ) : (
-              <StudentDashboard 
-                upcomingSessionData={upcomingSessions} 
-                pastSessionData={pastSessions}
+              <StudentDashboard
+                upcomingSessionData={upcomingSessions}
                 studentId={user.id}
               />
             )}
@@ -112,7 +118,6 @@ async function DashboardPage() {
 
     // Handle unknown user role
     throw new Error('Invalid user role');
-
   } catch (error) {
     // Handle any other errors
     console.error('Dashboard error:', error);
@@ -126,7 +131,8 @@ async function DashboardPage() {
           <Alert className="bg-red-50 border-red-200">
             <Info className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-700">
-              Unable to load dashboard data. Please try refreshing the page or contact support if the problem persists.
+              Unable to load dashboard data. Please try refreshing the page or
+              contact support if the problem persists.
             </AlertDescription>
           </Alert>
         </PageBody>

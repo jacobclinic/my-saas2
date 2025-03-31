@@ -59,10 +59,10 @@ const ActiveClassesSection = ({
     }
   }, [activeClassesData]);
 
-  console.log(
-    'nextSessionData and activeClassesData:',
-    activeClassesData,
-  );
+  // console.log(
+  //   'nextSessionData and activeClassesData:',
+  //   activeClassesData,
+  // );
 
   return (
     <>

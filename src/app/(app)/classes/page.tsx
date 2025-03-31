@@ -13,7 +13,7 @@ export const metadata = {
 async function ClassesPage() {
   const client = getSupabaseServerComponentClient();
   const { data: { user }, error: authError } = await client.auth.getUser();
-  console.log('-----ClassesPage-------auth-User:', user);
+  // console.log('-----ClassesPage-------auth-User:', user);
 
   // Handle authentication error
   if (authError || !user?.id) {

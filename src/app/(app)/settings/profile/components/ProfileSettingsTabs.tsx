@@ -74,7 +74,7 @@ export default ProfileSettingsTabs;
 
 function useCanUpdatePassword() {
   const { data: user } = useUser();
-  console.log('user', user);
+  // console.log('user', user);
 
   // user can only edit email and password
   // if they signed up with the EmailAuthProvider provider

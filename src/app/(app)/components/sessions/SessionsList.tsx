@@ -76,7 +76,7 @@ function DataTableExample({
           revalidateSessionsByClassIdDataFetch && revalidateSessionsByClassIdDataFetch();
         });
         // await deleteClass(sessionData.id);
-        console.log(`Class ${sessionData.date} deleted successfully`);
+        // console.log(`Class ${sessionData.date} deleted successfully`);
       } catch (error: any) {
         console.error(`Failed to delete class: ${error?.message}`);
       }

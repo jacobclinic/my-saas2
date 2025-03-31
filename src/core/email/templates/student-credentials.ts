@@ -2,11 +2,10 @@
 export function getStudentCredentialsEmailTemplate(params: {
     studentName: string;
     email: string;
-    password: string;
     className: string;
     loginUrl: string;
   }) {
-    const { studentName, email, password, className, loginUrl } = params;
+    const { studentName, email, className, loginUrl } = params;
   
     const html = `
       <!DOCTYPE html>
@@ -59,10 +58,9 @@ export function getStudentCredentialsEmailTemplate(params: {
               
               <div class="credentials">
                 <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Password:</strong> ${password}</p>
               </div>
   
-              <p>Please login using these credentials and change your password after your first login.</p>
+              <p>Please login using this eamil and password provided by you when registering to the class</p>
               
               <p style="text-align: center; margin: 30px 0;">
                 <a href="${loginUrl}" class="button">Login to Your Account</a>
@@ -85,9 +83,8 @@ export function getStudentCredentialsEmailTemplate(params: {
   You have been successfully enrolled in ${className}. Here are your login credentials:
   
   Email: ${email}
-  Password: ${password}
   
-  Please login using these credentials and change your password after your first login.
+  Please login using this email and password provided by you.
   
   You can login at: ${loginUrl}
   

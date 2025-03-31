@@ -28,7 +28,7 @@ export const metadata = {
 export default async function ClassViewPage({ params }: Params) {
   const client = getSupabaseServerComponentClient();
   const classData = await getClassDataById(client, params.id) as ClassWithTutorAndEnrollment;
-  console.log("classData-------", classData);
+  // console.log("classData-------", classData);
 
 
   return (

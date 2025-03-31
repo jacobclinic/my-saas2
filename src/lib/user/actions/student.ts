@@ -141,7 +141,6 @@ export async function createStudentAction({
       const { html, text } = getStudentCredentialsEmailTemplate({
         studentName: `${firstName} ${lastName}`,
         email,
-        password,
         className: nameOfClass,
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`
       });

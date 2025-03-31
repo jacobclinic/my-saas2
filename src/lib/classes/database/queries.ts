@@ -1,11 +1,17 @@
 import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js';
 import { Database } from '~/database.types';
-import { CLASSES_TABLE, SESSIONS_TABLE, STUDENT_CLASS_ENROLLMENTS_TABLE, USERS_TABLE } from '~/lib/db-tables';
+import {
+  CLASSES_TABLE,
+  SESSIONS_TABLE,
+  STUDENT_CLASS_ENROLLMENTS_TABLE,
+  USERS_TABLE,
+} from '~/lib/db-tables';
 import { ClassWithTutorAndEnrollment } from '../types/class';
 import { ClassForStudentType, ClassType } from '../types/class-v2';
 import { unknown } from 'zod';
 
-interface ClassWithTutorAndEnrollmentRawData extends Omit<ClassWithTutorAndEnrollment, 'noOfStudents'> {
+interface ClassWithTutorAndEnrollmentRawData
+  extends Omit<ClassWithTutorAndEnrollment, 'noOfStudents'> {
   noOfStudents: { count: number }[];
 }
 
@@ -15,8 +21,8 @@ interface ClassWithTutorAndEnrollmentRawData extends Omit<ClassWithTutorAndEnrol
 export async function getClassDataById(
   client: SupabaseClient<Database>,
   classId: string,
-): Promise<ClassWithTutorAndEnrollment | null>{
-  const result = await client
+): Promise<ClassWithTutorAndEnrollment | null> {
+  const result = (await client
     .from(CLASSES_TABLE)
     .select(
       `
@@ -35,12 +41,12 @@ export async function getClassDataById(
         timeSlots,
         noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
       `,
-      { count: 'exact' }
+      { count: 'exact' },
     )
     .eq('id', classId)
-    .maybeSingle() as { data: ClassWithTutorAndEnrollmentRawData | null };
+    .maybeSingle()) as { data: ClassWithTutorAndEnrollmentRawData | null };
 
-  console.log("getClassDataById - data - ", result?.data)
+  // console.log('getClassDataById - data - ', result?.data);
 
   if (!result.data) {
     return null;
@@ -52,7 +58,7 @@ export async function getClassDataById(
     noOfStudents: result.data.noOfStudents[0]?.count || 0, // Use length of the noOfStudents array
   };
 
-  console.log("getAllClassesData-2", transformedData)
+  // console.log('getAllClassesData-2', transformedData);
 
   return transformedData;
 }
@@ -61,8 +67,10 @@ export async function getAllClassesData(
   client: SupabaseClient<Database>,
 ): Promise<ClassWithTutorAndEnrollment[]> {
   try {
-    const { data, error } = await client.from(CLASSES_TABLE).select(
-      `
+    const { data, error } = await client
+      .from(CLASSES_TABLE)
+      .select(
+        `
         id,
         name,
         description,
@@ -78,14 +86,16 @@ export async function getAllClassesData(
         timeSlots,
         noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
       `,
-      { count: 'exact' }
-    )
-    .returns<ClassWithTutorAndEnrollmentRawData[]>();
+        { count: 'exact' },
+      )
+      .returns<ClassWithTutorAndEnrollmentRawData[]>();
 
-    console.log("getAllClassesData", data)
+    // console.log("getAllClassesData", data)
 
     if (error) {
-      throw new Error(`Error fetching classes: ${(error as PostgrestError).message}`);
+      throw new Error(
+        `Error fetching classes: ${(error as PostgrestError).message}`,
+      );
     }
 
     // Transform the data to get the count directly
@@ -94,10 +104,9 @@ export async function getAllClassesData(
       noOfStudents: classData.noOfStudents[0]?.count || 0, // Use length of the noOfStudents array
     }));
 
-    console.log("getAllClassesData-2", transformedData)
+    // console.log('getAllClassesData-2', transformedData);
 
     return transformedData;
-
   } catch (error) {
     console.error('Failed to fetch classes:', error);
     throw error;
@@ -140,10 +149,10 @@ export async function getAllClassesByTutorIdData(
               status
             )
           )
-        `
+        `,
       )
       .eq('tutor_id', tutor_id)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false });
 
     // If isDashboard is true, filter active classes
     if (isDashboard) {
@@ -152,45 +161,43 @@ export async function getAllClassesByTutorIdData(
 
     const { data, error } = await query;
 
-    console.log("getAllSessionsData", data)
+    // console.log("getAllSessionsData", data)
 
     if (error) {
-      throw new Error(`Error fetching sessions: ${(error as PostgrestError).message}`);
+      throw new Error(
+        `Error fetching sessions: ${(error as PostgrestError).message}`,
+      );
     }
 
     if (!data) {
       return [];
     }
 
-    const classIds = data?.map((classData) => classData.id);
-    const { data: sessionsData, error: sessionsError } = await client
-      .from(SESSIONS_TABLE)
-      .select(
-        `
-          id,
-          class_id,
-          start_time
-        `
-      )
-      .in('class_id', classIds)
-      .gt('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true })
-      .limit(1);
-
-    const transformedData = data?.map((classData) => {
-      const upcomingSession = sessionsData?.find(
-        (session) => session.class_id === classData.id,
-      );
-      const timeSlots = classData?.time_slots as { day: string; startTime: string; endTime: string; }[] | null;
-      return {
-        ...classData,
-        upcomingSession: upcomingSession ? upcomingSession.start_time : null,
-        time_slots: timeSlots,
-      };
-    })
+    const transformedData = await Promise.all(
+      data.map(async (classData) => {
+        const { data: sessionsData } = await client
+          .from(SESSIONS_TABLE)
+          .select(`id, start_time`)
+          .eq('class_id', classData.id)
+          .gt('start_time', new Date().toISOString())
+          .order('start_time', { ascending: true })
+          .limit(1);
+        
+        const timeSlots = classData?.time_slots as 
+          | { day: string; startTime: string; endTime: string }[] 
+          | null;
     
-    return transformedData;
+        return {
+          ...classData,
+          upcomingSession: sessionsData?.[0]?.start_time || null,
+          time_slots: timeSlots
+        };
+      })
+    );
 
+    console.log(transformedData);
+
+    return transformedData;
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
     throw error;
@@ -203,7 +210,6 @@ export async function getAllClassesByTutorIdDataPerWeek(
   isDashboard?: boolean,
 ): Promise<ClassType[] | []> {
   try {
-
     // Calculate date 7 days from now
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
@@ -236,10 +242,10 @@ export async function getAllClassesByTutorIdDataPerWeek(
               status
             )
           )
-        `
+        `,
       )
       .eq('tutor_id', tutor_id)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false });
 
     // If isDashboard is true, filter active classes
     if (isDashboard) {
@@ -248,10 +254,12 @@ export async function getAllClassesByTutorIdDataPerWeek(
 
     const { data, error } = await query;
 
-    console.log("getAllSessionsData", data)
+    // console.log("getAllSessionsData", data)
 
     if (error) {
-      throw new Error(`Error fetching sessions: ${(error as PostgrestError).message}`);
+      throw new Error(
+        `Error fetching sessions: ${(error as PostgrestError).message}`,
+      );
     }
 
     if (!data) {
@@ -266,7 +274,7 @@ export async function getAllClassesByTutorIdDataPerWeek(
           id,
           class_id,
           start_time
-        `
+        `,
       )
       .in('class_id', classIds)
       .gt('start_time', new Date().toISOString())
@@ -278,22 +286,22 @@ export async function getAllClassesByTutorIdDataPerWeek(
       const upcomingSession = sessionsData?.find(
         (session) => session.class_id === classData.id,
       );
-      const timeSlots = classData?.time_slots as { day: string; startTime: string; endTime: string; }[] | null;
+      const timeSlots = classData?.time_slots as
+        | { day: string; startTime: string; endTime: string }[]
+        | null;
       return {
         ...classData,
         upcomingSession: upcomingSession ? upcomingSession.start_time : null,
         time_slots: timeSlots,
       };
-    })
-    
-    return transformedData;
+    });
 
+    return transformedData;
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
     throw error;
   }
 }
-
 
 export async function getAllClassesByStudentIdData(
   client: SupabaseClient<Database>,
@@ -323,14 +331,14 @@ export async function getAllClassesByStudentIdData(
             status,            
             grade
           )
-        `
+        `,
       )
       .eq('student_id', student_id)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false });
 
     const { data, error } = await query;
 
-    console.log("getAllClassesByStudentIdData", data)
+    // console.log('getAllClassesByStudentIdData', data);
 
     if (!data) {
       return [];
@@ -357,7 +365,9 @@ export async function getAllClassesByStudentIdData(
     });
 
     if (error) {
-      throw new Error(`Error fetching classes: ${(error as PostgrestError).message}`);
+      throw new Error(
+        `Error fetching classes: ${(error as PostgrestError).message}`,
+      );
     }
 
     return transformedData;

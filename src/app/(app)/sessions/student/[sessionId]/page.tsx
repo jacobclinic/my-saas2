@@ -14,22 +14,26 @@ interface Params {
 export default async function SessionViewPage({ params }: Params) {
   const client = getSupabaseServerComponentClient();
 
-	// Get user and handle authentication
-	const { data: { user }, error: authError } = await client.auth.getUser();
+  // Get user and handle authentication
+  const {
+    data: { user },
+    error: authError,
+  } = await client.auth.getUser();
 
-	console.log("--------------user----------------", user?.id, params.sessionId)
+  // console.log("--------------user----------------", user?.id, params.sessionId)
 
-	// Handle authentication error
-	if (authError || !user?.id) {
-		console.error('Authentication error:', authError);
-		redirect('/auth/sign-in');
-	}
+  // Handle authentication error
+  if (authError || !user?.id) {
+    console.error('Authentication error:', authError);
+    console.log("Session ID: " +params.sessionId);
+    redirect('/auth/join-class-signin?sessionId=' + params.sessionId);
+  }
 
-	const sessionData = await getSessionByStudentIdData(
+  const sessionData = await getSessionByStudentIdData(
     client,
     user.id,
     params.sessionId,
-	)  
+  );
 
   if (!sessionData) {
     // Handle not found case
@@ -37,16 +41,17 @@ export default async function SessionViewPage({ params }: Params) {
       <PageBody>
         <div className="text-center">
           <h1 className="text-2xl font-bold">Session not found</h1>
-          <p className="mt-2 text-gray-600">The session you&apos;re looking for doesn&apos;t exist.</p>
+          <p className="mt-2 text-gray-600">
+            The session you&apos;re looking for doesn&apos;t exist.
+          </p>
         </div>
       </PageBody>
     );
   }
 
   // Determine session type based on start time
-  const sessionType = new Date(sessionData.start_time|| "") > new Date() 
-    ? 'upcoming' 
-    : 'past';  
+  const sessionType =
+    new Date(sessionData.start_time || '') > new Date() ? 'upcoming' : 'past';
 
   return (
     <>
@@ -56,12 +61,12 @@ export default async function SessionViewPage({ params }: Params) {
       /> */}
 
       <PageBody>
-        <StudentSessionDetails 
-					sessionData={sessionData}
-					type={sessionType}
-					studentId={user.id}
+        <StudentSessionDetails
+          sessionData={sessionData}
+          type={sessionType}
+          studentId={user.id}
         />
       </PageBody>
     </>
   );
-};
+}
