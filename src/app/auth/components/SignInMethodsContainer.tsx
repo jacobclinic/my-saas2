@@ -12,8 +12,13 @@ import EmailLinkAuth from '~/app/auth/components/EmailLinkAuth';
 
 import configuration from '~/configuration';
 import EmailOtpContainer from '~/app/auth/components/EmailOtpContainer';
+import JoinClassSignin from './JoinClassSignin';
 
-function SignInMethodsContainer() {
+function SignInMethodsContainer({
+  redirectUrl,
+}: {
+  redirectUrl: string | null;
+}) {
   const router = useRouter();
 
   const onSignIn = useCallback(() => {
@@ -22,31 +27,37 @@ function SignInMethodsContainer() {
 
   return (
     <>
-      <If condition={configuration.auth.providers.oAuth.length}>
-        <OAuthProviders />
+      {redirectUrl?.includes('/sessions/student/') ? (
+        <JoinClassSignin />
+      ) : (
+        <>
+          <If condition={configuration.auth.providers.oAuth.length}>
+            <OAuthProviders />
 
-        <div>
-          <span className={'text-xs text-gray-400'}>
-            or continue with email
-          </span>
-        </div>
-      </If>
+            <div>
+              <span className={'text-xs text-gray-400'}>
+                or continue with email
+              </span>
+            </div>
+          </If>
 
-      <If condition={configuration.auth.providers.emailPassword}>
-        <EmailPasswordSignInContainer onSignIn={onSignIn} />
-      </If>
+          <If condition={configuration.auth.providers.emailPassword}>
+            <EmailPasswordSignInContainer onSignIn={onSignIn} />
+          </If>
 
-      <If condition={configuration.auth.providers.phoneNumber}>
-        <PhoneNumberSignInContainer onSuccess={onSignIn} mode={'signIn'} />
-      </If>
+          <If condition={configuration.auth.providers.phoneNumber}>
+            <PhoneNumberSignInContainer onSuccess={onSignIn} mode={'signIn'} />
+          </If>
 
-      <If condition={configuration.auth.providers.emailLink}>
-        <EmailLinkAuth />
-      </If>
+          <If condition={configuration.auth.providers.emailLink}>
+            <EmailLinkAuth />
+          </If>
 
-      <If condition={configuration.auth.providers.emailOtp}>
-        <EmailOtpContainer shouldCreateUser={false} />
-      </If>
+          <If condition={configuration.auth.providers.emailOtp}>
+            <EmailOtpContainer shouldCreateUser={false} />
+          </If>
+        </>
+      )}
     </>
   );
 }

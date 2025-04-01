@@ -105,8 +105,17 @@ async function roleBasedMiddleware(request: NextRequest, response: NextResponse)
   const pathname = request.nextUrl.pathname;
   const isInAppPath = pathname.startsWith('/admin') || pathname.startsWith('/tutor') || pathname.startsWith('/student');
 
-  if (!isInAppPath) {
-    return response;
+   // Store the current URL in headers for server components
+   const requestHeaders = new Headers(request.headers);
+   requestHeaders.set('x-request-url', request.url);
+   response.headers.set('x-request-url', request.url);
+
+    if (!isInAppPath) {
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   const supabase = createMiddlewareClient(request, response);
@@ -115,8 +124,17 @@ async function roleBasedMiddleware(request: NextRequest, response: NextResponse)
 
   // If the user is not authenticated, redirect to sign-in
   if (error || !user?.user) {
-    console.error('User not authenticated:', error?.message || 'No user found');
-    return NextResponse.redirect(configuration.paths.signIn);
+    const signInUrl = new URL(configuration.paths.signIn, configuration.site.siteUrl);
+    
+    // Preserve the redirect URL if it exists, otherwise use current path
+    const redirectUrl = request.nextUrl.searchParams.get('redirectUrl') || 
+                       `${pathname}${request.nextUrl.search}`;
+    
+    if (redirectUrl) {
+      signInUrl.searchParams.set('redirectUrl', redirectUrl);
+    }
+
+    return NextResponse.redirect(signInUrl);
   }
 
   const userId = user.user?.id;

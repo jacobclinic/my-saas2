@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Heading from '~/core/ui/Heading';
 import configuration from '~/configuration';
 import SignInMethodsContainer from '~/app/auth/components/SignInMethodsContainer';
+import { useSearchParams } from 'next/navigation';
 
 const SIGN_UP_PATH = configuration.paths.signUp;
 
@@ -10,14 +11,22 @@ export const metadata = {
   title: 'Sign In',
 };
 
-function SignInPage() {
+function SignInPage(
+  {
+    searchParams,
+  }: {
+    searchParams: { redirectUrl?: string };
+  }
+) {
+
+  const redirectUrl = searchParams.redirectUrl;
   return (
     <>
       <div>
         <Heading type={5}>Sign In</Heading>
       </div>
 
-      <SignInMethodsContainer />
+      <SignInMethodsContainer redirectUrl={redirectUrl!} />
 
       <div className={'flex justify-center text-xs'}>
         <p className={'flex space-x-1'}>
