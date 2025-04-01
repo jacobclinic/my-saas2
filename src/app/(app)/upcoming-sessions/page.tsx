@@ -7,10 +7,8 @@ import {
   getAllUpcommingSessionsByTutorIdData,
   getAllUpcommingSessionsByTutorIdDataPerWeek,
 } from '~/lib/sessions/database/queries';
-import UpcomingClasses from '../components/upcoming-sessions/UpcomingSessions';
 import UpcomingSessionClient from '../components/upcoming-sessions/UpcomingSessionClient';
 import { redirect } from 'next/navigation';
-import StudentUpcomingSessions from '../components/upcoming-sessions-student/StudentUpcomingSessions';
 import StudentUpcomingSessionClient from '../components/upcoming-sessions-student/StudentUpcomingSessionClient';
 
 export const metadata = {
