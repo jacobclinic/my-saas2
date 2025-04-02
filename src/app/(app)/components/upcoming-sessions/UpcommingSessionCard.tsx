@@ -1,14 +1,18 @@
-'use client'
+'use client';
 
 import React, { useCallback, useState, useTransition } from 'react';
-import { LessonDetails, UpcommingSessionCardProps, UploadedMaterial } from '~/lib/sessions/types/upcoming-sessions';
-import { Card, CardContent, CardHeader, CardTitle } from "../base-v2/ui/Card";
-import { Button } from "../base-v2/ui/Button";
-import { Badge } from "../base-v2/ui/Badge";
-import { Textarea } from "../base-v2/ui/Textarea";
-import { Input } from "../base-v2/ui/Input";
+import {
+  LessonDetails,
+  UpcommingSessionCardProps,
+  UploadedMaterial,
+} from '~/lib/sessions/types/upcoming-sessions';
+import { Card, CardContent, CardHeader, CardTitle } from '../base-v2/ui/Card';
+import { Button } from '../base-v2/ui/Button';
+import { Badge } from '../base-v2/ui/Badge';
+import { Textarea } from '../base-v2/ui/Textarea';
+import { Input } from '../base-v2/ui/Input';
 import { cn } from '../../lib/utils';
-import { 
+import {
   Camera,
   Copy,
   Check,
@@ -19,7 +23,7 @@ import {
   Clock,
   File,
   Save,
-  Calendar
+  Calendar,
 } from 'lucide-react';
 import MaterialUploadDialog from './MaterialUploadDialog';
 import EditSessionDialog from './EditSessionDialog';
@@ -27,7 +31,7 @@ import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 
 const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,
-  variant = 'default'
+  variant = 'default',
 }) => {
   const isDashboard = variant === 'dashboard';
 
@@ -35,14 +39,16 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
     student?: boolean;
     materials?: boolean;
   }>({});
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   const [showMaterialDialog, setShowMaterialDialog] = useState(false);
-  const [uploadedMaterials, setUploadedMaterials] = useState<UploadedMaterial[]>([]);
+  const [uploadedMaterials, setUploadedMaterials] = useState<
+    UploadedMaterial[]
+  >([]);
   const [materialDescription, setMaterialDescription] = useState('');
   const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
     title: sessionData?.sessionRawData?.title || '',
-    description: sessionData?.sessionRawData?.description || ''
+    description: sessionData?.sessionRawData?.description || '',
   });
   const [iseditingLesson, setIsEditingLesson] = useState(false);
 
@@ -60,35 +66,40 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const joinMeetingAsTutor = useCallback(async () => {
     startTransition(async () => {
       const result = await joinMeetingAsHost({
-        meetingId: sessionData?.zoomMeetingId
+        meetingId: sessionData?.zoomMeetingId,
       });
       if (result.success) {
-        window.open(result.start_url, "_blank");
+        window.open(result.start_url, '_blank');
       } else {
-        alert("Failed to generate join link");
+        alert('Failed to generate join link');
       }
-    })
-  }, [sessionData])
+    });
+  }, [sessionData]);
   return (
     <>
-      <Card className={cn(
-        "mb-6",
-        isDashboard && "border-green-200 bg-green-50"
-      )}>
+      <Card
+        className={cn('mb-6', isDashboard && 'border-green-200 bg-green-50')}
+      >
         <CardContent className="p-6">
           <div className="space-y-6">
             {/* Header */}
             <div className="flex justify-between items-start">
               <div>
                 <div className="flex items-center space-x-2">
-                  <h2 className={cn(
-                    "text-xl font-semibold",
-                    isDashboard && "text-green-800"
-                  )}>
+                  <h2
+                    className={cn(
+                      'text-xl font-semibold',
+                      isDashboard && 'text-green-800',
+                    )}
+                  >
                     {sessionData.name}
-                  </h2>                
+                  </h2>
                   {sessionData.subject && (
-                    <Badge variant="secondary">{sessionData.subject?.replace(/\b([a-z])/,(match)=>match.toUpperCase())}</Badge>
+                    <Badge variant="secondary">
+                      {sessionData.subject?.replace(/\b([a-z])/, (match) =>
+                        match.toUpperCase(),
+                      )}
+                    </Badge>
                   )}
                 </div>
                 <div className="flex items-center mt-2 text-gray-600">
@@ -115,10 +126,12 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     </label>
                     <Input
                       value={lessonDetails?.title || ''}
-                      onChange={(e) => setLessonDetails({
-                        ...lessonDetails,
-                        title: e.target.value
-                      })}
+                      onChange={(e) =>
+                        setLessonDetails({
+                          ...lessonDetails,
+                          title: e.target.value,
+                        })
+                      }
                       placeholder="Enter the lesson title..."
                       className="w-full"
                     />
@@ -129,25 +142,29 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     </label>
                     <Textarea
                       value={lessonDetails?.description || ''}
-                      onChange={(e) => setLessonDetails({
-                        ...lessonDetails,
-                        description: e.target.value
-                      })}
+                      onChange={(e) =>
+                        setLessonDetails({
+                          ...lessonDetails,
+                          description: e.target.value,
+                        })
+                      }
                       placeholder="Enter the lesson description..."
                       className="w-full"
                       rows={3}
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={() => {
-                      console.log('Saving lesson details:', lessonDetails);
-                      setIsEditingLesson(false);
-                    }}>
+                    <Button
+                      onClick={() => {
+                        console.log('Saving lesson details:', lessonDetails);
+                        setIsEditingLesson(false);
+                      }}
+                    >
                       <Save className="h-4 w-4 mr-2" />
                       Save Details
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setIsEditingLesson(false)}
                     >
                       Cancel
@@ -157,8 +174,8 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
               ) : (
                 <div>
                   {!lessonDetails.title ? (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setIsEditingLesson(true)}
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -167,14 +184,14 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                   ) : (
                     <div className="space-y-2">
                       <h3 className="text-lg font-medium">
-                      {lessonDetails.title}
+                        {lessonDetails.title}
                       </h3>
                       <p className="text-gray-600">
-                      {lessonDetails.description}
+                        {lessonDetails.description}
                       </p>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setIsEditingLesson(true)}
                       >
                         <Edit className="h-4 w-4 mr-2" />
@@ -191,16 +208,23 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-medium">Class Materials</h4>
-                  <Badge variant="outline">{sessionData.materials.length} files</Badge>
+                  <Badge variant="outline">
+                    {sessionData.materials.length} files
+                  </Badge>
                 </div>
                 <div className="space-y-2 mb-4">
                   {sessionData.materials.map((material) => (
-                    <div key={material.id} className="flex items-center justify-between bg-gray-100 p-2 rounded">
+                    <div
+                      key={material.id}
+                      className="flex items-center justify-between bg-gray-100 p-2 rounded"
+                    >
                       <div className="flex items-center">
                         <File className="h-4 w-4 text-blue-600 mr-2" />
                         <span className="text-sm">{material.name}</span>
                       </div>
-                      <span className="text-sm text-gray-600">{material.file_size} MB</span>
+                      <span className="text-sm text-gray-600">
+                        {material.file_size} MB
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -213,10 +237,16 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 <Camera className="h-4 w-4 mr-2" />
                 Join as Tutor
               </Button>
-              
-              <Button variant="outline" 
-                onClick={() => handleCopyLink(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming`, "student")}
+              <Button
+                variant="outline"
+                onClick={() =>
+                  handleCopyLink(
+                    `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`)}`,
+                    'student',
+                  )
+                }
               >
+                {' '}
                 {linkCopied.student ? (
                   <Check className="h-4 w-4 mr-2" />
                 ) : (
@@ -225,25 +255,37 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 {linkCopied.student ? 'Copied!' : 'Copy Student Link'}
               </Button>
 
-              <Button variant="outline" onClick={() => setShowMaterialDialog(true)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowMaterialDialog(true)}
+              >
                 <Upload className="h-4 w-4 mr-2" />
-                {sessionData.materials?.length ? 'Update Materials' : 'Upload Materials'}
+                {sessionData.materials?.length
+                  ? 'Update Materials'
+                  : 'Upload Materials'}
               </Button>
 
-              <Button variant="outline" onClick={() => setShowSessionEditDialog(true)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowSessionEditDialog(true)}
+              >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Class
               </Button>
 
               {sessionData.materials && sessionData.materials.length > 0 && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="md:col-span-4"
                   onClick={() => {
-                    const materialsText = `Class Materials for ${sessionData.name} - ${sessionData.date}\n\n` +
-                      (sessionData.materials || []).map((material, index) => (
-                        `${index + 1}. ${material.name}\nDownload: https://commaeducation.com/materials/${sessionData.id}/${material.id}\n`
-                      )).join('\n');
+                    const materialsText =
+                      `Class Materials for ${sessionData.name} - ${sessionData.date}\n\n` +
+                      (sessionData.materials || [])
+                        .map(
+                          (material, index) =>
+                            `${index + 1}. ${material.name}\nDownload: https://commaeducation.com/materials/${sessionData.id}/${material.id}\n`,
+                        )
+                        .join('\n');
                     handleCopyLink(materialsText, 'materials');
                   }}
                 >
@@ -260,7 +302,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         </CardContent>
       </Card>
 
-      <MaterialUploadDialog 
+      <MaterialUploadDialog
         showMaterialDialog={showMaterialDialog}
         setShowMaterialDialog={setShowMaterialDialog}
         uploadedMaterials={uploadedMaterials}
@@ -271,7 +313,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         onSuccess={() => console.log('Material upload success')}
         existingMaterials={sessionData.materials || []}
       />
-      <EditSessionDialog 
+      <EditSessionDialog
         open={showEditSessionDialog}
         onClose={() => setShowSessionEditDialog(false)}
         sessionId={sessionData.id}
@@ -285,9 +327,8 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         }}
         loading={editSessionLoading}
       />
-
     </>
   );
 };
 
-  export default UpcommingSessionCard;
+export default UpcommingSessionCard;
