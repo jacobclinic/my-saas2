@@ -1,3 +1,4 @@
+import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js';
 import { Database } from '~/database.types';
 import {
@@ -6,7 +7,10 @@ import {
   STUDENT_CLASS_ENROLLMENTS_TABLE,
   USERS_TABLE,
 } from '~/lib/db-tables';
-import { ClassWithTutorAndEnrollment } from '../types/class';
+import {
+  ClassWithTutorAndEnrollment,
+  ClassWithTutorAndEnrollmentAndNextSession,
+} from '../types/class';
 import { ClassForStudentType, ClassType } from '../types/class-v2';
 import { unknown } from 'zod';
 
@@ -30,15 +34,15 @@ export async function getClassDataById(
         name,
         description,
         subject,
-        tutorId,
-        tutor:${USERS_TABLE}!tutorId (
+        tutor_id,
+        tutor:${USERS_TABLE}!tutor_id (
           id,
-          firstName,
-          lastName
+          first_name,
+          last_name
         ),
         fee,
         status,
-        timeSlots,
+        time_slots,
         noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
       `,
       { count: 'exact' },
@@ -59,6 +63,70 @@ export async function getClassDataById(
   };
 
   // console.log('getAllClassesData-2', transformedData);
+
+  return transformedData;
+}
+
+export async function getClassDataByIdwithNextSession(
+  client: SupabaseClient<Database>,
+  classId: string,
+): Promise<ClassWithTutorAndEnrollmentAndNextSession | null> {
+  const result = (await client
+    .from(CLASSES_TABLE)
+    .select(
+      `
+        id,
+        name,
+        description,
+        subject,
+        tutor_id,
+        tutor:${USERS_TABLE}!tutor_id (
+          id,
+          first_name,
+          last_name
+        ),
+        fee,
+        status,
+        time_slots,
+        noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
+      `,
+      { count: 'exact' },
+    )
+    .eq('id', classId)
+    .maybeSingle() ) as {
+    data: ClassWithTutorAndEnrollmentRawData | null;
+    error: unknown;
+  };
+
+  if (result.error) {
+    console.error('Error fetching class data:', result.error);
+    return null;
+  }
+
+  if (!result.data) {
+    console.error('No class data found for ID:', classId);
+    return null;
+  }
+
+  const nextSession = await client
+    .from(SESSIONS_TABLE)
+    .select(`id, start_time`)
+    .eq('class_id', classId)
+    .gt('start_time', new Date().toISOString())
+    .order('start_time', { ascending: true })
+    .limit(1);
+
+  if (nextSession.error) {
+    console.error('Error fetching next session:', nextSession.error);
+    return null;
+  }
+
+  // Transform the data to get the count directly
+  const transformedData: ClassWithTutorAndEnrollmentAndNextSession = {
+    ...result.data,
+    nextSession: nextSession.data?.[0]?.start_time,
+    noOfStudents: result.data?.noOfStudents[0]?.count || 0,
+  };
 
   return transformedData;
 }
@@ -182,17 +250,17 @@ export async function getAllClassesByTutorIdData(
           .gt('start_time', new Date().toISOString())
           .order('start_time', { ascending: true })
           .limit(1);
-        
-        const timeSlots = classData?.time_slots as 
-          | { day: string; startTime: string; endTime: string }[] 
+
+        const timeSlots = classData?.time_slots as
+          | { day: string; startTime: string; endTime: string }[]
           | null;
-    
+
         return {
           ...classData,
           upcomingSession: sessionsData?.[0]?.start_time || null,
-          time_slots: timeSlots
+          time_slots: timeSlots,
         };
-      })
+      }),
     );
 
     console.log(transformedData);

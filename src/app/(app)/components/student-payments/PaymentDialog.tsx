@@ -117,6 +117,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         throw new Error(result.error);
       }
     } catch (error) {
+      console.log(error);
       setUploadingFile((prev) =>
         prev
           ? {
