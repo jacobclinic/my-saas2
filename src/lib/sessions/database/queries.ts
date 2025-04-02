@@ -1515,3 +1515,48 @@ export async function isStudentEnrolledInSessionClass(
     throw error;
   }
 }
+
+export async function getNextSessionByClassID(
+  client: SupabaseClient<Database>,
+  class_id: string,
+): Promise<UpcomingSession | null> {
+  try {
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id
+        `,
+        { count: 'exact' },
+      )
+      .eq('class_id', class_id)
+      .gt('start_time', new Date().toISOString())
+      .order('start_time', { ascending: true })
+      .limit(1);
+
+    if (error) {
+      throw new Error(`Error fetching sessions: ${error.message}`);
+    }
+
+    if (!data || data.length === 0) {
+      return null;
+    }
+
+    return data[0];
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}

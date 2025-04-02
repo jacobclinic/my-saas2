@@ -6,6 +6,7 @@ import { User, Mail, Phone, ArrowRight, Lock } from 'lucide-react';
 import { ClassRegistrationData } from '~/lib/registration-link';
 import RegistrationSuccess from './RegistrationSuccess';
 import { registerStudentViaLoginAction } from '~/app/actions/public/student-class-register';
+import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 
@@ -16,10 +17,12 @@ interface RegistrationViaLoginFormData {
 
 interface StudentRegistrationFormrops {
   classData: ClassRegistrationData;
+  nextSessionData: UpcomingSession;
 }
 
 const StudentRegistrationViaLogin = ({
   classData,
+  nextSessionData,
 }: StudentRegistrationFormrops) => {
   const [formData, setFormData] = useState<RegistrationViaLoginFormData>({
     email: '',
@@ -57,6 +60,7 @@ const StudentRegistrationViaLogin = ({
             username: result.userData?.email,
             email: result.userData?.email,
             nextClass: {
+              sessionId: nextSessionData.id,
               date: classData.nextSession,
               time: classData.time,
               zoomLink: '',

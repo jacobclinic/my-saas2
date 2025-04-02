@@ -10,6 +10,7 @@ import { ClassRegistrationData } from '~/lib/registration-link';
 import RegistrationSuccess from './RegistrationSuccess';
 import useSignUpWithEmailAndPasswordMutation from '~/core/hooks/use-sign-up-with-email-password';
 import StudentRegistrationViaLogin from './RegisterViaLogin';
+import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 
@@ -24,10 +25,12 @@ interface RegistrationFormData {
 
 interface StudentRegistrationFormrops {
   classData: ClassRegistrationData;
+  nextSessionData: UpcomingSession;
 }
 
 const StudentRegistrationForm = ({
   classData,
+  nextSessionData
 }: StudentRegistrationFormrops) => {
   const [formData, setFormData] = useState<RegistrationFormData>({
     firstName: '',
@@ -94,6 +97,7 @@ const StudentRegistrationForm = ({
             username: result.userData?.email,
             email: result.userData?.email,
             nextClass: {
+              sessionId: nextSessionData.id,
               date: classData.nextSession,
               time: classData.time,
               zoomLink: '',
@@ -108,7 +112,7 @@ const StudentRegistrationForm = ({
   };
 
   if (isRegisterViaLogin) {
-    return <StudentRegistrationViaLogin classData={classData} />
+    return <StudentRegistrationViaLogin classData={classData} nextSessionData={nextSessionData}/>
   }
 
   if (isRegistrationSuccess) {

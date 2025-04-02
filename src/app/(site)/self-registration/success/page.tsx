@@ -32,6 +32,7 @@ export default async function SuccessPage({ searchParams }: PageProps) {
     password: authUser?.user_metadata?.temporary_password || "",
     email: authUser?.email || "",
     nextClass: {
+      sessionId: "",
     //   date: formatDate(user.student_class_enrollments[0].classes.next_session),
     //   time: formatTime(user.student_class_enrollments[0].classes.time_slots[0]),
       date: "",
