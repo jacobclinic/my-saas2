@@ -1,3 +1,4 @@
+'use client';
 import { Button } from '../base-v2/ui/Button';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { DollarSign, Camera, Video, AlertTriangle } from 'lucide-react';
@@ -5,6 +6,7 @@ import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { ClassData } from '~/lib/classes/types/class-v2';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
+import { useEffect, useState } from 'react';
 
 interface StudentSessionDetailsActionsProps {
   sessionData: SessionStudentTableData;
@@ -36,16 +38,23 @@ const StudentSessionDetailsActions = async ({
       </div>
     );
   }
+  const [registrationLink, setRegistrationLink] = useState('');
+  useEffect(() => {
+    const fetchRegistrationLink = async () => {
+      const registrationData = {
+        classId: classData.id,
+        className: classData.name || '',
+        nextSession: classData.nextClass || classData.schedule || '',
+        time: classData.schedule || '',
+      };
+      const link = await generateRegistrationLinkAction(registrationData);
+      setRegistrationLink(link);
+    };
 
-  const registrationData = {
-    classId: classData.id,
-    className: classData.name || '',
-    nextSession: classData.nextClass || classData.schedule || '',
-    time: classData.schedule || '',
-  };
-
-  const registrationLink =
-    await generateRegistrationLinkAction(registrationData);
+    if (type === 'upcoming') {
+      fetchRegistrationLink();
+    }
+  }, [classData, type]);
 
   return (
     <div className="space-y-4">

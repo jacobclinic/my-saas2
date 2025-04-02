@@ -232,7 +232,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
               type="file"
               id="receipt"
               className="hidden"
-              accept="image/*"
+              accept="image/*,.pdf"
               onChange={handleFileUpload}
             />
             <Button
