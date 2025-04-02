@@ -35,10 +35,12 @@ const StudentSessionDetails = ({ sessionData, type, studentId, isEnrolledToClass
       const formattedPastSession = formatSessionData(sessionData);
       setFormattedSessionData(formattedPastSession);
     }
+    
 
     if (classData) {
       // Ensure time_slots is an array before reducing
-      const schedule = classData?.timeSlots?.reduce((acc: string, slot: any, index: number, array: any[]) => {
+      
+      const schedule = classData?.time_slots?.reduce((acc: string, slot: any, index: number, array: any[]) => {
         const timeSlotString = `${slot.day}, ${slot.startTime} - ${slot.endTime}`;
         // Add a separator for all except the last item
         return acc + timeSlotString + (index < array.length - 1 ? "; " : "");

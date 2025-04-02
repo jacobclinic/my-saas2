@@ -36,7 +36,6 @@ const StudentSessionDetailsActions = async ({
       </div>
     );
   }
-  console.log("classData", classData);
 
   const registrationData = {
     classId: classData.id,
@@ -44,7 +43,6 @@ const StudentSessionDetailsActions = async ({
     nextSession: classData.nextClass || classData.schedule || '',
     time: classData.schedule || '',
   };
-  console.log("registrationData", registrationData);
 
   const registrationLink =
     await generateRegistrationLinkAction(registrationData);

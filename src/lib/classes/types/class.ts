@@ -30,7 +30,15 @@ interface ClassWithTutorAndEnrollment extends ClassType {
 }
 
 
-interface ClassWithTutorAndEnrollmentAndNextSession extends ClassType {
+interface ClassWithTutorAndEnrollmentAndNextSession {
+  id: string;
+  name: string;
+  description?: string;
+  subject: string;
+  tutorId: string;
+  fee?: number;
+  status?: string;
+  time_slots?: TimeSlot[];
   tutor: ClassTableTutor;
   noOfStudents: number | null;
   nextSession: string | null;
