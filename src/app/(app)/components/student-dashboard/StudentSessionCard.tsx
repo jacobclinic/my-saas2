@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../base-v2/ui/Dialog';
+import If from '~/core/ui/If';
 
 interface StudentSessionCardProps {
   sessionData: SessionStudentTableData;
@@ -200,16 +201,22 @@ const StudentSessionCard = ({
             </>
           ) : (
             <>
-              <Button
-                onClick={() => window.open(sessionData.recordingUrl, '_blank')}
-              >
-                <Video className="h-4 w-4 mr-2" />
-                Watch Recording
-              </Button>
-              <Button variant="outline" onClick={handleDownloadMaterials}>
-                <Download className="h-4 w-4 mr-2" />
-                Download Materials
-              </Button>
+              {sessionData.recordingUrl && (
+                <Button
+                  onClick={() =>
+                    window.open(sessionData.recordingUrl, '_blank')
+                  }
+                >
+                  <Video className="h-4 w-4 mr-2" />
+                  Watch Recording
+                </Button>
+              )}
+              {sessionData.materials?.[0]?.url && (
+                <Button variant="outline" onClick={handleDownloadMaterials}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Materials
+                </Button>
+              )}
             </>
           )}
         </div>

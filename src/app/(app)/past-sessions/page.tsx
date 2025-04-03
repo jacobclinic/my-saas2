@@ -24,8 +24,6 @@ async function PastSessionsPage() {
     user?.user?.id || '',
   );
 
-
-
   // Get user role
   const { data: userData, error: userError } = await client
     .from('users')

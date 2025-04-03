@@ -1354,6 +1354,11 @@ export async function getAllPastSessionsByStudentIdData(
         return materialWithoutUrl;
       });
 
+      //transform sessionData based on payment status
+      if (currentPayment?.status != (PaymentStatus.VERIFIED)) {
+        sessionData.recording_urls = null;
+      }
+
       return {
         ...sessionData,
         class: classTemp,
