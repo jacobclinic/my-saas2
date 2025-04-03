@@ -16,28 +16,14 @@ interface StudentSessionDetailsActionsProps {
   classData: ClassData;
 }
 
-const StudentSessionDetailsActions = async ({
+const StudentSessionDetailsActions =  ({
   sessionData,
   type,
   onPayment,
   isEnrolledToClass,
   classData,
 }: StudentSessionDetailsActionsProps) => {
-  if (type === 'past') {
-    return (
-      <div className="space-y-4">
-        {sessionData.recordingUrl && (
-          <Button
-            className="w-full"
-            onClick={() => window.open(sessionData.recordingUrl, '_blank')}
-          >
-            <Video className="h-4 w-4 mr-2" />
-            Watch Recording
-          </Button>
-        )}
-      </div>
-    );
-  }
+
   const [registrationLink, setRegistrationLink] = useState('');
   useEffect(() => {
     const fetchRegistrationLink = async () => {
@@ -56,6 +42,22 @@ const StudentSessionDetailsActions = async ({
     }
   }, [classData, type]);
 
+  if (type === 'past') {
+    return (
+      <div className="space-y-4">
+        {sessionData.recordingUrl && (
+          <Button
+            className="w-full"
+            onClick={() => window.open(sessionData.recordingUrl, '_blank')}
+          >
+            <Video className="h-4 w-4 mr-2" />
+            Watch Recording
+          </Button>
+        )}
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-4">
       {isEnrolledToClass ? (
