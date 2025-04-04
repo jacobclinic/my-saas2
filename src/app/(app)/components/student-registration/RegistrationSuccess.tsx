@@ -21,6 +21,7 @@ interface RegistrationSuccessProps {
     username: string;
     email: string;
     nextClass: {
+      sessionId: string;
       date: string;
       time: string;
       zoomLink: string;
@@ -69,7 +70,7 @@ const  RegistrationSuccess = ({ studentDetails }: RegistrationSuccessProps) => {
                 variant="outline"
                 className="w-full"
                 onClick={() =>
-                  handleCopy(studentDetails.nextClass.zoomLink, 'zoom')
+                  handleCopy(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${studentDetails.nextClass.sessionId}?type=upcoming`, 'session')
                 }
               >
                 {linkCopied.zoom ? (
@@ -77,7 +78,7 @@ const  RegistrationSuccess = ({ studentDetails }: RegistrationSuccessProps) => {
                 ) : (
                   <Link2 className="h-4 w-4 mr-2" />
                 )}
-                {linkCopied.zoom ? 'Zoom Link Copied!' : 'Copy Zoom Link'}
+                {linkCopied.zoom ? 'Zoom Link Copied!' : 'Copy Session Link'}
               </Button>
             </div>
           </div>

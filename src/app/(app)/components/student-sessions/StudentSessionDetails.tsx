@@ -11,22 +11,56 @@ import StudentSessionDetailsActions from './StudentSessionDetailsActions';
 import PaymentDialog from '../student-payments/PaymentDialog';
 import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
+import { ClassData } from '~/lib/classes/types/class-v2';
+import { ClassWithTutorAndEnrollmentAndNextSession } from '~/lib/classes/types/class';
+import { format as dateFnsFormat } from "date-fns";
+
 
 interface StudentSessionDetailsProps {
   sessionData: UpcomingSession | PastSession;
   type: 'next' | 'upcoming' | 'past';
   studentId: string;
+  isEnrolledToClass: boolean;
+  classData: ClassWithTutorAndEnrollmentAndNextSession;
 }
 
-const StudentSessionDetails = ({ sessionData, type, studentId }: StudentSessionDetailsProps) => {
+const StudentSessionDetails = ({ sessionData, type, studentId, isEnrolledToClass, classData }: StudentSessionDetailsProps) => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [formattedSessionData, setFormattedSessionData] = useState<SessionStudentTableData | null>(null);
+  const [classTableData, setClassTableData] = useState<ClassData>();
 
   // Transform past sessions data
   useEffect(() => {
     if (sessionData) {
       const formattedPastSession = formatSessionData(sessionData);
       setFormattedSessionData(formattedPastSession);
+    }
+    
+
+    if (classData) {
+      // Ensure time_slots is an array before reducing
+      
+      const schedule = classData?.time_slots?.reduce((acc: string, slot: any, index: number, array: any[]) => {
+        const timeSlotString = `${slot.day}, ${slot.startTime} - ${slot.endTime}`;
+        // Add a separator for all except the last item
+        return acc + timeSlotString + (index < array.length - 1 ? "; " : "");
+      }, "") || "No schedule available";
+  
+      const formattedDate = classData?.nextSession
+        ? dateFnsFormat(new Date(classData.nextSession), "EEE, MMM dd, yyyy")
+        : "No upcoming session";
+  
+      const formattedData = {
+        id: classData.id,
+        name: classData?.name || "No name provided",
+        schedule: schedule,
+        status: classData?.status || "Unknown",
+        registrationLink: "",
+        nextClass: formattedDate,
+        classRawData: classData,
+      };
+  
+      setClassTableData(formattedData);
     }
   }, [sessionData]);
 
@@ -115,6 +149,8 @@ const StudentSessionDetails = ({ sessionData, type, studentId }: StudentSessionD
               sessionData={formattedSessionData}
               type={type}
               onPayment={() => setShowPaymentDialog(true)}
+              isEnrolledToClass={isEnrolledToClass}
+              classData = {classTableData!}
             />
           </CardContent>
         </Card>

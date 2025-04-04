@@ -1,9 +1,10 @@
 import { useSearchParams } from 'next/navigation';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
-import { getSessionByStudentIdData } from '~/lib/sessions/database/queries';
+import { getSessionByStudentIdData, isStudentEnrolledInSessionClass } from '~/lib/sessions/database/queries';
 import { redirect } from 'next/navigation';
 import StudentSessionDetails from '~/app/(app)/components/student-sessions/StudentSessionDetails';
+import { getClassDataByIdwithNextSession } from '~/lib/classes/database/queries';
 
 interface Params {
   params: {
@@ -48,6 +49,14 @@ export default async function SessionViewPage({ params }: Params) {
       </PageBody>
     );
   }
+    
+  const isStudentEnrolledToClass = await isStudentEnrolledInSessionClass(
+    client,
+    sessionData.id,
+    user.id
+  )
+
+  const classData = await getClassDataByIdwithNextSession(client, sessionData.class_id!);
 
   // Determine session type based on start time
   const sessionType =
@@ -65,6 +74,8 @@ export default async function SessionViewPage({ params }: Params) {
           sessionData={sessionData}
           type={sessionType}
           studentId={user.id}
+          isEnrolledToClass = {isStudentEnrolledToClass}
+          classData = {classData!}
         />
       </PageBody>
     </>

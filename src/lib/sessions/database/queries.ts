@@ -1354,6 +1354,11 @@ export async function getAllPastSessionsByStudentIdData(
         return materialWithoutUrl;
       });
 
+      //transform sessionData based on payment status
+      if (currentPayment?.status != (PaymentStatus.VERIFIED)) {
+        sessionData.recording_urls = null;
+      }
+
       return {
         ...sessionData,
         class: classTemp,
@@ -1463,6 +1468,98 @@ export async function getSessionByStudentIdData(
     // console.log("---------------getSessionByStudentIdData-------", transformedData)
 
     return transformedData;
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
+export async function isStudentEnrolledInSessionClass(
+  client: SupabaseClient<Database>,
+  session_id: string,
+  student_id: string
+): Promise<boolean> {
+  try {
+    // Step 1: Get the class_id from the sessions table using the session_id
+    const { data: sessionData, error: sessionError } = await client
+      .from('sessions')
+      .select('class_id')
+      .eq('id', session_id)
+      .single();
+
+    if (sessionError) {
+      throw new Error(`Error fetching session: ${sessionError.message}`);
+    }
+
+    if (!sessionData || !sessionData.class_id) {
+      throw new Error(`Session with ID ${session_id} not found or has no associated class.`);
+    }
+
+    const classId = sessionData.class_id;
+
+    // Step 2: Check if the student is enrolled in the class using student_class_enrollments
+    const { data: enrollmentData, error: enrollmentError } = await client
+      .from('student_class_enrollments')
+      .select('id')
+      .eq('student_id', student_id)
+      .eq('class_id', classId)
+      .single();
+
+    if (enrollmentError) {
+      // If the error is a "not found" error (PGRST116), it means the student is not enrolled
+      if (enrollmentError.code === 'PGRST116') {
+        return false;
+      }
+      throw new Error(`Error checking enrollment: ${enrollmentError.message}`);
+    }
+
+    // If enrollmentData exists, the student is enrolled in the class
+    return !!enrollmentData;
+  } catch (error) {
+    console.error('Failed to check student enrollment:', error);
+    throw error;
+  }
+}
+
+export async function getNextSessionByClassID(
+  client: SupabaseClient<Database>,
+  class_id: string,
+): Promise<UpcomingSession | null> {
+  try {
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id
+        `,
+        { count: 'exact' },
+      )
+      .eq('class_id', class_id)
+      .gt('start_time', new Date().toISOString())
+      .order('start_time', { ascending: true })
+      .limit(1);
+
+    if (error) {
+      throw new Error(`Error fetching sessions: ${error.message}`);
+    }
+
+    if (!data || data.length === 0) {
+      return null;
+    }
+
+    return data[0];
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
     throw error;

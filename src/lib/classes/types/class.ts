@@ -29,6 +29,21 @@ interface ClassWithTutorAndEnrollment extends ClassType {
   noOfStudents: number;
 }
 
+
+interface ClassWithTutorAndEnrollmentAndNextSession {
+  id: string;
+  name: string;
+  description?: string;
+  subject: string;
+  tutorId: string;
+  fee?: number;
+  status?: string;
+  time_slots?: TimeSlot[];
+  tutor: ClassTableTutor;
+  noOfStudents: number | null;
+  nextSession: string | null;
+}
+
 type ClassTableData = {
   id: string;
   name: string;
@@ -39,4 +54,4 @@ type ClassTableData = {
 };
 
 export default ClassType;
-export type { ClassWithTutorAndEnrollment, TimeSlot, ClassTableData };
+export type { ClassWithTutorAndEnrollment, ClassWithTutorAndEnrollmentAndNextSession, TimeSlot, ClassTableData };

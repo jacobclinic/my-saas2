@@ -117,6 +117,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         throw new Error(result.error);
       }
     } catch (error) {
+      console.log(error);
       setUploadingFile((prev) =>
         prev
           ? {
@@ -231,7 +232,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
               type="file"
               id="receipt"
               className="hidden"
-              accept="image/*"
+              accept="image/*,.pdf"
               onChange={handleFileUpload}
             />
             <Button

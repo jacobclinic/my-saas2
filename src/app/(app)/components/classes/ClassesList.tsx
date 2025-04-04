@@ -32,7 +32,7 @@ const TutorClasses = ({
   const [linkCopied, setLinkCopied] = useState<LinkCopiedState>({});
   const [showCreateClass, setShowCreateClass] = useState(false);
   const [classTableData, setClassTableData] = useState<ClassListData[]>([]);
-  
+
   // Format the current page data for display
   useEffect(() => {
     if (classesData) {

@@ -1,5 +1,6 @@
 import { Json } from "~/database.types";
 import { PaymentStatus } from "~/lib/payments/types/admin-payments";
+import { ClassWithTutorAndEnrollmentAndNextSession } from "./class";
 
 // types.ts
 
@@ -94,6 +95,19 @@ export interface ClassListData {
   description?: string;
   timeSlots?: { day: string; time: string; }[];
   classRawData?: ClassType;
+}
+
+export interface ClassData {
+  id: string;
+  name?: string | null
+  schedule?: string;
+  subject?: string;
+  status?: string;
+  registrationLink?: string;
+  nextClass?: string;
+  description?: string;
+  timeSlots?: { day: string; time: string; }[];
+  classRawData?: ClassWithTutorAndEnrollmentAndNextSession;
 }
 
 export interface ClassCardProps {
