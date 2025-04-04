@@ -5,13 +5,19 @@ type Client = SupabaseClient<Database>;
 
 import { SESSIONS_TABLE } from '~/lib/db-tables';
 import SessionType from '../types/session';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
 
 /**
  * @description Creates a new session
  * @param client - Supabase client instance
  * @param data - Session data (excluding the ID)
  */
-export async function createSession(client: Client, data: Omit<SessionType, 'id'>) {
+export async function createSession(
+  client: Client,
+  data: Omit<SessionType, 'id'>,
+) {
   try {
     const { data: insertedSession, error } = await client
       .from(SESSIONS_TABLE)
@@ -29,8 +35,8 @@ export async function createSession(client: Client, data: Omit<SessionType, 'id'
 
     return insertedSession;
   } catch (error) {
-    console.error("Error creating session:", error);
-    throw new Error("Failed to create session. Please try again.");
+    console.error('Error creating session:', error);
+    throw new Error('Failed to create session. Please try again.');
   }
 }
 
@@ -39,16 +45,21 @@ export async function createSession(client: Client, data: Omit<SessionType, 'id'
  * @param client - Supabase client instance
  * @param sessions - Array of session data (excluding the ID)
  */
-export async function createSessions(client: Client, sessions: Omit<SessionType, 'id'>[]) {
+export async function createSessions(
+  client: Client,
+  sessions: Omit<SessionType, 'id'>[],
+) {
   try {
     const { data: insertedSessions, error } = await client
       .from(SESSIONS_TABLE)
-      .insert(sessions.map((session) => ({
-        start_time: session.startTime,
-        class_id: session.classId,
-        title: session?.title,
-        description: session?.description,
-      })))
+      .insert(
+        sessions.map((session) => ({
+          start_time: session.startTime,
+          class_id: session.classId,
+          title: session?.title,
+          description: session?.description,
+        })),
+      )
       .select('id') // Select the IDs of the inserted rows
       .throwOnError();
 
@@ -56,8 +67,8 @@ export async function createSessions(client: Client, sessions: Omit<SessionType,
 
     return insertedSessions;
   } catch (error) {
-    console.error("Error creating sessions:", error);
-    throw new Error("Failed to create sessions. Please try again.");
+    console.error('Error creating sessions:', error);
+    throw new Error('Failed to create sessions. Please try again.');
   }
 }
 
@@ -67,7 +78,11 @@ export async function createSessions(client: Client, sessions: Omit<SessionType,
  * @param sessionId - ID of the session to update
  * @param data - Session data to update (can be partial)
  */
-export async function updateSession(client: Client, sessionId: string, data: Partial<Omit<SessionType, 'id'>>) {
+export async function updateSession(
+  client: Client,
+  sessionId: string,
+  data: Partial<Omit<SessionType, 'id'>>,
+) {
   try {
     const { data: updatedSession, error } = await client
       .from(SESSIONS_TABLE)
@@ -81,8 +96,10 @@ export async function updateSession(client: Client, sessionId: string, data: Par
 
     return updatedSession;
   } catch (error) {
-    console.error("Error updating session:", error);
-    throw new Error("Failed to update session. Please check the input fields and try again.");
+    console.error('Error updating session:', error);
+    throw new Error(
+      'Failed to update session. Please check the input fields and try again.',
+    );
   }
 }
 
@@ -101,45 +118,112 @@ export async function deleteSession(client: Client, sessionId: string) {
 
     if (error) throw error; // Manually throw error if any
 
-    return { message: "Session deleted successfully" };
+    return { message: 'Session deleted successfully' };
   } catch (error) {
-    console.error("Error deleting session:", error);
-    throw new Error("Failed to delete session. Please try again.");
+    console.error('Error deleting session:', error);
+    throw new Error('Failed to delete session. Please try again.');
   }
 }
 
+// export async function updateRecordingUrl(
+//   client: Client,
+//   zoomMeetingId: string,
+//   recordingUrl: string,
+// ) {
+//   try {
+//     // Step 1: Fetch the existing recording_urls array
+//     const { data: session, error: fetchError } = await client
+//       .from(SESSIONS_TABLE)
+//       .select('recording_urls')
+//       .eq('zoom_meeting_id', zoomMeetingId)
+//       .single();
+
+//     if (fetchError) {
+//       logger.error('Error fetching session data:', fetchError);
+//     }
+
+//     if (fetchError) throw fetchError;
+//     logger.info('Fetched session data:', session);
+//     if (!session) {
+//       throw new Error(
+//         `Session with Zoom Meeting ID ${zoomMeetingId} not found.`,
+//       );
+//     }
+//     logger.info('Fetched session data:', session.recording_urls);
+
+//     // Step 2: Append the new URL to the array
+//     const updatedUrls = [...(session.recording_urls ?? []), recordingUrl];
+
+//     // Step 3: Update the row with the new array
+//     const { data, error: updateError } = await client
+//       .from(SESSIONS_TABLE)
+//       .update({ recording_urls: updatedUrls })
+//       .eq('zoom_meeting_id', zoomMeetingId)
+//       .throwOnError()
+//       .single();
+
+//     if (updateError) throw updateError;
+
+//     return data;
+//   } catch (error) {
+//     logger.error('Error updating recording URL:', error);
+//     console.error('Error updating recording URL:', error);
+//     throw new Error('Failed to update recording URL. Please try again.');
+//   }
+// }
 
 export async function updateRecordingUrl(
-  client: Client,
+  client: SupabaseClient, // Adjust type based on your `getSupabaseServerActionClient` return type
   zoomMeetingId: string,
-  recordingUrl: string
+  recordingUrl: string,
 ) {
   try {
     // Step 1: Fetch the existing recording_urls array
     const { data: session, error: fetchError } = await client
       .from(SESSIONS_TABLE)
-      .select('recording_urls')
-      .eq('zoom_meeting_id', zoomMeetingId)
+      .select("recording_urls")
+      .eq("zoom_meeting_id", zoomMeetingId)
       .single();
 
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      logger.error(`Error fetching session for Zoom Meeting ID ${zoomMeetingId}:`, fetchError);
+      throw fetchError;
+    }
+
+    if (!session) {
+      const errorMsg = `Session with Zoom Meeting ID ${zoomMeetingId} not found.`;
+      logger.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    logger.info(`Fetched session for Zoom Meeting ID ${zoomMeetingId}:`, {
+      recording_urls: session.recording_urls,
+    });
 
     // Step 2: Append the new URL to the array
-    const updatedUrls = [...(session.recording_urls ?? []), recordingUrl];
+    const currentUrls: string[] = Array.isArray(session.recording_urls) ? session.recording_urls : [];
+    const updatedUrls = [...currentUrls, recordingUrl];
 
     // Step 3: Update the row with the new array
     const { data, error: updateError } = await client
       .from(SESSIONS_TABLE)
       .update({ recording_urls: updatedUrls })
-      .eq('zoom_meeting_id', zoomMeetingId)
-      .throwOnError()
+      .eq("zoom_meeting_id", zoomMeetingId)
+      .select()
       .single();
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      logger.error(`Error updating recording URLs for Zoom Meeting ID ${zoomMeetingId}:`, updateError);
+      throw updateError;
+    }
 
+    logger.info(`Successfully updated recording URLs for Zoom Meeting ID ${zoomMeetingId}:`, {
+      updatedUrls,
+    });
     return data;
   } catch (error) {
-    console.error("Error updating recording URL:", error);
+    logger.error(`Failed to update recording URL for Zoom Meeting ID ${zoomMeetingId}:`, error);
+    console.error(`Failed to update recording URL for Zoom Meeting ID ${zoomMeetingId}:`, error);
     throw new Error("Failed to update recording URL. Please try again.");
   }
 }
