@@ -48,3 +48,21 @@ export interface UpdateSessionMeetingRequest {
   endTime: string;
   title?: string;
 }
+
+// Type definitions for Zoom webhook payload (simplified)
+export interface ZoomWebhookPayload {
+  event: string;
+  payload: {
+    object: {
+      id: string; // meetingId
+      recording_files: {
+        id: string;
+        file_type: string;
+        download_url: string;
+      }[];
+    };
+    plainToken?: string; // For URL validation
+  };
+}
+
+// Define the shape of the Zoom OAuth token response
