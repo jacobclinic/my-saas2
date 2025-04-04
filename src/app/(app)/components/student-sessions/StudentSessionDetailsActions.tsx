@@ -16,14 +16,13 @@ interface StudentSessionDetailsActionsProps {
   classData: ClassData;
 }
 
-const StudentSessionDetailsActions =  ({
+const StudentSessionDetailsActions = ({
   sessionData,
   type,
   onPayment,
   isEnrolledToClass,
   classData,
 }: StudentSessionDetailsActionsProps) => {
-
   const [registrationLink, setRegistrationLink] = useState('');
   useEffect(() => {
     const fetchRegistrationLink = async () => {
@@ -57,7 +56,7 @@ const StudentSessionDetailsActions =  ({
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-4">
       {isEnrolledToClass ? (
@@ -78,8 +77,22 @@ const StudentSessionDetailsActions =  ({
               Make Payment
             </Button>
           </>
+        ) : sessionData.paymentStatus ===
+          PAYMENT_STATUS.PENDING_VERIFICATION ? (
+          <>
+            <Alert className="border-yellow-200 bg-yellow-50">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-700">
+                Your payment is under verification. Please wait for the
+                confirmation.
+              </AlertDescription>
+            </Alert>
+          </>
         ) : (
-          <Button className="w-full">
+          <Button
+            className="w-full"
+            onClick={() => window.open(sessionData.zoomLink, '_blank')}
+          >
             <Camera className="h-4 w-4 mr-2" />
             Join Class
           </Button>
@@ -94,13 +107,13 @@ const StudentSessionDetailsActions =  ({
             </AlertDescription>
           </Alert>
           {/* Button to open registration link */}
-            <Button
+          <Button
             className="w-full bg-red-600 hover:bg-red-700"
             onClick={() => window.open(registrationLink, '_blank')}
-            >
+          >
             <DollarSign className="h-4 w-4 mr-2" />
             Enroll Now
-            </Button>
+          </Button>
         </>
       )}
     </div>
