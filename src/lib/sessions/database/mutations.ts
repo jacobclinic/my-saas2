@@ -173,7 +173,7 @@ export async function deleteSession(client: Client, sessionId: string) {
 // }
 
 export async function updateRecordingUrl(
-  client: SupabaseClient, // Adjust type based on your `getSupabaseServerActionClient` return type
+  client: Client, // Adjust type based on your `getSupabaseServerActionClient` return type
   zoomMeetingId: string,
   recordingUrl: string,
 ) {

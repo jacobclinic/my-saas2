@@ -1565,3 +1565,43 @@ export async function getNextSessionByClassID(
     throw error;
   }
 }
+
+export async function getSessionsWithoutRecordingUrlsOfLast24hrs(
+  client: SupabaseClient<Database>,
+): Promise<UpcomingSession[]> {
+  try {
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id
+        `,
+        { count: 'exact' },
+      )
+      .is('recording_urls', null)
+      .lt('start_time', new Date().toISOString())
+      .gt('start_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .order('start_time', { ascending: true });
+
+    if (error) {
+      throw new Error(`Error fetching sessions: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}

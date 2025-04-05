@@ -65,4 +65,14 @@ export interface ZoomWebhookPayload {
   };
 }
 
-// Define the shape of the Zoom OAuth token response
+
+// New type for the recording API response
+export interface ZoomRecordingResponse {
+  id: string;
+  recording_files: {
+    id: string;
+    file_type: string;
+    download_url: string;
+  }[];
+  password?: string;
+}
