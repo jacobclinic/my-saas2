@@ -120,6 +120,7 @@ export async function POST(req: NextRequest) {
     for (const file of recordingFiles) {
       if (file.file_type === "MP4") {
         const downloadUrl = file.download_url;
+        logger.info(`Processing recording file: ${downloadUrl}`);
         const fileName = `${meetingId}-${file.id}.mp4`;
         try {
           const signedUrl = await processRecording(downloadUrl, fileName, meetingId);
