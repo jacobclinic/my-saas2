@@ -49,12 +49,7 @@ const classes = [
     day: "Every Wednesday",
   },
 ];
-//USEEFFECT
-// get tutor by tutor id, and classes related to that tutor
-// const [tutor, setTutor] = useState(null);
-// const [classes, setClasses] = useState([]);
 
-//call the database and 
 
 
 
