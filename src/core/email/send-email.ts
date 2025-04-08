@@ -1,5 +1,3 @@
-import configuration from '../../configuration';
-
 interface SendEmailParams {
   from: string;
   to: string;
@@ -9,9 +7,15 @@ interface SendEmailParams {
 }
 
 export default async function sendEmail(config: SendEmailParams) {
-  const transporter = await getTransporter();
-
-  return transporter.sendMail(config);
+  try {
+    const transporter = await getTransporter();
+    
+    const result = await transporter.sendMail(config);
+    return result;
+  } catch (error) {
+    console.error('Error in sendEmail:', error);
+    throw error;
+  }
 }
 
 function getTransporter() {
@@ -19,71 +23,66 @@ function getTransporter() {
     return getMockMailTransporter();
   }
 
-  // if (!configuration.production) {
-  //   return getEtherealMailTransporter();
-  // }
-
   return getSMTPTransporter();
 }
 
-/**
- * @description SMTP Transporter for production use. Add your favorite email
- * API details (Mailgun, Sendgrid, etc.) to the configuration.
- */
 async function getSMTPTransporter() {
-  const nodemailer = await import('nodemailer');
+  try {
+    const nodemailer = await import('nodemailer');
 
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASSWORD;
-  const host = process.env.EMAIL_HOST;
-  const port = Number(process.env.EMAIL_PORT);
+    const user = process.env.EMAIL_USER;
+    const pass = process.env.EMAIL_PASSWORD;
+    const host = process.env.EMAIL_HOST;
+    const port = Number(process.env.EMAIL_PORT);
 
-  // const secure = port === 465 && !configuration.production;
-  const secure = port === 465;
+    const secure = port === 465;
 
-  // validate that we have all the required configuration
-  if (!user || !pass || !host || !port) {
-    throw new Error(
-      `Missing email configuration. Please add the following environment variables:
-      EMAIL_USER
-      EMAIL_PASSWORD
-      EMAIL_HOST
-      EMAIL_PORT
-      `,
-    );
+    if (!user || !pass || !host || !port) {
+      throw new Error(
+        `Missing email configuration. Please add the following environment variables:
+        EMAIL_USER
+        EMAIL_PASSWORD
+        EMAIL_HOST
+        EMAIL_PORT`
+      );
+    }
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user, pass },
+    });
+    
+    return transporter;
+  } catch (error) {
+    console.error('Error in getSMTPTransporter:', error);
+    throw error;
   }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: {
-      user,
-      pass,
-    },
-  });
 }
 
-/**
- * @description Dev transport for https://ethereal.email that you can use to
- * debug your emails for free. It's the default for the dev environment
- */
 async function getEtherealMailTransporter() {
-  const nodemailer = await import('nodemailer');
-  const testAccount = await getEtherealTestAccount();
+  try {
+    const nodemailer = await import('nodemailer');
+    const testAccount = await getEtherealTestAccount();
+    
+    const host = 'smtp.ethereal.email';
+    const port = 587;
 
-  const host = 'smtp.ethereal.email';
-  const port = 587;
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: false,
-    auth: {
-      user: testAccount.user,
-      pass: testAccount.pass,
-    },
-  });
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+        return transporter;
+  } catch (error) {
+    console.error('Error in getEtherealMailTransporter:', error);
+    throw error;
+  }
 }
 
 function getMockMailTransporter() {
@@ -91,7 +90,7 @@ function getMockMailTransporter() {
     sendMail(params: SendEmailParams) {
       console.log(
         `Using mock email transporter with params`,
-        JSON.stringify(params, null, 2),
+        JSON.stringify(params, null, 2)
       );
     },
   };
