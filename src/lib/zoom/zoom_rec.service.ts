@@ -203,3 +203,33 @@ export async function syncZoomRecordings() {
     throw error;
   }
 }
+
+// used in zoom webhook. Currently not in use
+export async function processRecording(
+  downloadUrl: string,
+  fileName: string,
+  meetingId: string,
+): Promise<string> {
+  const accessToken = await getZoomAccessToken();
+  const response = await fetch(`${downloadUrl}?access_token=${accessToken}`, {
+    method: 'GET',
+    redirect: 'follow',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to download: ${response.statusText}`);
+  }
+  if( response.ok){
+    console.log(`Downloaded recording from Zoom: ${fileName}`);
+  }
+//   const fileStream = response.body as NodeJS.ReadableStream;
+//   const signedUrl = await uploadToS3(fileStream, fileName);
+//   console.log(`Uploaded ${fileName} to S3. Viewable at: ${signedUrl}`);
+
+  const signedUrl = "https://example.com/signed-url"; // Placeholder for the actual signed URL from S3 upload
+
+  //delete the recording from Zoom
+//   await deleteZoomRecording(meetingId);
+
+  return signedUrl;
+}
