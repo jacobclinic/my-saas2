@@ -7,13 +7,14 @@ import {
   USERS_TABLE,
 } from '~/lib/db-tables';
 
-export async function getAllUpcomingSessionsWithin24Hrs(
+export async function getAllUpcomingSessionsWithin24_25Hrs(
   client: SupabaseClient<Database>,
 ): Promise<NotificationClass[] | []> {
   try {
     // Calculate the timestamp for 24 hours from now
     const now = new Date();
     const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const next25Hours = new Date(now.getTime() + 25 * 60 * 60 * 1000);
 
     const { data, error } = await client
       .from(SESSIONS_TABLE)
@@ -51,8 +52,8 @@ export async function getAllUpcomingSessionsWithin24Hrs(
         `,
         { count: 'exact' },
       )
-      .gte('start_time', now.toISOString())
-      .lte('start_time', next24Hours.toISOString())
+      .gte('start_time', next24Hours.toISOString())
+      .lte('start_time', next25Hours.toISOString())
       .order('start_time', { ascending: true });
 
     if (error) {
@@ -122,13 +123,14 @@ export async function getAllUpcomingSessionsWithin24Hrs(
     throw error;
   }
 }
-export async function getSessions2HrsAfterSession(
+export async function getSessions2_1HrsAfterSession(
   client: SupabaseClient<Database>,
 ): Promise<NotificationClass[] | []> {
   try {
     // Calculate the timestamp for 24 hours from now
     const now = new Date();
     const last2Hours = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const lastHour = new Date(now.getTime() - 1 * 60 * 60 * 1000);
 
     const { data, error } = await client
       .from(SESSIONS_TABLE)
@@ -167,7 +169,7 @@ export async function getSessions2HrsAfterSession(
         { count: 'exact' },
       )
       .gte('end_time', last2Hours.toISOString())
-      .lte('end_time', now.toISOString())
+      .lte('end_time', lastHour.toISOString())
       .order('end_time', { ascending: true });
 
     if (error) {
@@ -237,3 +239,5 @@ export async function getSessions2HrsAfterSession(
     throw error;
   }
 }
+
+

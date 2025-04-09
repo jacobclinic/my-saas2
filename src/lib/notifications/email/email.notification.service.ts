@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { getAllUpcomingSessionsWithin24Hrs, getSessions2HrsAfterSession } from '../quieries';
+import { getAllUpcomingSessionsWithin24_25Hrs, getSessions2_1HrsAfterSession } from '../quieries';
 import sendEmail from '~/core/email/send-email';
 import { getStudentNotifyBeforeEmailTemplate } from '~/core/email/templates/studentNotifyBefore';
 import { getStudentNotifyAfterEmailTemplate } from '~/core/email/templates/studentNotifyAfter';
@@ -92,11 +92,13 @@ async function sendNotifySessionEmails(
 }
 
 export async function notifyUpcomingSessionsBefore24Hrs(client: SupabaseClient) {
-  const sessions = await getAllUpcomingSessionsWithin24Hrs(client);
+  const sessions = await getAllUpcomingSessionsWithin24_25Hrs(client);
   await sendNotifySessionEmails(sessions, 'before');
 }
 
 export async function notifyAfterSessions(client: SupabaseClient) {
-  const sessions = await getSessions2HrsAfterSession(client);
+  const sessions = await getSessions2_1HrsAfterSession(client);
   await sendNotifySessionEmails(sessions, 'after');
 }
+
+
