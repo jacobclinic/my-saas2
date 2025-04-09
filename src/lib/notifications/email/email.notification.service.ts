@@ -4,15 +4,6 @@ import sendEmail from '~/core/email/send-email';
 import { getStudentNotifyBeforeEmailTemplate } from '~/core/email/templates/studentNotifyBefore';
 import { getStudentNotifyAfterEmailTemplate } from '~/core/email/templates/studentNotifyAfter';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const supabase = createClient(supabaseUrl!, supabaseKey!, {
-  auth: {
-    persistSession: false,
-  },
-});
-
 async function sendNotifySessionEmails(
   data: NotificationClass[],
   beforeOrAfter: 'before' | 'after',
@@ -100,12 +91,12 @@ async function sendNotifySessionEmails(
   }
 }
 
-export async function notifyUpcomingSessionsBefore24Hrs() {
-  const sessions = await getAllUpcomingSessionsWithin24Hrs(supabase);
+export async function notifyUpcomingSessionsBefore24Hrs(client: SupabaseClient) {
+  const sessions = await getAllUpcomingSessionsWithin24Hrs(client);
   await sendNotifySessionEmails(sessions, 'before');
 }
 
-export async function notifyAfterSessions() {
-  const sessions = await getSessions2HrsAfterSession(supabase);
+export async function notifyAfterSessions(client: SupabaseClient) {
+  const sessions = await getSessions2HrsAfterSession(client);
   await sendNotifySessionEmails(sessions, 'after');
 }
