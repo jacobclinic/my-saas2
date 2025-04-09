@@ -1,7 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { getAllUpcomingSessionsWithin24Hrs } from '../quieries';
+import { getAllUpcomingSessionsWithin24Hrs, getSessions2HrsAfterSession } from '../quieries';
 import sendEmail from '~/core/email/send-email';
 import { getStudentNotifyBeforeEmailTemplate } from '~/core/email/templates/studentNotifyBefore';
+import { getStudentNotifyAfterEmailTemplate } from '~/core/email/templates/studentNotifyAfter';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -12,7 +13,10 @@ const supabase = createClient(supabaseUrl!, supabaseKey!, {
   },
 });
 
-async function sendUpcomingSessionEmails(data: NotificationClass[]) {
+async function sendNotifySessionEmails(
+  data: NotificationClass[],
+  beforeOrAfter: 'before' | 'after',
+) {
   try {
     // Flatten all students across all sessions into a single array
     const emailTasks = data.flatMap(
@@ -29,31 +33,51 @@ async function sendUpcomingSessionEmails(data: NotificationClass[]) {
 
     // Function to send a single email
     const sendSingleEmail = async (task: (typeof emailTasks)[number]) => {
-      const { html, text } = getStudentNotifyBeforeEmailTemplate({
-        studentName: task.first_name!,
-        className: task.class_name,
-        sessionDate: new Date(task.start_time).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
-        sessionTime: new Date(task.start_time).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        }),
-        topic: task.topic,
-        classId: task.class_id,
-        studentEmail: task.to,
-      });
-      await sendEmail({
-        from: process.env.EMAIL_SENDER!,
-        to: task.to,
-        subject: `Upcoming Class Notification`,
-        html: html,
-        text: text,
-      });
+      if (beforeOrAfter === 'before') {
+        const { html, text } = getStudentNotifyBeforeEmailTemplate({
+          studentName: task.first_name!,
+          className: task.class_name,
+          sessionDate: new Date(task.start_time).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          sessionTime: task.start_time,
+          topic: task.topic,
+          classId: task.class_id,
+          studentEmail: task.to,
+        });
+        await sendEmail({
+          from: process.env.EMAIL_SENDER!,
+          to: task.to,
+          subject: `Upcoming Class Notification`,
+          html: html,
+          text: text,
+        });
+      }
+      if (beforeOrAfter === 'after') {
+        const { html, text } = getStudentNotifyAfterEmailTemplate({
+          studentName: task.first_name!,
+          className: task.class_name,
+          sessionDate: new Date(task.start_time).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          topic: task.topic,
+          classId: task.class_id,
+          studentEmail: task.to,
+        });
+        await sendEmail({
+          from: process.env.EMAIL_SENDER!,
+          to: task.to,
+          subject: `Upcoming Class Notification`,
+          html: html,
+          text: text,
+        });
+      }
     };
 
     // Process emails with a throttle (2 per second = 500ms per request)
@@ -78,5 +102,10 @@ async function sendUpcomingSessionEmails(data: NotificationClass[]) {
 
 export async function notifyUpcomingSessionsBefore24Hrs() {
   const sessions = await getAllUpcomingSessionsWithin24Hrs(supabase);
-  await sendUpcomingSessionEmails(sessions);
+  await sendNotifySessionEmails(sessions, 'before');
+}
+
+export async function notifyAfterSessions() {
+  const sessions = await getSessions2HrsAfterSession(supabase);
+  await sendNotifySessionEmails(sessions, 'after');
 }
