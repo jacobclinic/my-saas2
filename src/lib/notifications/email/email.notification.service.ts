@@ -1,8 +1,13 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { getAllUpcomingSessionsWithin24_25Hrs, getSessions2_1HrsAfterSession } from '../quieries';
+import {
+  getAllUpcomingSessionsWithin24_25Hrs,
+  getSessions2_1HrsAfterSession,
+  getUpcomingSessionsWithUnpaidStudentsBetween3_4Days,
+} from '../quieries';
 import sendEmail from '~/core/email/send-email';
 import { getStudentNotifyBeforeEmailTemplate } from '~/core/email/templates/studentNotifyBefore';
 import { getStudentNotifyAfterEmailTemplate } from '~/core/email/templates/studentNotifyAfter';
+import { paymentReminderEmaiTemplate } from '~/core/email/templates/paymentReminder';
 
 async function sendNotifySessionEmails(
   data: NotificationClass[],
@@ -91,7 +96,9 @@ async function sendNotifySessionEmails(
   }
 }
 
-export async function notifyUpcomingSessionsBefore24Hrs(client: SupabaseClient) {
+export async function notifyUpcomingSessionsBefore24Hrs(
+  client: SupabaseClient,
+) {
   const sessions = await getAllUpcomingSessionsWithin24_25Hrs(client);
   await sendNotifySessionEmails(sessions, 'before');
 }
@@ -101,4 +108,73 @@ export async function notifyAfterSessions(client: SupabaseClient) {
   await sendNotifySessionEmails(sessions, 'after');
 }
 
+async function sendPaymentReminderEmails(
+  data: SessionWithUnpaidStudents[],
+) {
+  try {
+    // Flatten all students across all sessions into a single array
+    const emailTasks = data.flatMap(
+      (session) =>
+        session.class?.unpaid_students.map((student) => ({
+          to: student.student.email,
+          first_name: student.student.first_name,
+          class_name: session.class?.name ?? 'Unnamed Class',
+          start_time: new Date(session.start_time!).toLocaleString(),
+          fee: session.class.fee,
+        })) || [],
+    );
 
+    // Function to send a single email
+    const sendSingleEmail = async (task: (typeof emailTasks)[number]) => {
+      const { html, text } = paymentReminderEmaiTemplate({
+        studentName: task.first_name!,
+        className: task.class_name,
+        sessionDate: new Date(task.start_time).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        sessionMonth: new Date(task.start_time).toLocaleString('en-US', {
+          month: 'long',
+        }),
+        studentEmail: task.to,
+        classFee: task.fee,
+      });
+      await sendEmail({
+        from: process.env.EMAIL_SENDER!,
+        to: task.to,
+        subject: `Payment Reminder for class ${task.class_name} for ${new Date(
+          task.start_time,
+        ).toLocaleString('en-US', {
+          month: 'long',
+        })}`,
+        html: html,
+        text: text,
+      });
+    };
+
+    // Process emails with a throttle (2 per second = 500ms per request)
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+    const rateLimitDelay = 500; // 500ms = 2 requests per second
+
+    for (let i = 0; i < emailTasks.length; i++) {
+      await sendSingleEmail(emailTasks[i]);
+      // Add delay after every email, except the last one
+      if (i < emailTasks.length - 1) {
+        await delay(rateLimitDelay);
+      }
+    }
+
+    console.log('All email notifications sent successfully');
+  } catch (error) {
+    console.error('Error sending email notifications:', error);
+    throw error;
+  }
+}
+
+export async function remindPayments3DaysPrior(client: SupabaseClient) {
+    const sessions = await getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(client);
+    await sendPaymentReminderEmails(sessions);
+}

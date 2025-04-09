@@ -33,7 +33,7 @@ interface NotificationClass {
 }
 
 
-type UnpaidStudent = {
+interface UnpaidStudent {
   id: string;
   first_name: string | null;
   last_name: string | null;
@@ -41,7 +41,7 @@ type UnpaidStudent = {
   phone_number: string | null;
 };
 
-type Payment = {
+interface Payment {
   id: string;
   payment_period: string | null;
   status: string | null;
@@ -50,13 +50,13 @@ type Payment = {
   student_id: string | null;
 };
 
-type Enrollment = {
+interface Enrollment {
   id: string;
   student_id: string;
   student: UnpaidStudent | UnpaidStudent[];
 };
 
-type Class = {
+interface Class {
   id: string;
   name: string | null;
   subject: string | null;
@@ -65,7 +65,7 @@ type Class = {
   students: Enrollment[] | null;
 };
 
-type Session = {
+interface Session {
   id: string;
   start_time: string | null;
   end_time: string | null;
@@ -75,8 +75,8 @@ type Session = {
   class: Class | null; // One-to-one relationship, not an array
 };
 
-// Output type for transformed data
-type SessionWithUnpaidStudents = {
+// Output interface for transformed data
+interface SessionWithUnpaidStudents {
   session_id: string;
   start_time: string | null;
   end_time: string | null;
