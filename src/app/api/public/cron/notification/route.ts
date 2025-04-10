@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     //notify after sessions
     await notifyAfterSessions(supabase);
 
-    return new Response('Notification scheduled successfully', { status: 200 });
+    return new Response('Notification sent successfully', { status: 200 });
   } catch (error) {
     console.error('Error in POST /api/cron/notification:', error);
     return new Response('Internal Server Error', { status: 500 });
