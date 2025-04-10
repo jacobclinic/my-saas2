@@ -20,6 +20,7 @@ async function sendNotifySessionEmails(
     // Flatten all students across all sessions into a single array
     const emailTasks = data.flatMap((session) => {
       logger.info('session', session);
+      console.log ('session', session);
       return (
         session.class?.students.map((student) => ({
           to: student.student.email,
