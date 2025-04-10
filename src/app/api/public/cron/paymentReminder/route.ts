@@ -19,9 +19,7 @@ export async function POST(req: Request) {
     }
 
     // Get data from Supabase
-    remindPayments3DaysPrior(supabase).catch((error) => {
-      console.error("Background task error:", error);
-    });
+    await remindPayments3DaysPrior(supabase);
 
     // Return response immediately
     return new Response("Payment reminders scheduled", { status: 200 });

@@ -12,6 +12,11 @@ import { format, parseISO } from 'date-fns';
 import getLogger from '~/core/logger';
 
 const logger = getLogger();
+
+// Process emails with a throttle (2 per second = 500ms per request)
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const rateLimitDelay = 500; // 500ms = 2 requests per second
+
 async function sendNotifySessionEmails(
   data: NotificationClass[],
   beforeOrAfter: 'before' | 'after',
@@ -20,7 +25,7 @@ async function sendNotifySessionEmails(
     // Flatten all students across all sessions into a single array
     const emailTasks = data.flatMap((session) => {
       logger.info('session', session);
-      console.log ('session', session);
+      console.log('session', session);
       return (
         session.class?.students.map((student) => ({
           to: student.student.email,
@@ -83,13 +88,21 @@ async function sendNotifySessionEmails(
     };
 
     // Process emails with a throttle (2 per second = 500ms per request)
-    const delay = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms));
+
     const rateLimitDelay = 500; // 500ms = 2 requests per second
 
     for (let i = 0; i < emailTasks.length; i++) {
-      await sendSingleEmail(emailTasks[i]);
-      logger.info('Sending notification email to', emailTasks[i].to);
+      try {
+        await sendSingleEmail(emailTasks[i]);
+        logger.info('Sending notification email to', {
+          email: emailTasks[i].to,
+        });
+      } catch (error) {
+        logger.error('Failed to send email to', {
+          email: emailTasks[i].to,
+          error,
+        });
+      }
       // Add delay after every email, except the last one
       if (i < emailTasks.length - 1) {
         await delay(rateLimitDelay);
@@ -168,15 +181,16 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
       });
     };
 
-    // Process emails with a throttle (2 per second = 500ms per request)
-    const delay = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms));
-    const rateLimitDelay = 500; // 500ms = 2 requests per second
-
     for (let i = 0; i < emailTasks.length; i++) {
-      await sendSingleEmail(emailTasks[i]);
-      logger.info('sending payment reminder to', emailTasks[i].to);
-      // Add delay after every email, except the last one
+      try {
+        await sendSingleEmail(emailTasks[i]);
+        logger.info('sending payment reminder to', emailTasks[i].to);
+      } catch (error) {
+        logger.error('Failed to send email to', {
+          email: emailTasks[i].to,
+          error,
+        });
+      }
       if (i < emailTasks.length - 1) {
         await delay(rateLimitDelay);
       }
