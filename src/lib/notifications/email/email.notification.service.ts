@@ -8,6 +8,7 @@ import sendEmail from '~/core/email/send-email';
 import { getStudentNotifyBeforeEmailTemplate } from '~/core/email/templates/studentNotifyBefore';
 import { getStudentNotifyAfterEmailTemplate } from '~/core/email/templates/studentNotifyAfter';
 import { paymentReminderEmaiTemplate } from '~/core/email/templates/paymentReminder';
+import { format, parseISO } from 'date-fns';
 
 async function sendNotifySessionEmails(
   data: NotificationClass[],
@@ -113,9 +114,9 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
     // Flatten all students across all sessions into a single array
     const emailTasks = data.flatMap((session) => {
       // Split session.start_time into DATE and TIME
-      const [DATE, timeWithOffset]: [string, string] =
-        session.start_time!.split(' ') as [string, string];
-      const TIME: string = timeWithOffset.split('+')[0]; // Remove the offset
+      const dt: Date = parseISO(session.start_time!);
+      const DATE: string = format(dt, 'yyyy-MM-dd');
+      const TIME: string = format(dt, 'HH:mm:ss');
 
       return (
         session.class?.unpaid_students.map((student) => ({
