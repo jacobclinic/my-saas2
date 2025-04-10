@@ -8,6 +8,7 @@ import sendEmail from '~/core/email/send-email';
 import { getStudentNotifyBeforeEmailTemplate } from '~/core/email/templates/studentNotifyBefore';
 import { getStudentNotifyAfterEmailTemplate } from '~/core/email/templates/studentNotifyAfter';
 import { paymentReminderEmaiTemplate } from '~/core/email/templates/paymentReminder';
+import { format, parseISO } from 'date-fns';
 
 async function sendNotifySessionEmails(
   data: NotificationClass[],
@@ -108,21 +109,26 @@ export async function notifyAfterSessions(client: SupabaseClient) {
   await sendNotifySessionEmails(sessions, 'after');
 }
 
-async function sendPaymentReminderEmails(
-  data: SessionWithUnpaidStudents[],
-) {
+async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
   try {
     // Flatten all students across all sessions into a single array
-    const emailTasks = data.flatMap(
-      (session) =>
+    const emailTasks = data.flatMap((session) => {
+      // Split session.start_time into DATE and TIME
+      const dt: Date = parseISO(session.start_time!);
+      const DATE: string = format(dt, 'yyyy-MM-dd');
+      const TIME: string = format(dt, 'HH:mm:ss');
+
+      return (
         session.class?.unpaid_students.map((student) => ({
           to: student.student.email,
           first_name: student.student.first_name,
           class_name: session.class?.name ?? 'Unnamed Class',
           start_time: new Date(session.start_time!).toLocaleString(),
           fee: session.class.fee,
-        })) || [],
-    );
+          paymentUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}?type=upcoming&sessionId=${session.session_id}&className=${session.class.name}&sessionDate=${DATE}&sessionTime=${TIME}&sessionSubject=${session.class.subject}&sessionTitle=${session.title}`)}`,
+        })) || []
+      );
+    });
 
     // Function to send a single email
     const sendSingleEmail = async (task: (typeof emailTasks)[number]) => {
@@ -140,6 +146,7 @@ async function sendPaymentReminderEmails(
         }),
         studentEmail: task.to,
         classFee: task.fee,
+        paymentUrl: task.paymentUrl,
       });
       await sendEmail({
         from: process.env.EMAIL_SENDER!,
@@ -175,6 +182,7 @@ async function sendPaymentReminderEmails(
 }
 
 export async function remindPayments3DaysPrior(client: SupabaseClient) {
-    const sessions = await getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(client);
-    await sendPaymentReminderEmails(sessions);
+  const sessions =
+    await getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(client);
+  await sendPaymentReminderEmails(sessions);
 }
