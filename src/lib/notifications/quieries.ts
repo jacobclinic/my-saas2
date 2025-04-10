@@ -15,7 +15,7 @@ export async function getAllUpcomingSessionsWithin24_25Hrs(
     // Calculate the timestamp for 24 hours from now
     const now = new Date();
     const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const next10Hours = new Date(now.getTime() + 10 * 60 * 60 * 1000);
+    const next25Hours = new Date(now.getTime() + 25 * 60 * 60 * 1000);
 
     const { data, error } = await client
       .from(SESSIONS_TABLE)
@@ -53,8 +53,8 @@ export async function getAllUpcomingSessionsWithin24_25Hrs(
         `,
         { count: 'exact' },
       )
-      .gte('start_time', now.toISOString())
-      .lte('start_time', next10Hours.toISOString())
+      .gte('start_time', next24Hours.toISOString())
+      .lte('start_time', next25Hours.toISOString())
       .order('start_time', { ascending: true });
 
     if (error) {
@@ -249,7 +249,7 @@ export async function getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(
   try {
     // Calculate time range: now to 3 days from now
     const now = new Date();
-    const threeDaysFromNow = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
     const fourDaysFromNow = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000);
 
     // Fetch sessions with class and enrollment data
@@ -283,8 +283,8 @@ export async function getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(
           )
         `,
       )
-      .gte('start_time', now.toISOString())
-      .lte('start_time', threeDaysFromNow.toISOString())
+      .gte('start_time', threeDaysFromNow.toISOString())
+      .lte('start_time', fourDaysFromNow.toISOString())
       .order('start_time', { ascending: true });
 
     if (sessionError) {
