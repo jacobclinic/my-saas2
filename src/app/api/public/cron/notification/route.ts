@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       console.error('Background task error:', error);
     });
 
-    return new Response('Notification sent successfully', { status: 200 });
+    return new Response('Notification scheduled successfully', { status: 200 });
   } catch (error) {
     console.error('Error in POST /api/cron/notification:', error);
     return new Response('Internal Server Error', { status: 500 });

@@ -9,7 +9,9 @@ import { getStudentNotifyBeforeEmailTemplate } from '~/core/email/templates/stud
 import { getStudentNotifyAfterEmailTemplate } from '~/core/email/templates/studentNotifyAfter';
 import { paymentReminderEmaiTemplate } from '~/core/email/templates/paymentReminder';
 import { format, parseISO } from 'date-fns';
+import getLogger from '~/core/logger';
 
+const logger = getLogger();
 async function sendNotifySessionEmails(
   data: NotificationClass[],
   beforeOrAfter: 'before' | 'after',
@@ -84,6 +86,7 @@ async function sendNotifySessionEmails(
 
     for (let i = 0; i < emailTasks.length; i++) {
       await sendSingleEmail(emailTasks[i]);
+      logger.info("Sending notification email to", emailTasks[i].to);
       // Add delay after every email, except the last one
       if (i < emailTasks.length - 1) {
         await delay(rateLimitDelay);
@@ -168,6 +171,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
 
     for (let i = 0; i < emailTasks.length; i++) {
       await sendSingleEmail(emailTasks[i]);
+      logger.info("sending payment reminder to", emailTasks[i].to);
       // Add delay after every email, except the last one
       if (i < emailTasks.length - 1) {
         await delay(rateLimitDelay);
