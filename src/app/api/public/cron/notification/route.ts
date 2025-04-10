@@ -22,16 +22,16 @@ export async function POST(req: Request) {
     }
 
     // Notify upcoming sessions before 24 hours
-    // await notifyUpcomingSessionsBefore24Hrs(supabase);
-    notifyUpcomingSessionsBefore24Hrs(supabase).catch((error) => {
-      console.error('Background task error:', error);
-    });
+    await notifyUpcomingSessionsBefore24Hrs(supabase);
+    // notifyUpcomingSessionsBefore24Hrs(supabase).catch((error) => {
+    //   console.error('Background task error:', error);
+    // });
 
     //notify after sessions
-    // await notifyAfterSessions(supabase);
-    notifyAfterSessions(supabase).catch((error) => {
-      console.error('Background task error:', error);
-    });
+    await notifyAfterSessions(supabase);
+    // notifyAfterSessions(supabase).catch((error) => {
+    //   console.error('Background task error:', error);
+    // });
 
     return new Response('Notification scheduled successfully', { status: 200 });
   } catch (error) {
