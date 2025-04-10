@@ -22,18 +22,12 @@ export async function POST(req: Request) {
     }
 
     // Notify upcoming sessions before 24 hours
-    // await notifyUpcomingSessionsBefore24Hrs(supabase);
-    notifyUpcomingSessionsBefore24Hrs(supabase).catch((error) => {
-      console.error('Background task error:', error);
-    });
+    await notifyUpcomingSessionsBefore24Hrs(supabase);
 
     //notify after sessions
-    // await notifyAfterSessions(supabase);
-    notifyAfterSessions(supabase).catch((error) => {
-      console.error('Background task error:', error);
-    });
+    await notifyAfterSessions(supabase);
 
-    return new Response('Notification scheduled successfully', { status: 200 });
+    return new Response('Notification sent successfully', { status: 200 });
   } catch (error) {
     console.error('Error in POST /api/cron/notification:', error);
     return new Response('Internal Server Error', { status: 500 });
