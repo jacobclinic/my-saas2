@@ -21,14 +21,10 @@ export async function POST(req: Request) {
     // Get data from Supabase
     remindPayments3DaysPrior(supabase).catch((error) => {
       console.error("Background task error:", error);
-      // Optionally log to an external service (e.g., Sentry) here
     });
 
     // Return response immediately
     return new Response("Payment reminders scheduled", { status: 200 });
-
-
-    return new Response('Payment reminders sent successfully', { status: 200 });
   } catch (error) {
     console.error('Error in GET /api/public/Test:', error);
     return new Response('Internal Server Error', { status: 500 });
