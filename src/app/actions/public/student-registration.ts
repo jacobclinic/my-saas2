@@ -59,6 +59,7 @@ const registrationSchema = z.object({
   classId: z.string().uuid(),
   password: z.string().min(6),
   nameOfClass: z.string().min(1),
+  address: z.string().min(2),
 });
 
 export async function registerStudentAction(
@@ -102,6 +103,7 @@ export async function registerStudentAction(
         phone_number: validated.phone,
         first_name: validated.firstName,
         last_name: validated.lastName,
+        address: validated.address,
         user_role: 'student',
       });
     } else {
@@ -116,30 +118,29 @@ export async function registerStudentAction(
             first_name: validated.firstName,
             last_name: validated.lastName,
             phone_number: validated.phone,
-            temporary_password: password,
             user_role: 'student',
           },
         });
 
       if (authError) throw authError;
       userId = authUser.user.id;
-
-      const { html, text } = getStudentCredentialsEmailTemplate({
-        studentName: `${validated.firstName} ${validated.lastName}`,
-        email: validated.email,
-        className: validated.nameOfClass,
-        loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
-      });
-
-      // Send welcome email
-      await sendEmail({
-        from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
-        to: validated.email,
-        subject: 'Welcome to Your Class - Login Credentials',
-        html,
-        text,
-      });
     }
+
+    const { html, text } = getStudentCredentialsEmailTemplate({
+      studentName: `${validated.firstName} ${validated.lastName}`,
+      email: validated.email,
+      className: validated.nameOfClass,
+      loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
+    });
+
+    // Send welcome email
+    await sendEmail({
+      from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
+      to: validated.email,
+      subject: 'Welcome to Your Class - Login Credentials',
+      html,
+      text,
+    });
 
     // Check if student is already enrolled in this class
     const { data: existingEnrollment } = await client

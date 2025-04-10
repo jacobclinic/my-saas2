@@ -65,8 +65,6 @@ export interface ZoomWebhookPayload {
   };
 }
 
-
-// New type for the recording API response
 export interface ZoomRecordingResponse {
   id: string;
   recording_files: {
@@ -75,4 +73,28 @@ export interface ZoomRecordingResponse {
     download_url: string;
   }[];
   password?: string;
+}
+
+export interface ZoomUserRecordingsResponse {
+  from: string;
+  to: string;
+  page_size: number;
+  total_records: number;
+  next_page_token: string;
+  meetings: {
+    uuid: string;
+    id: number;
+    topic: string;
+    start_time: string;
+    duration: number;
+    recording_files: {
+      id: string;
+      recording_start: string;
+      recording_end: string;
+      file_type: string;
+      file_size: number;
+      download_url: string;
+      status: string;
+    }[];
+  }[];
 }
