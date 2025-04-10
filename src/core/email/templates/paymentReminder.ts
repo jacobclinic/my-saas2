@@ -5,6 +5,7 @@ export function paymentReminderEmaiTemplate(params: {
   sessionMonth: string;
   studentEmail: string;
   classFee: number | null;
+  paymentUrl: string;
 }) {
   const {
     studentName,
@@ -13,6 +14,7 @@ export function paymentReminderEmaiTemplate(params: {
     sessionMonth,
     studentEmail,
     classFee,
+    paymentUrl
   } = params;
   const html = `
   <!DOCTYPE html>
@@ -91,9 +93,9 @@ export function paymentReminderEmaiTemplate(params: {
             <li>Check payment history</li>
           </ul>
           <p style="text-align: center; margin: 30px 0;">
-            <a href="${"paymentUrl"}" class="button">Make Payment</a>
+            <a href="${paymentUrl}" class="button">Make Payment</a>
           </p>
-          <p>If the button doesn't work, copy this link: <a href="${"paymentUrl"}">${"paymentUrl"}</a></p>
+          <p>If the button doesn't work, copy this link: <a href="${paymentUrl}">${paymentUrl}</a></p>
           <p>You'll need to sign in with your Comma Education account if you haven't already.</p>
 
           <div class="bank-details">
@@ -143,9 +145,9 @@ Click here to access your payment page where you can:
 - Upload your bank transfer receipt
 - Check payment history
 
-Payment Link: ${"paymentUrl"}
+Payment Link: ${paymentUrl}
 
-If the link doesn't work, copy and paste it into your browser: ${"paymentUrl"}
+If the link doesn't work, copy and paste it into your browser: ${paymentUrl}
 
 You'll need to sign in with your Comma Education account if you haven't already.
 
