@@ -53,7 +53,7 @@ export async function getAllUpcomingSessionsWithin24_25Hrs(
         `,
         { count: 'exact' },
       )
-      .gte('start_time', next24Hours.toISOString())
+      .gte('start_time', now.toISOString())
       .lte('start_time', next25Hours.toISOString())
       .order('start_time', { ascending: true });
 
@@ -250,6 +250,7 @@ export async function getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(
     // Calculate time range: now to 3 days from now
     const now = new Date();
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const fourDaysFromNow = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000);
 
     // Fetch sessions with class and enrollment data
     const { data: rawSessionData, error: sessionError } = await client
