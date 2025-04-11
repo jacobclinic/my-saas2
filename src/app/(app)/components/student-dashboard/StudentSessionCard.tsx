@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Card, CardContent } from '../base-v2/ui/Card';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
@@ -24,7 +24,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../base-v2/ui/Dialog';
-import If from '~/core/ui/If';
+import { Alert, AlertDescription } from '../base-v2/ui/Alert';
+import { AlertTriangle } from 'lucide-react';
 
 interface StudentSessionCardProps {
   sessionData: SessionStudentTableData;
@@ -79,6 +80,21 @@ const StudentSessionCard = ({
 
     setIsDialogOpen(false);
   };
+
+  const getRecordingUrl = useCallback(
+    async (fileName: string): Promise<string> => {
+      console.log('Fetching signed URL for:', fileName);
+      const response = await fetch(
+        `/api/signed-url?fileName=${encodeURIComponent(fileName)}`,
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch signed URL: ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data.signedUrl;
+    },
+    [],
+  );
 
   return (
     <Card className="mb-4">
@@ -201,15 +217,27 @@ const StudentSessionCard = ({
             </>
           ) : (
             <>
-              {sessionData.recordingUrl && (
-                <Button
-                  onClick={() =>
-                    window.open(sessionData.recordingUrl, '_blank')
-                  }
-                >
-                  <Video className="h-4 w-4 mr-2" />
-                  Watch Recording
-                </Button>
+              {sessionData.recordingUrl &&
+              sessionData.recordingUrl.length > 0 ? (
+                sessionData.recordingUrl.map((fileName, index) => (
+                  <Button
+                    key={index}
+                    onClick={async () =>
+                      window.open(await getRecordingUrl(fileName), '_blank')
+                    }
+                    className="flex items-center"
+                  >
+                    <Video className="h-4 w-4 mr-2" />
+                    Watch Recording {index + 1}
+                  </Button>
+                ))
+              ) : (
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-700">
+                    You haven't made the payment or no recordings available
+                  </AlertDescription>
+                </Alert>
               )}
               {sessionData.materials?.[0]?.url && (
                 <Button variant="outline" onClick={handleDownloadMaterials}>

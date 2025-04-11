@@ -1,10 +1,10 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import type { PastSessionsCardProps } from '~/lib/sessions/types/past-sessions';
-import { Card, CardContent } from "../base-v2/ui/Card";
-import { Button } from "../base-v2/ui/Button";
-import { Badge } from "../base-v2/ui/Badge";
+import { Card, CardContent } from '../base-v2/ui/Card';
+import { Button } from '../base-v2/ui/Button';
+import { Badge } from '../base-v2/ui/Badge';
 import {
   Video,
   Users,
@@ -13,27 +13,39 @@ import {
   Calendar,
   Clock,
   Link2,
-  File
+  File,
 } from 'lucide-react';
 import AttendanceDialog from './AttendanceDialog';
+import { getSignedUrl } from '~/lib/aws/s3.service';
 
-const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
-  sessionData,
-}) => {
+const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
   const [linkCopied, setLinkCopied] = useState<{
     recordings?: boolean;
     materials?: boolean;
     allMaterials?: boolean;
   }>({});
-  
-  const handleCopyLink = (link: string, type: 'recordings' | 'materials' | 'allMaterials') => {
+
+  const handleCopyLink = (
+    link: string,
+    type: 'recordings' | 'materials' | 'allMaterials',
+  ) => {
     navigator.clipboard.writeText(link);
     setLinkCopied({ ...linkCopied, [type]: true });
     setTimeout(() => {
       setLinkCopied({ ...linkCopied, [type]: false });
     }, 2000);
   };
+
+  const getRecordingUrl = useCallback(async (fileName: string): Promise<string> => {
+    console.log('Fetching signed URL for:', fileName);
+    const response = await fetch(`/api/signed-url?fileName=${encodeURIComponent(fileName)}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch signed URL: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.signedUrl;
+  }, []);
   return (
     <>
       <Card className="mb-4">
@@ -44,7 +56,9 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
               <div className="space-y-2">
                 <div>
                   <h3 className="text-xl font-semibold">{sessionData.name}</h3>
-                  <p className="text-blue-600 font-medium">{sessionData.topic}</p>
+                  <p className="text-blue-600 font-medium">
+                    {sessionData.topic}
+                  </p>
                 </div>
                 <div className="flex items-center text-gray-600">
                   <Calendar className="h-4 w-4 mr-2" />
@@ -62,13 +76,29 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
 
             {/* Actions */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Button onClick={() => window.open(sessionData.recordingUrl, '_blank')}>
-                <Video className="h-4 w-4 mr-2" />
-                View Recording
-              </Button>
-              
-              <Button variant="outline"
-                onClick={() => handleCopyLink(sessionData.recordingUrl, 'recordings')}
+              {sessionData.recordingUrl &&
+              sessionData.recordingUrl.length > 0 ? (
+                sessionData.recordingUrl.map((fileName, index) => (
+                  <Button
+                    key={index}
+                    onClick={async () =>
+                      window.open(await getRecordingUrl(fileName), '_blank')
+                    }
+                    className="flex items-center"
+                  >
+                    <Video className="h-4 w-4 mr-2" />
+                    View Recording {index + 1}
+                  </Button>
+                ))
+              ) : (
+                <p>No recordings available</p>
+              )}
+
+              {/* <Button
+                variant="outline"
+                onClick={() =>
+                  handleCopyLink(sessionData.recordingUrl, 'recordings')
+                }
               >
                 {linkCopied.recordings ? (
                   <Check className="h-4 w-4 mr-2" />
@@ -76,9 +106,12 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
                   <Link2 className="h-4 w-4 mr-2" />
                 )}
                 {linkCopied.recordings ? 'Copied!' : 'Copy Student Link'}
-              </Button>
+              </Button> */}
 
-              <Button variant="outline" onClick={() => setShowAttendanceDialog(true)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowAttendanceDialog(true)}
+              >
                 <Users className="h-4 w-4 mr-2" />
                 View Attendance
               </Button>
@@ -87,9 +120,9 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({
         </CardContent>
       </Card>
 
-      <AttendanceDialog 
-        showAttendanceDialog={showAttendanceDialog} 
-        setShowAttendanceDialog={setShowAttendanceDialog} 
+      <AttendanceDialog
+        showAttendanceDialog={showAttendanceDialog}
+        setShowAttendanceDialog={setShowAttendanceDialog}
         selectedSession={sessionData}
       />
     </>

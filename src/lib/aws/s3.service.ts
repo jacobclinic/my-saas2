@@ -16,7 +16,7 @@ const s3 = new AWS.S3({
 export async function uploadToS3(
   fileStream: NodeJS.ReadableStream,
   fileName: string,
-): Promise<string> {
+): Promise<void> {
   // Determine the content type based on file extension
   const fileExtension = fileName.split('.').pop()?.toLowerCase();
   const contentType =
@@ -39,12 +39,28 @@ export async function uploadToS3(
   await s3.upload(params).promise();
   logger.info(`[S3] File ${fileName} uploaded successfully.`);
 
-  const signedUrl = await s3.getSignedUrlPromise('getObject', {
-    Bucket: process.env.S3_BUCKET_NAME as string,
-    Key: `recordings/${fileName}`,
-    Expires: 604800, // 7 days
-  });
+  return;
+}
 
-  logger.info(`[S3] File uploaded successfully. Signed URL: ${signedUrl}`);
-  return signedUrl;
+export async function getSignedUrl(
+  fileName: string,
+  expiresIn: number = 4 * 60 * 60, // Default expiration time is 4 hour
+): Promise<string> {
+  const params = {
+    Bucket: 'comma-educations-recordings',
+    Key: `recordings/${fileName}`,
+    Expires: expiresIn,
+  };
+  logger.info(params);
+  logger.info(`[S3] AWS_REGION: ${process.env.AWS_REGION}`);
+  logger.info(`[S3] AWS_ACCESS_KEY_ID: ${process.env.AWS_ACCESS_KEY_ID}`);
+  logger.info(
+    `[S3] AWS_SECRET_ACCESS_KEY: ${process.env.AWS_SECRET_ACCESS_KEY}`,
+  );
+
+  logger.info(`[S3] Generating signed URL for ${fileName}...`);
+  const url = await s3.getSignedUrlPromise('getObject', params);
+  logger.info(`[S3] Signed URL generated successfully.`);
+
+  return url;
 }

@@ -209,13 +209,13 @@ export async function syncZoomRecordings() {
             // for testing
             //  const signedUrl = file.download_url; // Replace with actual signed URL from S3 upload
             // Step 7: Upload to S3
-            const signedUrl = await uploadToS3(fileStream, fileName);
+            await uploadToS3(fileStream, fileName);
             logger.info(
-              `[Cron] Uploaded recording file ${file.id} to S3 for Zoom Meeting ID ${zoomMeetingId}: ${signedUrl}`,
+              `[Cron] Uploaded recording file ${file.id} to S3 for Zoom Meeting ID ${zoomMeetingId}`,
             );
 
             // Step 8: Update the session with the S3 URL
-            await updateRecordingUrl(supabase, zoomMeetingId, signedUrl);
+            await updateRecordingUrl(supabase, zoomMeetingId, fileName);
             logger.info(
               `[Cron] Updated recording URL for Zoom Meeting ID ${zoomMeetingId} with file ${file.id}`,
             );
