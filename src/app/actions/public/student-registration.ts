@@ -6,6 +6,7 @@ import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
 import sendEmail from '../../../core/email/send-email';
 import { getStudentCredentialsEmailTemplate } from '../../../core/email/templates/student-credentials';
+import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 
 // Helper function to wait
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -126,22 +127,6 @@ export async function registerStudentAction(
       userId = authUser.user.id;
     }
 
-    const { html, text } = getStudentCredentialsEmailTemplate({
-      studentName: `${validated.firstName} ${validated.lastName}`,
-      email: validated.email,
-      className: validated.nameOfClass,
-      loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
-    });
-
-    // Send welcome email
-    await sendEmail({
-      from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
-      to: validated.email,
-      subject: 'Welcome to Your Class - Login Credentials',
-      html,
-      text,
-    });
-
     // Check if student is already enrolled in this class
     const { data: existingEnrollment } = await client
       .from('student_class_enrollments')
@@ -159,6 +144,34 @@ export async function registerStudentAction(
           class_id: validated.classId,
           enrolled_date: new Date().toISOString(),
         });
+
+      try {
+        const { html, text } = getStudentCredentialsEmailTemplate({
+          studentName: `${validated.firstName} ${validated.lastName}`,
+          email: validated.email,
+          className: validated.nameOfClass,
+          loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
+        });
+
+        await Promise.all([
+          sendEmail({
+            from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
+            to: validated.email,
+            subject: 'Welcome to Your Class - Login Credentials',
+            html,
+            text,
+          }),
+          sendSingleSMS({
+            phoneNumber: validated.phone,
+            message: `Welcome to ${validated.nameOfClass}! Your registration is confirmed. Login to your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
+                  \nUsername: Your email
+                  \nUse the entered Password you used
+                  \n-Comma Education`,
+          }),
+        ]);
+      } catch (error) {
+        console.error('Error sending email:', error);
+      }
 
       if (enrollmentError) throw enrollmentError;
     }

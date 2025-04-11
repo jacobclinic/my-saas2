@@ -14,6 +14,11 @@ interface SMSRequest {
   message: string;
 }
 
+interface SingleSMSRequest {
+  phoneNumber: string;
+  message: string;
+}
+
 interface APIResponse {
   success: boolean;
   messageId?: string;
@@ -224,5 +229,48 @@ export async function notifyUpcomingSessionsSMS(
     }
   } catch (error) {
     console.error('Error in notifyUpcomingSessionsBefore24Hrs:', error);
+  }
+}
+
+export async function sendSingleSMS(request: SingleSMSRequest): Promise<APIResponse> {
+  try {
+    
+    const encodedMessage = encodeURIComponent(request.message);
+
+    const baseUrl = smsConfig.baseUrl || 'https://www.textit.biz';
+    const url = new URL(`${baseUrl}/sendmsg/`);
+    const params = new URLSearchParams({
+        id: smsConfig.id,
+        pw: smsConfig.password,
+        to: request.phoneNumber,
+        text: encodedMessage, // URL-encode the message
+      });
+
+    const response = await fetch(`${url}?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    const textResponse = await response.text();
+
+    if (textResponse.startsWith('OK:')) {
+      return {
+        success: true,
+        messageId: textResponse.split(':')[1],
+      };
+    } else {
+      return {
+        success: false,
+        error: textResponse,
+      };
+    }
+  } catch (error) {
+    console.error('Error sending bulk SMS:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
   }
 }
