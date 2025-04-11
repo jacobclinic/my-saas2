@@ -235,7 +235,7 @@ const StudentSessionCard = ({
                 <Alert className="border-red-200 bg-red-50">
                   <AlertTriangle className="h-4 w-4 text-red-600" />
                   <AlertDescription className="text-red-700">
-                    You haven't made the payment or no recordings available
+                    You have not made the payment or no recordings available
                   </AlertDescription>
                 </Alert>
               )}
