@@ -221,12 +221,12 @@ export async function syncZoomRecordings() {
             );
 
             //after successfull upload,
-            // try {
-            //   await deleteRecordingFile( zoomMeetingId,file.id);
-            //   logger.info(`[Cron] Successfully deleted Zoom cloud recording for meeting ${zoomMeetingId}`);
-            // } catch (error) {
-            //   logger.error(`[Cron] Failed to delete Zoom cloud recording for meeting ${zoomMeetingId}:`, error);
-            // }
+            try {
+              await deleteRecordingFile( zoomMeetingId,file.id);
+              logger.info(`[Cron] Successfully deleted Zoom cloud recording for meeting ${zoomMeetingId}`);
+            } catch (error) {
+              logger.error(`[Cron] Failed to delete Zoom cloud recording for meeting ${zoomMeetingId}:`, error);
+            }
           } else {
             logger.warn(
               `[Cron] Unsupported file type ${file.file_type} for Zoom Meeting ID ${zoomMeetingId}, skipping.`,
