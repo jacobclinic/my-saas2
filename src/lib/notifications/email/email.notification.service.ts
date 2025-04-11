@@ -80,7 +80,7 @@ async function sendNotifySessionEmails(
         await sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: task.to,
-          subject: `Upcoming Class Notification`,
+          subject: `Your ${task.class_name} Class Recording Is Now Available`,
           html: html,
           text: text,
         });
