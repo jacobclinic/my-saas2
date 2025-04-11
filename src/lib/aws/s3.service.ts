@@ -47,18 +47,11 @@ export async function getSignedUrl(
   expiresIn: number = 4 * 60 * 60, // Default expiration time is 4 hour
 ): Promise<string> {
   const params = {
-    Bucket: 'comma-educations-recordings',
+    Bucket: process.env.S3_BUCKET_NAME as string,
     Key: `recordings/${fileName}`,
     Expires: expiresIn,
   };
-  logger.info(params);
-  logger.info(`[S3] AWS_REGION: ${process.env.AWS_REGION}`);
-  logger.info(`[S3] AWS_ACCESS_KEY_ID: ${process.env.AWS_ACCESS_KEY_ID}`);
-  logger.info(
-    `[S3] AWS_SECRET_ACCESS_KEY: ${process.env.AWS_SECRET_ACCESS_KEY}`,
-  );
 
-  logger.info(`[S3] Generating signed URL for ${fileName}...`);
   const url = await s3.getSignedUrlPromise('getObject', params);
   logger.info(`[S3] Signed URL generated successfully.`);
 
