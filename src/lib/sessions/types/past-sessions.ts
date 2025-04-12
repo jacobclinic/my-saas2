@@ -19,7 +19,7 @@ interface PastSessionData {
   topic: string;
   date: string;
   time: string;
-  recordingUrl: string;
+  recordingUrl: string[];
   attendance: AttendanceRecord[];
   materials: Material[];
 }

@@ -67,7 +67,7 @@ const PastSessions = ({
       topic: session?.title || '',
       date: formattedDate,
       time: formattedTime,
-      recordingUrl: session?.recording_urls?.[0] ?? '',
+      recordingUrl: session?.recording_urls || [],
       attendance:
         (session?.attendance || []).map((attendee) => {
           const formattedTime = `${attendee?.time ? new Date(attendee?.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : ''}`;

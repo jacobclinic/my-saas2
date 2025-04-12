@@ -97,9 +97,7 @@ const StudentSessionDetails = ({ sessionData, type, studentId, isEnrolledToClass
       paymentAmount: Number(sessionData.payment_amount) || sessionData.class?.fee || 0,
       zoomLink: sessionData.meeting_url || undefined,
       zoomMeetingId: sessionData.zoom_meeting_id || '',
-      recordingUrl: Array.isArray(sessionData.recording_urls) && sessionData.recording_urls.length > 0 
-        ? sessionData.recording_urls[0] 
-        : undefined,
+      recordingUrl: sessionData.recording_urls || [],
       materials: sessionData.materials?.map(material => ({
         id: material.id,
         name: material.name,

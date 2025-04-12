@@ -1,4 +1,3 @@
-
 // app/actions/public/student-class-register.ts
 'use server';
 import { revalidatePath } from 'next/cache';
@@ -8,6 +7,7 @@ import getSupabaseServerActionClient from '../../../core/supabase/action-client'
 import { getStudentCredentialsEmailTemplate } from '~/core/email/templates/student-credentials';
 import { USERS_TABLE } from '~/lib/db-tables';
 import sendEmail from '~/core/email/send-email';
+import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 
 const registrationSchema = z.object({
   email: z.string().email(),
@@ -85,30 +85,42 @@ export async function registerStudentViaLoginAction(
         error: 'Student is already enrolled in this class.',
       };
     }
+    try {
+      // get user details for email template
+      const { data: userDetails, error: userError } = await client
+        .from(USERS_TABLE)
+        .select('first_name, last_name, phone_number')
+        .eq('id', userId)
+        .single();
 
-    // get user details for email template
-    const { data: userDetails, error: userError } = await client
-      .from(USERS_TABLE)
-      .select('first_name, last_name')
-      .eq('id', userId)
-      .single();
-    
+      const { html, text } = getStudentCredentialsEmailTemplate({
+        studentName: `${userDetails?.first_name} ${userDetails?.last_name}`,
+        email: validated.email,
+        className: formData.className,
+        loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
+      });
 
-    const { html, text } = getStudentCredentialsEmailTemplate({
-      studentName: `${userDetails?.first_name} ${userDetails?.last_name}`,
-      email: validated.email,
-      className: formData.className,
-      loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
-    });
-
-    // Send welcome email
-    await sendEmail({
-      from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
-      to: validated.email,
-      subject: 'Welcome to Your Class - Login Credentials',
-      html,
-      text,
-    });
+      await Promise.all([
+        // Send welcome email
+        sendEmail({
+          from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
+          to: validated.email,
+          subject: 'Welcome to Your Class - Login Credentials',
+          html,
+          text,
+        }),
+        // send welcome sms
+        sendSingleSMS({
+          phoneNumber: userDetails?.phone_number!,
+          message: `Welcome to ${formData.className}! Your registration is confirmed. Login to your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
+                \nUsername: Your email
+                \nUse the entered Password you used
+                \n-Comma Education`,
+        }),
+      ]);
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
 
     revalidatePath('/classes');
     return {

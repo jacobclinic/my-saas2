@@ -80,7 +80,7 @@ async function sendNotifySessionEmails(
         await sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: task.to,
-          subject: `Upcoming Class Notification`,
+          subject: `Your ${task.class_name} Class Recording Is Now Available`,
           html: html,
           text: text,
         });
@@ -123,7 +123,7 @@ export async function notifyUpcomingSessionsBefore24Hrs(
   await sendNotifySessionEmails(sessions, 'before');
 }
 
-export async function notifyAfterSessions(client: SupabaseClient) {
+export async function notifyAfterSessionsEmail(client: SupabaseClient) {
   const sessions = await getSessions2_1HrsAfterSession(client);
   await sendNotifySessionEmails(sessions, 'after');
 }

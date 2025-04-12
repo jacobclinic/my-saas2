@@ -35,7 +35,7 @@ interface SessionStudentTableData {
   paymentAmount?: number;
   zoomLink?: string;
   zoomMeetingId: string;
-  recordingUrl?: string;
+  recordingUrl?: string[];
   materials?: Material[];
   sessionRawData?: UpcomingSession | PastSession;
   classId?: string;

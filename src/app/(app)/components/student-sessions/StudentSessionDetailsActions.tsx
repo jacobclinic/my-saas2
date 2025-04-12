@@ -6,7 +6,7 @@ import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { ClassData } from '~/lib/classes/types/class-v2';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface StudentSessionDetailsActionsProps {
   sessionData: SessionStudentTableData;
@@ -41,17 +41,34 @@ const StudentSessionDetailsActions = ({
     }
   }, [classData, type]);
 
+    const getRecordingUrl = useCallback(async (fileName: string): Promise<string> => {
+      console.log('Fetching signed URL for:', fileName);
+      const response = await fetch(`/api/signed-url?fileName=${encodeURIComponent(fileName)}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch signed URL: ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data.signedUrl;
+    }, []);
+
   if (type === 'past') {
     return (
       <div className="space-y-4">
-        {sessionData.recordingUrl && (
-          <Button
-            className="w-full"
-            onClick={() => window.open(sessionData.recordingUrl, '_blank')}
-          >
-            <Video className="h-4 w-4 mr-2" />
-            Watch Recording
-          </Button>
+        {sessionData.recordingUrl && sessionData.recordingUrl.length > 0 ? (
+          sessionData.recordingUrl.map((fileName, index) => (
+            <Button
+              key={index}
+              onClick={async () =>
+                window.open(await getRecordingUrl(fileName), '_blank')
+              }
+              className="flex items-center"
+            >
+              <Video className="h-4 w-4 mr-2" />
+              Watch Recording {index + 1}
+            </Button>
+          ))
+        ) : (
+          <p>No recordings available</p>
         )}
       </div>
     );

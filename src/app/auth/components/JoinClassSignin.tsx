@@ -12,14 +12,14 @@ function JoinClassSignin() {
   const redirectUrl = searchParams.get('redirectUrl');
   // Decode and extract parameters
   const decodedUrl = redirectUrl ? decodeURIComponent(redirectUrl) : '';
-  
+
   const sessionParams = {
     sessionId: decodedUrl.match(/sessionId=([^&]+)/)?.[1],
     className: decodedUrl.match(/className=([^&]+)/)?.[1],
     sessionDate: decodedUrl.match(/sessionDate=([^&]+)/)?.[1],
     sessionTime: decodedUrl.match(/sessionTime=([^&]+)/)?.[1],
     sessionSubject: decodedUrl.match(/sessionSubject=([^&]+)/)?.[1],
-    sessionTitle: decodedUrl.match(/sessionTitle=([^&]+)/)?.[1]
+    sessionTitle: decodedUrl.match(/sessionTitle=([^&]+)/)?.[1],
   };
 
   const signInMutation = useSignInWithEmailPassword();
@@ -44,7 +44,9 @@ function JoinClassSignin() {
         const userId = data?.user?.id;
 
         // On successful sign-in, redirect redirectUrl
-        router.push(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionParams.sessionId}?type=upcoming`);
+        router.push(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionParams.sessionId}?type=upcoming`,
+        );
       } catch (error) {
         console.error('Sign in error:', error);
       }
@@ -67,19 +69,38 @@ function JoinClassSignin() {
       <p className="text-center text-sm text-gray-600 mb-3 flex justify-start">
         Enter your login details to join
       </p>
+      {/* Display session details if available */}
+      {!sessionParams.sessionId &&
+      !sessionParams.className &&
+      !sessionParams.sessionDate &&
+      !sessionParams.sessionTime &&
+      !sessionParams.sessionSubject &&
+      !sessionParams.sessionTitle ? (
+        null
+      ) : (
+        <div className="bg-gray-50 p-4 rounded-md border border-blue-500 mb-6">
+          <h3 className="text-base font-medium text-blue-900 mb-2">
+            {sessionParams.className && <b>{sessionParams.className}</b>}
+          </h3>
+          {sessionParams.sessionDate && (
+            <p className="text-sm text-blue-800 mb-1">
+              {sessionParams.sessionDate} · {sessionParams.sessionTime}
+            </p>
+          )}
 
-      <div className="bg-gray-50 p-4 rounded-md border border-blue-500 mb-6">
-        <h3 className="text-base font-medium text-blue-900 mb-2">
-          <b>{sessionParams.className}</b>
-        </h3>
-        <p className="text-sm text-blue-800 mb-1">
-          {sessionParams.sessionDate} · {sessionParams.sessionTime}
-        </p>
-        <p className="text-sm text-blue-800">Subject: {sessionParams.sessionSubject}</p>
-        {sessionParams.sessionTitle!='undefined' && (
-          <p className="text-sm text-blue-800">Title: {sessionParams.sessionTitle}</p>
-        )}
-      </div>
+          {sessionParams.sessionSubject && (
+            <p className="text-sm text-blue-800">
+              Subject: {sessionParams.sessionSubject}
+            </p>
+          )}
+          {sessionParams.sessionTitle != 'undefined' ||
+            (sessionParams.sessionTitle && (
+              <p className="text-sm text-blue-800">
+                Title: {sessionParams.sessionTitle}
+              </p>
+            ))}
+        </div>
+      )}
 
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-4">
