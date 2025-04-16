@@ -41,19 +41,24 @@ const StudentSessionDetailsActions = ({
     }
   }, [classData, type]);
 
-    const getRecordingUrl = useCallback(async (fileName: string): Promise<string> => {
+  const getRecordingUrl = useCallback(
+    async (fileName: string): Promise<string> => {
       console.log('Fetching signed URL for:', fileName);
-      const response = await fetch(`/api/signed-url?fileName=${encodeURIComponent(fileName)}`);
+      const response = await fetch(
+        `/api/signed-url?fileName=${encodeURIComponent(fileName)}`,
+      );
       if (!response.ok) {
         throw new Error(`Failed to fetch signed URL: ${response.statusText}`);
       }
       const data = await response.json();
       return data.signedUrl;
-    }, []);
+    },
+    [],
+  );
 
   if (type === 'past') {
     return (
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {sessionData.recordingUrl && sessionData.recordingUrl.length > 0 ? (
           sessionData.recordingUrl.map((fileName, index) => (
             <Button
@@ -61,14 +66,16 @@ const StudentSessionDetailsActions = ({
               onClick={async () =>
                 window.open(await getRecordingUrl(fileName), '_blank')
               }
-              className="flex items-center"
             >
               <Video className="h-4 w-4 mr-2" />
               Watch Recording {index + 1}
             </Button>
           ))
         ) : (
-          <p>No recordings available</p>
+          <Button variant="outline">
+            <Video className="h-4 w-4 mr-2" />
+            No recordings available
+          </Button>
         )}
       </div>
     );

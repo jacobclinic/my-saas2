@@ -1355,7 +1355,7 @@ export async function getAllPastSessionsByStudentIdData(
       });
 
       //transform sessionData based on payment status
-      if (currentPayment?.status != (PaymentStatus.VERIFIED)) {
+      if (currentPayment?.status != PaymentStatus.VERIFIED) {
         sessionData.recording_urls = null;
       }
 
@@ -1477,7 +1477,7 @@ export async function getSessionByStudentIdData(
 export async function isStudentEnrolledInSessionClass(
   client: SupabaseClient<Database>,
   session_id: string,
-  student_id: string
+  student_id: string,
 ): Promise<boolean> {
   try {
     // Step 1: Get the class_id from the sessions table using the session_id
@@ -1492,7 +1492,9 @@ export async function isStudentEnrolledInSessionClass(
     }
 
     if (!sessionData || !sessionData.class_id) {
-      throw new Error(`Session with ID ${session_id} not found or has no associated class.`);
+      throw new Error(
+        `Session with ID ${session_id} not found or has no associated class.`,
+      );
     }
 
     const classId = sessionData.class_id;
@@ -1592,7 +1594,10 @@ export async function getSessionsWithoutRecordingUrlsOfLast24hrs(
       )
       .is('recording_urls', null)
       .lt('start_time', new Date().toISOString())
-      .gt('start_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .gt(
+        'start_time',
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      )
       .order('start_time', { ascending: true });
 
     if (error) {
