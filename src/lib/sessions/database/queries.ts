@@ -805,7 +805,7 @@ export async function getAllPastSessionsData(
         { count: 'exact' },
       )
       .lt('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true });
+      .order('start_time', { ascending: false });
 
     // console.log("getAllSessionsData", data)
 
@@ -912,7 +912,7 @@ export async function getAllPastSessionsByTutorIdData(
       )
       .lt('start_time', new Date().toISOString())
       .in('class_id', classIds)
-      .order('start_time', { ascending: true });
+      .order('start_time', { ascending: false });
 
     // console.log("getAllSessionsData", pastSessions)
 

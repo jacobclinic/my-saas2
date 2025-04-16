@@ -9,8 +9,6 @@ import PastSessionsCard from './PastSessionCard';
 import { PastSession } from '~/lib/sessions/types/session-v2';
 import 'react-datepicker/dist/react-datepicker.css';
 import { DateRangePicker } from '@heroui/date-picker';
-import { initial } from 'cypress/types/lodash';
-
 interface DateRange {
   start?: {
     year: number;
