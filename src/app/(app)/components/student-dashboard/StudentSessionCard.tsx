@@ -232,12 +232,23 @@ const StudentSessionCard = ({
                   </Button>
                 ))
               ) : (
-                <Alert className="border-red-200 bg-red-50">
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-700">
-                    You have not made the payment or no recordings available
-                  </AlertDescription>
-                </Alert>
+                <>
+                  {sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED ? (
+                    <Alert className="border-red-200 bg-red-50">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-red-700">
+                        Recording not available for this session.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert className="border-red-200 bg-red-50">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-red-700">
+                        You have not made the payment to the class
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </>
               )}
               {sessionData.materials?.[0]?.url && (
                 <Button variant="outline" onClick={handleDownloadMaterials}>
