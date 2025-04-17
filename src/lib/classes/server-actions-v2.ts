@@ -110,7 +110,7 @@ export const createClassAction = withSession(
         const nextOccurrences = getUpcomingOccurrences(
           timeSlot,
           classData.startDate,
-          classData.endDate,
+          new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0],
         );
 
         // Take the first occurrence for Zoom meeting creation
@@ -126,7 +126,6 @@ export const createClassAction = withSession(
             yearGrade: classData.yearGrade || '',
             monthlyFee: classData.monthlyFee || '',
             startDate: classData.startDate || '',
-            endDate: classData.endDate || '',
             timeSlots: [timeSlot],
             tutorId: classData.tutorId || '',
           },

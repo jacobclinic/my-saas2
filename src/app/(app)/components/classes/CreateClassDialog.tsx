@@ -36,6 +36,18 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
 
+  // const [newClass, setNewClass] = useState<NewClassData>({
+  //   name: '',
+  //   subject: '',
+  //   description: '',
+  //   yearGrade: '',
+  //   monthlyFee: '',
+  //   startDate: '',
+  //   endDate: new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0], // End of current year
+  //   timeSlots: [{ day: '', startTime: '', endTime: '' }], // Single time slot
+  //   tutorId,
+  // });
+
   const [newClass, setNewClass] = useState<NewClassData>({
     name: '',
     subject: '',
@@ -43,7 +55,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     yearGrade: '',
     monthlyFee: '',
     startDate: '',
-    endDate: new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0], // End of current year
     timeSlots: [{ day: '', startTime: '', endTime: '' }], // Single time slot
     tutorId,
   });
@@ -216,7 +227,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
             />
           </div>
 
-          <div>
+          {/* <div>
             <label className="text-sm font-medium">End Date</label>
             <Input
               type="date"
@@ -226,7 +237,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               }
               min={new Date().toISOString().split('T')[0]}
             />
-          </div>
+          </div> */}
         </div>
 
         <div>
