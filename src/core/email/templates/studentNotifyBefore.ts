@@ -92,7 +92,7 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
             <li>Recording (available after class)</li>
           </ul>
           <p style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Access Class</a>
+            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" style="background-color: #E84437; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Access Class</a>
           </p>
           <p>If the button doesn't work, copy this link: <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}">${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}</a></p>
           <p>You'll need to sign in with your Comma Education account if you haven't already.</p>

@@ -1,13 +1,13 @@
 // lib/email/templates/student-credentials.ts
 export function getStudentCredentialsEmailTemplate(params: {
-    studentName: string;
-    email: string;
-    className: string;
-    loginUrl: string;
-  }) {
-    const { studentName, email, className, loginUrl } = params;
-  
-    const html = `
+  studentName: string;
+  email: string;
+  className: string;
+  loginUrl: string;
+}) {
+  const { studentName, email, className, loginUrl } = params;
+
+  const html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -63,19 +63,21 @@ export function getStudentCredentialsEmailTemplate(params: {
               <p>Please login using this eamil and password provided by you when registering to the class</p>
               
               <p style="text-align: center; margin: 30px 0;">
-                <a href="${loginUrl}" class="button">Login to Your Account</a>
+                <a href="${loginUrl}" style="background-color: #E84437; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                  Login to Your Account
+                </a>
               </p>
   
               <p>If you have any questions or need assistance, please don't hesitate to contact your tutor.</p>
               
-              <p>Best regards,<br>Your Education Team</p>
+              <p>Best regards,<br>Comma Education Team</p>
             </div>
           </div>
         </body>
       </html>
     `;
-  
-    const text = `
+
+  const text = `
   Welcome to Your Class!
   
   Hello ${studentName},
@@ -93,6 +95,6 @@ export function getStudentCredentialsEmailTemplate(params: {
   Best regards,
   Your Education Team
     `;
-  
-    return { html, text };
-  }
+
+  return { html, text };
+}
