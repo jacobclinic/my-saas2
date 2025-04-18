@@ -26,6 +26,7 @@ import {
 } from '../base-v2/ui/Dialog';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { AlertTriangle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface StudentSessionCardProps {
   sessionData: SessionStudentTableData;
@@ -45,6 +46,7 @@ const StudentSessionCard = ({
   joinMeetingAsStudent,
 }: StudentSessionCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
 
   const handleDownloadMaterials = async () => {
     if (!sessionData?.materials || sessionData.materials.length === 0) {
@@ -178,41 +180,44 @@ const StudentSessionCard = ({
                 </Button>
               ) : sessionData.paymentStatus ===
                 PAYMENT_STATUS.PENDING_VERIFICATION ? null : (
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full" disabled={isPending}>
-                      View Class
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{sessionData.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-4 py-4">
-                      <Button
-                        onClick={() => {
-                          joinMeetingAsStudent(sessionData);
-                          setIsDialogOpen(false);
-                        }}
-                        disabled={isPending}
-                      >
-                        <Video className="h-4 w-4 mr-2" />
-                        Join Class
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleDownloadMaterials}
-                        disabled={
-                          !sessionData?.materials ||
-                          sessionData.materials.length === 0
-                        }
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Class Materials
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                // <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                //   <DialogTrigger asChild>
+                //     <Button className="w-full" disabled={isPending}>
+                //       View Class
+                //     </Button>
+                //   </DialogTrigger>
+                //   <DialogContent>
+                //     <DialogHeader>
+                //       <DialogTitle>{sessionData.name}</DialogTitle>
+                //     </DialogHeader>
+                //     <div className="flex flex-col gap-4 py-4">
+                //       <Button
+                //         onClick={() => {
+                //           joinMeetingAsStudent(sessionData);
+                //           setIsDialogOpen(false);
+                //         }}
+                //         disabled={isPending}
+                //       >
+                //         <Video className="h-4 w-4 mr-2" />
+                //         Join Class
+                //       </Button>
+                //       <Button
+                //         variant="outline"
+                //         onClick={handleDownloadMaterials}
+                //         disabled={
+                //           !sessionData?.materials ||
+                //           sessionData.materials.length === 0
+                //         }
+                //       >
+                //         <Download className="h-4 w-4 mr-2" />
+                //         Download Class Materials
+                //       </Button>
+                //     </div>
+                //   </DialogContent>
+                // </Dialog>
+                <Button className="w-full" disabled={isPending} onClick={() => router.push(`/sessions/student/${sessionData.id}`)}>
+                  View Class
+                </Button>
               )}
             </>
           ) : (
