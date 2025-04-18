@@ -21,13 +21,13 @@ const StudentSessionDetailsMaterials = ({
           {materials.map((material) => (
             <div
               key={material.id}
-              className="flex items-center justify-between p-4 bg-white rounded-lg border"
+              className="flex items-center justify-between p-2 bg-white rounded-lg border"
             >
               <div className="flex items-center">
                 <File className="h-5 w-5 text-blue-600 mr-3" />
                 <div>
                   <p className="font-medium">{material.name}</p>
-                  <p className="text-sm text-gray-600">{material.file_size}</p>
+                  <p className="text-sm text-gray-600">{material.file_size} Mb</p>
                 </div>
               </div>
               <Button
