@@ -1,15 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ClassType } from '~/lib/classes/types/class-v2';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
-import TutorDashboard from './TutorDashboard';
-import { Info } from 'lucide-react';
-import Alert from '~/core/ui/Alert';
-import { AlertDescription } from '../base-v2/ui/Alert';
 import UpcomingClassesSection from './tutor-db-sections/UpcomingClasses';
-import ActiveClassesSection from './tutor-db-sections/ActiveClasses';
-import TutorialVideoSection from './tutor-db-sections/TutorialVideoSection';
 import PaginationControls from '../PaginationControls';
 
 const TutorDBClient = ({

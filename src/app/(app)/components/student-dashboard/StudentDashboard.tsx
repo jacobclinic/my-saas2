@@ -7,7 +7,6 @@ import React, {
   useState,
   useTransition,
 } from 'react';
-import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Calendar, Info, MonitorPlay } from 'lucide-react';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
