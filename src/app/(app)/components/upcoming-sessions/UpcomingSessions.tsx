@@ -156,23 +156,6 @@ const UpcomingSessions = ({
         </div>
       </div>
 
-      {/* Quick Tip */}
-      <Alert className="bg-blue-50 border-blue-200" hidden={!isAlertVisible}>
-        <div className="flex items-center">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-700">
-            Tip: Upload class materials at least 24 hours before the class to
-            give students time to prepare.
-          </AlertDescription>
-        </div>
-        {/* Close button */}
-        <button
-          onClick={() => setIsAlertVisible(false)}
-          className="absolute top-2 right-2 p-1 rounded-full hover:bg-blue-100 transition-colors"
-        >
-          <X className="h-4 w-4 text-blue-600" />
-        </button>
-      </Alert>
 
       {/* Classes List */}
       <div className="space-y-6">
