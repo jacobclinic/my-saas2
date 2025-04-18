@@ -190,10 +190,8 @@ export const deleteClassAction = withSession(
     const client = getSupabaseServerActionClient();
 
     const result = await deleteClass(client, params.classId);
-
     revalidatePath('/classes');
     revalidatePath('/(app)/classes');
-
     return {
       success: true,
       classId: result,

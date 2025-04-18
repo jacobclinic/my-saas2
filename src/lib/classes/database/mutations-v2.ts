@@ -3,7 +3,7 @@ import type { Database } from '~/database.types';
 
 type Client = SupabaseClient<Database>;
 
-import { CLASSES_TABLE } from '~/lib/db-tables';
+import { CLASSES_TABLE, SESSIONS_TABLE } from '~/lib/db-tables';
 import { ClassType, NewClassData } from '../types/class-v2';
 
 
@@ -18,7 +18,6 @@ export async function createClass(client: Client, data: NewClassData) {
         grade: data.yearGrade,
         fee: parseInt(data.monthlyFee),
         starting_date: data.startDate,
-        end_date: data.endDate,
         time_slots: data.timeSlots,
         status: 'active',
         tutor_id: data.tutorId
@@ -59,18 +58,20 @@ export async function updateClass(client: Client, classId: string, data: Partial
 
 export async function deleteClass(client: Client, classId: string) {
   try {
+    const currentTime = new Date().toISOString();
+
     const { error } = await client
-      .from(CLASSES_TABLE)
+      .from('sessions')
       .delete()
-      .eq('id', classId)
-      .throwOnError();
+      .eq('class_id', classId)
+      .gt('start_time', currentTime);
 
     if (error) throw error;
 
     return classId;
   } catch (error) {
-    console.error("Error deleting class:", error);
-    throw new Error("Failed to delete class. Please try again.");
+    console.error("Error deleting class sessions:", error);
+    throw new Error("Failed to delete class sessions. Please try again.");
   }
 }
 

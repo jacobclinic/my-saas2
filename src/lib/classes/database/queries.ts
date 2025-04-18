@@ -12,7 +12,6 @@ import {
   ClassWithTutorAndEnrollmentAndNextSession,
 } from '../types/class';
 import { ClassForStudentType, ClassType } from '../types/class-v2';
-import { unknown } from 'zod';
 
 interface ClassWithTutorAndEnrollmentRawData
   extends Omit<ClassWithTutorAndEnrollment, 'noOfStudents'> {
