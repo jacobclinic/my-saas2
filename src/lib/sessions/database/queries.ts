@@ -344,7 +344,9 @@ export async function getTodaysAllUpcommingSessionsData(
 ): Promise<UpcomingSession[] | []> {
   try {
     const today = new Date().toISOString();
-    const tommorow = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString();
+    const tommorow = new Date(
+      new Date().getTime() + 24 * 60 * 60 * 1000,
+    ).toISOString();
 
     const { data, error } = await client
       .from(SESSIONS_TABLE)
@@ -926,6 +928,112 @@ export async function getAllPastSessionsData(
       return {
         ...sessionData,
         class: classTemp,
+        attendance: attendanceTemp ?? [],
+      };
+    });
+
+    return transformedData;
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
+export async function getAllPastSessionsDataAdmin(
+  client: SupabaseClient<Database>,
+): Promise<PastSession[] | []> {
+  try {
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor_id,
+            tutor:${USERS_TABLE}!tutor_id (
+              id,
+              first_name,
+              last_name,
+              email
+            ),
+            students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(id)
+          ),
+          materials:${RESOURCE_MATERIALS_TABLE}!id (
+            id,
+            name,
+            url,
+            file_size
+          ),
+          attendance:${STUDENT_SESSION_ATTENDANCE_TABLE}!id (
+            id,
+            student_id,
+            time,
+            student:${USERS_TABLE}!student_id (
+              id,
+              first_name,
+              last_name
+            )
+          )
+        `,
+        { count: 'exact' },
+      )
+      .lt('start_time', new Date().toISOString())
+      .order('start_time', { ascending: false });
+
+    // console.log("getAllSessionsData", data)
+
+    if (error) {
+      throw new Error(`Error fetching sessions: ${error.message}`);
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    // Transform the data to get the count directly
+    const transformedData = data?.map((sessionData) => {
+      let classTemp;
+      let attendanceTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+        else classTemp = sessionData.class;
+      }
+      if (sessionData?.attendance?.length > 0) {
+        attendanceTemp = sessionData.attendance.map((attendee) => {
+          if (Array.isArray(attendee.student))
+            return { ...attendee, student: attendee.student[0] };
+          else return { ...attendee, student: attendee.student };
+        });
+      }
+      return {
+        ...sessionData,
+        class: classTemp
+          ? {
+              id: classTemp.id,
+              name: classTemp.name,
+              subject: classTemp.subject,
+              tutor_id: classTemp.tutor_id,
+              tutor: Array.isArray(classTemp.tutor)
+                ? classTemp.tutor[0]
+                : classTemp.tutor || undefined,
+              students: classTemp.students,
+            }
+          : undefined,
         attendance: attendanceTemp ?? [],
       };
     });
