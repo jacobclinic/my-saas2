@@ -339,6 +339,97 @@ export async function getAllUpcommingSessionsData(
   }
 }
 
+export async function getTodaysAllUpcommingSessionsData(
+  client: SupabaseClient<Database>,
+): Promise<UpcomingSession[] | []> {
+  try {
+    const today = new Date().toISOString();
+    const tommorow = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString();
+
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor_id,
+            tutor:${USERS_TABLE}!tutor_id (
+              id,
+              first_name,
+              last_name,
+              email
+            ),
+            students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(id)
+          ),
+          materials:${RESOURCE_MATERIALS_TABLE}!id (
+            id,
+            name,
+            url,
+            file_size
+          )
+        `,
+        { count: 'exact' },
+      )
+      .gt('start_time', today)
+      .lt('end_time', tommorow)
+      .order('start_time', { ascending: true });
+
+    if (error) {
+      throw new Error(`Error fetching sessions: ${error.message}`);
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    const transformedData = data?.map((sessionData) => {
+      let classTemp;
+      if (sessionData?.class) {
+        if (Array.isArray(sessionData.class)) {
+          classTemp = sessionData.class[0];
+        } else {
+          classTemp = sessionData.class;
+        }
+      }
+      return {
+        ...sessionData,
+        class: classTemp
+          ? {
+              id: classTemp.id,
+              name: classTemp.name,
+              subject: classTemp.subject,
+              tutor_id: classTemp.tutor_id,
+              tutor: Array.isArray(classTemp.tutor)
+                ? classTemp.tutor[0]
+                : classTemp.tutor || undefined,
+              students: classTemp.students,
+            }
+          : undefined,
+      };
+    });
+
+    return transformedData;
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
 export async function getAllUpcommingSessionsDataPerWeek(
   client: SupabaseClient<Database>,
 ): Promise<UpcomingSession[] | []> {
