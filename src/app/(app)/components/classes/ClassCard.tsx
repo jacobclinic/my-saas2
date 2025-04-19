@@ -39,7 +39,6 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
   const [addStudentLoading, setAddStudentLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleCopyLink = async () => {
     const classId = classData.id;
@@ -91,18 +90,6 @@ const ClassCard: React.FC<ClassCardProps> = ({
       console.error('Error adding student:', error);
     } finally {
       setAddStudentLoading(false);
-    }
-  };
-
-  const handleDeleteClass = async (classId: string) => {
-    try {
-      setShowDeleteDialog(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setShowDeleteDialog(false);
-    } catch (error) {
-      console.error('Error adding student:', error);
-    } finally {
-      setShowDeleteDialog(false);
     }
   };
 
@@ -167,14 +154,6 @@ const ClassCard: React.FC<ClassCardProps> = ({
                 <Plus className="h-4 w-4 mr-2" />
                 Add Student
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteDialog  (true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Delete Class
-              </Button>
-
               {showViewDetails && (
                 <Button
                   variant="outline"
@@ -209,13 +188,6 @@ const ClassCard: React.FC<ClassCardProps> = ({
         onClose={() => setShowAddStudentDialog(false)}
         classData={classData}
         onAddStudent={handleAddStudent}
-        loading={addStudentLoading}
-      />
-      <DeleteClassDialog
-        open  ={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        onDeleteClass={handleDeleteClass}
-        classData={classData}
         loading={addStudentLoading}
       />
     </>
