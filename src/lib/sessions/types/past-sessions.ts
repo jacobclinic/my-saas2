@@ -28,6 +28,8 @@ interface SelectedSession {
   name: string;
   date: string;
   time: string;
+  tutorName: string | null ;
+  topic : string | null;
   attendance: AttendanceRecord[];
 }
 
