@@ -4,8 +4,15 @@ import { DateRangePicker } from '@heroui/date-picker';
 import { useEffect, useState } from 'react';
 import { PastSession } from '~/lib/sessions/types/session-v2';
 import AttendanceDialog from '../../past-sessions/AttendanceDialog';
-import { SelectedSession } from '~/lib/sessions/types/past-sessions';
-import { Users } from 'lucide-react';
+import {
+  SelectedSession,
+  SelectedSessionAdmin,
+} from '~/lib/sessions/types/past-sessions';
+import { Check, Delete, Link, Trash, Users } from 'lucide-react';
+import { deleteSessionAction } from '~/lib/sessions/server-actions';
+import CsrfTokenContext from '~/lib/contexts/csrf';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+import DeleteSessionDialog from './DeleteSessionDialog';
 
 interface DateRange {
   start?: {
@@ -31,7 +38,15 @@ const PastClassesTable = ({
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
   const [selectedSession, setSelectedSession] =
     useState<SelectedSession | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+
   const [selectedTutor, setSelectedTutor] = useState('');
+
+  const [linkCopied, setLinkCopied] = useState<boolean>(false);
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const csrfToken = useCsrfToken();
 
   const handleDateRangeChange = (value: any) => {
     setDateRange(value);
@@ -66,6 +81,7 @@ const PastClassesTable = ({
         : 'N/A',
     topic: session.title || 'Unknown',
     attendance: session.attendance || [],
+    subject: session.class?.subject || null,
   }));
 
   const filteredData = classData.filter((cls) => {
@@ -81,16 +97,52 @@ const PastClassesTable = ({
     );
   });
 
+  const handleCopyLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    setLinkCopied(true);
+    setTimeout(() => {
+      setLinkCopied(false);
+    }, 2000);
+  };
+
+  const [deleteClassLoading, setDeleteClassLoading] = useState(false);
+
+  const handleDeleteClass = async (classId: string) => {
+    try {
+      setDeleteClassLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Error adding student:', error);
+    } finally {
+      setDeleteClassLoading(false);
+    }
+  };
+
+  const deletePastSession = async (sessionId: string) => {
+    try {
+      const response = await deleteSessionAction({ csrfToken, sessionId });
+      if (response.success) {
+        alert('Successfully deleted session');
+        return;
+      }
+      alert('Failed to delete session. Please try again.');
+    } catch (error) {
+      alert('Failed to delete session. Please try again.');
+    }
+  };
+
   // Transform cls to SelectedSession
   const transformToSelectedSession = (
     cls: (typeof classData)[0],
-  ): SelectedSession => ({
+  ): SelectedSessionAdmin => ({
     id: cls.id,
     name: cls.name || '',
     date: cls.date?.split('T')[0] || '',
     time: cls.time || '',
     tutorName: cls.tutorName || null,
     topic: cls.topic || null,
+    subject: cls.subject || null,
     attendance: cls.attendance.map((att) => ({
       name: `${att.student?.first_name || ''} ${att.student?.last_name || ''}`.trim(),
       joinTime: att.time || '',
@@ -103,6 +155,11 @@ const PastClassesTable = ({
     setSelectedSession(transformToSelectedSession(cls));
     setShowAttendanceDialog(true);
   };
+
+  const handleViewDeleteDialog = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setShowDeleteDialog(true);
+  }
 
   return (
     <>
@@ -151,7 +208,7 @@ const PastClassesTable = ({
                   Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Start Time
+                  Time
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Actions
@@ -170,24 +227,56 @@ const PastClassesTable = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{cls.time}</td>
                   <td className="px-6 py-4 whitespace-nowrap space-x-2">
-                    <button
-                      onClick={() => {
-                        handleViewAttendance(cls);
-                        console.log('View attendance for:', cls);
-                      }}
-                      className="bg-white-500 text-black outline-2 border-medium px-3 py-1 rounded hover:bg-green-600 text-sm"
-                    >
-                      <div className="flex items-center">
-                        <Users className="h-4 w-4 mr-2" />
+                    {/* Attendance Button */}
+                    <div className="relative group inline-block">
+                      <button
+                        onClick={() => handleViewAttendance(cls)}
+                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                        aria-label="Attendance"
+                      >
+                        <Users className="h-4 w-4" />
+                        <span className="sr-only">Attendance</span>
+                      </button>
+                      <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
                         Attendance
-                      </div>
-                    </button>
-                    <button className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm">
-                      Edit
-                    </button>
-                    <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                      Delete
-                    </button>
+                      </span>
+                    </div>
+
+                    {/* Copy Link Button */}
+                    <div className="relative group inline-block">
+                      <button
+                        onClick={() =>
+                          handleCopyLink(
+                            `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&redirectUrl=${encodeURIComponent(
+                              `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`,
+                            )}`,
+                          )
+                        }
+                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                        aria-label="Copy Link"
+                      >
+                        <Link className="h-4 w-4" />
+                        <span className="sr-only">Copy Link</span>
+                      </button>
+                      <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                        Copy student Link
+                      </span>
+                    </div>
+
+                    {/* Delete Button */}
+                    <div className="relative group inline-block">
+                      <button
+                        className="bg-red-500 text-white px-3 py-1  rounded hover:bg-red-600 transition-colors"
+                        aria-label="Delete"
+                        onClick={ () =>handleViewDeleteDialog(cls.id)}
+                      >
+                        <Trash className="h-4 w-4" />
+                        <span className="sr-only">Delete</span>
+                      </button>
+                      <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                        Delete
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -208,6 +297,14 @@ const PastClassesTable = ({
         showAttendanceDialog={showAttendanceDialog}
         setShowAttendanceDialog={setShowAttendanceDialog}
         selectedSession={selectedSession}
+      />
+
+      <DeleteSessionDialog
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onDeleteSession={handleDeleteClass}
+        sessionId={selectedSessionId!}
+        loading={deleteClassLoading}
       />
     </>
   );

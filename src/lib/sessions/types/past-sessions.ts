@@ -28,9 +28,13 @@ interface SelectedSession {
   name: string;
   date: string;
   time: string;
-  tutorName: string | null ;
-  topic : string | null;
   attendance: AttendanceRecord[];
+}
+
+interface SelectedSessionAdmin extends SelectedSession {
+  tutorName: string | null;
+  topic: string | null;
+  subject: string | null;
 }
 
 interface AttendanceDialogProps {
@@ -49,5 +53,6 @@ export type {
   PastSessionData,
   SelectedSession,
   AttendanceDialogProps,
-  PastSessionsCardProps
+  PastSessionsCardProps,
+  SelectedSessionAdmin
 };
