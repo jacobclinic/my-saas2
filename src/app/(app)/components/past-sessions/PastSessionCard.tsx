@@ -17,7 +17,6 @@ import {
   Link,
 } from 'lucide-react';
 import AttendanceDialog from './AttendanceDialog';
-import { getSignedUrl } from '~/lib/aws/s3.service';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);

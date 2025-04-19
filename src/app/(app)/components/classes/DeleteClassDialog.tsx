@@ -1,25 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, useTransition } from 'react';
-import { Input } from '../base-v2/ui/Input';
-import { Textarea } from '../base-v2/ui/Textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../base-v2/ui/Select';
-import { X, Plus, AlertTriangle } from 'lucide-react';
+import React, { useTransition } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import BaseDialog from '../base-v2/BaseDialog';
-import {
-  TimeSlot,
-  EditClassData,
-  ClassListData,
-  ClassType,
-} from '~/lib/classes/types/class-v2';
-import { Button } from '../base-v2/ui/Button';
+import { ClassListData } from '~/lib/classes/types/class-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '../../lib/hooks/use-toast';
 import { deleteClassAction } from '~/lib/classes/server-actions-v2';
@@ -60,7 +45,8 @@ const DeleteClassDialog: React.FC<DeleteClassDialogProps> = ({
       } else {
         toast({
           title: 'Error deleting class',
-          description: 'There was an error deleting the class. Please try again.',
+          description:
+            'There was an error deleting the class. Please try again.',
           variant: 'destructive',
         });
       }
