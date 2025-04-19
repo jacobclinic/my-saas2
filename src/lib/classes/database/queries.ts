@@ -11,7 +11,12 @@ import {
   ClassWithTutorAndEnrollment,
   ClassWithTutorAndEnrollmentAndNextSession,
 } from '../types/class';
-import { ClassForStudentType, ClassType } from '../types/class-v2';
+import {
+  ClassForStudentType,
+  ClassType,
+  ClassWithTutorAndEnrollmentAdmin,
+  ClassWithTutorAndEnrollmentAdminRawData,
+} from '../types/class-v2';
 
 interface ClassWithTutorAndEnrollmentRawData
   extends Omit<ClassWithTutorAndEnrollment, 'noOfStudents'> {
@@ -92,7 +97,7 @@ export async function getClassDataByIdwithNextSession(
       { count: 'exact' },
     )
     .eq('id', classId)
-    .maybeSingle() ) as {
+    .maybeSingle()) as {
     data: ClassWithTutorAndEnrollmentRawData | null;
     error: unknown;
   };
@@ -181,6 +186,66 @@ export async function getAllClassesData(
 }
 
 // version 2
+
+export async function getAllClassesDataAdmin(
+  client: SupabaseClient<Database>,
+): Promise<ClassWithTutorAndEnrollmentAdmin[]> {
+  try {
+    const { data, error } = await client
+      .from(CLASSES_TABLE)
+      .select(
+        `
+        id,
+        name,
+        description,
+        subject,
+        tutor_id,
+        tutor:${USERS_TABLE}!tutor_id (
+          id,
+          first_name,
+          last_name
+        ),
+        fee,
+        status,
+        time_slots,
+        grade,
+        noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
+      `,
+        { count: 'exact' },
+      )
+      .returns<ClassWithTutorAndEnrollmentAdminRawData[]>();
+
+    if (error) {
+      throw new Error(
+        `Error fetching classes: ${(error as PostgrestError).message}`,
+      );
+    }
+
+    // Transform the data to get the count directly
+    const transformedData = data?.map(
+      (classData): ClassWithTutorAndEnrollmentAdmin => ({
+        id: classData.id,
+        name: classData.name,
+        description: classData.description || null,
+        subject: classData.subject,
+        tutorId: classData.tutor_id,
+        fee: classData.fee,
+        status: classData.status,
+        time_slots: classData.time_slots,
+        grade: classData.grade,
+        tutor: classData.tutor,
+        noOfStudents: classData.noOfStudents[0]?.count || 0,
+      }),
+    );
+
+    // console.log('getAllClassesData-2', transformedData);
+
+    return transformedData;
+  } catch (error) {
+    console.error('Failed to fetch classes:', error);
+    throw error;
+  }
+}
 
 export async function getAllClassesByTutorIdData(
   client: SupabaseClient<Database>,

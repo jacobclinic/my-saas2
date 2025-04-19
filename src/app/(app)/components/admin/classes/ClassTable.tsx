@@ -1,18 +1,16 @@
 'use client';
 
-import { DateRangePicker } from '@heroui/date-picker';
 import { useEffect, useState } from 'react';
-import { PastSession } from '~/lib/sessions/types/session-v2';
-import AttendanceDialog from '../../past-sessions/AttendanceDialog';
-import {
-  SelectedSession,
-  SelectedSessionAdmin,
-} from '~/lib/sessions/types/past-sessions';
-import { Check, Delete, Link, Trash, Users } from 'lucide-react';
+import { SelectedSession } from '~/lib/sessions/types/past-sessions';
+import { Link, Trash, Users } from 'lucide-react';
 import { deleteSessionAction } from '~/lib/sessions/server-actions';
-import CsrfTokenContext from '~/lib/contexts/csrf';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import DeleteSessionDialog from './DeleteSessionDialog';
+import { ClassWithTutorAndEnrollment } from '~/lib/classes/types/class';
+import {
+  ClassType,
+  ClassWithTutorAndEnrollmentAdmin,
+  SelectedClassAdmin,
+} from '~/lib/classes/types/class-v2';
 
 interface DateRange {
   start?: {
@@ -27,17 +25,14 @@ interface DateRange {
   } | null;
 }
 
-const PastSessionsTable = ({
-  pastSessionsData,
+const ClassesTable = ({
+  classesData,
 }: {
-  pastSessionsData: PastSession[];
+  classesData: ClassWithTutorAndEnrollmentAdmin[];
 }) => {
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
   const [selectedSession, setSelectedSession] =
-    useState<SelectedSession | null>(null);
+    useState<SelectedClassAdmin | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
   );
@@ -50,52 +45,29 @@ const PastSessionsTable = ({
 
   const csrfToken = useCsrfToken();
 
-  const handleDateRangeChange = (value: any) => {
-    setDateRange(value);
-  };
-
   const dateObjectToDate = (dateObj: any): Date | null => {
     if (!dateObj) return null;
     return new Date(dateObj.year, dateObj.month - 1, dateObj.day);
   };
 
-  useEffect(() => {
-    if (dateRange) {
-      const from = dateObjectToDate(dateRange.start);
-      const to = dateObjectToDate(dateRange.end);
-
-      setFromDate(from ? from.toISOString().split('T')[0] : '');
-      setToDate(to ? to.toISOString().split('T')[0] : '');
-    } else {
-      setFromDate('');
-      setToDate('');
-    }
-  }, [dateRange]);
-
-  const classData = pastSessionsData.map((session) => ({
-    id: session.id,
-    tutorName: session.class?.tutor?.first_name || 'Unknown',
-    name: session.class?.name,
-    date: session.start_time,
-    time:
-      session.start_time && session.end_time
-        ? `${session.start_time.split('T')[1]?.split('+')[0].slice(0, 5) || ''} - ${session.end_time.split('T')[1]?.split('+')[0].slice(0, 5) || ''}`
-        : 'N/A',
-    topic: session.title || 'Unknown',
-    attendance: session.attendance || [],
-    subject: session.class?.subject || null,
+  const classData = classesData.map((cls) => ({
+    id: cls.id,
+    tutorName: cls.tutor.first_name + ' ' + cls.tutor.last_name,
+    name: cls.name,
+    time: cls.time_slots && cls.time_slots.length > 0 ? cls.time_slots[0] : null,
+    subject: cls.subject,
+    grade: cls.grade,
+    description: cls.description,
+    fee: cls.fee,
+    status: cls.status,
   }));
 
-  const filteredData = classData.filter((cls) => {
-    const date = new Date(cls.date!);
-    const from = fromDate ? new Date(fromDate) : null;
-    const to = toDate ? new Date(toDate) : null;
+  console.log(classData);
 
+  const filteredData = classData.filter((cls) => {
     return (
-      (!from || date >= from) &&
-      (!to || date <= to) &&
-      (!selectedTutor ||
-        cls.tutorName.toLowerCase().includes(selectedTutor.toLowerCase()))
+      !selectedTutor ||
+      cls.tutorName.toLowerCase().includes(selectedTutor.toLowerCase())
     );
   });
 
@@ -107,36 +79,40 @@ const PastSessionsTable = ({
     }, 2000);
   };
 
-  const [deleteClassLoading, setDeleteClassLoading] = useState(false);
-
-  const handleDeleteClass = async (classId: string) => {
+  const deletePastSession = async (sessionId: string) => {
     try {
-      setDeleteClassLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setShowDeleteDialog(false);
+      const response = await deleteSessionAction({ csrfToken, sessionId });
+      if (response.success) {
+        alert('Successfully deleted session');
+        return;
+      }
+      alert('Failed to delete session. Please try again.');
     } catch (error) {
-      console.error('Error adding student:', error);
-    } finally {
-      setDeleteClassLoading(false);
+      alert('Failed to delete session. Please try again.');
     }
   };
 
   // Transform cls to SelectedSession
   const transformToSelectedSession = (
     cls: (typeof classData)[0],
-  ): SelectedSessionAdmin => ({
+  ): SelectedClassAdmin => ({
     id: cls.id,
     name: cls.name || '',
-    date: cls.date?.split('T')[0] || '',
-    time: cls.time || '',
-    tutorName: cls.tutorName || null,
-    topic: cls.topic || null,
-    subject: cls.subject || null,
-    attendance: cls.attendance.map((att) => ({
-      name: `${att.student?.first_name || ''} ${att.student?.last_name || ''}`.trim(),
-      joinTime: att.time || '',
-      duration: 'N/A', // calculate the duration using join time and leave time. Leave time is not provided
-    })),
+    time_slots: cls.time
+      ? [
+          {
+            day: cls.time.day,
+            start_time: cls.time.startTime,
+            end_time: cls.time.endTime,
+          },
+        ]
+      : [],
+    description: cls.description,
+    subject: cls.subject,
+    tutorName: cls.tutorName,
+    fee: cls.fee,
+    status: cls.status,
+    grade: cls.grade,
   });
 
   // Handle View button click to show AttendanceDialog
@@ -171,14 +147,8 @@ const PastSessionsTable = ({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date filter
+              Year Filter
             </label>
-            <DateRangePicker
-              value={dateRange as any}
-              aria-label="Date Range"
-              onChange={handleDateRangeChange}
-              className="w-full sm:w-auto border rounded-lg border-gray-300"
-            />
           </div>
         </div>
 
@@ -194,10 +164,10 @@ const PastSessionsTable = ({
                   Class Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Date
+                  Day
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Time
+                  Time slot
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Actions
@@ -212,9 +182,11 @@ const PastSessionsTable = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{cls.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {cls.date?.split('T')[0]}
+                    {cls.time?.day}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{cls.time}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {cls.time?.startTime}-{cls.time?.endTime}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap space-x-2">
                     {/* Attendance Button */}
                     <div className="relative group inline-block">
@@ -234,13 +206,7 @@ const PastSessionsTable = ({
                     {/* Copy Link Button */}
                     <div className="relative group inline-block">
                       <button
-                        onClick={() =>
-                          handleCopyLink(
-                            `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&redirectUrl=${encodeURIComponent(
-                              `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`,
-                            )}`,
-                          )
-                        }
+                        onClick={() => handleCopyLink(``)}
                         className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
                         aria-label="Copy Link"
                       >
@@ -281,22 +247,16 @@ const PastSessionsTable = ({
         </div>
       </div>
 
-      {/* Attendance Dialog */}
-      <AttendanceDialog
-        showAttendanceDialog={showAttendanceDialog}
-        setShowAttendanceDialog={setShowAttendanceDialog}
-        selectedSession={selectedSession}
-      />
-
+      {/* 
       <DeleteSessionDialog
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
         onDeleteSession={handleDeleteClass}
         sessionId={selectedSessionId!}
         loading={deleteClassLoading}
-      />
+      /> */}
     </>
   );
 };
 
-export default PastSessionsTable;
+export default ClassesTable;

@@ -1,10 +1,16 @@
 import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
-import { getAllClassesByStudentIdData, getAllClassesByTutorIdData } from '~/lib/classes/database/queries';
+import {
+  getAllClassesByStudentIdData,
+  getAllClassesByTutorIdData,
+  getAllClassesData,
+  getAllClassesDataAdmin,
+} from '~/lib/classes/database/queries';
 import { redirect } from 'next/navigation';
 import StudentClassClient from '../components/student-classes/StudentClassClient';
 import ClassesListClient from '../components/classes/ClassesListClient';
+import ClassesTable from '../components/admin/classes/ClassTable';
 
 export const metadata = {
   title: 'Sessions',
@@ -12,7 +18,10 @@ export const metadata = {
 
 async function ClassesPage() {
   const client = getSupabaseServerComponentClient();
-  const { data: { user }, error: authError } = await client.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await client.auth.getUser();
   // console.log('-----ClassesPage-------auth-User:', user);
 
   // Handle authentication error
@@ -32,41 +41,42 @@ async function ClassesPage() {
     throw userError;
   }
 
-  const userRole = userData?.user_role || "admin";
+  const userRole = userData?.user_role || 'admin';
   // const userRole = userData?.user_role || "student";
 
   let classesData: any[] = [];
   let studentClassesData: any[] = [];
   let tutorId;
-  
-  if (userRole === "student") {
-    
-    studentClassesData = await getAllClassesByStudentIdData(client, user?.id || "");
-  } else if (userRole === "tutor" || userRole === "admin") {
-    
-    
-    classesData = await getAllClassesByTutorIdData(client, user?.id || ""); 
-    
-    
+
+  if (userRole === 'student') {
+    studentClassesData = await getAllClassesByStudentIdData(
+      client,
+      user?.id || '',
+    );
+  } else if (userRole === 'tutor') {
+    classesData = await getAllClassesByTutorIdData(client, user?.id || '');
     tutorId = user?.id;
+  } else if (userRole === 'admin') {
+    classesData = await getAllClassesDataAdmin(client);
+    // console.log('-----ClassesPage-------classesData:', classesData);
   }
-  
+
   return (
     <>
-    
-      <AppHeader
-        title={''}
-        description={
-          ""
-        }
-      />
-    
-    
+      <AppHeader title={''} description={''} />
+
       <PageBody>
         {userRole === 'student' ? (
           <StudentClassClient studentClassesData={studentClassesData} />
+        ) : userRole === 'tutor' ? (
+          <ClassesListClient
+            classesData={classesData}
+            userRole={userRole}
+            tutorId={tutorId}
+          />
         ) : (
-          <ClassesListClient classesData={classesData} userRole={userRole} tutorId={tutorId}/>
+          // /////////////////////////////////////////////////
+          <ClassesTable classesData={classesData} />
         )}
       </PageBody>
     </>
