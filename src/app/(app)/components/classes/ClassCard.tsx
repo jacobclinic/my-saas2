@@ -124,6 +124,13 @@ const ClassCard: React.FC<ClassCardProps> = ({
                   )}
                 </div>
               </div>
+              <div>
+                {classData.status === 'active' ? (
+                  <Badge variant="secondary">{classData.status}</Badge>
+                ) : (
+                  <Badge variant="destructive">{classData.status}</Badge>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">

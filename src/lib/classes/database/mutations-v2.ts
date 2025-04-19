@@ -61,12 +61,19 @@ export async function deleteClass(client: Client, classId: string) {
     const currentTime = new Date().toISOString();
 
     const { error } = await client
-      .from('sessions')
+      .from(SESSIONS_TABLE)
       .delete()
       .eq('class_id', classId)
       .gt('start_time', currentTime);
 
     if (error) throw error;
+
+    const result = await client
+      .from(CLASSES_TABLE)
+      .update({status : 'canceled'})
+      .eq('id', classId);
+    
+    if (result.error) throw result.error;
 
     return classId;
   } catch (error) {

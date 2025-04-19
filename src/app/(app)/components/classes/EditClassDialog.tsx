@@ -422,16 +422,36 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
             </AlertDescription>
           </Alert>
           <div className="flex w-full mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={()=>{setShowDeleteDialog(true)}}
-              className="bg-red-500 text-white hover:bg-red-600 w-full"
-            >
-              <Delete className="h-4 w-4 mr-2" />
-              Cancel upcoming classes
-            </Button>
+            {classData!.status === 'active' ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowDeleteDialog(true);
+                  onClose();
+                }}
+                className="bg-red-500 text-white hover:bg-red-600 w-full"
+              >
+                <Delete className="h-4 w-4 mr-2" />
+                Cancel upcoming classes
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={true}
+                size="sm"
+                onClick={() => {
+                  setShowDeleteDialog(true);
+                  onClose();
+                }}
+                className="bg-red-500 text-white hover:bg-red-600 w-full"
+              >
+                <Delete className="h-4 w-4 mr-2" />
+                You have already canceled this classes upcoming sessions
+              </Button>
+            )}
           </div>
         </div>
       </BaseDialog>
