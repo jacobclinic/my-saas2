@@ -27,7 +27,7 @@ interface DateRange {
   } | null;
 }
 
-const PastClassesTable = ({
+const PastSessionsTable = ({
   pastSessionsData,
 }: {
   pastSessionsData: PastSession[];
@@ -38,7 +38,9 @@ const PastClassesTable = ({
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
   const [selectedSession, setSelectedSession] =
     useState<SelectedSession | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null,
+  );
 
   const [selectedTutor, setSelectedTutor] = useState('');
 
@@ -159,7 +161,7 @@ const PastClassesTable = ({
   const handleViewDeleteDialog = (sessionId: string) => {
     setSelectedSessionId(sessionId);
     setShowDeleteDialog(true);
-  }
+  };
 
   return (
     <>
@@ -268,7 +270,7 @@ const PastClassesTable = ({
                       <button
                         className="bg-red-500 text-white px-3 py-1  rounded hover:bg-red-600 transition-colors"
                         aria-label="Delete"
-                        onClick={ () =>handleViewDeleteDialog(cls.id)}
+                        onClick={() => handleViewDeleteDialog(cls.id)}
                       >
                         <Trash className="h-4 w-4" />
                         <span className="sr-only">Delete</span>
@@ -310,4 +312,4 @@ const PastClassesTable = ({
   );
 };
 
-export default PastClassesTable;
+export default PastSessionsTable;

@@ -1,10 +1,14 @@
 import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
-import { getAllPastSessionsByStudentIdData, getAllPastSessionsByTutorIdData, getAllPastSessionsDataAdmin } from '~/lib/sessions/database/queries';
+import {
+  getAllPastSessionsByStudentIdData,
+  getAllPastSessionsByTutorIdData,
+  getAllPastSessionsDataAdmin,
+} from '~/lib/sessions/database/queries';
 import PastSessionsClient from '../components/past-sessions/PastSessionClient';
 import StudentPastSessionClient from '../components/past-sessions-student/StudentPastSessionClient';
-import PastClassesTable from '../components/admin/past-class/PastClassTable';
+import PastSessionsTable from '../components/admin/past-session/PastSessionsTable';
 
 export const metadata = {
   title: 'Sessions',
@@ -45,11 +49,14 @@ async function PastSessionsPage() {
       <AppHeader title={''} description={''} />
       <PageBody>
         {userRole === 'student' ? (
-          <StudentPastSessionClient pastSessionData={studentSessionData} userId={user.user!.id}/>
+          <StudentPastSessionClient
+            pastSessionData={studentSessionData}
+            userId={user.user!.id}
+          />
         ) : userRole === 'tutor' ? (
           <PastSessionsClient initialSessions={tutorSessionData} />
         ) : (
-          <PastClassesTable pastSessionsData={pastSessionsAdmin}/>
+          <PastSessionsTable pastSessionsData={pastSessionsAdmin} />
         )}
       </PageBody>
     </>
