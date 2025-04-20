@@ -13,7 +13,7 @@ interface DeleteClassDialogProps {
   open: boolean;
   onClose: () => void;
   onDeleteClass: (classId: string) => void;
-  classData: ClassListData | null;
+  classId: string;
   loading?: boolean;
 }
 
@@ -21,7 +21,7 @@ const DeleteClassDialog: React.FC<DeleteClassDialogProps> = ({
   open,
   onClose,
   onDeleteClass,
-  classData,
+  classId,
   loading = false,
 }) => {
   const [isPending, startTransition] = useTransition();
@@ -29,10 +29,10 @@ const DeleteClassDialog: React.FC<DeleteClassDialogProps> = ({
   const { toast } = useToast();
 
   const handleSubmit = () => {
-    if (!classData?.id) return;
+    if (!classId) return;
     startTransition(async () => {
       const result = await deleteClassAction({
-        classId: classData.id,
+        classId: classId,
         csrfToken,
       });
       if (result.success) {
@@ -50,7 +50,7 @@ const DeleteClassDialog: React.FC<DeleteClassDialogProps> = ({
           variant: 'destructive',
         });
       }
-      onDeleteClass(classData.id);
+      onDeleteClass(classId);
     });
   };
 
@@ -59,7 +59,7 @@ const DeleteClassDialog: React.FC<DeleteClassDialogProps> = ({
       open={open}
       onClose={onClose}
       title="Delete Class"
-      description="Update your class details and schedule"
+      description="Delete all upcoming sessions of this class"
       maxWidth="xl"
       onConfirm={handleSubmit}
       confirmButtonText="Confirm and Delete class"

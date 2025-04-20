@@ -25,7 +25,6 @@ import RegisteredStudentsDialog from './RegisteredStudentsDialog';
 import EditClassDialog from './EditClassDialog';
 import AddStudentDialog from './AddStudentDialog';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
-import DeleteClassDialog from './DeleteClassDialog';
 
 const ClassCard: React.FC<ClassCardProps> = ({
   classData,

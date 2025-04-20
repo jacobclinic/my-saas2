@@ -5,8 +5,8 @@ import { SelectedSession } from '~/lib/sessions/types/past-sessions';
 import { Check, Link, Trash, Users } from 'lucide-react';
 import { deleteSessionAction } from '~/lib/sessions/server-actions';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { ClassWithTutorAndEnrollment } from '~/lib/classes/types/class';
 import {
+  ClassListData,
   ClassType,
   ClassWithTutorAndEnrollmentAdmin,
   SelectedClassAdmin,
@@ -21,6 +21,7 @@ import {
 import { GRADES } from '~/lib/constants-v2';
 import { format as dateFnsFormat } from 'date-fns';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
+import DeleteClassDialog from '../../classes/DeleteClassDialog';
 
 const ClassesTable = ({
   classesData,
@@ -29,13 +30,12 @@ const ClassesTable = ({
 }) => {
   const [selectedSession, setSelectedSession] =
     useState<SelectedClassAdmin | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
-    null,
-  );
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [selectedTutor, setSelectedTutor] = useState('');
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteClassLoading, setDeleteClassLoading] = useState(false);
 
   const csrfToken = useCsrfToken();
 
@@ -107,32 +107,44 @@ const ClassesTable = ({
     }
   };
 
-  // Transform cls to SelectedSession
-  const transformToSelectedSession = (
-    cls: (typeof classData)[0],
-  ): SelectedClassAdmin => ({
-    id: cls.id,
-    name: cls.name || '',
-    time_slots: cls.time
-      ? [
-          {
-            day: cls.time.day,
-            start_time: cls.time.startTime,
-            end_time: cls.time.endTime,
-          },
-        ]
-      : [],
-    description: cls.description,
-    subject: cls.subject,
-    tutorName: cls.tutorName,
-    fee: cls.fee,
-    status: cls.status,
-    grade: cls.grade,
-    upcomingSession: cls.upcomingSession,
-  });
+  const handleDeleteClass = async (classId: string) => {
+    try {
+      setDeleteClassLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Error adding student:', error);
+    } finally {
+      setDeleteClassLoading(false);
+    }
+  };
 
-  const handleViewDeleteDialog = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
+  // Transform cls to SelectedSession
+  // const transformToSelectedSession = (
+  //   cls: (typeof classData)[0],
+  // ): SelectedClassAdmin => ({
+  //   id: cls.id,
+  //   name: cls.name || '',
+  //   time_slots: cls.time
+  //     ? [
+  //         {
+  //           day: cls.time.day,
+  //           start_time: cls.time.startTime,
+  //           end_time: cls.time.endTime,
+  //         },
+  //       ]
+  //     : [],
+  //   description: cls.description,
+  //   subject: cls.subject,
+  //   tutorName: cls.tutorName,
+  //   fee: cls.fee,
+  //   status: cls.status,
+  //   grade: cls.grade,
+  //   upcomingSession: cls.upcomingSession,
+  // });
+
+  const handleViewDeleteDialog = (classId: string) => {
+    setSelectedClassId(classId);
     setShowDeleteDialog(true);
   };
 
@@ -278,14 +290,13 @@ const ClassesTable = ({
         </div>
       </div>
 
-      {/* 
-      <DeleteSessionDialog
+      <DeleteClassDialog
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        onDeleteSession={handleDeleteClass}
-        sessionId={selectedSessionId!}
+        onDeleteClass={handleDeleteClass}
+        classId={selectedClassId!}
         loading={deleteClassLoading}
-      /> */}
+      />
     </>
   );
 };

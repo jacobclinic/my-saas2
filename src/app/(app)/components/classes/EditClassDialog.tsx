@@ -459,7 +459,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
         onDeleteClass={handleDeleteClass}
-        classData={classData}
+        classId={classData!.id}
         loading={deleteClassLoading}
       />
     </>
