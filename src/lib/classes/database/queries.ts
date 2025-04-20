@@ -221,21 +221,36 @@ export async function getAllClassesDataAdmin(
       );
     }
 
-    // Transform the data to get the count directly
-    const transformedData = data?.map(
-      (classData): ClassWithTutorAndEnrollmentAdmin => ({
-        id: classData.id,
-        name: classData.name,
-        description: classData.description || null,
-        subject: classData.subject,
-        tutorId: classData.tutor_id,
-        fee: classData.fee,
-        status: classData.status,
-        time_slots: classData.time_slots,
-        grade: classData.grade,
-        tutor: classData.tutor,
-        noOfStudents: classData.noOfStudents[0]?.count || 0,
-      }),
+    const transformedData = await Promise.all(
+      data?.map(async (classData) => {
+        // Fetch upcoming session
+        const { data: sessionsData } = await client
+          .from(SESSIONS_TABLE)
+          .select(`id, start_time`)
+          .eq('class_id', classData.id)
+          .gt('start_time', new Date().toISOString())
+          .order('start_time', { ascending: true })
+          .limit(1);
+    
+        const timeSlots = classData?.time_slots as
+          | { day: string; startTime: string; endTime: string }[]
+          | null;
+    
+        return {
+          id: classData.id,
+          name: classData.name,
+          description: classData.description,
+          subject: classData.subject,
+          tutorId: classData.tutor_id,
+          fee: classData.fee,
+          status: classData.status,
+          time_slots: timeSlots,
+          grade: classData.grade,
+          tutor: classData.tutor,
+          noOfStudents: classData.noOfStudents[0]?.count || 0,
+          upcomingSession: sessionsData?.[0]?.start_time || null,
+        };
+      }) || []
     );
 
     // console.log('getAllClassesData-2', transformedData);

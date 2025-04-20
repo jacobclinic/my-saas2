@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { SelectedSession } from '~/lib/sessions/types/past-sessions';
-import { Link, Trash, Users } from 'lucide-react';
+import { Check, Link, Trash, Users } from 'lucide-react';
 import { deleteSessionAction } from '~/lib/sessions/server-actions';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { ClassWithTutorAndEnrollment } from '~/lib/classes/types/class';
@@ -19,19 +19,8 @@ import {
   SelectValue,
 } from '../../base-v2/ui/Select';
 import { GRADES } from '~/lib/constants-v2';
-
-interface DateRange {
-  start?: {
-    year: number;
-    month: number;
-    day: number;
-  } | null;
-  end?: {
-    year: number;
-    month: number;
-    day: number;
-  } | null;
-}
+import { format as dateFnsFormat } from 'date-fns';
+import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
 
 const ClassesTable = ({
   classesData,
@@ -43,21 +32,12 @@ const ClassesTable = ({
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
   );
-
   const [selectedTutor, setSelectedTutor] = useState('');
-
-  const [linkCopied, setLinkCopied] = useState<boolean>(false);
-
+  const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
   const [selectedYear, setSelectedYear] = useState<string>('all');
 
   const csrfToken = useCsrfToken();
-
-  const dateObjectToDate = (dateObj: any): Date | null => {
-    if (!dateObj) return null;
-    return new Date(dateObj.year, dateObj.month - 1, dateObj.day);
-  };
 
   const classData = classesData.map((cls) => ({
     id: cls.id,
@@ -66,13 +46,13 @@ const ClassesTable = ({
     time:
       cls.time_slots && cls.time_slots.length > 0 ? cls.time_slots[0] : null,
     subject: cls.subject,
+    time_slots: cls.time_slots,
     grade: cls.grade,
     description: cls.description,
     fee: cls.fee,
     status: cls.status,
+    upcomingSession: cls.upcomingSession,
   }));
-
-  console.log(classData);
 
   const filteredData = classData.filter((cls) => {
     const nameMatch = selectedTutor
@@ -84,11 +64,33 @@ const ClassesTable = ({
     return nameMatch && yearMatch;
   });
 
-  const handleCopyLink = (link: string) => {
-    navigator.clipboard.writeText(link);
-    setLinkCopied(true);
+  const handleCopyLink = async (cls: (typeof classData)[0]) => {
+    const nextSession = cls?.upcomingSession
+      ? dateFnsFormat(new Date(cls.upcomingSession), 'EEE, MMM dd, yyyy')
+      : 'No upcoming session';
+
+    const clsSchedule =
+      cls?.time_slots?.reduce(
+        (acc: string, slot: any, index: number, array) => {
+          const timeSlotString = `${slot.day}, ${slot.startTime} - ${slot.endTime}`;
+          return acc + timeSlotString + (index < array.length - 1 ? '; ' : '');
+        },
+        '',
+      ) || 'No schedule available';
+    const registrationData = {
+      classId: cls.id,
+      className: cls.name || '',
+      nextSession: nextSession || '',
+      time: clsSchedule || '',
+    };
+
+    const registrationLink =
+      await generateRegistrationLinkAction(registrationData);
+
+    navigator.clipboard.writeText(registrationLink);
+    setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
     setTimeout(() => {
-      setLinkCopied(false);
+      setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
     }, 2000);
   };
 
@@ -126,6 +128,7 @@ const ClassesTable = ({
     fee: cls.fee,
     status: cls.status,
     grade: cls.grade,
+    upcomingSession: cls.upcomingSession,
   });
 
   const handleViewDeleteDialog = (sessionId: string) => {
@@ -212,9 +215,7 @@ const ClassesTable = ({
                   <td className="px-6 py-4 whitespace-nowrap">
                     {cls.time?.startTime}-{cls.time?.endTime}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {cls.status}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">{cls.status}</td>
                   <td className="px-6 py-4 whitespace-nowrap space-x-2">
                     {/* Attendance Button */}
                     <div className="relative group inline-block">
@@ -233,14 +234,18 @@ const ClassesTable = ({
                     {/* Copy Link Button */}
                     <div className="relative group inline-block">
                       <button
-                        onClick={() => handleCopyLink(``)}
+                        onClick={() => handleCopyLink(cls)}
                         className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
                         aria-label="Copy Link"
                       >
-                        <Link className="h-4 w-4" />
+                        {copiedLinks[cls.id] ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Link className="h-4 w-4" />
+                        )}
                       </button>
                       <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        Copy student Link
+                        Copy Registration Link
                       </span>
                     </div>
 

@@ -195,6 +195,7 @@ export interface ClassWithTutorAndEnrollmentAdmin {
     last_name: string;
   };
   noOfStudents: number;
+  upcomingSession: string | null;
 }
 
 export interface SelectedClassAdmin {
@@ -211,4 +212,5 @@ export interface SelectedClassAdmin {
     end_time: string;
   }[] | null
   grade: string | null
+  upcomingSession: string | null
 }
