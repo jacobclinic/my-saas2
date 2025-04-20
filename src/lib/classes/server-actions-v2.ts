@@ -11,7 +11,7 @@ import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { ClassType, NewClassData } from './types/class-v2';
 import { getUpcomingOccurrences, getUpcomingOccurrencesForYear } from '../utils/date-utils';
 import { zoomService } from '../zoom/zoom.service';
-import { SESSIONS_TABLE } from '../db-tables';
+import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
 
 type CreateClassParams = {
@@ -191,11 +191,9 @@ export const deleteClassAction = withSession(
     const { classId, csrfToken } = params;
     const client = getSupabaseServerActionClient();
 
-    // Step 1: Validate CSRF token
-    // Assuming you have a function to verify CSRF token (implement as per your setup)
     await verifyCsrfToken(csrfToken);
 
-    // Step 2: Get the current user's session
+    // Get the current user's session
     const {
       data: { session },
       error: sessionError,
@@ -209,11 +207,10 @@ export const deleteClassAction = withSession(
 
     const userId = session.user.id;
 
-    // Step 3: Check user role and permissions
-    // Fetch user role (e.g., from a 'users' or 'profiles' table)
+    // Check user role and permissions
     const { data: userProfile, error: profileError } = await client
-      .from('profiles') // Adjust table name as per your schema
-      .select('role')
+      .from(USERS_TABLE) 
+      .select('user_role')
       .eq('id', userId)
       .single();
 
@@ -224,13 +221,13 @@ export const deleteClassAction = withSession(
       };
     }
 
-    const isAdmin = userProfile.role === 'admin';
+    const isAdmin = userProfile.user_role === 'admin';
 
-    // Step 4: If not admin, check if user is a tutor for the class
+    // If not admin, check if user is a tutor for the class
     let isAuthorized = isAdmin;
     if (!isAdmin) {
       const { data: classData, error: classError } = await client
-        .from('classes') // Adjust table name as per your schema
+        .from(CLASSES_TABLE) 
         .select('tutor_id')
         .eq('id', classId)
         .single();
@@ -252,7 +249,7 @@ export const deleteClassAction = withSession(
       };
     }
 
-    // Step 5: Proceed with class deletion
+    //Proceed with class deletion
     const result = await deleteClass(client, classId);
     if (!result) {
       return {
@@ -261,7 +258,7 @@ export const deleteClassAction = withSession(
       };
     }
 
-    // Step 6: Revalidate paths
+    //Revalidate paths
     revalidatePath('/classes');
     revalidatePath('/(app)/classes');
 
