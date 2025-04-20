@@ -13,6 +13,8 @@ import { getUpcomingOccurrences, getUpcomingOccurrencesForYear } from '../utils/
 import { zoomService } from '../zoom/zoom.service';
 import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
+import { getAllClassesData } from './database/queries';
+import { getAllUpcommingSessionsData } from '../sessions/database/queries';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -360,3 +362,39 @@ export const createZoomMeeting = async (
     console.error(`Error creating Zoom meeting`, error);
   }
 };
+
+export const getAllUpcominSessionsAdmin = async() =>{
+  const client = getSupabaseServerActionClient();
+  const {
+    data: { session },
+    error: sessionError,
+  } = await client.auth.getSession();
+  if (sessionError || !session?.user) {
+    throw new Error('User not authenticated');
+  }
+
+  const userId = session.user.id;
+
+  // Check user role and permissions
+  const { data: userProfile, error: profileError } = await client
+    .from(USERS_TABLE) 
+    .select('user_role')
+    .eq('id', userId)
+    .single();
+
+  if (profileError || !userProfile) {
+    throw new Error('Failed to fetch user profile');
+  }
+
+  const isAdmin = userProfile.user_role === 'admin';
+
+  if (!isAdmin) {
+    throw new Error('Unauthorized to access this data');
+  }
+
+  const data =  await getAllUpcommingSessionsData(client)
+  if (!data) {
+    throw new Error('Failed to fetch upcoming sessions data');
+  }
+  return data;
+}
