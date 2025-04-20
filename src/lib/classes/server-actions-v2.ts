@@ -12,6 +12,7 @@ import { ClassType, NewClassData } from './types/class-v2';
 import { getUpcomingOccurrences, getUpcomingOccurrencesForYear } from '../utils/date-utils';
 import { zoomService } from '../zoom/zoom.service';
 import { SESSIONS_TABLE } from '../db-tables';
+import verifyCsrfToken from '~/core/verify-csrf-token';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -187,18 +188,89 @@ export const updateClassAction = withSession(
 
 export const deleteClassAction = withSession(
   async (params: DeleteClassParams) => {
+    const { classId, csrfToken } = params;
     const client = getSupabaseServerActionClient();
 
-    const result = await deleteClass(client, params.classId);
+    // Step 1: Validate CSRF token
+    // Assuming you have a function to verify CSRF token (implement as per your setup)
+    await verifyCsrfToken(csrfToken);
+
+    // Step 2: Get the current user's session
+    const {
+      data: { session },
+      error: sessionError,
+    } = await client.auth.getSession();
+    if (sessionError || !session?.user) {
+      return {
+        success: false,
+        error: 'User not authenticated',
+      };
+    }
+
+    const userId = session.user.id;
+
+    // Step 3: Check user role and permissions
+    // Fetch user role (e.g., from a 'users' or 'profiles' table)
+    const { data: userProfile, error: profileError } = await client
+      .from('profiles') // Adjust table name as per your schema
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (profileError || !userProfile) {
+      return {
+        success: false,
+        error: 'Failed to fetch user profile',
+      };
+    }
+
+    const isAdmin = userProfile.role === 'admin';
+
+    // Step 4: If not admin, check if user is a tutor for the class
+    let isAuthorized = isAdmin;
+    if (!isAdmin) {
+      const { data: classData, error: classError } = await client
+        .from('classes') // Adjust table name as per your schema
+        .select('tutor_id')
+        .eq('id', classId)
+        .single();
+
+      if (classError || !classData) {
+        return {
+          success: false,
+          error: 'Class not found',
+        };
+      }
+
+      isAuthorized = classData.tutor_id === userId;
+    }
+
+    if (!isAuthorized) {
+      return {
+        success: false,
+        error: 'Unauthorized to delete this class',
+      };
+    }
+
+    // Step 5: Proceed with class deletion
+    const result = await deleteClass(client, classId);
+    if (!result) {
+      return {
+        success: false,
+        error: 'Failed to delete class',
+      };
+    }
+
+    // Step 6: Revalidate paths
     revalidatePath('/classes');
     revalidatePath('/(app)/classes');
+
     return {
       success: true,
       classId: result,
     };
-  },
+  }
 );
-
 const createZoomMeetingsBatch = async (
   classId: string,
   classData: NewClassData,
