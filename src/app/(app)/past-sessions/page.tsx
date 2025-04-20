@@ -8,7 +8,7 @@ import {
 } from '~/lib/sessions/database/queries';
 import PastSessionsClient from '../components/past-sessions/PastSessionClient';
 import StudentPastSessionClient from '../components/past-sessions-student/StudentPastSessionClient';
-import PastSessionsTable from '../components/admin/past-session/PastSessionsTable';
+import PastSessionsAdmin from '../components/admin/past-session/PastSessionsAdmin';
 
 export const metadata = {
   title: 'Sessions',
@@ -56,7 +56,7 @@ async function PastSessionsPage() {
         ) : userRole === 'tutor' ? (
           <PastSessionsClient initialSessions={tutorSessionData} />
         ) : (
-          <PastSessionsTable pastSessionsData={pastSessionsAdmin} />
+          <PastSessionsAdmin pastSessionsData={pastSessionsAdmin} />
         )}
       </PageBody>
     </>

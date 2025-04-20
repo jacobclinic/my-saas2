@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../base-v2/ui/Select';
-import { X, Plus, AlertTriangle, Delete } from 'lucide-react';
+import { X, Plus, AlertTriangle, Delete, Trash } from 'lucide-react';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import BaseDialog from '../base-v2/BaseDialog';
 import {
@@ -422,36 +422,24 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
             </AlertDescription>
           </Alert>
           <div className="flex w-full mt-4">
-            {classData!.status === 'active' ? (
-              <Button
+          <Button
                 type="button"
                 variant="outline"
                 size="sm"
+                disabled = {classData!.status !== 'active'}
                 onClick={() => {
                   setShowDeleteDialog(true);
                   onClose();
                 }}
                 className="bg-red-500 text-white hover:bg-red-600 w-full"
               >
-                <Delete className="h-4 w-4 mr-2" />
-                Cancel upcoming classes
+                <Trash className="h-4 w-4 mr-2" />
+                {classData!.status === 'active' ? (
+                  'Cancel upcoming classes'
+                ) : (
+                  'You have already canceled all upcoming sessions of this class'
+                )}
               </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={true}
-                size="sm"
-                onClick={() => {
-                  setShowDeleteDialog(true);
-                  onClose();
-                }}
-                className="bg-red-500 text-white hover:bg-red-600 w-full"
-              >
-                <Delete className="h-4 w-4 mr-2" />
-                You have already canceled this classes upcoming sessions
-              </Button>
-            )}
           </div>
         </div>
       </BaseDialog>

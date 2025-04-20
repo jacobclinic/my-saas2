@@ -10,7 +10,7 @@ import {
 import { redirect } from 'next/navigation';
 import StudentClassClient from '../components/student-classes/StudentClassClient';
 import ClassesListClient from '../components/classes/ClassesListClient';
-import ClassesTable from '../components/admin/classes/ClassTable';
+import ClassesAdmin from '../components/admin/classes/ClassesAdmin';
 
 export const metadata = {
   title: 'Sessions',
@@ -76,7 +76,7 @@ async function ClassesPage() {
           />
         ) : (
           // /////////////////////////////////////////////////
-          <ClassesTable classesData={classesData} />
+          <ClassesAdmin classesData={classesData} />
         )}
       </PageBody>
     </>
