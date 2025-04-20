@@ -226,7 +226,7 @@ const PastSessionsTable = ({
                         <Users className="h-4 w-4" />
                         <span className="sr-only">Attendance</span>
                       </button>
-                      <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
                         Attendance
                       </span>
                     </div>
@@ -247,7 +247,7 @@ const PastSessionsTable = ({
                         <Link className="h-4 w-4" />
                         <span className="sr-only">Copy Link</span>
                       </button>
-                      <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
                         Copy student Link
                       </span>
                     </div>
@@ -262,7 +262,7 @@ const PastSessionsTable = ({
                         <Trash className="h-4 w-4" />
                         <span className="sr-only">Delete</span>
                       </button>
-                      <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
                         Delete
                       </span>
                     </div>

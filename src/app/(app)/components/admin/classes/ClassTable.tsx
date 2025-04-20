@@ -11,6 +11,14 @@ import {
   ClassWithTutorAndEnrollmentAdmin,
   SelectedClassAdmin,
 } from '~/lib/classes/types/class-v2';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../base-v2/ui/Select';
+import { GRADES } from '~/lib/constants-v2';
 
 interface DateRange {
   start?: {
@@ -30,7 +38,6 @@ const ClassesTable = ({
 }: {
   classesData: ClassWithTutorAndEnrollmentAdmin[];
 }) => {
-  const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
   const [selectedSession, setSelectedSession] =
     useState<SelectedClassAdmin | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
@@ -43,6 +50,8 @@ const ClassesTable = ({
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+
   const csrfToken = useCsrfToken();
 
   const dateObjectToDate = (dateObj: any): Date | null => {
@@ -54,7 +63,8 @@ const ClassesTable = ({
     id: cls.id,
     tutorName: cls.tutor.first_name + ' ' + cls.tutor.last_name,
     name: cls.name,
-    time: cls.time_slots && cls.time_slots.length > 0 ? cls.time_slots[0] : null,
+    time:
+      cls.time_slots && cls.time_slots.length > 0 ? cls.time_slots[0] : null,
     subject: cls.subject,
     grade: cls.grade,
     description: cls.description,
@@ -65,10 +75,13 @@ const ClassesTable = ({
   console.log(classData);
 
   const filteredData = classData.filter((cls) => {
-    return (
-      !selectedTutor ||
-      cls.tutorName.toLowerCase().includes(selectedTutor.toLowerCase())
-    );
+    const nameMatch = selectedTutor
+      ? cls.tutorName.toLowerCase().includes(selectedTutor.toLowerCase())
+      : true;
+
+    const yearMatch =
+      selectedYear !== 'all' ? cls.grade === selectedYear : true;
+    return nameMatch && yearMatch;
   });
 
   const handleCopyLink = (link: string) => {
@@ -115,12 +128,6 @@ const ClassesTable = ({
     grade: cls.grade,
   });
 
-  // Handle View button click to show AttendanceDialog
-  const handleViewAttendance = (cls: (typeof classData)[0]) => {
-    setSelectedSession(transformToSelectedSession(cls));
-    setShowAttendanceDialog(true);
-  };
-
   const handleViewDeleteDialog = (sessionId: string) => {
     setSelectedSessionId(sessionId);
     setShowDeleteDialog(true);
@@ -149,6 +156,21 @@ const ClassesTable = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Year Filter
             </label>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                {GRADES.map((grade) => {
+                  return (
+                    <SelectItem key={grade} value={grade}>
+                      {grade}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -170,6 +192,9 @@ const ClassesTable = ({
                   Time slot
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Actions
                 </th>
               </tr>
@@ -187,18 +212,20 @@ const ClassesTable = ({
                   <td className="px-6 py-4 whitespace-nowrap">
                     {cls.time?.startTime}-{cls.time?.endTime}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {cls.status}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap space-x-2">
                     {/* Attendance Button */}
                     <div className="relative group inline-block">
                       <button
-                        onClick={() => handleViewAttendance(cls)}
+                        onClick={() => {}}
                         className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
                         aria-label="Attendance"
                       >
                         <Users className="h-4 w-4" />
-                        <span className="sr-only">Attendance</span>
                       </button>
-                      <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
                         Attendance
                       </span>
                     </div>
@@ -211,9 +238,8 @@ const ClassesTable = ({
                         aria-label="Copy Link"
                       >
                         <Link className="h-4 w-4" />
-                        <span className="sr-only">Copy Link</span>
                       </button>
-                      <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
                         Copy student Link
                       </span>
                     </div>
@@ -223,12 +249,12 @@ const ClassesTable = ({
                       <button
                         className="bg-red-500 text-white px-3 py-1  rounded hover:bg-red-600 transition-colors"
                         aria-label="Delete"
+                        disabled={cls.status === 'canceled'}
                         onClick={() => handleViewDeleteDialog(cls.id)}
                       >
                         <Trash className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
                       </button>
-                      <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
                         Delete
                       </span>
                     </div>
