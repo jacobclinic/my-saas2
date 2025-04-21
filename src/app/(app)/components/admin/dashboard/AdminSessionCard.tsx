@@ -39,6 +39,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [linkCopied, setLinkCopied] = useState<{
     student?: boolean;
     materials?: boolean;
+    tutor?: boolean;
   }>({});
   const [isPending, startTransition] = useTransition();
 
@@ -56,21 +57,22 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
   const [editSessionLoading, setEditSessionLoading] = useState(false);
 
-  const handleCopyLink = (link: string, type: 'student' | 'materials') => {
+  const handleCopyLink = (link: string, type: 'student' | 'materials' | 'tutor') => {
     navigator.clipboard.writeText(link);
     setLinkCopied({ ...linkCopied, [type]: true });
     setTimeout(() => {
       setLinkCopied({ ...linkCopied, [type]: false });
     }, 2000);
   };
+  
 
-  const joinMeetingAsTutor = useCallback(async () => {
+  const copyTutorLink = useCallback(async () => {
     startTransition(async () => {
       const result = await joinMeetingAsHost({
         meetingId: sessionData?.zoomMeetingId,
       });
       if (result.success) {
-        window.open(result.start_url, '_blank');
+        handleCopyLink(result.start_url, 'tutor');
       } else {
         alert('Failed to generate join link');
       }
@@ -238,9 +240,14 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
             {/* Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button onClick={joinMeetingAsTutor} disabled={isPending}>
-                <Camera className="h-4 w-4 mr-2" />
-                Join as Tutor
+              <Button variant="outline" onClick={copyTutorLink} disabled={isPending}>
+                {' '}
+                {linkCopied.student ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <Link className="h-4 w-4 mr-2" />
+                )}
+                {linkCopied.student ? 'Copied!' : 'Copy Tutor Link'}
               </Button>
               <Button
                 variant="outline"
