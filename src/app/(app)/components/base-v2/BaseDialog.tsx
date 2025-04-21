@@ -2,6 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/Dialog";
 import { Button } from "./ui/Button";
 import { cn } from '../../lib/utils';
+import { Trash } from 'lucide-react';
 
 export interface BaseDialogProps {
   open: boolean;
@@ -19,6 +20,10 @@ export interface BaseDialogProps {
   description?: React.ReactNode;
   loading?: boolean;
   headerClassName?: string;
+  deleteClassOption?: boolean;
+  onDeleteClass?: () => void;
+  deleteClassText?: string;
+  deleteClassBtnDisabled?: boolean;
 }
 
 const BaseDialog: React.FC<BaseDialogProps> = ({
@@ -36,7 +41,11 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   contentClassName = '',
   description,
   loading = false,
-  headerClassName = ''
+  headerClassName = '',
+  deleteClassOption = false,
+  onDeleteClass,
+  deleteClassText = 'Delete Class',
+  deleteClassBtnDisabled
 }) => {
   const maxWidthClasses = {
     sm: 'max-w-sm',
@@ -69,6 +78,17 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
                   disabled={loading}
                 >
                   {closeButtonText}
+                </Button>
+              )}
+              {deleteClassOption && (
+                <Button 
+                  variant="outline" 
+                  onClick={onDeleteClass}
+                  disabled={deleteClassBtnDisabled}
+                  className="bg-red-500 text-white hover:bg-red-600"
+                >
+                  <Trash className="h-4 w-4 mr-2" />
+                  {deleteClassText}
                 </Button>
               )}
               {onConfirm && (

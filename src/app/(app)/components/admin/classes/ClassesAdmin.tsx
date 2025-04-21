@@ -30,12 +30,9 @@ const ClassesAdmin = ({
 }: {
   classesData: ClassWithTutorAndEnrollmentAdmin[];
 }) => {
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [selectedTutor, setSelectedTutor] = useState('');
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
   const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteClassLoading, setDeleteClassLoading] = useState(false);
   const [showStudentsDialog, setShowStudentsDialog] = useState(false);
   const [selectedClassName, setSelectedClassName] = useState<string | null>(
     null,
@@ -157,23 +154,6 @@ const ClassesAdmin = ({
     }
   };
 
-  const handleDeleteClass = async (classId: string) => {
-    try {
-      setDeleteClassLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setShowDeleteDialog(false);
-    } catch (error) {
-      console.error('Error adding student:', error);
-    } finally {
-      setDeleteClassLoading(false);
-    }
-  };
-
-  const handleViewDeleteDialog = (classId: string) => {
-    setSelectedClassId(classId);
-    setShowDeleteDialog(true);
-  };
-
   const formatDataForEditCls = (cls: (typeof classData)[0]) => {
     return {
       id: cls.id,
@@ -293,23 +273,7 @@ const ClassesAdmin = ({
                         View Students
                       </span>
                     </div>
-                    {/* Edit class button */}
-                    <div className="relative group inline-block">
-                      <button
-                        onClick={() => {
-                          setShowEditDialog(true);
-                          handleSetEditClassData(cls);
-                        }}
-                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                        aria-label="Attendance"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        Edit Class
-                      </span>
-                    </div>
-
+                  
                     {/* Copy Link Button */}
                     <div className="relative group inline-block">
                       <button
@@ -328,18 +292,20 @@ const ClassesAdmin = ({
                       </span>
                     </div>
 
-                    {/* Delete Button */}
-                    <div className="relative group inline-block">
+                     {/* Edit class button */}
+                     <div className="relative group inline-block">
                       <button
-                        className="bg-red-500 text-white px-3 py-1  rounded hover:bg-red-600 transition-colors"
-                        aria-label="Delete"
-                        disabled={cls.status === 'canceled'}
-                        onClick={() => handleViewDeleteDialog(cls.id)}
+                        onClick={() => {
+                          setShowEditDialog(true);
+                          handleSetEditClassData(cls);
+                        }}
+                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                        aria-label="Attendance"
                       >
-                        <Trash className="h-4 w-4" />
+                        <Edit className="h-4 w-4" />
                       </button>
                       <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        Delete
+                        Edit Class
                       </span>
                     </div>
                   </td>
@@ -356,14 +322,6 @@ const ClassesAdmin = ({
           </table>
         </div>
       </div>
-
-      <DeleteClassDialog
-        open={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        onDeleteClass={handleDeleteClass}
-        classId={selectedClassId!}
-        loading={deleteClassLoading}
-      />
 
       <RegisteredStudentsDialog
         open={showStudentsDialog}
