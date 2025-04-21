@@ -118,7 +118,6 @@ async function DashboardPage() {
       const allUpcomingSessions = await getTodaysAllUpcommingSessionsData(
         client
       );
-      console.log("DashboardPage-UpcomingSession-server-component------", allUpcomingSessions[0].class?.tutor);
 
       return (
         <>
