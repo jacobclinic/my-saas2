@@ -6,8 +6,7 @@ import { Check, Link, Trash, Users } from 'lucide-react';
 import { deleteSessionAction } from '~/lib/sessions/server-actions';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
-  ClassListData,
-  ClassType,
+  ClassListStudent,
   ClassWithTutorAndEnrollmentAdmin,
   SelectedClassAdmin,
 } from '~/lib/classes/types/class-v2';
@@ -22,6 +21,7 @@ import { GRADES } from '~/lib/constants-v2';
 import { format as dateFnsFormat } from 'date-fns';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
 import DeleteClassDialog from '../../classes/DeleteClassDialog';
+import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 
 const ClassesAdmin = ({
   classesData,
@@ -36,6 +36,13 @@ const ClassesAdmin = ({
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteClassLoading, setDeleteClassLoading] = useState(false);
+  const [showStudentsDialog, setShowStudentsDialog] = useState(false);
+  const [selectedClassName, setSelectedClassName] = useState<string | null>(
+    null,
+  );
+  const [selectedClassStudents, setSelectedClassStudents] = useState<
+    ClassListStudent[]
+  >([]);
 
   const csrfToken = useCsrfToken();
 
@@ -52,6 +59,7 @@ const ClassesAdmin = ({
     fee: cls.fee,
     status: cls.status,
     upcomingSession: cls.upcomingSession,
+    students: cls.students,
   }));
 
   const filteredData = classData.filter((cls) => {
@@ -151,7 +159,7 @@ const ClassesAdmin = ({
   return (
     <>
       <div className="max-w-7xl p-6">
-        <h1 className="text-3xl font-bold mb-6">Past Classes</h1>
+        <h1 className="text-3xl font-bold mb-6">Class groups</h1>
 
         {/* Filters */}
         <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex flex-wrap gap-4 items-end">
@@ -232,14 +240,22 @@ const ClassesAdmin = ({
                     {/* Attendance Button */}
                     <div className="relative group inline-block">
                       <button
-                        onClick={() => {}}
+                        onClick={() => {
+                          setShowStudentsDialog(true);
+                          setSelectedClassName(cls.name);
+                          {
+                            cls.students
+                              ? setSelectedClassStudents(cls.students)
+                              : null;
+                          }
+                        }}
                         className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
                         aria-label="Attendance"
                       >
                         <Users className="h-4 w-4" />
                       </button>
                       <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        Attendance
+                        View Students
                       </span>
                     </div>
 
@@ -296,6 +312,13 @@ const ClassesAdmin = ({
         onDeleteClass={handleDeleteClass}
         classId={selectedClassId!}
         loading={deleteClassLoading}
+      />
+
+      <RegisteredStudentsDialog
+        open={showStudentsDialog}
+        onClose={() => setShowStudentsDialog(false)}
+        classDataName={selectedClassName}
+        studentData={selectedClassStudents}
       />
     </>
   );

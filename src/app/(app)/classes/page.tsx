@@ -57,8 +57,7 @@ async function ClassesPage() {
     classesData = await getAllClassesByTutorIdData(client, user?.id || '');
     tutorId = user?.id;
   } else if (userRole === 'admin') {
-    classesData = await getAllClassesDataAdmin(client);
-    // console.log('-----ClassesPage-------classesData:', classesData);
+    classesData = await getAllClassesDataAdmin(client);  
   }
 
   return (

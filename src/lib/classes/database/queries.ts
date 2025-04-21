@@ -209,7 +209,19 @@ export async function getAllClassesDataAdmin(
         status,
         time_slots,
         grade,
-        noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
+        noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count),
+        students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id (
+          id,
+          student_id,
+          student:${USERS_TABLE}!student_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone_number,
+            status
+          )
+        )
       `,
         { count: 'exact' },
       )
@@ -231,11 +243,11 @@ export async function getAllClassesDataAdmin(
           .gt('start_time', new Date().toISOString())
           .order('start_time', { ascending: true })
           .limit(1);
-    
+
         const timeSlots = classData?.time_slots as
           | { day: string; startTime: string; endTime: string }[]
           | null;
-    
+
         return {
           id: classData.id,
           name: classData.name,
@@ -249,8 +261,9 @@ export async function getAllClassesDataAdmin(
           tutor: classData.tutor,
           noOfStudents: classData.noOfStudents[0]?.count || 0,
           upcomingSession: sessionsData?.[0]?.start_time || null,
+          students: classData.students
         };
-      }) || []
+      }) || [],
     );
 
     // console.log('getAllClassesData-2', transformedData);
