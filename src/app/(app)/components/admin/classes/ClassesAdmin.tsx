@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SelectedSession } from '~/lib/sessions/types/past-sessions';
-import { Check, Link, Trash, Users } from 'lucide-react';
-import { deleteSessionAction } from '~/lib/sessions/server-actions';
-import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { Check, Edit, Link, Trash, Users } from 'lucide-react';
 import {
+  ClassListData,
   ClassListStudent,
+  ClassType,
   ClassWithTutorAndEnrollmentAdmin,
+  EditClassData,
   SelectedClassAdmin,
+  TimeSlot,
 } from '~/lib/classes/types/class-v2';
 import {
   Select,
@@ -22,14 +23,13 @@ import { format as dateFnsFormat } from 'date-fns';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
 import DeleteClassDialog from '../../classes/DeleteClassDialog';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
+import EditClassDialog from '../../classes/EditClassDialog';
 
 const ClassesAdmin = ({
   classesData,
 }: {
   classesData: ClassWithTutorAndEnrollmentAdmin[];
 }) => {
-  const [selectedSession, setSelectedSession] =
-    useState<SelectedClassAdmin | null>(null);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [selectedTutor, setSelectedTutor] = useState('');
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
@@ -43,8 +43,40 @@ const ClassesAdmin = ({
   const [selectedClassStudents, setSelectedClassStudents] = useState<
     ClassListStudent[]
   >([]);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [selectedEditClassData, setSelectedEditClassData] = useState<ClassListData>({} as ClassListData);
 
-  const csrfToken = useCsrfToken();
+  const createSchedule = (cls: ClassWithTutorAndEnrollmentAdmin) => {
+    return (
+      cls.time_slots?.reduce(
+        (acc: string, slot: any, index: number, array: string | any[]) => {
+          const timeSlotString = `${slot.day}, ${slot.startTime} - ${slot.endTime}`;
+          // Add a separator for all except the last item
+          return acc + timeSlotString + (index < array.length - 1 ? '; ' : '');
+        },
+        '',
+      ) || 'No schedule available'
+    );
+  };
+
+  const createClassRawData = (cls: ClassWithTutorAndEnrollmentAdmin): ClassType => {
+    return {
+      id: cls.id,
+      created_at: undefined, // Not available in input, set to undefined
+      name: cls.name,
+      description: cls.description ,
+      subject: cls.subject,
+      tutor_id: cls.tutorId,
+      fee: cls.fee,
+      status: cls.status,
+      time_slots: cls.time_slots,
+      grade: cls.grade,
+      starting_date: cls.starting_date?.split('T')[0] ?? null, // Not available in input, set to null
+      students: cls.students ?? [], // Convert null/undefined to empty array
+      upcomingSession: cls.upcomingSession,
+    };
+  };
 
   const classData = classesData.map((cls) => ({
     id: cls.id,
@@ -60,6 +92,8 @@ const ClassesAdmin = ({
     status: cls.status,
     upcomingSession: cls.upcomingSession,
     students: cls.students,
+    schedule: createSchedule(cls),
+    classRawData: createClassRawData(cls)
   }));
 
   const filteredData = classData.filter((cls) => {
@@ -102,16 +136,24 @@ const ClassesAdmin = ({
     }, 2000);
   };
 
-  const deletePastSession = async (sessionId: string) => {
+  const handleUpdateClass = async (
+    classId: string,
+    updatedData: EditClassData,
+  ) => {
     try {
-      const response = await deleteSessionAction({ csrfToken, sessionId });
-      if (response.success) {
-        alert('Successfully deleted session');
-        return;
-      }
-      alert('Failed to delete session. Please try again.');
+      setEditLoading(true);
+      // Here you would make your API call to update the class
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      // console.log('Updating class:', classId, updatedData);
+
+      // Close dialog and show success message
+      setShowEditDialog(false);
+      // You might want to trigger a refresh of the class list or update local state
     } catch (error) {
-      alert('Failed to delete session. Please try again.');
+      console.error('Error updating class:', error);
+      // Handle error (show error message, etc.)
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -127,34 +169,27 @@ const ClassesAdmin = ({
     }
   };
 
-  // Transform cls to SelectedSession
-  // const transformToSelectedSession = (
-  //   cls: (typeof classData)[0],
-  // ): SelectedClassAdmin => ({
-  //   id: cls.id,
-  //   name: cls.name || '',
-  //   time_slots: cls.time
-  //     ? [
-  //         {
-  //           day: cls.time.day,
-  //           start_time: cls.time.startTime,
-  //           end_time: cls.time.endTime,
-  //         },
-  //       ]
-  //     : [],
-  //   description: cls.description,
-  //   subject: cls.subject,
-  //   tutorName: cls.tutorName,
-  //   fee: cls.fee,
-  //   status: cls.status,
-  //   grade: cls.grade,
-  //   upcomingSession: cls.upcomingSession,
-  // });
-
   const handleViewDeleteDialog = (classId: string) => {
     setSelectedClassId(classId);
     setShowDeleteDialog(true);
   };
+
+  const formatDataForEditCls = (cls: (typeof classData)[0]) => {
+    return {
+      id: cls.id,
+      name: cls.name,
+      schedule: cls.schedule|| 'No schedule available',
+      subject: cls.subject ?? undefined,
+      status: cls.status!,
+      grade: cls.grade,
+      description: cls.description ?? undefined,
+      classRawData: cls.classRawData,
+    };
+  };
+
+  const handleSetEditClassData = (cls: (typeof classData)[0]) => {
+    setSelectedEditClassData(() => formatDataForEditCls(cls));
+  }
 
   return (
     <>
@@ -202,22 +237,22 @@ const ClassesAdmin = ({
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Tutor Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Class Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Day
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Time slot
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Actions
                 </th>
               </tr>
@@ -225,19 +260,19 @@ const ClassesAdmin = ({
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredData.map((cls) => (
                 <tr key={cls.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-5 py-4 whitespace-nowrap">
                     {cls.tutorName}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{cls.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-5 py-4 whitespace-nowrap">{cls.name}</td>
+                  <td className="px-5 py-4 whitespace-nowrap">
                     {cls.time?.day}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-5 py-4 whitespace-nowrap">
                     {cls.time?.startTime}-{cls.time?.endTime}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{cls.status}</td>
-                  <td className="px-6 py-4 whitespace-nowrap space-x-2">
-                    {/* Attendance Button */}
+                  <td className="px-5 py-4 whitespace-nowrap">{cls.status}</td>
+                  <td className="px-5 py-4 whitespace-nowrap space-x-2">
+                    {/* View students Button */}
                     <div className="relative group inline-block">
                       <button
                         onClick={() => {
@@ -256,6 +291,22 @@ const ClassesAdmin = ({
                       </button>
                       <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
                         View Students
+                      </span>
+                    </div>
+                    {/* Edit class button */}
+                    <div className="relative group inline-block">
+                      <button
+                        onClick={() => {
+                          setShowEditDialog(true);
+                          handleSetEditClassData(cls);
+                        }}
+                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                        aria-label="Attendance"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                        Edit Class
                       </span>
                     </div>
 
@@ -319,6 +370,14 @@ const ClassesAdmin = ({
         onClose={() => setShowStudentsDialog(false)}
         classDataName={selectedClassName}
         studentData={selectedClassStudents}
+      />
+
+      <EditClassDialog
+        open={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+        onUpdateClass={handleUpdateClass}
+        classData={selectedEditClassData}
+        loading={editLoading}
       />
     </>
   );

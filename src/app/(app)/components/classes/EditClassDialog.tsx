@@ -30,7 +30,7 @@ interface EditClassDialogProps {
   open: boolean;
   onClose: () => void;
   onUpdateClass: (classId: string, classData: EditClassData) => void;
-  classData: ClassListData | null;
+  classData: ClassListData ;
   loading?: boolean;
 }
 

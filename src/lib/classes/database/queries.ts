@@ -209,6 +209,7 @@ export async function getAllClassesDataAdmin(
         status,
         time_slots,
         grade,
+        starting_date,
         noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count),
         students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id (
           id,
@@ -261,7 +262,8 @@ export async function getAllClassesDataAdmin(
           tutor: classData.tutor,
           noOfStudents: classData.noOfStudents[0]?.count || 0,
           upcomingSession: sessionsData?.[0]?.start_time || null,
-          students: classData.students
+          students: classData.students,
+          starting_date: classData.starting_date,
         };
       }) || [],
     );
