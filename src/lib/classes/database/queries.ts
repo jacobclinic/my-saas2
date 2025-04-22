@@ -11,8 +11,12 @@ import {
   ClassWithTutorAndEnrollment,
   ClassWithTutorAndEnrollmentAndNextSession,
 } from '../types/class';
-import { ClassForStudentType, ClassType } from '../types/class-v2';
-import { unknown } from 'zod';
+import {
+  ClassForStudentType,
+  ClassType,
+  ClassWithTutorAndEnrollmentAdmin,
+  ClassWithTutorAndEnrollmentAdminRawData,
+} from '../types/class-v2';
 
 interface ClassWithTutorAndEnrollmentRawData
   extends Omit<ClassWithTutorAndEnrollment, 'noOfStudents'> {
@@ -93,7 +97,7 @@ export async function getClassDataByIdwithNextSession(
       { count: 'exact' },
     )
     .eq('id', classId)
-    .maybeSingle() ) as {
+    .maybeSingle()) as {
     data: ClassWithTutorAndEnrollmentRawData | null;
     error: unknown;
   };
@@ -182,6 +186,81 @@ export async function getAllClassesData(
 }
 
 // version 2
+
+export async function getAllClassesDataAdmin(
+  client: SupabaseClient<Database>,
+): Promise<ClassWithTutorAndEnrollmentAdmin[]> {
+  try {
+    const { data, error } = await client
+      .from(CLASSES_TABLE)
+      .select(
+        `
+        id,
+        name,
+        description,
+        subject,
+        tutor_id,
+        tutor:${USERS_TABLE}!tutor_id (
+          id,
+          first_name,
+          last_name
+        ),
+        fee,
+        status,
+        time_slots,
+        grade,
+        noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
+      `,
+        { count: 'exact' },
+      )
+      .returns<ClassWithTutorAndEnrollmentAdminRawData[]>();
+
+    if (error) {
+      throw new Error(
+        `Error fetching classes: ${(error as PostgrestError).message}`,
+      );
+    }
+
+    const transformedData = await Promise.all(
+      data?.map(async (classData) => {
+        // Fetch upcoming session
+        const { data: sessionsData } = await client
+          .from(SESSIONS_TABLE)
+          .select(`id, start_time`)
+          .eq('class_id', classData.id)
+          .gt('start_time', new Date().toISOString())
+          .order('start_time', { ascending: true })
+          .limit(1);
+    
+        const timeSlots = classData?.time_slots as
+          | { day: string; startTime: string; endTime: string }[]
+          | null;
+    
+        return {
+          id: classData.id,
+          name: classData.name,
+          description: classData.description,
+          subject: classData.subject,
+          tutorId: classData.tutor_id,
+          fee: classData.fee,
+          status: classData.status,
+          time_slots: timeSlots,
+          grade: classData.grade,
+          tutor: classData.tutor,
+          noOfStudents: classData.noOfStudents[0]?.count || 0,
+          upcomingSession: sessionsData?.[0]?.start_time || null,
+        };
+      }) || []
+    );
+
+    // console.log('getAllClassesData-2', transformedData);
+
+    return transformedData;
+  } catch (error) {
+    console.error('Failed to fetch classes:', error);
+    throw error;
+  }
+}
 
 export async function getAllClassesByTutorIdData(
   client: SupabaseClient<Database>,

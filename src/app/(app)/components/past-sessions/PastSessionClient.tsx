@@ -17,14 +17,14 @@ const PastSessionsClient = ({
     useState<PastSession[]>(initialSessions);
 
   // Calculate the total number of pages
-  const totalPages = Math.ceil(initialSessions.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   // Calculate pagination indices
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
   // Get the current page's data
-  const currentSessions = initialSessions.slice(
+  const currentSessions = filteredData.slice(
     indexOfFirstItem,
     indexOfLastItem,
   );

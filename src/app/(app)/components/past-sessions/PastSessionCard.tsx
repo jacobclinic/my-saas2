@@ -14,9 +14,9 @@ import {
   Clock,
   Link2,
   File,
+  Link,
 } from 'lucide-react';
 import AttendanceDialog from './AttendanceDialog';
-import { getSignedUrl } from '~/lib/aws/s3.service';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
@@ -24,11 +24,12 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     recordings?: boolean;
     materials?: boolean;
     allMaterials?: boolean;
+    student?: boolean;
   }>({});
 
   const handleCopyLink = (
     link: string,
-    type: 'recordings' | 'materials' | 'allMaterials',
+    type: 'recordings' | 'materials' | 'allMaterials' | 'student',
   ) => {
     navigator.clipboard.writeText(link);
     setLinkCopied({ ...linkCopied, [type]: true });
@@ -37,15 +38,20 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     }, 2000);
   };
 
-  const getRecordingUrl = useCallback(async (fileName: string): Promise<string> => {
-    console.log('Fetching signed URL for:', fileName);
-    const response = await fetch(`/api/signed-url?fileName=${encodeURIComponent(fileName)}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch signed URL: ${response.statusText}`);
-    }
-    const data = await response.json();
-    return data.signedUrl;
-  }, []);
+  const getRecordingUrl = useCallback(
+    async (fileName: string): Promise<string> => {
+      console.log('Fetching signed URL for:', fileName);
+      const response = await fetch(
+        `/api/signed-url?fileName=${encodeURIComponent(fileName)}`,
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch signed URL: ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data.signedUrl;
+    },
+    [],
+  );
   return (
     <>
       <Card className="mb-4">
@@ -91,7 +97,10 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
                   </Button>
                 ))
               ) : (
-                <p>No recordings available</p>
+                <Button variant="outline">
+                  <Video className="h-4 w-4 mr-2" />
+                  No recordings available
+                </Button>
               )}
 
               {/* <Button
@@ -114,6 +123,24 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
               >
                 <Users className="h-4 w-4 mr-2" />
                 View Attendance
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() =>
+                  handleCopyLink(
+                    `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${null}&sessionTitle=${sessionData.topic}`)}`,
+                    'student',
+                  )
+                }
+              >
+                {' '}
+                {linkCopied.student ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <Link className="h-4 w-4 mr-2" />
+                )}
+                {linkCopied.student ? 'Copied!' : 'Copy Student Link'}
               </Button>
             </div>
           </div>

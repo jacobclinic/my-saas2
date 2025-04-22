@@ -138,7 +138,7 @@ export interface NewClassData {
   yearGrade: string;
   monthlyFee: string;
   startDate: string;
-  endDate: string;
+  // endDate: string;
   timeSlots: [{
     day: string;
     startTime: string;
@@ -160,4 +160,57 @@ export interface EditClassData {
   startDate: string;
   timeSlots: TimeSlot[];
   status: 'active' | 'inactive' | 'draft';
+}
+
+export interface ClassWithTutorAndEnrollmentAdminRawData {
+  id: string;
+  name: string;
+  description: string | null;
+  subject: string | null;
+  tutor_id: string;
+  fee: number;
+  status: string;
+  time_slots: { day: string; startTime: string; endTime: string }[];
+  grade: string;
+  tutor: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  };
+  noOfStudents: [{ count: number }]; // Raw count from Supabase
+}
+export interface ClassWithTutorAndEnrollmentAdmin {
+  id: string;
+  name: string;
+  description: string | null;
+  subject: string | null;
+  tutorId: string;
+  fee: number;
+  status: string;
+  time_slots: { day: string; startTime: string; endTime: string }[] | null;
+  grade: string;
+  tutor: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  };
+  noOfStudents: number;
+  upcomingSession: string | null;
+}
+
+export interface SelectedClassAdmin {
+  id: string
+  name?: string | null
+  description: string | null
+  subject: string | null
+  tutorName: string | null
+  fee: number | null
+  status: string | null  
+  time_slots: {
+    day: string;
+    start_time: string;
+    end_time: string;
+  }[] | null
+  grade: string | null
+  upcomingSession: string | null
 }

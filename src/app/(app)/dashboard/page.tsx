@@ -4,14 +4,14 @@ import { PageBody } from '~/core/ui/Page';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import {
   getAllUpcommingSessionsByTutorIdData,
-  getAllUpcomingSessionsByStudentIdData,
-  getAllPastSessionsByStudentIdData,
   getAllUpcomingSessionsByStudentIdPerWeek,
+  getTodaysAllUpcommingSessionsData,
 } from '~/lib/sessions/database/queries';
 import { Alert, AlertDescription } from '../components/base-v2/ui/Alert';
 import { Info } from 'lucide-react';
 import StudentDashboard from '../components/student-dashboard/StudentDashboard';
 import TutorDBClient from '../components/tutor-dashboard/TutorDashBoardClient';
+import AdminDashboardClient from '../components/admin/dashboard/AdminDashboardClient';
 
 export const metadata = {
   title: 'Dashboard',
@@ -49,10 +49,9 @@ async function DashboardPage() {
     // const userRole = userData?.user_role || "student";
 
     // Fetch appropriate data based on user role
-    if (userRole === 'tutor' || userRole === 'admin') {
+    if (userRole === 'tutor') {
       const [sessionData] = await Promise.all([
         getAllUpcommingSessionsByTutorIdData(client, user.id, true),
-        // getAllClassesByTutorIdDataPerWeek(client, user.id, true)
       ]);
       // console.log("DashboardPage-UpcomingSession-server-component------", sessionData);
       // console.log("DashboardPage-Classes-server-component------", classesData);
@@ -114,6 +113,40 @@ async function DashboardPage() {
           </PageBody>
         </>
       );
+    }
+    else if (userRole === 'admin') {
+      const allUpcomingSessions = await getTodaysAllUpcommingSessionsData(
+        client
+      );
+      console.log("DashboardPage-UpcomingSession-server-component------", allUpcomingSessions[0].class?.tutor);
+
+      return (
+        <>
+          <AppHeader
+            title="Admin Dashboard"
+            description={`Welcome back! ${
+              allUpcomingSessions.length
+                ? 'There are upcoming sessions.'
+                : "There are no classes scheduled today"
+            }`}
+          />
+          <PageBody>
+            {!allUpcomingSessions.length ? (
+              <Alert className="bg-blue-50 border-blue-200">
+                <Info className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-700">
+                 There are no classes scheduled today
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <AdminDashboardClient
+                upcomingSessionData={allUpcomingSessions}
+              />
+            )}
+          </PageBody>
+        </>
+      );
+
     }
 
     // Handle unknown user role

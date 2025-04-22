@@ -4,10 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Info } from 'lucide-react';
 import {
   UpcomingSessionTableData,
-  UploadedMaterial,
 } from '~/lib/sessions/types/upcoming-sessions';
 import UpcommingSessionClassCard from '../../upcoming-sessions/UpcommingSessionCard';
-import { ClassType } from '~/lib/classes/types/class-v2';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 
 const UpcomingClassesSection = ({

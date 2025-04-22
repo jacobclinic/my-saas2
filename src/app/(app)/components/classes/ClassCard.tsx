@@ -16,7 +16,11 @@ import {
   Building,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { ClassCardProps, EditClassData, NewStudentData } from '~/lib/classes/types/class-v2';
+import {
+  ClassCardProps,
+  EditClassData,
+  NewStudentData,
+} from '~/lib/classes/types/class-v2';
 import RegisteredStudentsDialog from './RegisteredStudentsDialog';
 import EditClassDialog from './EditClassDialog';
 import AddStudentDialog from './AddStudentDialog';
@@ -35,7 +39,6 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const [addStudentLoading, setAddStudentLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
-
   const handleCopyLink = async () => {
     const classId = classData.id;
     const registrationData = {
@@ -45,8 +48,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
       time: classData.schedule || '',
     };
 
-    const registrationLink = await generateRegistrationLinkAction(registrationData);
-    
+    const registrationLink =
+      await generateRegistrationLinkAction(registrationData);
+
     navigator.clipboard.writeText(registrationLink);
     setLinkCopied(true);
     setTimeout(() => {
@@ -54,17 +58,19 @@ const ClassCard: React.FC<ClassCardProps> = ({
     }, 2000);
   };
 
-  const handleUpdateClass = async (classId: string, updatedData: EditClassData) => {
+  const handleUpdateClass = async (
+    classId: string,
+    updatedData: EditClassData,
+  ) => {
     try {
       setEditLoading(true);
       // Here you would make your API call to update the class
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
       // console.log('Updating class:', classId, updatedData);
-      
+
       // Close dialog and show success message
       setShowEditDialog(false);
       // You might want to trigger a refresh of the class list or update local state
-      
     } catch (error) {
       console.error('Error updating class:', error);
       // Handle error (show error message, etc.)
@@ -76,7 +82,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const handleAddStudent = async (studentData: NewStudentData) => {
     try {
       setAddStudentLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       // console.log('Adding student:', studentData, 'to class:', classData.id);
       setShowAddStudentDialog(false);
     } catch (error) {
@@ -85,7 +91,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
       setAddStudentLoading(false);
     }
   };
-  
+
   return (
     <>
       <Card className={cn('mb-4', isDashboard && 'border-blue-200 bg-blue-50')}>
@@ -95,12 +101,13 @@ const ClassCard: React.FC<ClassCardProps> = ({
               <div className="space-y-2">
                 <div className="space-y-1">
                   <h3 className="text-lg font-semibold">{classData.name}</h3>
-                 
+
                   <div className="flex items-center text-sm text-gray-600">
-                  
                     <CalendarDays className="h-4 w-4 mr-2" />
-                    
-                    {classData.schedule?.replace(/\b([a-z])/,(match)=>match.toUpperCase())}
+
+                    {classData.schedule?.replace(/\b([a-z])/, (match) =>
+                      match.toUpperCase(),
+                    )}
                   </div>
                   {'nextClass' in classData && (
                     <div className="flex items-center text-sm text-gray-600">
@@ -116,8 +123,13 @@ const ClassCard: React.FC<ClassCardProps> = ({
                   )}
                 </div>
               </div>
-
-              
+              <div>
+                {classData.status === 'active' ? (
+                  <Badge variant="secondary">{classData.status}</Badge>
+                ) : (
+                  <Badge variant="destructive">{classData.status}</Badge>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -129,35 +141,25 @@ const ClassCard: React.FC<ClassCardProps> = ({
                 View Students
               </Button>
 
-              <Button
-                variant="outline"
-                onClick={() => setShowEditDialog(true)}
-              >
+              <Button variant="outline" onClick={() => setShowEditDialog(true)}>
                 <Edit2 className="h-4 w-4 mr-2" />
                 Edit Class
               </Button>
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    handleCopyLink()
-                  }
-                >
-                  {linkCopied ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <Copy className="h-4 w-4 mr-2" />
-                  )}
-                  {linkCopied ? 'Copied!' : 'Registration Link'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAddStudentDialog(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Student
-                </Button>
-             
-
+              <Button variant="outline" onClick={() => handleCopyLink()}>
+                {linkCopied ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-2" />
+                )}
+                {linkCopied ? 'Copied!' : 'Registration Link'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowAddStudentDialog(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Student
+              </Button>
               {showViewDetails && (
                 <Button
                   variant="outline"

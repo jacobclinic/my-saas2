@@ -11,7 +11,10 @@ import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { ClassType, NewClassData } from './types/class-v2';
 import { getUpcomingOccurrences, getUpcomingOccurrencesForYear } from '../utils/date-utils';
 import { zoomService } from '../zoom/zoom.service';
-import { SESSIONS_TABLE } from '../db-tables';
+import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
+import verifyCsrfToken from '~/core/verify-csrf-token';
+import { getAllClassesData } from './database/queries';
+import { getAllUpcommingSessionsData } from '../sessions/database/queries';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -110,7 +113,7 @@ export const createClassAction = withSession(
         const nextOccurrences = getUpcomingOccurrences(
           timeSlot,
           classData.startDate,
-          classData.endDate,
+          new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0],
         );
 
         // Take the first occurrence for Zoom meeting creation
@@ -126,7 +129,6 @@ export const createClassAction = withSession(
             yearGrade: classData.yearGrade || '',
             monthlyFee: classData.monthlyFee || '',
             startDate: classData.startDate || '',
-            endDate: classData.endDate || '',
             timeSlots: [timeSlot],
             tutorId: classData.tutorId || '',
           },
@@ -188,10 +190,77 @@ export const updateClassAction = withSession(
 
 export const deleteClassAction = withSession(
   async (params: DeleteClassParams) => {
+    const { classId, csrfToken } = params;
     const client = getSupabaseServerActionClient();
 
-    const result = await deleteClass(client, params.classId);
+    await verifyCsrfToken(csrfToken);
 
+    // Get the current user's session
+    const {
+      data: { session },
+      error: sessionError,
+    } = await client.auth.getSession();
+    if (sessionError || !session?.user) {
+      return {
+        success: false,
+        error: 'User not authenticated',
+      };
+    }
+
+    const userId = session.user.id;
+
+    // Check user role and permissions
+    const { data: userProfile, error: profileError } = await client
+      .from(USERS_TABLE) 
+      .select('user_role')
+      .eq('id', userId)
+      .single();
+
+    if (profileError || !userProfile) {
+      return {
+        success: false,
+        error: 'Failed to fetch user profile',
+      };
+    }
+
+    const isAdmin = userProfile.user_role === 'admin';
+
+    // If not admin, check if user is a tutor for the class
+    let isAuthorized = isAdmin;
+    if (!isAdmin) {
+      const { data: classData, error: classError } = await client
+        .from(CLASSES_TABLE) 
+        .select('tutor_id')
+        .eq('id', classId)
+        .single();
+
+      if (classError || !classData) {
+        return {
+          success: false,
+          error: 'Class not found',
+        };
+      }
+
+      isAuthorized = classData.tutor_id === userId;
+    }
+
+    if (!isAuthorized) {
+      return {
+        success: false,
+        error: 'Unauthorized to delete this class',
+      };
+    }
+
+    //Proceed with class deletion
+    const result = await deleteClass(client, classId);
+    if (!result) {
+      return {
+        success: false,
+        error: 'Failed to delete class',
+      };
+    }
+
+    //Revalidate paths
     revalidatePath('/classes');
     revalidatePath('/(app)/classes');
 
@@ -199,9 +268,8 @@ export const deleteClassAction = withSession(
       success: true,
       classId: result,
     };
-  },
+  }
 );
-
 const createZoomMeetingsBatch = async (
   classId: string,
   classData: NewClassData,
@@ -294,3 +362,39 @@ export const createZoomMeeting = async (
     console.error(`Error creating Zoom meeting`, error);
   }
 };
+
+export const getAllUpcominSessionsAdmin = async() =>{
+  const client = getSupabaseServerActionClient();
+  const {
+    data: { session },
+    error: sessionError,
+  } = await client.auth.getSession();
+  if (sessionError || !session?.user) {
+    throw new Error('User not authenticated');
+  }
+
+  const userId = session.user.id;
+
+  // Check user role and permissions
+  const { data: userProfile, error: profileError } = await client
+    .from(USERS_TABLE) 
+    .select('user_role')
+    .eq('id', userId)
+    .single();
+
+  if (profileError || !userProfile) {
+    throw new Error('Failed to fetch user profile');
+  }
+
+  const isAdmin = userProfile.user_role === 'admin';
+
+  if (!isAdmin) {
+    throw new Error('Unauthorized to access this data');
+  }
+
+  const data =  await getAllUpcommingSessionsData(client)
+  if (!data) {
+    throw new Error('Failed to fetch upcoming sessions data');
+  }
+  return data;
+}

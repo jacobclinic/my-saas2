@@ -80,7 +80,7 @@ function JoinClassSignin() {
       ) : (
         <div className="bg-gray-50 p-4 rounded-md border border-blue-500 mb-6">
           <h3 className="text-base font-medium text-blue-900 mb-2">
-            {sessionParams.className && <b>{sessionParams.className}</b>}
+            {sessionParams.className && <b>{sessionParams.className.charAt(0).toUpperCase() + sessionParams.className.slice(1)}</b>}
           </h3>
           {sessionParams.sessionDate && (
             <p className="text-sm text-blue-800 mb-1">
@@ -90,13 +90,13 @@ function JoinClassSignin() {
 
           {sessionParams.sessionSubject && (
             <p className="text-sm text-blue-800">
-              Subject: {sessionParams.sessionSubject}
+              Subject: {sessionParams.sessionSubject.charAt(0).toUpperCase() + sessionParams.sessionSubject.slice(1)}
             </p>
           )}
-          {sessionParams.sessionTitle != 'undefined' ||
+          {sessionParams.sessionTitle != 'undefined' &&
             (sessionParams.sessionTitle && (
               <p className="text-sm text-blue-800">
-                Title: {sessionParams.sessionTitle}
+                Title: {sessionParams.sessionTitle.charAt(0).toUpperCase() + sessionParams.sessionTitle.slice(1)}
               </p>
             ))}
         </div>
@@ -147,17 +147,17 @@ function JoinClassSignin() {
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 mb-4"
           type="submit"
         >
-          Join Class
+          Go to Class
         </button>
       </form>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-gray-600 pt-4">
         Having trouble joining? Contact support at{' '}
         <a
           href="mailto:support@commaeducation.com"
           className="text-blue-600 hover:underline"
         >
-          support@commaeducation.com
+          support@commaeducation.lk
         </a>
       </p>
     </div>

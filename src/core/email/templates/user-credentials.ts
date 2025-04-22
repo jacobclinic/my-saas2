@@ -65,7 +65,7 @@ export function getUserCredentialsEmailTemplate(params: {
             <p>For security reasons, please change your password after your first login.</p>
             
             <p style="text-align: center; margin: 30px 0;">
-              <a href="${loginUrl}" class="button">Login to Your Account</a>
+              <a href="${loginUrl}" style="background-color: #E84437; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login to Your Account</a>
             </p>
 
             <p>If you have any questions or need assistance, please don't hesitate to contact the admin team.</p>

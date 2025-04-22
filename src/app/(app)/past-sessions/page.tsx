@@ -1,9 +1,14 @@
 import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
-import { getAllPastSessionsByStudentIdData, getAllPastSessionsByTutorIdData } from '~/lib/sessions/database/queries';
+import {
+  getAllPastSessionsByStudentIdData,
+  getAllPastSessionsByTutorIdData,
+  getAllPastSessionsDataAdmin,
+} from '~/lib/sessions/database/queries';
 import PastSessionsClient from '../components/past-sessions/PastSessionClient';
 import StudentPastSessionClient from '../components/past-sessions-student/StudentPastSessionClient';
+import PastSessionsAdmin from '../components/admin/past-session/PastSessionsAdmin';
 
 export const metadata = {
   title: 'Sessions',
@@ -24,6 +29,8 @@ async function PastSessionsPage() {
     user?.user?.id || '',
   );
 
+  const pastSessionsAdmin = await getAllPastSessionsDataAdmin(client);
+
   // Get user role
   const { data: userData, error: userError } = await client
     .from('users')
@@ -42,9 +49,14 @@ async function PastSessionsPage() {
       <AppHeader title={''} description={''} />
       <PageBody>
         {userRole === 'student' ? (
-          <StudentPastSessionClient pastSessionData={studentSessionData} userId={user.user!.id}/>
-        ) : (
+          <StudentPastSessionClient
+            pastSessionData={studentSessionData}
+            userId={user.user!.id}
+          />
+        ) : userRole === 'tutor' ? (
           <PastSessionsClient initialSessions={tutorSessionData} />
+        ) : (
+          <PastSessionsAdmin pastSessionsData={pastSessionsAdmin} />
         )}
       </PageBody>
     </>

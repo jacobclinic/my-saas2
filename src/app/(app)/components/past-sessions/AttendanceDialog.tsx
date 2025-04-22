@@ -36,8 +36,8 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-sm text-gray-600">{selectedSession?.date}</p>
-              <p className="text-sm text-gray-600">{selectedSession?.time}</p>
+              <p className="text-sm text-gray-600">Date: {selectedSession?.date}</p>
+              <p className="text-sm text-gray-600">Time: {selectedSession?.time}</p>
             </div>
             <Badge variant="outline">{selectedSession?.attendance.length} Students</Badge>
           </div>

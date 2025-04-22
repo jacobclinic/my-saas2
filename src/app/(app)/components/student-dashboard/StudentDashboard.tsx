@@ -7,7 +7,6 @@ import React, {
   useState,
   useTransition,
 } from 'react';
-import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Calendar, Info, MonitorPlay } from 'lucide-react';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
@@ -250,14 +249,7 @@ const StudentDashboard = ({
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Tips Alert */}
-        <Alert className="bg-blue-50 border-blue-200">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-700">
-            Join your class 5 minutes early to ensure a smooth start. Don&apos;t
-            forget to check the class materials beforehand!
-          </AlertDescription>
-        </Alert>
+       
 
         {/* Next Session */}
         {nextSession && (

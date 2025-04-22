@@ -26,6 +26,7 @@ import {
 } from '../base-v2/ui/Dialog';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { AlertTriangle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface StudentSessionCardProps {
   sessionData: SessionStudentTableData;
@@ -45,6 +46,7 @@ const StudentSessionCard = ({
   joinMeetingAsStudent,
 }: StudentSessionCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
 
   const handleDownloadMaterials = async () => {
     if (!sessionData?.materials || sessionData.materials.length === 0) {
@@ -178,41 +180,44 @@ const StudentSessionCard = ({
                 </Button>
               ) : sessionData.paymentStatus ===
                 PAYMENT_STATUS.PENDING_VERIFICATION ? null : (
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full" disabled={isPending}>
-                      View Class
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{sessionData.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-4 py-4">
-                      <Button
-                        onClick={() => {
-                          joinMeetingAsStudent(sessionData);
-                          setIsDialogOpen(false);
-                        }}
-                        disabled={isPending}
-                      >
-                        <Video className="h-4 w-4 mr-2" />
-                        Join Class
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleDownloadMaterials}
-                        disabled={
-                          !sessionData?.materials ||
-                          sessionData.materials.length === 0
-                        }
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Class Materials
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                // <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                //   <DialogTrigger asChild>
+                //     <Button className="w-full" disabled={isPending}>
+                //       View Class
+                //     </Button>
+                //   </DialogTrigger>
+                //   <DialogContent>
+                //     <DialogHeader>
+                //       <DialogTitle>{sessionData.name}</DialogTitle>
+                //     </DialogHeader>
+                //     <div className="flex flex-col gap-4 py-4">
+                //       <Button
+                //         onClick={() => {
+                //           joinMeetingAsStudent(sessionData);
+                //           setIsDialogOpen(false);
+                //         }}
+                //         disabled={isPending}
+                //       >
+                //         <Video className="h-4 w-4 mr-2" />
+                //         Join Class
+                //       </Button>
+                //       <Button
+                //         variant="outline"
+                //         onClick={handleDownloadMaterials}
+                //         disabled={
+                //           !sessionData?.materials ||
+                //           sessionData.materials.length === 0
+                //         }
+                //       >
+                //         <Download className="h-4 w-4 mr-2" />
+                //         Download Class Materials
+                //       </Button>
+                //     </div>
+                //   </DialogContent>
+                // </Dialog>
+                <Button className="w-full" disabled={isPending} onClick={() => router.push(`/sessions/student/${sessionData.id}`)}>
+                  View Class
+                </Button>
               )}
             </>
           ) : (
@@ -232,12 +237,23 @@ const StudentSessionCard = ({
                   </Button>
                 ))
               ) : (
-                <Alert className="border-red-200 bg-red-50">
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-700">
-                    You have not made the payment or no recordings available
-                  </AlertDescription>
-                </Alert>
+                <>
+                  {sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED ? (
+                    <Alert className="border-red-200 bg-red-50">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-red-700">
+                        Recording not available for this session.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert className="border-red-200 bg-red-50">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-red-700">
+                        You have not made the payment to the class
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </>
               )}
               {sessionData.materials?.[0]?.url && (
                 <Button variant="outline" onClick={handleDownloadMaterials}>

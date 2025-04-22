@@ -1,15 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import type {
-  UpcomingSessionTableData,
-} from '~/lib/sessions/types/upcoming-sessions';
-import { Alert, AlertDescription } from '../base-v2/ui/Alert';
-import { Input } from '../base-v2/ui/Input';
+import type { UpcomingSessionTableData } from '~/lib/sessions/types/upcoming-sessions';
+import { Input } from '../../base-v2/ui/Input';
 import { Info, Search, X } from 'lucide-react';
-import UpcommingSessionCard from './UpcommingSessionCard';
+import UpcommingSessionCard from './AdminSessionCard';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { DateRangePicker } from '@heroui/date-picker';
+import AdminSessionCard from './AdminSessionCard';
 
 interface DateRange {
   start?: {
@@ -24,18 +22,16 @@ interface DateRange {
   } | null;
 }
 
-const UpcomingSessions = ({
+const AdminDashboardSessions = ({
   upcomingSessionData,
   onFilterChange,
-  allSessionData
+  allSessionData,
 }: {
   upcomingSessionData: UpcomingSession[];
   onFilterChange: (filteredData: UpcomingSession[]) => void;
   allSessionData: UpcomingSession[];
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAlertVisible, setIsAlertVisible] = useState(true);
-  const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [upcomingSessionTableData, setUpcomingSessionTableData] = useState<
     UpcomingSessionTableData[]
   >([]);
@@ -44,14 +40,16 @@ const UpcomingSessions = ({
   useEffect(() => {
     if (upcomingSessionData) {
       const formattedData: UpcomingSessionTableData[] = upcomingSessionData.map(
-        (session) => formatSessionData(session)
+        (session) => formatSessionData(session),
       );
       setUpcomingSessionTableData(formattedData);
     }
   }, [upcomingSessionData]);
 
   // Helper function to format session data
-  const formatSessionData = (session: UpcomingSession): UpcomingSessionTableData => {
+  const formatSessionData = (
+    session: UpcomingSession,
+  ): UpcomingSessionTableData => {
     const formattedDate = new Date(
       session?.start_time || '',
     ).toLocaleDateString('en-US', {
@@ -62,7 +60,7 @@ const UpcomingSessions = ({
     });
     const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })} - 
     ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
-    
+
     return {
       id: session.id,
       name: `${session?.class?.name}`,
@@ -87,47 +85,24 @@ const UpcomingSessions = ({
     };
   };
 
-  // Helper function to convert date object to JavaScript Date
-  const dateObjectToDate = (dateObj: any): Date | null => {
-    if (!dateObj) return null;
-    return new Date(dateObj.year, dateObj.month - 1, dateObj.day);
-  };
-
   // Filter the complete dataset when search or date range changes
   useEffect(() => {
     // Apply filters to the FULL dataset
     const filteredSessions = allSessionData.filter((session) => {
       // Apply search term filter
       const matchesSearchTerm = searchTerm
-        ? (session?.class?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+        ? (session?.class?.name || '')
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
         : true;
 
-      // Apply date range filter if dateRange is selected
-      let matchesDateRange = true;
-      
-      if (dateRange && dateRange.start && dateRange.end) {
-        const sessionDate = new Date(session?.start_time || '');
-        const startDate = dateObjectToDate(dateRange.start);
-        const endDate = dateObjectToDate(dateRange.end);
-        
-        if (startDate && endDate) {
-          matchesDateRange = sessionDate >= startDate && sessionDate <= endDate;
-        }
-      }
-
       // Return true only if both conditions are satisfied
-      return matchesSearchTerm && matchesDateRange;
+      return matchesSearchTerm;
     });
 
     // Call the parent's onFilterChange with the filtered data
     onFilterChange(filteredSessions);
-    
-  }, [searchTerm, dateRange, allSessionData]);
-
-  // Handle date range change
-  const handleDateRangeChange = (value: any) => {
-    setDateRange(value);
-  };
+  }, [searchTerm,  allSessionData]);
 
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
@@ -145,23 +120,14 @@ const UpcomingSessions = ({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
-          {/* HeroUI DateRangePicker */}
-          <DateRangePicker
-            value={dateRange as any}
-            aria-label='Date Range'
-            onChange={handleDateRangeChange} 
-            className="w-full sm:w-auto border rounded-lg border-gray-300"
-          />
         </div>
       </div>
-
 
       {/* Classes List */}
       <div className="space-y-6">
         {upcomingSessionTableData.length > 0 ? (
           upcomingSessionTableData.map((sessionData) => (
-            <UpcommingSessionCard
+            <AdminSessionCard
               key={sessionData.id}
               sessionData={sessionData}
             />
@@ -176,4 +142,4 @@ const UpcomingSessions = ({
   );
 };
 
-export default UpcomingSessions;
+export default AdminDashboardSessions;

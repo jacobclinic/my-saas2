@@ -10,13 +10,18 @@ import {
 import UpcomingSessionClient from '../components/upcoming-sessions/UpcomingSessionClient';
 import { redirect } from 'next/navigation';
 import StudentUpcomingSessionClient from '../components/upcoming-sessions-student/StudentUpcomingSessionClient';
+import UpcomingSessionsAdmin from '../components/admin/upcoming-sessions/UpcomingSessionsAdmin';
+import { getAllUpcominSessionsAdmin } from '~/lib/classes/server-actions-v2';
 
 export const metadata = {
   title: 'Sessions',
 };
 
+
 async function UpcomingSessionsPage() {
   const client = getSupabaseServerComponentClient();
+
+
   const { data: user, error: authError } = await client.auth.getUser();
   // console.log('-----UpcomingSessionsPage-------auth-User:', user);
   const tutorSessionData = await getAllUpcommingSessionsByTutorIdDataPerWeek(
@@ -28,6 +33,8 @@ async function UpcomingSessionsPage() {
     client,
     user?.user?.id || '',
   );
+
+  const adminSessionData = await getAllUpcominSessionsAdmin()
 
   if (authError || !user?.user.id) {
     console.error('Authentication error:', authError);
@@ -57,8 +64,10 @@ async function UpcomingSessionsPage() {
             upcomingSessionData={studentSessionData}
             userId={user.user.id}
           />
-        ) : (
+        ) : userRole === 'tutor' ? (
           <UpcomingSessionClient upcomingSessionData={tutorSessionData} />
+        ) : (
+          <UpcomingSessionsAdmin upcomingSessionData={adminSessionData} />
         )}
       </PageBody>
     </>

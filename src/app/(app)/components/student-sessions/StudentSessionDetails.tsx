@@ -120,15 +120,7 @@ const StudentSessionDetails = ({ sessionData, type, studentId, isEnrolledToClass
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Important Info Alert */}
-        {type !== 'past' && (
-          <Alert className="bg-blue-50 border-blue-200">
-            <Info className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-700">
-              Join your class 5 minutes early to ensure a smooth start. Don&apos;t forget to check the class materials beforehand!
-            </AlertDescription>
-          </Alert>
-        )}
+       
 
         {/* Main Session Card */}
         <Card className={type === 'next' ? 'border-2 border-blue-200 bg-blue-50' : ''}>
