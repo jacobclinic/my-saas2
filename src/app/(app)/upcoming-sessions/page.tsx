@@ -2,9 +2,7 @@ import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
 import {
-  getAllUpcomingSessionsByStudentIdData,
   getAllUpcomingSessionsByStudentIdPerWeek,
-  getAllUpcommingSessionsByTutorIdData,
   getAllUpcommingSessionsByTutorIdDataPerWeek,
 } from '~/lib/sessions/database/queries';
 import UpcomingSessionClient from '../components/upcoming-sessions/UpcomingSessionClient';

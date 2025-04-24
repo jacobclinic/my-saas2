@@ -13,7 +13,7 @@ import { getUpcomingOccurrences, getUpcomingOccurrencesForYear } from '../utils/
 import { zoomService } from '../zoom/zoom.service';
 import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
-import { getAllClassesData } from './database/queries';
+import { isAdminOrCLassTutor } from './database/queries';
 import { getAllUpcommingSessionsData } from '../sessions/database/queries';
 
 type CreateClassParams = {
@@ -210,47 +210,13 @@ export const deleteClassAction = withSession(
     const userId = session.user.id;
 
     // Check user role and permissions
-    const { data: userProfile, error: profileError } = await client
-      .from(USERS_TABLE) 
-      .select('user_role')
-      .eq('id', userId)
-      .single();
-
-    if (profileError || !userProfile) {
+    const havePermission = await isAdminOrCLassTutor(client, userId, classId)
+    if(!havePermission){
       return {
         success: false,
-        error: 'Failed to fetch user profile',
+        error: `You don't have permissions to delete the class`,
       };
     }
-
-    const isAdmin = userProfile.user_role === 'admin';
-
-    // If not admin, check if user is a tutor for the class
-    let isAuthorized = isAdmin;
-    if (!isAdmin) {
-      const { data: classData, error: classError } = await client
-        .from(CLASSES_TABLE) 
-        .select('tutor_id')
-        .eq('id', classId)
-        .single();
-
-      if (classError || !classData) {
-        return {
-          success: false,
-          error: 'Class not found',
-        };
-      }
-
-      isAuthorized = classData.tutor_id === userId;
-    }
-
-    if (!isAuthorized) {
-      return {
-        success: false,
-        error: 'Unauthorized to delete this class',
-      };
-    }
-
     //Proceed with class deletion
     const result = await deleteClass(client, classId);
     if (!result) {
