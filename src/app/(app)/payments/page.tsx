@@ -23,6 +23,7 @@ async function PaymentsPage({
   searchParams: { month?: string };
 }) {
   const client = getSupabaseServerComponentClient();
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
 
   try {
     // Get user and handle authentication
@@ -49,7 +50,7 @@ async function PaymentsPage({
     }
 
     const userRole = userData?.user_role || 'unknown';
-    const selectedPeriod = searchParams.month || '2025-04'; // Default to January 2025
+    const selectedPeriod = searchParams.month || currentMonth; // Default to January 2025
 
     // Render appropriate component based on user role
     if (userRole === 'admin') {
