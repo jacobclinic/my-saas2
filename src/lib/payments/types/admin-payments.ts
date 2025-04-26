@@ -3,10 +3,10 @@ export enum PaymentStatus {
   PENDING = 'pending',
   PENDING_VERIFICATION = 'pending_verification',
   VERIFIED = 'verified',
-  REJECTED = 'rejected'
+  REJECTED = 'rejected',
+  NOT_PAID = 'not_paid', // New status for invoices without payments
 }
 
-// Payment interface for admin views
 export interface Payment {
   id: string;
   studentId: string;
@@ -19,12 +19,10 @@ export interface Payment {
   period: string;
   submittedDate: string;
   status: PaymentStatus;
-  paymentProofUrl?: string;
-  notes?: string;
-  verifiedDate?: string;
-  rejectedDate?: string;
+  paymentProofUrl: string;
+  invoiceNo?: string; // Added for invoice number
+  invoiceDate?: string; // Added for invoice date
 }
-
 // Payment details for dialog view
 export interface PaymentDetailsDialogProps {
   open: boolean;
@@ -48,4 +46,17 @@ export interface PaymentActionResponse {
   error?: string;
   payment?: Payment;
   payments?: Payment[];
+}
+
+export interface PaymentSummary {
+  totalAmount: number;
+  verifiedAmount: number;
+  pendingAmount: number;
+  notPaidAmount: number;
+  rejectedAmount: number;
+  totalInvoices: number;
+  verifiedCount: number;
+  pendingCount: number;
+  notPaidCount: number;
+  rejectedCount: number;
 }

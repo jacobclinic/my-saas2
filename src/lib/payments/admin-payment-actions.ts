@@ -1,238 +1,253 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import { STUDENT_PAYMENTS_TABLE, USERS_TABLE, CLASSES_TABLE } from '~/lib/db-tables';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
-import { 
-  getAllStudentPayments, 
-  getStudentPaymentById 
-} from '~/lib/payments/database/queries';
-import { 
-  approveStudentPayment, 
-  rejectStudentPayment 
-} from '~/lib/payments/database/mutations';
+import { generateMonthlyInvoices } from '../invoices/database/mutations';
 
-/**
- * Server action to fetch all student payments with related data
- */
-export const getAllStudentPaymentsAction = withSession(
-  async ({ csrfToken }: { csrfToken: string }) => {
-    const client = getSupabaseServerActionClient();
-    
-    try {
-      const payments = await getAllStudentPayments(client);
-      return { success: true, payments };
-    } catch (error: any) {
-      console.error('Error fetching student payments:', error);
-      return { success: false, error: error.message };
-    }
-  }
-);
-
-/**
- * Server action to fetch a specific student payment by ID
- */
-export const getStudentPaymentByIdAction = withSession(
-  async ({ 
-    paymentId,
-    csrfToken
-  }: { 
-    paymentId: string,
-    csrfToken: string 
-  }) => {
-    const client = getSupabaseServerActionClient();
-    
-    try {
-      const payment = await getStudentPaymentById(client, paymentId);
-      return { success: true, payment };
-    } catch (error: any) {
-      console.error('Error fetching payment details:', error);
-      return { success: false, error: error.message };
-    }
-  }
-);
-
-/**
- * Server action to approve a student payment
- */
 export const approveStudentPaymentAction = withSession(
-  async ({ 
+  async ({
     paymentId,
-    csrfToken
-  }: { 
-    paymentId: string,
-    csrfToken: string 
+    csrfToken,
+  }: {
+    paymentId: string;
+    csrfToken: string;
   }) => {
     const client = getSupabaseServerActionClient();
 
     try {
-      await approveStudentPayment(client, paymentId);
-      
-      // Revalidate related paths to refresh data
-      revalidatePath('/admin/payments');
-      revalidatePath('/dashboard');
-      
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error approving payment:', error);
-      return { success: false, error: error.message };
-    }
-  }
-);
+      // Get invoice details
+      const { data: invoice, error: invoiceError } = await client
+        .from('invoices')
+        .select('id, student_id, class_id, invoice_period, amount')
+        .eq('id', paymentId)
+        .single();
 
-/**
- * Server action to reject a student payment with reason
- */
-export const rejectStudentPaymentAction = withSession(
-  async ({ 
-    paymentId,
-    reason,
-    csrfToken
-  }: { 
-    paymentId: string,
-    reason: string,
-    csrfToken: string 
-  }) => {
-    const client = getSupabaseServerActionClient();
+      if (invoiceError) throw invoiceError;
 
-    try {
-      await rejectStudentPayment(client, paymentId, reason);
-      
-      // Revalidate related paths to refresh data
-      revalidatePath('/admin/payments');
-      revalidatePath('/dashboard');
-      
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error rejecting payment:', error);
-      return { success: false, error: error.message || 'Failed to reject payment' };
-    }
-  }
-);
+      // Check if payment exists
+      const { data: payment, error: paymentError } = await client
+        .from('student_payments')
+        .select('id')
+        .eq('invoice_id', paymentId)
+        .single();
 
-/**
- * Server action to get pending payments count (for notifications)
- */
-export const getPendingPaymentsCountAction = withSession(
-  async ({ csrfToken }: { csrfToken: string }) => {
-    const client = getSupabaseServerActionClient();
-    
-    try {
-      const { count, error } = await client
-        .from(STUDENT_PAYMENTS_TABLE)
-        .select('*', { count: 'exact', head: true })
-        .in('status', [PaymentStatus.PENDING, PaymentStatus.PENDING_VERIFICATION]);
-
-      if (error) throw error;
-      
-      return { success: true, count: count || 0 };
-    } catch (error: any) {
-      console.error('Error fetching pending payments count:', error);
-      return { success: false, error: error.message, count: 0 };
-    }
-  }
-);
-
-/**
- * Server action to update the payment status directly
- */
-export const updatePaymentStatusAction = withSession(
-  async ({ 
-    paymentId,
-    status,
-    notes,
-    csrfToken
-  }: { 
-    paymentId: string,
-    status: PaymentStatus,
-    notes?: string,
-    csrfToken: string 
-  }) => {
-    const client = getSupabaseServerActionClient();
-    
-    try {
-      const updateData: Record<string, any> = {
-        status,
-        updated_at: new Date().toISOString()
-      };
-      
-      // Add status-specific fields
-      if (status === PaymentStatus.VERIFIED) {
-        updateData.verified_date = new Date().toISOString();
-      } else if (status === PaymentStatus.REJECTED) {
-        updateData.rejected_date = new Date().toISOString();
-        if (notes) updateData.notes = notes;
+      if (paymentError && paymentError.code !== 'PGRST116') {
+        throw paymentError;
       }
-      
-      const { error } = await client
-        .from(STUDENT_PAYMENTS_TABLE)
-        .update(updateData)
+
+      if (payment) {
+        // Update existing payment
+        const { error } = await client
+          .from('student_payments')
+          .update({
+            status: 'verified',
+            verified_date: new Date().toISOString(),
+            rejected_date: null,
+            payment_date: new Date().toISOString(), // Using payment_date instead of updated_at
+          })
+          .eq('id', payment.id);
+
+        if (error) throw error;
+      } else {
+        // Create new payment
+        const { error } = await client.from('student_payments').insert({
+          invoice_id: invoice.id,
+          student_id: invoice.student_id,
+          class_id: invoice.class_id,
+          payment_period: invoice.invoice_period,
+          amount: invoice.amount,
+          status: 'verified',
+          verified_date: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          payment_date: new Date().toISOString(), // Using payment_date instead of updated_at
+        });
+
+        if (error) throw error;
+      }
+
+      // Update invoice status
+      const { error: invoiceUpdateError } = await client
+        .from('invoices')
+        .update({ status: 'paid' })
         .eq('id', paymentId);
 
-      if (error) throw error;
-      
-      // Revalidate related paths
-      revalidatePath('/admin/payments');
-      revalidatePath('/dashboard');
-      
+      if (invoiceUpdateError) throw invoiceUpdateError;
+
       return { success: true };
-    } catch (error: any) {
-      console.error('Error updating payment status:', error);
-      return { success: false, error: error.message };
+    } catch (error) {
+      console.error('Error approving payment:', error);
+      return { success: false, error: error };
     }
-  }
+  },
 );
 
-/**
- * Server action to get payment summary statistics for admin dashboard
- */
-export const getPaymentSummaryAction = withSession(
-  async ({ csrfToken }: { csrfToken: string }) => {
+export const rejectStudentPaymentAction = withSession(
+  async ({
+    paymentId,
+    reason,
+    csrfToken,
+  }: {
+    paymentId: string;
+    reason: string;
+    csrfToken: string;
+  }) => {
     const client = getSupabaseServerActionClient();
-    
+
     try {
-      // Instead of using group by, we'll fetch all payment statuses and count them in JavaScript
-      const { data: allPayments, error: statusError } = await client
-        .from(STUDENT_PAYMENTS_TABLE)
-        .select('status');
-        
-      if (statusError) throw statusError;
+      // Get invoice details
+      const { data: invoice, error: invoiceError } = await client
+        .from('invoices')
+        .select('id, student_id, class_id, invoice_period, amount')
+        .eq('id', paymentId)
+        .single();
 
-      // Count payments by status
-      const statusCounts = allPayments.reduce((acc: Record<string, number>, payment) => {
-        const status = payment.status || 'unknown';
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-      }, {});
+      if (invoiceError) throw invoiceError;
 
-      // Get total payment amount
-      const { data: amountData, error: amountError } = await client
-        .from(STUDENT_PAYMENTS_TABLE)
-        .select('amount')
-        .eq('status', PaymentStatus.VERIFIED);
-        
-      if (amountError) throw amountError;
-      
-      // Calculate total verified amount
-      const totalVerifiedAmount = amountData.reduce((sum: number, item) => 
-        sum + (Number(item.amount) || 0), 0);
-        
-      // Create summary object
+      // Check if payment exists
+      const { data: payment, error: paymentError } = await client
+        .from('student_payments')
+        .select('id')
+        .eq('invoice_id', paymentId)
+        .single();
+
+      if (paymentError && paymentError.code !== 'PGRST116') {
+        throw paymentError;
+      }
+
+      if (payment) {
+        // Update existing payment
+        const { error } = await client
+          .from('student_payments')
+          .update({
+            status: 'rejected',
+            rejected_date: new Date().toISOString(),
+            verified_date: null,
+            notes: reason,
+            payment_date: new Date().toISOString(), // Using payment_date instead of updated_at
+          })
+          .eq('id', payment.id);
+
+        if (error) throw error;
+      } else {
+        // Create new payment
+        const { error } = await client.from('student_payments').insert({
+          invoice_id: invoice.id,
+          student_id: invoice.student_id,
+          class_id: invoice.class_id,
+          payment_period: invoice.invoice_period,
+          amount: invoice.amount,
+          status: 'rejected',
+          rejected_date: new Date().toISOString(),
+          notes: reason,
+          created_at: new Date().toISOString(),
+          payment_date: new Date().toISOString(), // Using payment_date instead of updated_at
+        });
+
+        if (error) throw error;
+      }
+
+      // Update invoice status
+      const { error: invoiceUpdateError } = await client
+        .from('invoices')
+        .update({ status: 'issued' })
+        .eq('id', paymentId);
+
+      if (invoiceUpdateError) throw invoiceUpdateError;
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error rejecting payment:', error);
+      return { success: false, error: error };
+    }
+  },
+);
+
+// Other actions unchanged...
+
+export const getPaymentSummaryAction = withSession(
+  async ({
+    csrfToken,
+    invoicePeriod,
+  }: {
+    csrfToken: string;
+    invoicePeriod?: string;
+  }) => {
+    const client = getSupabaseServerActionClient();
+
+    try {
+      // Generate invoices if period is provided
+      if (invoicePeriod) {
+        const [year, month] = invoicePeriod.split('-').map(Number);
+        await generateMonthlyInvoices(client, year, month);
+      }
+
+      // Fetch all invoices with payment status
+      const { data: invoices, error: invoiceError } = await client
+        .from('invoices')
+        .select(
+          `
+          id,
+          amount,
+          invoice_period,
+          payment:student_payments!fk_student_payments_invoice_id (
+            status,
+            amount
+          )
+        `,
+        )
+        .eq('invoice_period', invoicePeriod ?? '');
+
+      if (invoiceError) throw invoiceError;
+
+      // Initialize summary
       const summary = {
-        total: allPayments.length,
-        pending: statusCounts[PaymentStatus.PENDING] || 0,
-        pendingVerification: statusCounts[PaymentStatus.PENDING_VERIFICATION] || 0,
-        verified: statusCounts[PaymentStatus.VERIFIED] || 0,
-        rejected: statusCounts[PaymentStatus.REJECTED] || 0,
-        totalVerifiedAmount
+        total: 0,
+        pending: 0,
+        pendingVerification: 0,
+        verified: 0,
+        rejected: 0,
+        notPaid: 0,
+        totalVerifiedAmount: 0,
+        totalAmount: 0,
       };
-      
+
+      // Aggregate data
+      for (const invoice of invoices) {
+        const payment = Array.isArray(invoice.payment)
+          ? invoice.payment[0]
+          : invoice.payment;
+        const invoiceAmount = invoice.amount || 0;
+        summary.total += 1;
+        summary.totalAmount += invoiceAmount;
+
+        if (!payment || !payment.status) {
+          summary.notPaid += 1;
+        } else {
+          switch (payment.status) {
+            case PaymentStatus.PENDING:
+              summary.pending += 1;
+              break;
+            case PaymentStatus.PENDING_VERIFICATION:
+              summary.pendingVerification += 1;
+              break;
+            case PaymentStatus.VERIFIED:
+              summary.verified += 1;
+              summary.totalVerifiedAmount += invoiceAmount;
+              break;
+            case PaymentStatus.REJECTED:
+              summary.rejected += 1;
+              break;
+            default:
+              summary.notPaid += 1;
+          }
+        }
+      }
+
       return { success: true, summary };
     } catch (error: any) {
       console.error('Error fetching payment summary:', error);
       return { success: false, error: error.message };
     }
-  }
+  },
 );

@@ -9,7 +9,10 @@ import {
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { ClassType, NewClassData } from './types/class-v2';
-import { getUpcomingOccurrences, getUpcomingOccurrencesForYear } from '../utils/date-utils';
+import {
+  getUpcomingOccurrences,
+  getUpcomingOccurrencesForYear,
+} from '../utils/date-utils';
 import { zoomService } from '../zoom/zoom.service';
 import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
@@ -113,7 +116,9 @@ export const createClassAction = withSession(
         const nextOccurrences = getUpcomingOccurrences(
           timeSlot,
           classData.startDate,
-          new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0],
+          new Date(new Date().getFullYear(), 11, 31)
+            .toISOString()
+            .split('T')[0],
         );
 
         // Take the first occurrence for Zoom meeting creation
@@ -210,8 +215,8 @@ export const deleteClassAction = withSession(
     const userId = session.user.id;
 
     // Check user role and permissions
-    const havePermission = await isAdminOrCLassTutor(client, userId, classId)
-    if(!havePermission){
+    const havePermission = await isAdminOrCLassTutor(client, userId, classId);
+    if (!havePermission) {
       return {
         success: false,
         error: `You don't have permissions to delete the class`,
@@ -234,7 +239,7 @@ export const deleteClassAction = withSession(
       success: true,
       classId: result,
     };
-  }
+  },
 );
 const createZoomMeetingsBatch = async (
   classId: string,
@@ -329,7 +334,7 @@ export const createZoomMeeting = async (
   }
 };
 
-export const getAllUpcominSessionsAdmin = async() =>{
+export const getAllUpcominSessionsAdmin = async () => {
   const client = getSupabaseServerActionClient();
   const {
     data: { session },
@@ -343,7 +348,7 @@ export const getAllUpcominSessionsAdmin = async() =>{
 
   // Check user role and permissions
   const { data: userProfile, error: profileError } = await client
-    .from(USERS_TABLE) 
+    .from(USERS_TABLE)
     .select('user_role')
     .eq('id', userId)
     .single();
@@ -355,12 +360,13 @@ export const getAllUpcominSessionsAdmin = async() =>{
   const isAdmin = userProfile.user_role === 'admin';
 
   if (!isAdmin) {
+    console.log('here...');
     throw new Error('Unauthorized to access this data');
   }
 
-  const data =  await getAllUpcommingSessionsData(client)
+  const data = await getAllUpcommingSessionsData(client);
   if (!data) {
     throw new Error('Failed to fetch upcoming sessions data');
   }
   return data;
-}
+};

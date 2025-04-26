@@ -46,7 +46,7 @@ async function UpcomingSessionsPage() {
   let upcomingSessionData = null;
 
   if (userRole === 'admin') {
-    // For administrators, show the full payment management interface
+    // Fetch initial payment data for admin
     upcomingSessionData = await getAllUpcominSessionsAdmin();
   } else if (userRole === 'student') {
     // For students, show their own payment history
