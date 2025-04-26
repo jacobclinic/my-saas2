@@ -57,35 +57,45 @@ export const uploadPaymentSlipAction = withSession(
       }
 
       // Check if there's an existing payment record (especially a rejected one)
-      const { data: existingPayment, error: existingPaymentError } =
+      const { data: existingPayments, error: existingPaymentError } =
         await client
           .from('student_payments')
           .select('id, status')
           .eq('invoice_id', invoice.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+          .order('created_at', { ascending: false });
 
-      if (existingPaymentError && existingPaymentError.code !== 'PGRST116') {
-        // Only throw error if it's not "no rows returned"
+      // console.log('Found existing payments:', existingPayments);
+
+      if (existingPaymentError) {
         console.error('Error checking existing payment:', existingPaymentError);
         throw existingPaymentError;
       }
 
-      if (existingPayment) {
+      // If we have existing payments, update the most recent one
+      if (existingPayments && existingPayments.length > 0) {
+        const mostRecentPayment = existingPayments[0];
+        // console.log('Updating existing payment with ID:', mostRecentPayment.id);
+
         // Update the existing payment record
         const { error: updateError } = await client
           .from('student_payments')
           .update({
             payment_proof_url: url, // Override with new receipt
             status: PAYMENT_STATUS.PENDING_VERIFICATION, // Change status to processing
-            updated_at: new Date().toISOString(),
             payment_date: new Date().toISOString(),
+            notes:
+              existingPayments[0].status === PAYMENT_STATUS.REJECTED
+                ? 'Resubmitted after rejection'
+                : undefined,
           })
-          .eq('id', existingPayment.id);
+          .eq('id', mostRecentPayment.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating payment:', updateError);
+          throw updateError;
+        }
       } else {
+        // console.log('No existing payments found, creating new payment');
         // Create a new payment record if none exists
         const { error: dbError } = await client
           .from('student_payments')
@@ -103,10 +113,6 @@ export const uploadPaymentSlipAction = withSession(
 
         if (dbError) throw dbError;
       }
-
-      // Don't update the invoice status - it should remain "issued"
-      // The admin will mark it as "paid" when they verify the payment
-
       revalidatePath('/dashboard');
       return { success: true, url };
     } catch (error: any) {
