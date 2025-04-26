@@ -7,6 +7,7 @@ import getSupabaseServerActionClient from '../../../core/supabase/action-client'
 import sendEmail from '../../../core/email/send-email';
 import { getStudentCredentialsEmailTemplate } from '../../../core/email/templates/student-credentials';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
+import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 
 // Helper function to wait
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -145,6 +146,20 @@ export async function registerStudentAction(
           enrolled_date: new Date().toISOString(),
         });
 
+      if (enrollmentError) throw enrollmentError;
+
+      // Create invoice for the newly registered student
+      const invoiceId = await createInvoiceForNewStudent(
+        client,
+        userId,
+        validated.classId,
+      );
+      if (!invoiceId) {
+        console.error('Failed to create invoice for student:', userId);
+        // Continue with registration even if invoice creation fails
+        // The system can generate missing invoices later with the monthly job
+      }
+
       try {
         const { html, text } = getStudentCredentialsEmailTemplate({
           studentName: `${validated.firstName} ${validated.lastName}`,
@@ -172,8 +187,6 @@ export async function registerStudentAction(
       } catch (error) {
         console.error('Error sending email:', error);
       }
-
-      if (enrollmentError) throw enrollmentError;
     }
 
     revalidatePath('/classes');
