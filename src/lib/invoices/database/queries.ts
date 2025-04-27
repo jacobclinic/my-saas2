@@ -1,22 +1,7 @@
 import { generateMonthlyInvoices } from './mutations';
 import { SupabaseClient } from '@supabase/supabase-js';
 
-// Define the Invoice interface locally to avoid import issues
-interface Invoice {
-  id: string;
-  student_id: string;
-  student_name: string;
-  class_id: string;
-  class_name: string | null;
-  month: string;
-  payment_status: 'completed' | 'pending' | 'not_paid';
-  payment_proof_url: string | null;
-  invoice_no: string | null;
-  amount: number | null;
-  invoice_date: string;
-  due_date: string | null;
-  status: string;
-}
+
 
 export async function getMonthlyInvoices(
   client: SupabaseClient,
