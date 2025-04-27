@@ -1829,3 +1829,31 @@ export async function getSessionsWithoutRecordingUrlsOfLast24hrs(
     throw error;
   }
 }
+
+export async function checkUpcomingSessionAvailabilityForClass(
+  client: SupabaseClient<Database>,
+  class_id: string,
+): Promise<boolean> {
+  // Validate class_id as a UUID (optional, if strict validation is needed)
+  if (!class_id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    throw new Error('Invalid class_id: must be a valid UUID');
+  }
+
+  try {
+    const { count, error } = await client
+      .from(SESSIONS_TABLE)
+      .select('*', { count: 'exact', head: true })
+      .eq('class_id', class_id)
+      .gt('start_time', new Date().toISOString())
+      .limit(1);
+
+    if (error) {
+      throw new Error(`Error fetching sessions for class ${class_id}: ${error.message}`);
+    }
+
+    return (count ?? 0) > 0;
+  } catch (error) {
+    console.error(`Failed to check session availability for class ${class_id}:`, error);
+    throw new Error(`Failed to check session availability: ${(error as Error).message}`);
+  }
+}

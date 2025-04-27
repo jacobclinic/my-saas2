@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { checkUpcomingSessionAvailabilityForClass } from '~/lib/sessions/database/queries';
 
 export async function generateMonthlyInvoices(
   client: SupabaseClient,
@@ -48,7 +49,12 @@ export async function generateMonthlyInvoices(
         .eq('invoice_period', invoicePeriod)
         .single();
 
-      if (!existingInvoice) {
+      // Check if there are upcoming sessions for this class
+      const hasUpcomingSessions =
+        await checkUpcomingSessionAvailabilityForClass(client, class_id);
+
+      // Only create invoice if there are upcoming sessions and no existing invoice
+      if (!existingInvoice && hasUpcomingSessions) {
         invoicesToInsert.push({
           student_id,
           class_id,
