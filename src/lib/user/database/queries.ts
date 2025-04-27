@@ -78,7 +78,17 @@ export async function getAllUsersByUserRoleData(
       return [];
     }
     
-    return data;
+    return data.map(user => ({
+      ...user,
+      email: user.email || undefined,
+      display_name: user.display_name || undefined,
+      photo_url: user.photo_url || undefined,
+      first_name: user.first_name || undefined,
+      last_name: user.last_name || undefined,
+      user_role: user.user_role || undefined,
+      address: user.address || undefined,
+      biography: user.biography || undefined
+    })) as UserType[];
 
   } catch (error) {
     console.error('Failed to fetch all users:', error);

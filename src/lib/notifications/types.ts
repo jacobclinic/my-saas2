@@ -50,7 +50,7 @@ interface Payment {
   student_id: string | null;
 };
 
-interface Enrollment {
+interface notificationsEnrollment {
   id: string;
   student_id: string;
   student: UnpaidStudent | UnpaidStudent[];
@@ -62,18 +62,18 @@ interface Class {
   subject: string | null;
   fee: number | null;
   tutor_id: string;
-  students: Enrollment[] | null;
+  students: notificationsEnrollment[] | null;
 };
 
-interface Session {
+interface SessionForUnpaidStudents {
   id: string;
   start_time: string | null;
   end_time: string | null;
   title: string | null;
   description: string | null;
   class_id: string | null;
-  class: Class | null; // One-to-one relationship, not an array
-};
+  class: Class | null; 
+}
 
 // Output interface for transformed data
 interface SessionWithUnpaidStudents {
