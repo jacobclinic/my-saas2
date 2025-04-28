@@ -30,7 +30,7 @@ interface EditClassDialogProps {
   open: boolean;
   onClose: () => void;
   onUpdateClass: (classId: string, classData: EditClassData) => void;
-  classData: ClassListData | null;
+  classData: ClassListData;
   loading?: boolean;
 }
 
@@ -221,6 +221,17 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
         confirmButtonText="Save Changes"
         loading={loading}
         confirmButtonVariant={isValid ? 'default' : 'secondary'}
+        deleteClassOption={true}
+        deleteClassText={
+          classData!.status === 'active'
+            ? 'Cancel upcoming classes'
+            : 'Already canceled class'
+        }
+        onDeleteClass={() => {
+          setShowDeleteDialog(true);
+          onClose();
+        }}
+        deleteClassBtnDisabled={ classData!.status !== 'active'}
       >
         <div className="space-y-4">
           <div>
@@ -421,26 +432,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
               Make sure to notify them of any changes.
             </AlertDescription>
           </Alert>
-          <div className="flex w-full mt-4">
-          <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled = {classData!.status !== 'active'}
-                onClick={() => {
-                  setShowDeleteDialog(true);
-                  onClose();
-                }}
-                className="bg-red-500 text-white hover:bg-red-600 w-full"
-              >
-                <Trash className="h-4 w-4 mr-2" />
-                {classData!.status === 'active' ? (
-                  'Cancel upcoming classes'
-                ) : (
-                  'You have already canceled all upcoming sessions of this class'
-                )}
-              </Button>
-          </div>
+
         </div>
       </BaseDialog>
       <DeleteClassDialog

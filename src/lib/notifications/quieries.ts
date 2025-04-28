@@ -296,7 +296,7 @@ export async function getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(
     }
 
     // Cast rawSessionData to our Session type, fixing Supabase's array inference
-    const sessionData: Session[] = rawSessionData.map((session) => ({
+    const sessionData: SessionForUnpaidStudents[] = rawSessionData.map((session) => ({
       ...session,
       class: Array.isArray(session.class)
         ? session.class[0] || null
@@ -325,7 +325,7 @@ export async function getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(
 
     // Transform and filter the data
     const transformedData: SessionWithUnpaidStudents[] = sessionData.map(
-      (session: Session) => {
+      (session: SessionForUnpaidStudents) => {
         const sessionMonthYear = session.start_time
           ? new Date(session.start_time).toISOString().slice(0, 7) // e.g., "2025-04"
           : null;
@@ -340,7 +340,7 @@ export async function getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(
         };
 
         const unpaidStudents = (classData.students || [])
-          .map((enrollment: Enrollment) => {
+          .map((enrollment: notificationsEnrollment) => {
             const studentData: UnpaidStudent = Array.isArray(enrollment.student)
               ? enrollment.student[0]
               : enrollment.student;

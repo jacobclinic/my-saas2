@@ -177,7 +177,9 @@ export interface ClassWithTutorAndEnrollmentAdminRawData {
     first_name: string;
     last_name: string;
   };
-  noOfStudents: [{ count: number }]; // Raw count from Supabase
+  noOfStudents: [{ count: number }];
+  students: ClassListStudent[] | null;
+  starting_date: string | null;
 }
 export interface ClassWithTutorAndEnrollmentAdmin {
   id: string;
@@ -196,6 +198,8 @@ export interface ClassWithTutorAndEnrollmentAdmin {
   };
   noOfStudents: number;
   upcomingSession: string | null;
+  students?: ClassListStudent[] | null;
+  starting_date: string | null;
 }
 
 export interface SelectedClassAdmin {

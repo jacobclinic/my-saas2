@@ -179,7 +179,19 @@ const StudentSessionCard = ({
                   Make Payment
                 </Button>
               ) : sessionData.paymentStatus ===
-                PAYMENT_STATUS.PENDING_VERIFICATION ? null : (
+                PAYMENT_STATUS.PENDING_VERIFICATION ? null : sessionData.paymentStatus ===
+                PAYMENT_STATUS.REJECTED ? (
+                <Button
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={() => {
+                    setSelectedSession(sessionData);
+                    setShowPaymentDialog(true);
+                  }}
+                >
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Try The Payment Again
+                </Button>
+              ) : (
                 // <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 //   <DialogTrigger asChild>
                 //     <Button className="w-full" disabled={isPending}>
@@ -215,7 +227,13 @@ const StudentSessionCard = ({
                 //     </div>
                 //   </DialogContent>
                 // </Dialog>
-                <Button className="w-full" disabled={isPending} onClick={() => router.push(`/sessions/student/${sessionData.id}`)}>
+                <Button
+                  className="w-full"
+                  disabled={isPending}
+                  onClick={() =>
+                    router.push(`/sessions/student/${sessionData.id}`)
+                  }
+                >
                   View Class
                 </Button>
               )}

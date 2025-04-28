@@ -8,6 +8,7 @@ import { getStudentCredentialsEmailTemplate } from '~/core/email/templates/stude
 import { USERS_TABLE } from '~/lib/db-tables';
 import sendEmail from '~/core/email/send-email';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
+import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 
 const registrationSchema = z.object({
   email: z.string().email(),
@@ -74,6 +75,18 @@ export async function registerStudentViaLoginAction(
       if (enrollmentError) {
         console.error('Enrollment error:', enrollmentError.message);
         throw enrollmentError;
+      }
+
+      // Create invoice for the newly registered student
+      const invoiceId = await createInvoiceForNewStudent(
+        client,
+        userId,
+        validated.classId,
+      );
+      if (!invoiceId) {
+        console.error('Failed to create invoice for student:', userId);
+        // Continue with registration even if invoice creation fails
+        // The system can generate missing invoices later with the monthly job
       }
     } else {
       console.log(

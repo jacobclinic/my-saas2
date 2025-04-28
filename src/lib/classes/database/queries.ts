@@ -209,7 +209,20 @@ export async function getAllClassesDataAdmin(
         status,
         time_slots,
         grade,
-        noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
+        starting_date,
+        noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count),
+        students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id (
+          id,
+          student_id,
+          student:${USERS_TABLE}!student_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone_number,
+            status
+          )
+        )
       `,
         { count: 'exact' },
       )
@@ -231,11 +244,11 @@ export async function getAllClassesDataAdmin(
           .gt('start_time', new Date().toISOString())
           .order('start_time', { ascending: true })
           .limit(1);
-    
+
         const timeSlots = classData?.time_slots as
           | { day: string; startTime: string; endTime: string }[]
           | null;
-    
+
         return {
           id: classData.id,
           name: classData.name,
@@ -249,8 +262,10 @@ export async function getAllClassesDataAdmin(
           tutor: classData.tutor,
           noOfStudents: classData.noOfStudents[0]?.count || 0,
           upcomingSession: sessionsData?.[0]?.start_time || null,
+          students: classData.students,
+          starting_date: classData.starting_date,
         };
-      }) || []
+      }) || [],
     );
 
     // console.log('getAllClassesData-2', transformedData);
@@ -523,3 +538,41 @@ export async function getAllClassesByStudentIdData(
     throw error;
   }
 }
+
+export async function isAdminOrCLassTutor(  client: SupabaseClient<Database>,
+  userId: string , classId: string) : Promise<boolean>{
+    // Check user role and permissions
+        const { data: userProfile, error: profileError } = await client
+          .from(USERS_TABLE) 
+          .select('user_role')
+          .eq('id', userId)
+          .single();
+    
+        if (profileError || !userProfile) {
+          return false
+        }
+    
+        const isAdmin = userProfile.user_role === 'admin';
+    
+        // If not admin, check if user is a tutor for the class
+        let isAuthorized = isAdmin;
+        if (!isAdmin) {
+          const { data: classData, error: classError } = await client
+            .from(CLASSES_TABLE) 
+            .select('tutor_id')
+            .eq('id', classId)
+            .single();
+    
+          if (classError || !classData) {
+            return false
+          }
+    
+          isAuthorized = classData.tutor_id === userId;
+        }
+    
+        if (!isAuthorized) {
+          return false
+        }
+
+        return true
+  }

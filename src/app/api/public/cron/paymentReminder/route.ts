@@ -18,13 +18,14 @@ export async function POST(req: Request) {
       return new Response('Unauthorized', { status: 401 });
     }
 
+
     // Get data from Supabase
     await remindPayments3DaysPrior(supabase);
 
     // Return response immediately
     return new Response("Payment reminders scheduled", { status: 200 });
   } catch (error) {
-    console.error('Error in GET /api/public/Test:', error);
+    console.error('Error in GET /api/public/payment-reminder:', error);
     return new Response('Internal Server Error', { status: 500 });
   }
 }
