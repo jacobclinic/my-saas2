@@ -8,7 +8,7 @@ import {
   SelectedSession,
   SelectedSessionAdmin,
 } from '~/lib/sessions/types/past-sessions';
-import { Link, Trash, Users } from 'lucide-react';
+import { Check, Link, Trash, Users } from 'lucide-react';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DeleteSessionDialog from './DeleteSessionDialog';
 
@@ -42,11 +42,8 @@ const PastSessionsAdmin = ({
 
   const [selectedTutor, setSelectedTutor] = useState('');
 
-  const [linkCopied, setLinkCopied] = useState<boolean>(false);
-
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const csrfToken = useCsrfToken();
+  const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
 
   const handleDateRangeChange = (value: any) => {
     setDateRange(value);
@@ -97,11 +94,14 @@ const PastSessionsAdmin = ({
     );
   });
 
-  const handleCopyLink = (link: string) => {
+  const handleCopyLink = (cls: (typeof classData)[0]) => {
+    const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&redirectUrl=${encodeURIComponent(
+      `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`,
+    )}`;
     navigator.clipboard.writeText(link);
-    setLinkCopied(true);
+    setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
     setTimeout(() => {
-      setLinkCopied(false);
+      setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
     }, 2000);
   };
 
@@ -232,17 +232,15 @@ const PastSessionsAdmin = ({
                     {/* Copy Link Button */}
                     <div className="relative group inline-block">
                       <button
-                        onClick={() =>
-                          handleCopyLink(
-                            `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&redirectUrl=${encodeURIComponent(
-                              `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`,
-                            )}`,
-                          )
-                        }
+                        onClick={() => handleCopyLink(cls)}
                         className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
                         aria-label="Copy Link"
                       >
-                        <Link className="h-4 w-4" />
+                        {copiedLinks[cls.id] ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Link className="h-4 w-4" />
+                        )}
                         <span className="sr-only">Copy Link</span>
                       </button>
                       <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
