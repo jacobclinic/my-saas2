@@ -177,10 +177,10 @@ export const getPaymentSummaryAction = withSession(
 
     try {
       // Generate invoices if period is provided
-      if (invoicePeriod) {
-        const [year, month] = invoicePeriod.split('-').map(Number);
-        await generateMonthlyInvoices(client, year, month);
-      }
+      // if (invoicePeriod) {
+      //   const [year, month] = invoicePeriod.split('-').map(Number);
+      //   await generateMonthlyInvoices(client, year, month);
+      // }
 
       // Fetch all invoices with payment status
       const { data: invoices, error: invoiceError } = await client
@@ -248,6 +248,44 @@ export const getPaymentSummaryAction = withSession(
     } catch (error: any) {
       console.error('Error fetching payment summary:', error);
       return { success: false, error: error.message };
+    }
+  },
+);
+
+export const generateInvoicesAction = withSession(
+  async ({
+    csrfToken,
+    invoicePeriod,
+  }: {
+    csrfToken: string;
+    invoicePeriod: string;
+  }) => {
+    const client = getSupabaseServerActionClient();
+
+    try {
+      const [year, month] = invoicePeriod.split('-').map(Number);
+
+      // Start timing the operation
+      const startTime = performance.now();
+
+      // Generate the invoices
+      await generateMonthlyInvoices(client, year, month);
+
+      // Calculate how long it took
+      const endTime = performance.now();
+      const executionTime = Math.round((endTime - startTime) / 1000);
+
+      return {
+        success: true,
+        message: `Invoices successfully generated for ${invoicePeriod}`,
+        executionTime,
+      };
+    } catch (error: any) {
+      console.error('Error generating invoices:', error);
+      return {
+        success: false,
+        message: `Failed to generate invoices: ${error.message}`,
+      };
     }
   },
 );

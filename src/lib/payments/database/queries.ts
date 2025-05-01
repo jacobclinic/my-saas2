@@ -11,7 +11,6 @@ import {
   PaymentStatus,
   PaymentSummary,
 } from '~/lib/payments/types/admin-payments';
-import { generateMonthlyInvoices } from '~/lib/invoices/database/mutations';
 
 type Client = SupabaseClient<Database>;
 
@@ -83,10 +82,10 @@ export async function getAllStudentPayments(
 ): Promise<Payment[]> {
   try {
     // Generate invoices if a specific period is provided
-    if (invoicePeriod) {
-      const [year, month] = invoicePeriod.split('-').map(Number);
-      await generateMonthlyInvoices(client, year, month);
-    }
+    // if (invoicePeriod) {
+    //   const [year, month] = invoicePeriod.split('-').map(Number);
+    //   await generateMonthlyInvoices(client, year, month);
+    // }
 
     // Fetch invoices with optional payments
     const query = client
@@ -301,8 +300,8 @@ export async function getPaymentSummary(
 ): Promise<PaymentSummary> {
   try {
     // Ensure invoices are generated for the period
-    const [year, month] = invoicePeriod.split('-').map(Number);
-    await generateMonthlyInvoices(client, year, month);
+    // const [year, month] = invoicePeriod.split('-').map(Number);
+    // await generateMonthlyInvoices(client, year, month);
 
     // Fetch invoices with optional payments
     const { data, error } = await client
