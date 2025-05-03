@@ -36,18 +36,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
 
-  // const [newClass, setNewClass] = useState<NewClassData>({
-  //   name: '',
-  //   subject: '',
-  //   description: '',
-  //   yearGrade: '',
-  //   monthlyFee: '',
-  //   startDate: '',
-  //   endDate: new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0], // End of current year
-  //   timeSlots: [{ day: '', startTime: '', endTime: '' }], // Single time slot
-  //   tutorId,
-  // });
-
   const [newClass, setNewClass] = useState<NewClassData>({
     name: '',
     subject: '',
@@ -124,10 +112,24 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       (slot) => slot.day && slot.startTime && slot.endTime,
     );
 
+  const handleClose = () => {
+    onClose();
+    setNewClass({
+      name: '',
+      subject: '',
+      description: '',
+      yearGrade: '',
+      monthlyFee: '',
+      startDate: '',
+      timeSlots: [{ day: '', startTime: '', endTime: '' }], // Reset to a single time slot
+      tutorId,
+    });
+  };
+
   return (
     <BaseDialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title="Create Class Group"
       description="Set up your class details and schedule"
       maxWidth="xl"
@@ -214,7 +216,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           </div>
         </div>
 
-        <div className='flex justify-between gap-4'>
+        <div className="flex justify-between gap-4">
           <div>
             <label className="text-sm font-medium">Starting Date</label>
             <Input
