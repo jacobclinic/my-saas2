@@ -84,6 +84,7 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       if (sessionData.endTime) {
         const endDate = new Date(sessionData.endTime);
         setSessionEndTime(endDate.toISOString().split('T')[1].substring(0, 5));
+
       }
     }
   }, [sessionData]);
@@ -153,13 +154,16 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
           onClose();
           toast({
             title: 'Success',
-            description: 'Session edited successfully',
-            variant: 'success',
+            description: result.warning 
+              ? 'Session updated with warning: ' + result.warning 
+              : 'Session edited successfully',
+            variant: result.warning ? 'destructive' : 'success',
+            duration: result.warning ? 8000 : 3000, // Longer duration for warnings
           });
         } else {
           toast({
             title: 'Error',
-            description: 'Failed to edit session',
+            description: result.error || 'Failed to edit session',
             variant: 'destructive',
           });
         }
@@ -192,18 +196,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   //   // Return the formatted string for datetime-local input
   //   return localISOString.slice(0, 16);
   // };
-
-  // Extract date from ISO string
-  const extractDateFromISO = (isoString: string): string => {
-    if (!isoString) return '';
-    return isoString.split('T')[0];
-  };
-
-  // Extract time from ISO string
-  const extractTimeFromISO = (isoString: string): string => {
-    if (!isoString) return '';
-    return isoString.split('T')[1]?.substring(0, 5) || '';
-  };
 
   return (
     <BaseDialog
