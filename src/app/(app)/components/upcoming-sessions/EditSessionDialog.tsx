@@ -61,18 +61,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   const [sessionEndTime, setSessionEndTime] = useState('');
   const [hasChanged, setHasChanged] = useState(false);
 
-  const [uploadedMaterials, setUploadedMaterials] = useState<
-    {
-      id: string;
-      name: string;
-      size: string;
-      file: File;
-    }[]
-  >([]);
-
-  // State to track materials marked for deletion
-  const [materialsToDelete, setMaterialsToDelete] = useState<string[]>([]);
-
   useEffect(() => {
     if (sessionData) {
       setEditedSession({
