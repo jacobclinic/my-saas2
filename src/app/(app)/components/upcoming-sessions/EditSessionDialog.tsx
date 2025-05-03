@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
-import { Input } from "../base-v2/ui/Input";
-import { Textarea } from "../base-v2/ui/Textarea";
+import { Input } from '../base-v2/ui/Input';
+import { Textarea } from '../base-v2/ui/Textarea';
 import { AlertTriangle, X, Upload, File, Plus, Trash } from 'lucide-react';
-import { Alert, AlertDescription } from "../base-v2/ui/Alert";
+import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import BaseDialog from '../base-v2/BaseDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { Button } from '../base-v2/ui/Button';
@@ -40,12 +40,11 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   onClose,
   sessionId,
   sessionData,
-  loading = false
+  loading = false,
 }) => {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
-
 
   const [editedSession, setEditedSession] = useState<EditSessionData>({
     title: '',
@@ -53,15 +52,22 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     startTime: '',
     endTime: '',
     materials: [],
-    meetingUrl: ''
+    meetingUrl: '',
   });
 
-  const [uploadedMaterials, setUploadedMaterials] = useState<{
-    id: string;
-    name: string;
-    size: string;
-    file: File;
-  }[]>([]);
+  // Add state for separate date, startTime, and endTime inputs
+  const [sessionDate, setSessionDate] = useState('');
+  const [sessionStartTime, setSessionStartTime] = useState('');
+  const [sessionEndTime, setSessionEndTime] = useState('');
+
+  const [uploadedMaterials, setUploadedMaterials] = useState<
+    {
+      id: string;
+      name: string;
+      size: string;
+      file: File;
+    }[]
+  >([]);
 
   // State to track materials marked for deletion
   const [materialsToDelete, setMaterialsToDelete] = useState<string[]>([]);
@@ -74,39 +80,75 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         startTime: sessionData.startTime || '',
         endTime: sessionData.endTime || '',
         materials: sessionData.materials || [],
-        meetingUrl: sessionData.meetingUrl || ''
+        meetingUrl: sessionData.meetingUrl || '',
       });
+
+      // Set the date and time inputs based on the session data
+      if (sessionData.startTime) {
+        const startDate = new Date(sessionData.startTime);
+        setSessionDate(startDate.toISOString().split('T')[0]);
+        setSessionStartTime(
+          startDate.toISOString().split('T')[1].substring(0, 5),
+        );
+      }
+
+      if (sessionData.endTime) {
+        const endDate = new Date(sessionData.endTime);
+        setSessionEndTime(endDate.toISOString().split('T')[1].substring(0, 5));
+      }
     }
   }, [sessionData]);
 
+  // Function to combine date and time into ISO format
+  const combineDateAndTime = (date: string, time: string): string => {
+    if (!date || !time) return '';
+
+    // Create a proper ISO string with timezone information
+    // First create a Date object with the combined date and time
+    const combinedDateTime = new Date(`${date}T${time}:00`);
+
+    // Return the ISO string
+    return combinedDateTime.toISOString();
+  };
+
   const handleSubmit = () => {
-    console.log("--------------sessionId--------", sessionId)
+    console.log('--------------sessionId--------', sessionId);
     if (sessionId) {
       startTransition(async () => {
-        // Here you would typically:
-        // 1. Upload any new materials first
-        // 2. Delete any materials marked for deletion
-        // 3. Update the session details
+        // Combine date and times before sending to the server
+        const combinedStartTime = combineDateAndTime(
+          sessionDate,
+          sessionStartTime,
+        );
+        const combinedEndTime = combineDateAndTime(sessionDate, sessionEndTime);
+
+        // Update the editedSession with the combined date and time values
+        const updatedSession = {
+          ...editedSession,
+          startTime: combinedStartTime,
+          endTime: combinedEndTime,
+        };
+
+        console.log('--------------updatedSession--------', updatedSession);
+
         const result = await updateSessionAction({
           sessionId,
-          sessionData: editedSession,
-          // newMaterials: uploadedMaterials,
-          // deleteMaterials: materialsToDelete,
-          csrfToken
+          sessionData: updatedSession,
+          csrfToken,
         });
-        
+
         if (result.success) {
           onClose();
           toast({
-            title: "Success",
-            description: "Session edited successfully",
-            variant: "success",
+            title: 'Success',
+            description: 'Session edited successfully',
+            variant: 'success',
           });
         } else {
           toast({
-            title: "Error",
-            description: "Failed to edit session",
-            variant: "destructive",
+            title: 'Error',
+            description: 'Failed to edit session',
+            variant: 'destructive',
           });
         }
       });
@@ -117,18 +159,18 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     const files = e.target.files;
     if (!files) return;
 
-    const newFiles = Array.from(files).map(file => ({
+    const newFiles = Array.from(files).map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
       size: (file.size / 1024 / 1024).toFixed(2), // Convert to MB
-      file: file
+      file: file,
     }));
     setUploadedMaterials([...uploadedMaterials, ...newFiles]);
   };
 
   const handleRemoveUploadedMaterial = (id: string) => {
-    setUploadedMaterials(prevMaterials => 
-      prevMaterials.filter(material => material.id !== id)
+    setUploadedMaterials((prevMaterials) =>
+      prevMaterials.filter((material) => material.id !== id),
     );
   };
 
@@ -136,19 +178,16 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     setMaterialsToDelete([...materialsToDelete, materialId]);
   };
 
-  const isValid =
-    editedSession.startTime &&
-    editedSession.endTime;
+  const isValid = sessionDate && sessionStartTime && sessionEndTime;
 
-  console.log("--------------sessionId-----------", sessionId)
-
+  // Original convertToIST function - keeping for reference but not using
   const convertToIST = (utcTimeString: string) => {
     // Parse the UTC time
     const utcDate = new Date(utcTimeString);
-    
+
     // Add 5 hours and 30 minutes
-    const istTime = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
-    
+    const istTime = new Date(utcDate.getTime() + 5.5 * 60 * 60 * 1000);
+
     // Format the date to desired string
     const year = istTime.getUTCFullYear();
     const month = String(istTime.getUTCMonth() + 1).padStart(2, '0');
@@ -156,39 +195,25 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     const hours = String(istTime.getUTCHours()).padStart(2, '0');
     const minutes = String(istTime.getUTCMinutes()).padStart(2, '0');
     const seconds = String(istTime.getUTCSeconds()).padStart(2, '0');
-    
+
     const istFormatedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}+5:30`;
     // Get local ISO string
     const localISOString = new Date(istFormatedTime).toLocaleDateString();
-    
-    // Return the formatted string for datetime-local input
-    return localISOString.slice(0, 16);
-  }
 
-  const formatToDateTimeInput = (isoString: string): string => {
-    if (!isoString) return '';
-  
-  // Create date object from UTC string
-  const utcDate = new Date(isoString);
-  
-  // Convert to IST (UTC+5:30)
-  const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
-  const istDate = new Date(utcDate.getTime() + istOffset);
-  
-  // Format to datetime-local input format (YYYY-MM-DDThh:mm)
-  return istDate.toISOString().slice(0, 16);
-    
-    // Create a date object from the ISO string
-    // This will automatically convert to local timezone
-    const date = new Date(isoString);
-    
-    // Get local ISO string
-    const localISOString = new Date(
-      date.getTime() - (date.getTimezoneOffset() * 60000)
-    ).toISOString();
-    
     // Return the formatted string for datetime-local input
     return localISOString.slice(0, 16);
+  };
+
+  // Extract date from ISO string
+  const extractDateFromISO = (isoString: string): string => {
+    if (!isoString) return '';
+    return isoString.split('T')[0];
+  };
+
+  // Extract time from ISO string
+  const extractTimeFromISO = (isoString: string): string => {
+    if (!isoString) return '';
+    return isoString.split('T')[1]?.substring(0, 5) || '';
   };
 
   return (
@@ -206,39 +231,55 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       <div className="space-y-4">
         <div>
           <label className="text-sm font-medium">Session Title</label>
-          <Input 
+          <Input
             placeholder="Enter session title"
             value={editedSession.title}
-            onChange={(e) => setEditedSession({ ...editedSession, title: e.target.value })}
+            onChange={(e) =>
+              setEditedSession({ ...editedSession, title: e.target.value })
+            }
           />
         </div>
 
         <div>
           <label className="text-sm font-medium">Description</label>
-          <Textarea 
+          <Textarea
             placeholder="Describe what will be covered in this session..."
             value={editedSession.description}
-            onChange={(e) => setEditedSession({ ...editedSession, description: e.target.value })}
+            onChange={(e) =>
+              setEditedSession({
+                ...editedSession,
+                description: e.target.value,
+              })
+            }
             className="h-24"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Session Date</label>
+          <Input
+            type="date"
+            value={sessionDate}
+            onChange={(e) => setSessionDate(e.target.value)}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Start Time</label>
-            <Input 
-              type="datetime-local"
-              value={convertToIST(editedSession.startTime)}
-              onChange={(e) => setEditedSession({ ...editedSession, startTime: e.target.value })}
+            <Input
+              type="time"
+              value={sessionStartTime}
+              onChange={(e) => setSessionStartTime(e.target.value)}
             />
           </div>
 
           <div>
             <label className="text-sm font-medium">End Time</label>
-            <Input 
-              type="datetime-local"
-              value={convertToIST(editedSession.endTime)}
-              onChange={(e) => setEditedSession({ ...editedSession, endTime: e.target.value })}
+            <Input
+              type="time"
+              value={sessionEndTime}
+              onChange={(e) => setSessionEndTime(e.target.value)}
             />
           </div>
         </div>
@@ -329,7 +370,8 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         <Alert className="bg-yellow-50 border-yellow-200">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <AlertDescription className="text-yellow-700">
-            Changes to the session details will affect all enrolled students. Make sure to notify them of any changes.
+            Changes to the session details will affect all enrolled students.
+            Make sure to notify them of any changes.
           </AlertDescription>
         </Alert>
       </div>

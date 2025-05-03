@@ -51,6 +51,8 @@ const UpcomingClassesSection = ({
           zoomLinkTutor: session?.meeting_url || '',
           zoomLinkStudent: session?.meeting_url || '',
           zoomMeetingId: session?.zoom_meeting_id || '',
+          lessonTitle: session?.title || '',
+          lessonDescription: session?.description || '',
           materials: (session?.materials || []).map((material) => ({
             id: material.id,
             name: material.name || '',
