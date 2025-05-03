@@ -175,8 +175,19 @@ const PastSessionsAdmin = ({
               value={dateRange as any}
               aria-label="Date Range"
               onChange={handleDateRangeChange}
+              onReset={ () => setDateRange(null) }
               className="w-full sm:w-auto border rounded-lg border-gray-300"
             />
+          </div>
+          <div>
+            <button
+              hidden={!dateRange}
+              onClick={() => setDateRange(null)}
+              className="text-sm border border-gray-300 rounded-md px-3 py-2.5"
+              aria-label="Clear date filter"
+            >
+              Clear
+            </button>
           </div>
         </div>
 
