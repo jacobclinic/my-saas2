@@ -34,12 +34,17 @@ import {
 import MaterialUploadDialog from '../../upcoming-sessions/MaterialUploadDialog';
 import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
+import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { useToast } from '~/app/(app)/lib/hooks/use-toast';
 
 const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,
   variant = 'default',
 }) => {
   const isDashboard = variant === 'dashboard';
+  const csrfToken = useCsrfToken();
+  const { toast } = useToast();
 
   const [linkCopied, setLinkCopied] = useState<{
     student?: boolean;
@@ -61,6 +66,29 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
   const [editSessionLoading, setEditSessionLoading] = useState(false);
+
+  const saveLessonDetails = async () => {
+    setEditSessionLoading(true);
+    const result = await updateSessionAction({
+      sessionId: sessionData.id,
+      sessionData: lessonDetails,
+      csrfToken
+    });
+
+    if (result.success) {
+      toast({
+        title: 'Success',
+        description: 'Session edited successfully',
+        variant: 'success',
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to edit session',
+        variant: 'destructive',
+      });
+    }
+  }
 
   const handleCopyLink = (
     link: string,
@@ -173,7 +201,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {
-                        console.log('Saving lesson details:', lessonDetails);
+                        saveLessonDetails(); 
                         setIsEditingLesson(false);
                       }}
                     >
