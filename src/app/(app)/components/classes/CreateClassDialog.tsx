@@ -82,10 +82,17 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 
   const handleSubmit = () => {
     startTransition(async () => {
+      // Create a copy of newClass with the adjusted start date
+      const classDataWithAdjustedDate = {
+        ...newClass,
+        startDate: decrementDate(newClass.startDate),
+      };
+
       const result = await createClassAction({
-        classData: newClass,
+        classData: classDataWithAdjustedDate,
         csrfToken,
       });
+
       if (result.success) {
         onClose();
         toast({
@@ -141,6 +148,13 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       timeSlots: [{ day: '', startTime: '', endTime: '' }], // Reset to a single time slot
       tutorId,
     });
+  };
+
+  //function to decrement a day from the starting date to fix the issue of not creating a class on the selected day. It creates class from the next week onward
+  const decrementDate = (date: string): string => {
+    const inputDate = new Date(date);
+    inputDate.setDate(inputDate.getDate() - 1);
+    return inputDate.toISOString().split('T')[0];
   };
 
   return (
