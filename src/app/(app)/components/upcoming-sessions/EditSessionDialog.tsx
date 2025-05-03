@@ -84,10 +84,35 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       if (sessionData.endTime) {
         const endDate = new Date(sessionData.endTime);
         setSessionEndTime(endDate.toISOString().split('T')[1].substring(0, 5));
-
       }
     }
   }, [sessionData]);
+
+  useEffect(() => {
+    // Create ISO strings from the separated fields whenever they change
+    if (sessionDate && sessionStartTime) {
+      const combinedStartTime = combineDateAndTime(
+        sessionDate,
+        sessionStartTime,
+      );
+      if (combinedStartTime !== editedSession.startTime) {
+        setEditedSession((prev) => ({
+          ...prev,
+          startTime: combinedStartTime,
+        }));
+      }
+    }
+
+    if (sessionDate && sessionEndTime) {
+      const combinedEndTime = combineDateAndTime(sessionDate, sessionEndTime);
+      if (combinedEndTime !== editedSession.endTime) {
+        setEditedSession((prev) => ({
+          ...prev,
+          endTime: combinedEndTime,
+        }));
+      }
+    }
+  }, [sessionDate, sessionStartTime, sessionEndTime]);
 
   useEffect(() => {
     if (
@@ -154,8 +179,8 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
           onClose();
           toast({
             title: 'Success',
-            description: result.warning 
-              ? 'Session updated with warning: ' + result.warning 
+            description: result.warning
+              ? 'Session updated with warning: ' + result.warning
               : 'Session edited successfully',
             variant: result.warning ? 'destructive' : 'success',
             duration: result.warning ? 8000 : 3000, // Longer duration for warnings
