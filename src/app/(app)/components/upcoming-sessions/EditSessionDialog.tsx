@@ -59,6 +59,7 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   const [sessionDate, setSessionDate] = useState('');
   const [sessionStartTime, setSessionStartTime] = useState('');
   const [sessionEndTime, setSessionEndTime] = useState('');
+  const [hasChanged, setHasChanged] = useState(false);
 
   const [uploadedMaterials, setUploadedMaterials] = useState<
     {
@@ -98,6 +99,29 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       }
     }
   }, [sessionData]);
+
+  useEffect(() => {
+    if (
+      editedSession.title !== sessionData.title ||
+      editedSession.description !== sessionData.description ||
+      editedSession.startTime !== sessionData.startTime ||
+      editedSession.endTime !== sessionData.endTime ||
+      editedSession.materials.length !== sessionData.materials.length ||
+      editedSession.meetingUrl !== sessionData.meetingUrl
+    ) {
+      setHasChanged(true);
+    } else {
+      setHasChanged(false);
+    }
+  }, [
+    editedSession.title,
+    editedSession.description,
+    editedSession.startTime,
+    editedSession.endTime,
+    editedSession.materials.length,
+    editedSession.meetingUrl,
+    sessionData,
+  ]);
 
   // Function to combine date and time into ISO format
   const combineDateAndTime = (date: string, time: string): string => {
@@ -155,54 +179,31 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    const newFiles = Array.from(files).map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      size: (file.size / 1024 / 1024).toFixed(2), // Convert to MB
-      file: file,
-    }));
-    setUploadedMaterials([...uploadedMaterials, ...newFiles]);
-  };
-
-  const handleRemoveUploadedMaterial = (id: string) => {
-    setUploadedMaterials((prevMaterials) =>
-      prevMaterials.filter((material) => material.id !== id),
-    );
-  };
-
-  const handleDeleteExistingMaterial = (materialId: string) => {
-    setMaterialsToDelete([...materialsToDelete, materialId]);
-  };
-
   const isValid = sessionDate && sessionStartTime && sessionEndTime;
 
-  // Original convertToIST function - keeping for reference but not using
-  const convertToIST = (utcTimeString: string) => {
-    // Parse the UTC time
-    const utcDate = new Date(utcTimeString);
+  // // Original convertToIST function - keeping for reference but not using
+  // const convertToIST = (utcTimeString: string) => {
+  //   // Parse the UTC time
+  //   const utcDate = new Date(utcTimeString);
 
-    // Add 5 hours and 30 minutes
-    const istTime = new Date(utcDate.getTime() + 5.5 * 60 * 60 * 1000);
+  //   // Add 5 hours and 30 minutes
+  //   const istTime = new Date(utcDate.getTime() + 5.5 * 60 * 60 * 1000);
 
-    // Format the date to desired string
-    const year = istTime.getUTCFullYear();
-    const month = String(istTime.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(istTime.getUTCDate()).padStart(2, '0');
-    const hours = String(istTime.getUTCHours()).padStart(2, '0');
-    const minutes = String(istTime.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(istTime.getUTCSeconds()).padStart(2, '0');
+  //   // Format the date to desired string
+  //   const year = istTime.getUTCFullYear();
+  //   const month = String(istTime.getUTCMonth() + 1).padStart(2, '0');
+  //   const day = String(istTime.getUTCDate()).padStart(2, '0');
+  //   const hours = String(istTime.getUTCHours()).padStart(2, '0');
+  //   const minutes = String(istTime.getUTCMinutes()).padStart(2, '0');
+  //   const seconds = String(istTime.getUTCSeconds()).padStart(2, '0');
 
-    const istFormatedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}+5:30`;
-    // Get local ISO string
-    const localISOString = new Date(istFormatedTime).toLocaleDateString();
+  //   const istFormatedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}+5:30`;
+  //   // Get local ISO string
+  //   const localISOString = new Date(istFormatedTime).toLocaleDateString();
 
-    // Return the formatted string for datetime-local input
-    return localISOString.slice(0, 16);
-  };
+  //   // Return the formatted string for datetime-local input
+  //   return localISOString.slice(0, 16);
+  // };
 
   // Extract date from ISO string
   const extractDateFromISO = (isoString: string): string => {
@@ -227,6 +228,7 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       confirmButtonText="Save Changes"
       loading={loading}
       confirmButtonVariant={isValid ? 'default' : 'secondary'}
+      confirmButtonDisabled={!hasChanged || !isValid}
     >
       <div className="space-y-4">
         <div>
@@ -283,90 +285,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
             />
           </div>
         </div>
-
-        {/* Materials Section */}
-        <div className="space-y-4">
-          {/* <div className="flex justify-between items-center">
-              <h3 className="font-medium">Class Materials</h3>
-              <div>
-              <input
-                  type="file"
-                  id="material-upload"
-                  className="hidden"
-                  multiple
-                  onChange={handleFileUpload}
-              />
-              <Button 
-                  variant="outline"
-                  onClick={() => document.getElementById('material-upload')?.click()}
-              >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Materials
-              </Button>
-              </div>
-          </div> */}
-
-          {/* Existing Materials */}
-          {/* {editedSession.materials.length > 0 && (
-              <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">Existing Materials</h4>
-              {editedSession.materials.map((material) => (
-                  !materialsToDelete.includes(material.id) && (
-                  <div 
-                      key={material.id} 
-                      className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
-                  >
-                      <div className="flex items-center">
-                      <File className="h-4 w-4 text-blue-600 mr-2" />
-                      <div>
-                          <p className="font-medium">{material.name}</p>
-                          <p className="text-sm text-gray-600">{material.file_size}</p>
-                      </div>
-                      </div>
-                      <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteExistingMaterial(material.id)}
-                      className="text-red-500 hover:text-red-700"
-                      >
-                      <Trash className="h-4 w-4" />
-                      </Button>
-                  </div>
-                  )
-              ))}
-              </div>
-          )} */}
-
-          {/* New Materials */}
-          {/* {uploadedMaterials.length > 0 && (
-              <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">New Materials</h4>
-              {uploadedMaterials.map((material) => (
-                  <div 
-                  key={material.id} 
-                  className="flex items-center justify-between bg-green-50 p-3 rounded-lg"
-                  >
-                  <div className="flex items-center">
-                      <Upload className="h-4 w-4 text-green-600 mr-2" />
-                      <div>
-                      <p className="font-medium">{material.name}</p>
-                      <p className="text-sm text-gray-600">{material.size} MB</p>
-                      </div>
-                  </div>
-                  <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveUploadedMaterial(material.id)}
-                      className="text-red-500 hover:text-red-700"
-                  >
-                      <X className="h-4 w-4" />
-                  </Button>
-                  </div>
-              ))}
-              </div>
-          )} */}
-        </div>
-
         <Alert className="bg-yellow-50 border-yellow-200">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <AlertDescription className="text-yellow-700">
