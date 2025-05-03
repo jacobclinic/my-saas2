@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import { Input } from '../base-v2/ui/Input';
 import { Textarea } from '../base-v2/ui/Textarea';
 import {
@@ -46,6 +46,8 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     timeSlots: [{ day: '', startTime: '', endTime: '' }], // Single time slot
     tutorId,
   });
+
+  const [allFilled, setAllFilled] = useState(false);
 
   // const handleAddTimeSlot = () => {
   //   setNewClass(prev => ({
@@ -112,6 +114,21 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       (slot) => slot.day && slot.startTime && slot.endTime,
     );
 
+  useEffect(() => {
+    if (isValid) {
+      setAllFilled(true);
+    } else {
+      setAllFilled(false);
+    }
+  }, [
+    newClass.name,
+    newClass.subject,
+    newClass.monthlyFee,
+    newClass.yearGrade,
+    newClass.startDate,
+    newClass.timeSlots,
+  ]);
+
   const handleClose = () => {
     onClose();
     setNewClass({
@@ -137,6 +154,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       confirmButtonText="Create Class"
       loading={isPending}
       confirmButtonVariant={isValid ? 'default' : 'secondary'}
+      confirmButtonDisabled={!allFilled}
     >
       <div className="space-y-4">
         <div>
