@@ -6,7 +6,12 @@ import {
   UpcommingSessionCardProps,
   UploadedMaterial,
 } from '~/lib/sessions/types/upcoming-sessions';
-import { Card, CardContent, CardHeader, CardTitle } from '../../base-v2/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../base-v2/ui/Card';
 import { Button } from '../../base-v2/ui/Button';
 import { Badge } from '../../base-v2/ui/Badge';
 import { Textarea } from '../../base-v2/ui/Textarea';
@@ -57,14 +62,16 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
   const [editSessionLoading, setEditSessionLoading] = useState(false);
 
-  const handleCopyLink = (link: string, type: 'student' | 'materials' | 'tutor') => {
+  const handleCopyLink = (
+    link: string,
+    type: 'student' | 'materials' | 'tutor',
+  ) => {
     navigator.clipboard.writeText(link);
     setLinkCopied({ ...linkCopied, [type]: true });
     setTimeout(() => {
       setLinkCopied({ ...linkCopied, [type]: false });
     }, 2000);
   };
-  
 
   const copyTutorLink = useCallback(async () => {
     startTransition(async () => {
@@ -107,7 +114,10 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 </div>
                 <div className="flex items-center mt-2 text-gray-900">
                   <User className="h-4 w-4 mr-2" />
-                  <span>Tutor: {sessionData.sessionRawData?.class?.tutor?.first_name}</span>
+                  <span>
+                    Tutor:{' '}
+                    {sessionData.sessionRawData?.class?.tutor?.first_name}
+                  </span>
                 </div>
                 <div className="flex items-center mt-2 text-gray-600">
                   <Calendar className="h-4 w-4 mr-2" />
@@ -240,14 +250,18 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
             {/* Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button variant="outline" onClick={copyTutorLink} disabled={isPending}>
+              <Button
+                variant="outline"
+                onClick={copyTutorLink}
+                disabled={isPending}
+              >
                 {' '}
-                {linkCopied.student ? (
+                {linkCopied.tutor ? (
                   <Check className="h-4 w-4 mr-2" />
                 ) : (
                   <Link className="h-4 w-4 mr-2" />
                 )}
-                {linkCopied.student ? 'Copied!' : 'Copy Tutor Link'}
+                {linkCopied.tutor ? 'Copied!' : 'Copy Tutor Link'}
               </Button>
               <Button
                 variant="outline"
