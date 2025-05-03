@@ -54,8 +54,8 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   >([]);
   const [materialDescription, setMaterialDescription] = useState('');
   const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
-    title: sessionData?.sessionRawData?.title || '',
-    description: sessionData?.sessionRawData?.description || '',
+    title: sessionData.lessonTitle || '',
+    description: sessionData.lessonDescription || '',
   });
   const [iseditingLesson, setIsEditingLesson] = useState(false);
 
@@ -182,7 +182,14 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => setIsEditingLesson(false)}
+                      onClick={() => {
+                        setIsEditingLesson(false);
+                        // Reset to original values from sessionData
+                        setLessonDetails({
+                          title: sessionData.lessonTitle || '',
+                          description: sessionData.lessonDescription || '',
+                        });
+                      }}
                     >
                       Cancel
                     </Button>
