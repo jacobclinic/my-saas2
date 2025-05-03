@@ -148,7 +148,7 @@ const AdminPaymentsPanel = ({ initialPayments, initialSummary }: AdminPaymentsPa
     setActiveTab(tab);
   };
   
-  const handleGenerateInvoices = async () => {
+  const handleGenerateInvoices = async (): Promise<void> => {
     try {
       setIsGeneratingInvoices(true);
       setInvoiceMessage(null);
