@@ -6,6 +6,8 @@ import { z } from 'zod';
 
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { USERS_TABLE } from '~/lib/db-tables';
+import { getUserById } from '~/lib/user/database/queries';
+import UserType from '~/lib/user/types/user';
 
 const userDetailsSchema = z.object({
   displayName: z.string().min(2, 'Display name is required'),
@@ -134,4 +136,18 @@ export async function updateProfilePhotoAction(
       error: error instanceof Error ? error.message : 'An error occurred',
     };
   }
+}
+
+export async function getUserByIdAction(
+  userId: string,
+): Promise<UserType> {
+
+    const client = getSupabaseServerActionClient();
+
+    const data= await getUserById(client, userId);
+
+    if (!data) {
+      throw new Error('User not found');
+    }
+    return data;
 }

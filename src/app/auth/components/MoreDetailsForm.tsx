@@ -3,15 +3,13 @@
 import { useState, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-import { UserCircleIcon } from '@heroicons/react/24/outline';
-
 import Button from '~/core/ui/Button';
 import TextField from '~/core/ui/TextField';
 import ImageUploader from '~/core/ui/ImageUploader';
 import Logo from '~/core/ui/Logo';
-import { updateUserDetailsAction, updateProfilePhotoAction } from '../actions';
 import useSupabase from '~/core/hooks/use-supabase';
-import { USERS_TABLE } from '~/lib/db-tables';
+import { updateProfilePhotoAction, updateUserDetailsAction } from '../sign-up/moredetails/actions';
+
 
 interface MoreDetailsFormProps {
   user: User;
@@ -88,7 +86,6 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
         </div>
 
         <div className="w-full bg-white dark:bg-background p-6 rounded-lg border border-gray-100 dark:border-dark-800 shadow-sm flex-1 flex flex-col justify-center">
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col items-center justify-center py-3">
               <div className="w-full max-w-xs">

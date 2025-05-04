@@ -1,8 +1,9 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import MoreDetailsForm from './components/MoreDetailsForm';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import configuration from '~/configuration';
+import { getUserByIdAction } from './actions';
+import MoreDetailsForm from '../../components/MoreDetailsForm';
 
 export const metadata: Metadata = {
   title: 'Complete Your Profile',
@@ -21,14 +22,7 @@ async function MoreDetailsPage() {
     redirect(configuration.paths.signIn);
   }
 
-  // Get user info
-  const { data: userData, error } = await client
-    .from('users')
-    .select(
-      'display_name, first_name, last_name, phone_number, address, photo_url',
-    )
-    .eq('id', session.user.id)
-    .single();
+  const userData = await getUserByIdAction(session.user.id);
 
   console.log('User data on moredetails page:', userData);
 

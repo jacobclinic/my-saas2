@@ -95,3 +95,21 @@ export async function getAllUsersByUserRoleData(
     throw error;
   }
 }
+
+export async function getUserById(
+  client: SupabaseClient<Database>,
+  userId: string
+): Promise<UserType | null> {
+  const { data, error } = await client
+    .from(USERS_TABLE)
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching user by ID:', error);
+    return null;
+  }
+
+  return data as UserType;
+}

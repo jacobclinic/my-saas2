@@ -6,11 +6,14 @@ import AuthErrorMessage from './AuthErrorMessage';
 import useSignUpWithEmailAndPasswordMutation from '~/core/hooks/use-sign-up-with-email-password';
 import If from '~/core/ui/If';
 import Alert from '~/core/ui/Alert';
-import { ensureUserRecord } from '../sign-up/moredetails/actions';
+
 
 import EmailPasswordSignUpForm from '~/app/auth/components/EmailPasswordSignUpForm';
 
 import configuration from '~/configuration';
+import { ensureUserRecord } from '../sign-up/moredetails/actions';
+
+
 
 const requireEmailConfirmation = configuration.auth.requireEmailConfirmation;
 
