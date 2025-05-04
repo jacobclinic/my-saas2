@@ -1,10 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AuthErrorMessage from './AuthErrorMessage';
 import useSignUpWithEmailAndPasswordMutation from '~/core/hooks/use-sign-up-with-email-password';
 import If from '~/core/ui/If';
 import Alert from '~/core/ui/Alert';
+import { ensureUserRecord } from '../sign-up/moredetails/actions';
 
 import EmailPasswordSignUpForm from '~/app/auth/components/EmailPasswordSignUpForm';
 
@@ -17,6 +19,7 @@ const EmailPasswordSignUpContainer: React.FCC<{
   onSubmit?: (userId?: string) => void;
   onError?: (error?: unknown) => unknown;
 }> = ({ onSignUp, onSubmit, onError }) => {
+  const router = useRouter();
   const signUpMutation = useSignUpWithEmailAndPasswordMutation();
   const redirecting = useRef(false);
   const loading = signUpMutation.isMutating || redirecting.current;
@@ -33,26 +36,44 @@ const EmailPasswordSignUpContainer: React.FCC<{
   }, [callOnErrorCallback]);
 
   const onSignupRequested = useCallback(
-    async (params: { email: string; password: string, userRole: string }) => {
-      console.log("onSignupRequested-params", params);
+    async (params: { email: string; password: string; userRole: string }) => {
+      console.log('onSignupRequested-params', params);
       if (loading) {
         return;
       }
 
       try {
         const data = await signUpMutation.trigger(params);
+        const userId = data?.user?.id;
+        const email = data?.user?.email || params.email;
+
+        // If successful signup, ensure user record exists in database
+        if (userId && email) {
+          try {
+            await ensureUserRecord(userId, email, params.userRole);
+          } catch (error) {
+            console.error('Failed to create user record:', error);
+          }
+        }
 
         // If the user is required to confirm their email, we display a message
         if (requireEmailConfirmation) {
           setShowVerifyEmailAlert(true);
 
           if (onSubmit) {
-            const userId = data?.user?.id;
             onSubmit(userId);
           }
         } else {
-          // Otherwise, we redirect the user to the onboarding page
-          onSignUp && onSignUp();
+          // Here we redirect the user to the moredetails page to collect additional information
+          redirecting.current = true;
+
+          // If onSignUp callback is provided, call it first
+          if (onSignUp) {
+            onSignUp();
+          }
+
+          // Then redirect to the moredetails page
+          router.push('/auth/sign-up/moredetails');
         }
       } catch (error) {
         if (onError) {
@@ -60,7 +81,7 @@ const EmailPasswordSignUpContainer: React.FCC<{
         }
       }
     },
-    [loading, onError, onSignUp, onSubmit, signUpMutation]
+    [loading, onError, onSignUp, onSubmit, signUpMutation, router],
   );
 
   return (
