@@ -8,8 +8,10 @@ import TextField from '~/core/ui/TextField';
 import ImageUploader from '~/core/ui/ImageUploader';
 import Logo from '~/core/ui/Logo';
 import useSupabase from '~/core/hooks/use-supabase';
-import { updateProfilePhotoAction, updateUserDetailsAction } from '../sign-up/moredetails/actions';
-
+import {
+  updateProfilePhotoAction,
+  updateUserDetailsAction,
+} from '../sign-up/moredetails/actions';
 
 interface MoreDetailsFormProps {
   user: User;
@@ -79,15 +81,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
   );
 
   return (
-    <div className="flex flex-col items-center h-screen overflow-hidden">
-      <div className="flex flex-col items-center w-full max-w-5xl mx-auto py-4 h-[80vh] overflow-y-auto md:overflow-y-hidden">
-        <div className="mb-4">
-          <Logo />
-        </div>
-
-        <div className="w-full bg-white dark:bg-background p-6 rounded-lg border border-gray-100 dark:border-dark-800 shadow-sm flex-1 flex flex-col justify-center">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex flex-col items-center justify-center py-3">
+    <div className="flex flex-col items-center h-[100%] overflow-hidden">
+      <div className="flex flex-col items-center w-full max-w-5xl mx-auto h-[70vh] overflow-y-auto md:overflow-y-hidden">
+        <div className="w-full px-4 flex-1 flex flex-col justify-center">
+          <form onSubmit={handleSubmit} className="space-y-2">
+            <div className="flex flex-col items-center justify-center pt-4">
               <div className="w-full max-w-xs">
                 <ImageUploader
                   value={photoUrl}
@@ -107,7 +105,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-2">
               <TextField>
                 <TextField.Label>
                   Display Name
@@ -169,7 +167,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                 </TextField.Label>
               </TextField>
 
-              <div className="pt-4">
+              <div className="pt-2">
                 <Button
                   type="submit"
                   loading={isSubmitting}

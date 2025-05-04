@@ -41,17 +41,8 @@ async function MoreDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background">
-      <div className="w-full max-w-md space-y-8 bg-card p-8 rounded-lg shadow-sm">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Complete Your Profile</h1>
-          <p className="text-muted-foreground mt-2">
-            Please provide some additional information to complete your profile.
-          </p>
-        </div>
-
+    <div className="min-h-[100%] max-h-screen flex items-center justify-center py-1 px-4 sm:px-6 lg:px-4 bg-background md:border md:px-8 md:py-2 md:shadow-xl dark:md:border-dark-800  dark:bg-background dark:shadow-[0_0_1200px_0] dark:shadow-primary/30 bg-white">
         <MoreDetailsForm user={session.user} />
-      </div>
     </div>
   );
 }

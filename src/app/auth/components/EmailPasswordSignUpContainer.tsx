@@ -4,16 +4,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthErrorMessage from './AuthErrorMessage';
 import useSignUpWithEmailAndPasswordMutation from '~/core/hooks/use-sign-up-with-email-password';
+import useSignInWithEmailPassword from '~/core/hooks/use-sign-in-with-email-password';
 import If from '~/core/ui/If';
 import Alert from '~/core/ui/Alert';
-
 
 import EmailPasswordSignUpForm from '~/app/auth/components/EmailPasswordSignUpForm';
 
 import configuration from '~/configuration';
 import { ensureUserRecord } from '../sign-up/moredetails/actions';
-
-
 
 const requireEmailConfirmation = configuration.auth.requireEmailConfirmation;
 
@@ -24,8 +22,12 @@ const EmailPasswordSignUpContainer: React.FCC<{
 }> = ({ onSignUp, onSubmit, onError }) => {
   const router = useRouter();
   const signUpMutation = useSignUpWithEmailAndPasswordMutation();
+  const signInMutation = useSignInWithEmailPassword();
   const redirecting = useRef(false);
-  const loading = signUpMutation.isMutating || redirecting.current;
+  const loading =
+    signUpMutation.isMutating ||
+    signInMutation.isMutating ||
+    redirecting.current;
   const [showVerifyEmailAlert, setShowVerifyEmailAlert] = useState(false);
 
   const callOnErrorCallback = useCallback(() => {
@@ -70,13 +72,24 @@ const EmailPasswordSignUpContainer: React.FCC<{
           // Here we redirect the user to the moredetails page to collect additional information
           redirecting.current = true;
 
-          // If onSignUp callback is provided, call it first
-          if (onSignUp) {
-            onSignUp();
-          }
+          // First sign in the user to create a valid session
+          try {
+            await signInMutation.trigger({
+              email: params.email,
+              password: params.password,
+            });
 
-          // Then redirect to the moredetails page
-          router.push('/auth/sign-up/moredetails');
+            // If onSignUp callback is provided, call it first
+            if (onSignUp) {
+              onSignUp();
+            }
+
+            // Then redirect to the moredetails page
+            router.push('/auth/sign-up/moredetails');
+          } catch (signInError) {
+            // If sign-in fails, redirect to sign-in page
+            router.push(configuration.paths.signIn);
+          }
         }
       } catch (error) {
         if (onError) {
@@ -84,7 +97,15 @@ const EmailPasswordSignUpContainer: React.FCC<{
         }
       }
     },
-    [loading, onError, onSignUp, onSubmit, signUpMutation, router],
+    [
+      loading,
+      onError,
+      onSignUp,
+      onSubmit,
+      signUpMutation,
+      signInMutation,
+      router,
+    ],
   );
 
   return (
