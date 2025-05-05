@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
-import { Input } from "../base-v2/ui/Input";
-import { Textarea } from "../base-v2/ui/Textarea";
+import { Input } from '../base-v2/ui/Input';
+import { Textarea } from '../base-v2/ui/Textarea';
 import { AlertTriangle, X, Upload, File, Plus, Trash } from 'lucide-react';
-import { Alert, AlertDescription } from "../base-v2/ui/Alert";
+import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import BaseDialog from '../base-v2/BaseDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { Button } from '../base-v2/ui/Button';
@@ -40,12 +40,11 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   onClose,
   sessionId,
   sessionData,
-  loading = false
+  loading = false,
 }) => {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
-
 
   const [editedSession, setEditedSession] = useState<EditSessionData>({
     title: '',
@@ -53,18 +52,14 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     startTime: '',
     endTime: '',
     materials: [],
-    meetingUrl: ''
+    meetingUrl: '',
   });
 
-  const [uploadedMaterials, setUploadedMaterials] = useState<{
-    id: string;
-    name: string;
-    size: string;
-    file: File;
-  }[]>([]);
-
-  // State to track materials marked for deletion
-  const [materialsToDelete, setMaterialsToDelete] = useState<string[]>([]);
+  // Add state for separate date, startTime, and endTime inputs
+  const [sessionDate, setSessionDate] = useState('');
+  const [sessionStartTime, setSessionStartTime] = useState('');
+  const [sessionEndTime, setSessionEndTime] = useState('');
+  const [hasChanged, setHasChanged] = useState(false);
 
   useEffect(() => {
     if (sessionData) {
@@ -74,122 +69,158 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         startTime: sessionData.startTime || '',
         endTime: sessionData.endTime || '',
         materials: sessionData.materials || [],
-        meetingUrl: sessionData.meetingUrl || ''
+        meetingUrl: sessionData.meetingUrl || '',
       });
+
+      // Set the date and time inputs based on the session data
+      if (sessionData.startTime) {
+        const startDate = new Date(sessionData.startTime);
+        setSessionDate(startDate.toISOString().split('T')[0]);
+        setSessionStartTime(
+          startDate.toISOString().split('T')[1].substring(0, 5),
+        );
+      }
+
+      if (sessionData.endTime) {
+        const endDate = new Date(sessionData.endTime);
+        setSessionEndTime(endDate.toISOString().split('T')[1].substring(0, 5));
+      }
     }
   }, [sessionData]);
 
+  useEffect(() => {
+    // Create ISO strings from the separated fields whenever they change
+    if (sessionDate && sessionStartTime) {
+      const combinedStartTime = combineDateAndTime(
+        sessionDate,
+        sessionStartTime,
+      );
+      if (combinedStartTime !== editedSession.startTime) {
+        setEditedSession((prev) => ({
+          ...prev,
+          startTime: combinedStartTime,
+        }));
+      }
+    }
+
+    if (sessionDate && sessionEndTime) {
+      const combinedEndTime = combineDateAndTime(sessionDate, sessionEndTime);
+      if (combinedEndTime !== editedSession.endTime) {
+        setEditedSession((prev) => ({
+          ...prev,
+          endTime: combinedEndTime,
+        }));
+      }
+    }
+  }, [sessionDate, sessionStartTime, sessionEndTime]);
+
+  useEffect(() => {
+    if (
+      editedSession.title !== sessionData.title ||
+      editedSession.description !== sessionData.description ||
+      editedSession.startTime !== sessionData.startTime ||
+      editedSession.endTime !== sessionData.endTime ||
+      editedSession.materials.length !== sessionData.materials.length ||
+      editedSession.meetingUrl !== sessionData.meetingUrl
+    ) {
+      setHasChanged(true);
+    } else {
+      setHasChanged(false);
+    }
+  }, [
+    editedSession.title,
+    editedSession.description,
+    editedSession.startTime,
+    editedSession.endTime,
+    editedSession.materials.length,
+    editedSession.meetingUrl,
+    sessionData,
+  ]);
+
+  // Function to combine date and time into ISO format
+  const combineDateAndTime = (date: string, time: string): string => {
+    if (!date || !time) return '';
+
+    // Create a proper ISO string with timezone information
+    // First create a Date object with the combined date and time
+    const combinedDateTime = new Date(`${date}T${time}:00`);
+
+    // Return the ISO string
+    return combinedDateTime.toISOString();
+  };
+
   const handleSubmit = () => {
-    console.log("--------------sessionId--------", sessionId)
+    console.log('--------------sessionId--------', sessionId);
     if (sessionId) {
       startTransition(async () => {
-        // Here you would typically:
-        // 1. Upload any new materials first
-        // 2. Delete any materials marked for deletion
-        // 3. Update the session details
+        // Combine date and times before sending to the server
+        const combinedStartTime = combineDateAndTime(
+          sessionDate,
+          sessionStartTime,
+        );
+        const combinedEndTime = combineDateAndTime(sessionDate, sessionEndTime);
+
+        // Update the editedSession with the combined date and time values
+        const updatedSession = {
+          ...editedSession,
+          startTime: combinedStartTime,
+          endTime: combinedEndTime,
+        };
+
+        console.log('--------------updatedSession--------', updatedSession);
+
         const result = await updateSessionAction({
           sessionId,
-          sessionData: editedSession,
-          // newMaterials: uploadedMaterials,
-          // deleteMaterials: materialsToDelete,
-          csrfToken
+          sessionData: updatedSession,
+          csrfToken,
         });
-        
+
         if (result.success) {
           onClose();
           toast({
-            title: "Success",
-            description: "Session edited successfully",
-            variant: "success",
+            title: 'Success',
+            description: result.warning
+              ? 'Session updated with warning: ' + result.warning
+              : 'Session edited successfully',
+            variant: result.warning ? 'destructive' : 'success',
+            duration: result.warning ? 8000 : 3000, // Longer duration for warnings
           });
         } else {
           toast({
-            title: "Error",
-            description: "Failed to edit session",
-            variant: "destructive",
+            title: 'Error',
+            description: result.error || 'Failed to edit session',
+            variant: 'destructive',
           });
         }
       });
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+  const isValid = sessionDate && sessionStartTime && sessionEndTime;
 
-    const newFiles = Array.from(files).map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      size: (file.size / 1024 / 1024).toFixed(2), // Convert to MB
-      file: file
-    }));
-    setUploadedMaterials([...uploadedMaterials, ...newFiles]);
-  };
+  // // Original convertToIST function - keeping for reference but not using
+  // const convertToIST = (utcTimeString: string) => {
+  //   // Parse the UTC time
+  //   const utcDate = new Date(utcTimeString);
 
-  const handleRemoveUploadedMaterial = (id: string) => {
-    setUploadedMaterials(prevMaterials => 
-      prevMaterials.filter(material => material.id !== id)
-    );
-  };
+  //   // Add 5 hours and 30 minutes
+  //   const istTime = new Date(utcDate.getTime() + 5.5 * 60 * 60 * 1000);
 
-  const handleDeleteExistingMaterial = (materialId: string) => {
-    setMaterialsToDelete([...materialsToDelete, materialId]);
-  };
+  //   // Format the date to desired string
+  //   const year = istTime.getUTCFullYear();
+  //   const month = String(istTime.getUTCMonth() + 1).padStart(2, '0');
+  //   const day = String(istTime.getUTCDate()).padStart(2, '0');
+  //   const hours = String(istTime.getUTCHours()).padStart(2, '0');
+  //   const minutes = String(istTime.getUTCMinutes()).padStart(2, '0');
+  //   const seconds = String(istTime.getUTCSeconds()).padStart(2, '0');
 
-  const isValid =
-    editedSession.startTime &&
-    editedSession.endTime;
+  //   const istFormatedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}+5:30`;
+  //   // Get local ISO string
+  //   const localISOString = new Date(istFormatedTime).toLocaleDateString();
 
-  console.log("--------------sessionId-----------", sessionId)
-
-  const convertToIST = (utcTimeString: string) => {
-    // Parse the UTC time
-    const utcDate = new Date(utcTimeString);
-    
-    // Add 5 hours and 30 minutes
-    const istTime = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
-    
-    // Format the date to desired string
-    const year = istTime.getUTCFullYear();
-    const month = String(istTime.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(istTime.getUTCDate()).padStart(2, '0');
-    const hours = String(istTime.getUTCHours()).padStart(2, '0');
-    const minutes = String(istTime.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(istTime.getUTCSeconds()).padStart(2, '0');
-    
-    const istFormatedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}+5:30`;
-    // Get local ISO string
-    const localISOString = new Date(istFormatedTime).toLocaleDateString();
-    
-    // Return the formatted string for datetime-local input
-    return localISOString.slice(0, 16);
-  }
-
-  const formatToDateTimeInput = (isoString: string): string => {
-    if (!isoString) return '';
-  
-  // Create date object from UTC string
-  const utcDate = new Date(isoString);
-  
-  // Convert to IST (UTC+5:30)
-  const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
-  const istDate = new Date(utcDate.getTime() + istOffset);
-  
-  // Format to datetime-local input format (YYYY-MM-DDThh:mm)
-  return istDate.toISOString().slice(0, 16);
-    
-    // Create a date object from the ISO string
-    // This will automatically convert to local timezone
-    const date = new Date(isoString);
-    
-    // Get local ISO string
-    const localISOString = new Date(
-      date.getTime() - (date.getTimezoneOffset() * 60000)
-    ).toISOString();
-    
-    // Return the formatted string for datetime-local input
-    return localISOString.slice(0, 16);
-  };
+  //   // Return the formatted string for datetime-local input
+  //   return localISOString.slice(0, 16);
+  // };
 
   return (
     <BaseDialog
@@ -202,134 +233,68 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       confirmButtonText="Save Changes"
       loading={loading}
       confirmButtonVariant={isValid ? 'default' : 'secondary'}
+      confirmButtonDisabled={!hasChanged || !isValid}
     >
       <div className="space-y-4">
         <div>
           <label className="text-sm font-medium">Session Title</label>
-          <Input 
+          <Input
             placeholder="Enter session title"
             value={editedSession.title}
-            onChange={(e) => setEditedSession({ ...editedSession, title: e.target.value })}
+            onChange={(e) =>
+              setEditedSession({ ...editedSession, title: e.target.value })
+            }
           />
         </div>
 
         <div>
           <label className="text-sm font-medium">Description</label>
-          <Textarea 
+          <Textarea
             placeholder="Describe what will be covered in this session..."
             value={editedSession.description}
-            onChange={(e) => setEditedSession({ ...editedSession, description: e.target.value })}
+            onChange={(e) =>
+              setEditedSession({
+                ...editedSession,
+                description: e.target.value,
+              })
+            }
             className="h-24"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Session Date</label>
+          <Input
+            type="date"
+            value={sessionDate}
+            onChange={(e) => setSessionDate(e.target.value)}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Start Time</label>
-            <Input 
-              type="datetime-local"
-              value={convertToIST(editedSession.startTime)}
-              onChange={(e) => setEditedSession({ ...editedSession, startTime: e.target.value })}
+            <Input
+              type="time"
+              value={sessionStartTime}
+              onChange={(e) => setSessionStartTime(e.target.value)}
             />
           </div>
 
           <div>
             <label className="text-sm font-medium">End Time</label>
-            <Input 
-              type="datetime-local"
-              value={convertToIST(editedSession.endTime)}
-              onChange={(e) => setEditedSession({ ...editedSession, endTime: e.target.value })}
+            <Input
+              type="time"
+              value={sessionEndTime}
+              onChange={(e) => setSessionEndTime(e.target.value)}
             />
           </div>
         </div>
-
-        {/* Materials Section */}
-        <div className="space-y-4">
-          {/* <div className="flex justify-between items-center">
-              <h3 className="font-medium">Class Materials</h3>
-              <div>
-              <input
-                  type="file"
-                  id="material-upload"
-                  className="hidden"
-                  multiple
-                  onChange={handleFileUpload}
-              />
-              <Button 
-                  variant="outline"
-                  onClick={() => document.getElementById('material-upload')?.click()}
-              >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Materials
-              </Button>
-              </div>
-          </div> */}
-
-          {/* Existing Materials */}
-          {/* {editedSession.materials.length > 0 && (
-              <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">Existing Materials</h4>
-              {editedSession.materials.map((material) => (
-                  !materialsToDelete.includes(material.id) && (
-                  <div 
-                      key={material.id} 
-                      className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
-                  >
-                      <div className="flex items-center">
-                      <File className="h-4 w-4 text-blue-600 mr-2" />
-                      <div>
-                          <p className="font-medium">{material.name}</p>
-                          <p className="text-sm text-gray-600">{material.file_size}</p>
-                      </div>
-                      </div>
-                      <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteExistingMaterial(material.id)}
-                      className="text-red-500 hover:text-red-700"
-                      >
-                      <Trash className="h-4 w-4" />
-                      </Button>
-                  </div>
-                  )
-              ))}
-              </div>
-          )} */}
-
-          {/* New Materials */}
-          {/* {uploadedMaterials.length > 0 && (
-              <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">New Materials</h4>
-              {uploadedMaterials.map((material) => (
-                  <div 
-                  key={material.id} 
-                  className="flex items-center justify-between bg-green-50 p-3 rounded-lg"
-                  >
-                  <div className="flex items-center">
-                      <Upload className="h-4 w-4 text-green-600 mr-2" />
-                      <div>
-                      <p className="font-medium">{material.name}</p>
-                      <p className="text-sm text-gray-600">{material.size} MB</p>
-                      </div>
-                  </div>
-                  <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveUploadedMaterial(material.id)}
-                      className="text-red-500 hover:text-red-700"
-                  >
-                      <X className="h-4 w-4" />
-                  </Button>
-                  </div>
-              ))}
-              </div>
-          )} */}
-        </div>
-
         <Alert className="bg-yellow-50 border-yellow-200">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <AlertDescription className="text-yellow-700">
-            Changes to the session details will affect all enrolled students. Make sure to notify them of any changes.
+            Changes to the session details will affect all enrolled students.
+            Make sure to notify them of any changes.
           </AlertDescription>
         </Alert>
       </div>

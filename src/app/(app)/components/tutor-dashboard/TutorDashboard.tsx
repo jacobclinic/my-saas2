@@ -35,6 +35,7 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
         zoomLinkTutor: session?.meeting_url || "",
         zoomLinkStudent: session?.meeting_url || "",
         zoomMeetingId: session?.zoom_meeting_id || "",
+        lessonTitle: session?.title || "",
         materials: (session?.materials || []).map((material) => {
           return {
             id: material.id,
@@ -90,7 +91,7 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
         </AlertDescription>
       </Alert>
 
-      {/* Next Class */}
+      {/* Upcoming classes */}
       <div className="space-y-2">
         <div className="flex items-center">
           <Info className="h-5 w-5 mr-2" />
@@ -102,26 +103,9 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
         /> : null}
       </div>
 
-      {/* Active Classes */}
-      <div className="space-y-4">
-        <div className="flex items-center">
-          <Info className="h-5 w-5 mr-2" />
-          <h2 className="text-xl font-bold">Active Classes</h2>
-        </div>
-        <div>
-          {activeClassTableData.map(classData => (
-            <ClassCard
-              key={classData.id}
-              classData={classData}
-              variant="dashboard"
-              showViewDetails={false}
-            />
-          ))}
-        </div>
-      </div>
       
       {/* Tutorial Video */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>How to Use the Platform</CardTitle>
         </CardHeader>
@@ -135,7 +119,7 @@ const TutorDashboard = ({ nextSessionData, activeClassesData }: { nextSessionDat
             />
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 };

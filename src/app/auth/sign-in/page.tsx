@@ -11,17 +11,18 @@ export const metadata = {
   title: 'Sign In',
 };
 
-function SignInPage(
-  {
-    searchParams,
-  }: {
-    searchParams: { redirectUrl?: string };
-  }
-) {
-
+function SignInPage({
+  searchParams,
+}: {
+  searchParams: { redirectUrl?: string };
+}) {
   const redirectUrl = searchParams.redirectUrl;
   return (
-    <>
+    <div
+      className={
+        'flex w-full max-w-md flex-col items-center space-y-4 rounded-xl border-transparent bg-white px-2 py-1 dark:bg-background dark:shadow-[0_0_1200px_0] dark:shadow-primary/30 md:w-8/12 md:border md:px-8 md:py-6 md:shadow-xl dark:md:border-dark-800 lg:w-7/12 lg:px-6 xl:w-7/12 2xl:w-7/12'
+      }
+    >
       <div>
         <Heading type={5}>Sign In</Heading>
       </div>
@@ -40,7 +41,7 @@ function SignInPage(
           </Link>
         </p>
       </div>
-    </>
+    </div>
   );
 }
 

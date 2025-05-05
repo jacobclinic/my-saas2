@@ -6,7 +6,12 @@ import {
   UpcommingSessionCardProps,
   UploadedMaterial,
 } from '~/lib/sessions/types/upcoming-sessions';
-import { Card, CardContent, CardHeader, CardTitle } from '../../base-v2/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../base-v2/ui/Card';
 import { Button } from '../../base-v2/ui/Button';
 import { Badge } from '../../base-v2/ui/Badge';
 import { Textarea } from '../../base-v2/ui/Textarea';
@@ -29,12 +34,17 @@ import {
 import MaterialUploadDialog from '../../upcoming-sessions/MaterialUploadDialog';
 import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
+import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { useToast } from '~/app/(app)/lib/hooks/use-toast';
 
 const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,
   variant = 'default',
 }) => {
   const isDashboard = variant === 'dashboard';
+  const csrfToken = useCsrfToken();
+  const { toast } = useToast();
 
   const [linkCopied, setLinkCopied] = useState<{
     student?: boolean;
@@ -49,22 +59,47 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   >([]);
   const [materialDescription, setMaterialDescription] = useState('');
   const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
-    title: sessionData?.sessionRawData?.title || '',
-    description: sessionData?.sessionRawData?.description || '',
+    title: sessionData.lessonTitle || '',
+    description: sessionData.lessonDescription || '',
   });
   const [iseditingLesson, setIsEditingLesson] = useState(false);
 
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
   const [editSessionLoading, setEditSessionLoading] = useState(false);
 
-  const handleCopyLink = (link: string, type: 'student' | 'materials' | 'tutor') => {
+  const saveLessonDetails = async () => {
+    setEditSessionLoading(true);
+    const result = await updateSessionAction({
+      sessionId: sessionData.id,
+      sessionData: lessonDetails,
+      csrfToken
+    });
+
+    if (result.success) {
+      toast({
+        title: 'Success',
+        description: 'Session edited successfully',
+        variant: 'success',
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to edit session',
+        variant: 'destructive',
+      });
+    }
+  }
+
+  const handleCopyLink = (
+    link: string,
+    type: 'student' | 'materials' | 'tutor',
+  ) => {
     navigator.clipboard.writeText(link);
     setLinkCopied({ ...linkCopied, [type]: true });
     setTimeout(() => {
       setLinkCopied({ ...linkCopied, [type]: false });
     }, 2000);
   };
-  
 
   const copyTutorLink = useCallback(async () => {
     startTransition(async () => {
@@ -107,7 +142,10 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 </div>
                 <div className="flex items-center mt-2 text-gray-900">
                   <User className="h-4 w-4 mr-2" />
-                  <span>Tutor: {sessionData.sessionRawData?.class?.tutor?.first_name}</span>
+                  <span>
+                    Tutor:{' '}
+                    {sessionData.sessionRawData?.class?.tutor?.first_name}
+                  </span>
                 </div>
                 <div className="flex items-center mt-2 text-gray-600">
                   <Calendar className="h-4 w-4 mr-2" />
@@ -163,7 +201,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {
-                        console.log('Saving lesson details:', lessonDetails);
+                        saveLessonDetails(); 
                         setIsEditingLesson(false);
                       }}
                     >
@@ -172,7 +210,14 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => setIsEditingLesson(false)}
+                      onClick={() => {
+                        setIsEditingLesson(false);
+                        // Reset to original values from sessionData
+                        setLessonDetails({
+                          title: sessionData.lessonTitle || '',
+                          description: sessionData.lessonDescription || '',
+                        });
+                      }}
                     >
                       Cancel
                     </Button>
@@ -240,14 +285,18 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
             {/* Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button variant="outline" onClick={copyTutorLink} disabled={isPending}>
+              <Button
+                variant="outline"
+                onClick={copyTutorLink}
+                disabled={isPending}
+              >
                 {' '}
-                {linkCopied.student ? (
+                {linkCopied.tutor ? (
                   <Check className="h-4 w-4 mr-2" />
                 ) : (
                   <Link className="h-4 w-4 mr-2" />
                 )}
-                {linkCopied.student ? 'Copied!' : 'Copy Tutor Link'}
+                {linkCopied.tutor ? 'Copied!' : 'Copy Tutor Link'}
               </Button>
               <Button
                 variant="outline"

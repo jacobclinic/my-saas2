@@ -17,7 +17,9 @@ import { zoomService } from '../zoom/zoom.service';
 import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
 import { isAdminOrCLassTutor } from './database/queries';
-import { getAllUpcommingSessionsData } from '../sessions/database/queries';
+import { getAllUpcommingSessionsData, getSessionDataById } from '../sessions/database/queries';
+import { updateZoomSessionAction } from '../sessions/server-actions-v2-legacy';
+import { title } from 'process';
 
 type CreateClassParams = {
   classData: NewClassData;

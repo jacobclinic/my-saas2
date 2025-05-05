@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import { Input } from '../base-v2/ui/Input';
 import { Textarea } from '../base-v2/ui/Textarea';
 import {
@@ -36,18 +36,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
 
-  // const [newClass, setNewClass] = useState<NewClassData>({
-  //   name: '',
-  //   subject: '',
-  //   description: '',
-  //   yearGrade: '',
-  //   monthlyFee: '',
-  //   startDate: '',
-  //   endDate: new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0], // End of current year
-  //   timeSlots: [{ day: '', startTime: '', endTime: '' }], // Single time slot
-  //   tutorId,
-  // });
-
   const [newClass, setNewClass] = useState<NewClassData>({
     name: '',
     subject: '',
@@ -58,6 +46,8 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     timeSlots: [{ day: '', startTime: '', endTime: '' }], // Single time slot
     tutorId,
   });
+
+  const [allFilled, setAllFilled] = useState(false);
 
   // const handleAddTimeSlot = () => {
   //   setNewClass(prev => ({
@@ -92,10 +82,17 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 
   const handleSubmit = () => {
     startTransition(async () => {
+      // Create a copy of newClass with the adjusted start date
+      const classDataWithAdjustedDate = {
+        ...newClass,
+        startDate: decrementDate(newClass.startDate),
+      };
+
       const result = await createClassAction({
-        classData: newClass,
+        classData: classDataWithAdjustedDate,
         csrfToken,
       });
+
       if (result.success) {
         onClose();
         toast({
@@ -124,10 +121,46 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       (slot) => slot.day && slot.startTime && slot.endTime,
     );
 
+  useEffect(() => {
+    if (isValid) {
+      setAllFilled(true);
+    } else {
+      setAllFilled(false);
+    }
+  }, [
+    newClass.name,
+    newClass.subject,
+    newClass.monthlyFee,
+    newClass.yearGrade,
+    newClass.startDate,
+    newClass.timeSlots,
+  ]);
+
+  const handleClose = () => {
+    onClose();
+    setNewClass({
+      name: '',
+      subject: '',
+      description: '',
+      yearGrade: '',
+      monthlyFee: '',
+      startDate: '',
+      timeSlots: [{ day: '', startTime: '', endTime: '' }], // Reset to a single time slot
+      tutorId,
+    });
+  };
+
+  //function to decrement a day from the starting date to fix the issue of not creating a class on the selected day. It creates class from the next week onward
+  const decrementDate = (date: string): string => {
+    const inputDate = new Date(date);
+    inputDate.setDate(inputDate.getDate() - 1);
+    return inputDate.toISOString().split('T')[0];
+  };
+
   return (
     <BaseDialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title="Create Class Group"
       description="Set up your class details and schedule"
       maxWidth="xl"
@@ -135,6 +168,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       confirmButtonText="Create Class"
       loading={isPending}
       confirmButtonVariant={isValid ? 'default' : 'secondary'}
+      confirmButtonDisabled={!allFilled}
     >
       <div className="space-y-4">
         <div>
@@ -214,7 +248,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           </div>
         </div>
 
-        <div className='flex justify-between gap-4'>
+        <div className="flex justify-between gap-4">
           <div>
             <label className="text-sm font-medium">Starting Date</label>
             <Input

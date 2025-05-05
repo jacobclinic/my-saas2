@@ -159,7 +159,7 @@ export interface EditClassData {
   monthlyFee: number;
   startDate: string;
   timeSlots: TimeSlot[];
-  status: 'active' | 'inactive' | 'draft';
+  status: 'active' | 'canceled';
 }
 
 export interface ClassWithTutorAndEnrollmentAdminRawData {

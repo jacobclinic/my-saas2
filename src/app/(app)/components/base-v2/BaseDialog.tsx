@@ -24,6 +24,7 @@ export interface BaseDialogProps {
   onDeleteClass?: () => void;
   deleteClassText?: string;
   deleteClassBtnDisabled?: boolean;
+  confirmButtonDisabled?: boolean;
 }
 
 const BaseDialog: React.FC<BaseDialogProps> = ({
@@ -45,7 +46,8 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   deleteClassOption = false,
   onDeleteClass,
   deleteClassText = 'Delete Class',
-  deleteClassBtnDisabled
+  deleteClassBtnDisabled,
+  confirmButtonDisabled
 }) => {
   const maxWidthClasses = {
     sm: 'max-w-sm',
@@ -95,7 +97,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
                 <Button 
                   onClick={onConfirm}
                   variant={confirmButtonVariant}
-                  disabled={loading}
+                  disabled={loading || confirmButtonDisabled}
                 >
                   {confirmButtonText}
                 </Button>

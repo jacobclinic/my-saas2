@@ -28,12 +28,19 @@ import {
 import MaterialUploadDialog from './MaterialUploadDialog';
 import EditSessionDialog from './EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
+import { parse, format } from 'date-fns';
+
+interface TimeRange {
+  startTime: string; // e.g., "2025-05-03T06:13:00Z"
+  endTime: string;   // e.g., "2025-05-03T06:22:00Z"
+}
 
 const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,
   variant = 'default',
 }) => {
   const isDashboard = variant === 'dashboard';
+  // console.log('sessionData in upcoming session:', sessionData);
 
   const [linkCopied, setLinkCopied] = useState<{
     student?: boolean;
@@ -62,6 +69,40 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       setLinkCopied({ ...linkCopied, [type]: false });
     }, 2000);
   };
+
+  console.log('lessonDetails:', sessionData.time);
+
+
+  function convertTimeRangeToISO(
+    timeRange: string,
+    date: Date = new Date('2025-05-03'),
+  ): TimeRange {
+    try {
+      // Validate and split the input (e.g., "6:13 AM - 6:22 AM" -> ["6:13 AM", "6:22 AM"])
+      const timeParts = timeRange.split(' - ').map(part => part.trim());
+      if (timeParts.length !== 2) {
+        throw new Error('Invalid time range format. Expected "h:mm A - h:mm A"');
+      }
+  
+      // Parse start and end times
+      const start = parse(timeParts[0], 'h:mm a', date);
+      const end = parse(timeParts[1], 'h:mm a', date);
+  
+      // Validate parsed times
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        throw new Error('Invalid time format. Use "h:mm A" (e.g., "6:13 AM")');
+      }
+  
+      // Convert to ISO 8601 (UTC)
+      const startTime = format(start, "yyyy-MM-dd'T'HH:mm:ss'Z'");
+      const endTime = format(end, "yyyy-MM-dd'T'HH:mm:ss'Z'");
+  
+      return { startTime, endTime };
+    } catch (error) {
+      console.error(`Failed to convert time range "${timeRange}":`, error);
+      throw new Error(`Invalid time range: ${(error as Error).message}`);
+    }
+  }
 
   const joinMeetingAsTutor = useCallback(async () => {
     startTransition(async () => {
@@ -318,12 +359,12 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         onClose={() => setShowSessionEditDialog(false)}
         sessionId={sessionData.id}
         sessionData={{
-          title: sessionData?.sessionRawData?.title || '',
-          description: sessionData?.sessionRawData?.description || '',
-          startTime: sessionData?.sessionRawData?.start_time || '',
-          endTime: sessionData?.sessionRawData?.end_time || '',
-          meetingUrl: sessionData?.sessionRawData?.meeting_url || '',
-          materials: sessionData?.materials || [],
+          title: sessionData.lessonTitle || '',
+          description: sessionData.lessonDescription || '',
+          startTime: convertTimeRangeToISO(sessionData.time,new Date(sessionData.date)).startTime || '',
+          endTime: convertTimeRangeToISO(sessionData.time,new Date(sessionData.date)).endTime || '',
+          meetingUrl: sessionData.zoomLinkStudent || '',
+          materials: sessionData.materials || [],
         }}
         loading={editSessionLoading}
       />

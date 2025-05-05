@@ -129,8 +129,14 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
 
   // Refetch data when URL parameters change (handles browser back/forward buttons)
   useEffect(() => {
-    const month = searchParams.get('month');
-    if (month && month !== selectedPeriod) {
+    if (searchParams.has('month')) {
+      const month = searchParams.get('month');
+      if (month && month !== selectedPeriod) {
+        setSelectedPeriod(month);
+        fetchPaymentsForPeriod(month);
+      }
+    } else{
+      const month = new Date().toISOString().slice(0, 7); // YYYY-MM format
       setSelectedPeriod(month);
       fetchPaymentsForPeriod(month);
     }

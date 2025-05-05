@@ -113,10 +113,8 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
           { day: '', startTime: '', endTime: '' },
         ],
         status:
-          (classData?.classRawData?.status as
-            | 'active'
-            | 'inactive'
-            | 'draft') || 'active',
+          (classData?.classRawData?.status as 'active' | 'canceled') ||
+          'active',
       });
     }
   }, [classData]);
@@ -209,11 +207,28 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
     return date.toISOString().split('T')[0]; // Extract the YYYY-MM-DD part
   };
 
+  const handleClose = () => {
+    onClose();
+    setEditedClass({
+      name: classData?.classRawData?.name || '',
+      subject: classData?.classRawData?.subject || '',
+      description: classData?.classRawData?.description || '',
+      yearGrade: classData?.classRawData?.grade || '',
+      monthlyFee: classData?.classRawData?.fee || 0,
+      startDate: classData?.classRawData?.starting_date || '',
+      timeSlots: classData?.classRawData?.time_slots || [
+        { day: '', startTime: '', endTime: '' },
+      ],
+      status:
+        (classData?.classRawData?.status as 'active' | 'canceled') || 'active',
+    });
+  };
+
   return (
     <>
       <BaseDialog
         open={open}
-        onClose={onClose}
+        onClose={handleClose}
         title="Edit Class"
         description="Update your class details and schedule"
         maxWidth="xl"
@@ -231,7 +246,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
           setShowDeleteDialog(true);
           onClose();
         }}
-        deleteClassBtnDisabled={ classData!.status !== 'active'}
+        deleteClassBtnDisabled={classData!.status !== 'active'}
       >
         <div className="space-y-4">
           <div>
@@ -261,27 +276,6 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
                   {SUBJECTS.map((subject) => (
                     <SelectItem key={subject} value={subject.toLowerCase()}>
                       {subject}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Status</label>
-              <Select
-                value={editedClass.status}
-                onValueChange={(value: 'active' | 'inactive' | 'draft') =>
-                  setEditedClass({ ...editedClass, status: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -432,7 +426,6 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
               Make sure to notify them of any changes.
             </AlertDescription>
           </Alert>
-
         </div>
       </BaseDialog>
       <DeleteClassDialog
