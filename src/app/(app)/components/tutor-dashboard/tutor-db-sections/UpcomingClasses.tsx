@@ -59,6 +59,7 @@ const UpcomingClassesSection = ({
             url: material.url || '',
             file_size: material.file_size || '',
           })),
+          sessionRawData: session,
         };
       });
 

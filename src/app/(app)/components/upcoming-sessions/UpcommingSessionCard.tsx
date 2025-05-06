@@ -29,10 +29,12 @@ import MaterialUploadDialog from './MaterialUploadDialog';
 import EditSessionDialog from './EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 import { parse, format } from 'date-fns';
+import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
-  endTime: string;   // e.g., "2025-05-03T06:22:00Z"
+  endTime: string; // e.g., "2025-05-03T06:22:00Z"
 }
 
 const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
@@ -62,6 +64,8 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
   const [editSessionLoading, setEditSessionLoading] = useState(false);
 
+  const csrfToken = useCsrfToken();
+
   const handleCopyLink = (link: string, type: 'student' | 'materials') => {
     navigator.clipboard.writeText(link);
     setLinkCopied({ ...linkCopied, [type]: true });
@@ -72,31 +76,32 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
   console.log('lessonDetails:', sessionData.time);
 
-
   function convertTimeRangeToISO(
     timeRange: string,
     date: Date = new Date('2025-05-03'),
   ): TimeRange {
     try {
       // Validate and split the input (e.g., "6:13 AM - 6:22 AM" -> ["6:13 AM", "6:22 AM"])
-      const timeParts = timeRange.split(' - ').map(part => part.trim());
+      const timeParts = timeRange.split(' - ').map((part) => part.trim());
       if (timeParts.length !== 2) {
-        throw new Error('Invalid time range format. Expected "h:mm A - h:mm A"');
+        throw new Error(
+          'Invalid time range format. Expected "h:mm A - h:mm A"',
+        );
       }
-  
+
       // Parse start and end times
       const start = parse(timeParts[0], 'h:mm a', date);
       const end = parse(timeParts[1], 'h:mm a', date);
-  
+
       // Validate parsed times
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         throw new Error('Invalid time format. Use "h:mm A" (e.g., "6:13 AM")');
       }
-  
+
       // Convert to ISO 8601 (UTC)
       const startTime = format(start, "yyyy-MM-dd'T'HH:mm:ss'Z'");
       const endTime = format(end, "yyyy-MM-dd'T'HH:mm:ss'Z'");
-  
+
       return { startTime, endTime };
     } catch (error) {
       console.error(`Failed to convert time range "${timeRange}":`, error);
@@ -116,6 +121,16 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       }
     });
   }, [sessionData]);
+
+  const saveLessonDetails = async () => {
+    // Save lesson details logic here
+    const result = await updateSessionAction({
+      sessionId: sessionData.id,
+      sessionData: lessonDetails,
+      csrfToken,
+    });
+    setIsEditingLesson(false);
+  };
   return (
     <>
       <Card
@@ -197,8 +212,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {
-                        console.log('Saving lesson details:', lessonDetails);
-                        setIsEditingLesson(false);
+                        saveLessonDetails();
                       }}
                     >
                       <Save className="h-4 w-4 mr-2" />
@@ -206,7 +220,14 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => setIsEditingLesson(false)}
+                      onClick={() => {
+                        setIsEditingLesson(false);
+                        setLessonDetails({
+                          title: sessionData?.sessionRawData?.title || '',
+                          description:
+                            sessionData?.sessionRawData?.description || '',
+                        });
+                      }}
                     >
                       Cancel
                     </Button>
@@ -361,8 +382,12 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionData={{
           title: sessionData.lessonTitle || '',
           description: sessionData.lessonDescription || '',
-          startTime: convertTimeRangeToISO(sessionData.time,new Date(sessionData.date)).startTime || '',
-          endTime: convertTimeRangeToISO(sessionData.time,new Date(sessionData.date)).endTime || '',
+          startTime:
+            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
+              .startTime || '',
+          endTime:
+            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
+              .endTime || '',
           meetingUrl: sessionData.zoomLinkStudent || '',
           materials: sessionData.materials || [],
         }}
