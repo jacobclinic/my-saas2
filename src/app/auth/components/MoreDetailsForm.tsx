@@ -20,15 +20,67 @@ interface MoreDetailsFormProps {
 const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<{
+    displayName?: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    address?: string;
+  }>({});
   const client = useSupabase();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validate form
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const displayName = formData.get('displayName') as string;
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
+    const phoneNumber = formData.get('phoneNumber') as string;
+
+    const errors: {
+      displayName?: string;
+      firstName?: string;
+      lastName?: string;
+      phoneNumber?: string;
+    } = {};
+
+    if (!displayName || displayName.trim().length < 3) {
+      errors.displayName = 'Display name must be at least 3 characters';
+    }
+
+    if (!firstName || firstName.trim().length < 3) {
+      errors.firstName = 'First name must be at least 3 characters';
+    }
+
+    if (!lastName || lastName.trim().length < 3) {
+      errors.lastName = 'Last name must be at least 3 characters';
+    }
+
+    if (!phoneNumber || phoneNumber.trim().length < 10) {
+      errors.phoneNumber = 'Please enter a valid phone number';
+    } else if (
+      !/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(
+        phoneNumber,
+      )
+    ) {
+      errors.phoneNumber = 'Please enter a valid phone number';
+    }
+
+    setFormErrors(errors);
+
+    // If there are errors, don't submit the form
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData(e.currentTarget);
       await updateUserDetailsAction(formData);
+      toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('Failed to update profile. Please try again.');
@@ -109,6 +161,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
               <TextField>
                 <TextField.Label>
                   Display Name
+                  {formErrors.displayName && (
+                    <p className="text-red-500 text-sm">
+                      {formErrors.displayName}
+                    </p>
+                  )}
                   <TextField.Input
                     name="displayName"
                     required
@@ -123,6 +180,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                 <TextField>
                   <TextField.Label>
                     First Name
+                    {formErrors.firstName && (
+                      <p className="text-red-500 text-sm">
+                        {formErrors.firstName}
+                      </p>
+                    )}
                     <TextField.Input
                       name="firstName"
                       required
@@ -135,6 +197,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                 <TextField>
                   <TextField.Label>
                     Last Name
+                    {formErrors.lastName && (
+                      <p className="text-red-500 text-sm">
+                        {formErrors.lastName}
+                      </p>
+                    )}
                     <TextField.Input
                       name="lastName"
                       required
@@ -148,6 +215,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
               <TextField>
                 <TextField.Label>
                   Phone Number
+                  {formErrors.phoneNumber && (
+                    <p className="text-red-500 text-sm">
+                      {formErrors.phoneNumber}
+                    </p>
+                  )}
                   <TextField.Input
                     name="phoneNumber"
                     required
@@ -160,6 +232,9 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
               <TextField>
                 <TextField.Label>
                   Address
+                  {formErrors.address && (
+                    <p className="text-red-500 text-sm">{formErrors.address}</p>
+                  )}
                   <TextField.Input
                     name="address"
                     placeholder="Your address (optional)"
