@@ -345,7 +345,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-2">
+            {/* <div className="flex justify-between items-center mb-2">
               <label className="text-sm font-medium">Class Schedule</label>
               <Button
                 type="button"
@@ -356,7 +356,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
                 <Plus className="h-4 w-4 mr-2" />
                 Add Time Slot
               </Button>
-            </div>
+            </div> */}
 
             <div className="space-y-2 flex flex-col">
               <div className="flex self-end gap-[75px] mr-14">
