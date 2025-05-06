@@ -11,6 +11,10 @@ import {
 import { Check, Link, Trash, Users } from 'lucide-react';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DeleteSessionDialog from './DeleteSessionDialog';
+import { format, toZonedTime } from 'date-fns-tz';
+
+// Set the local timezone (e.g., 'Asia/Colombo' for Sri Lanka, GMT+5:30)
+const LOCAL_TIMEZONE = 'Asia/Colombo';
 
 interface DateRange {
   start?: {
@@ -39,9 +43,7 @@ const PastSessionsAdmin = ({
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
   );
-
   const [selectedTutor, setSelectedTutor] = useState('');
-
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
 
@@ -67,28 +69,46 @@ const PastSessionsAdmin = ({
     }
   }, [dateRange]);
 
-  const classData = pastSessionsData.map((session) => ({
-    id: session.id,
-    tutorName: session.class?.tutor?.first_name || 'Unknown',
-    name: session.class?.name,
-    date: session.start_time,
-    time:
-      session.start_time && session.end_time
-        ? `${session.start_time.split('T')[1]?.split('+')[0].slice(0, 5) || ''} - ${session.end_time.split('T')[1]?.split('+')[0].slice(0, 5) || ''}`
-        : 'N/A',
-    topic: session.title || 'Unknown',
-    attendance: session.attendance || [],
-    subject: session.class?.subject || null,
-  }));
+  const classData = pastSessionsData.map((session) => {
+    const startTimeUtc = session.start_time ? new Date(session.start_time) : null;
+    const endTimeUtc = session.end_time ? new Date(session.end_time) : null;
+
+    // Convert UTC to local timezone using toZonedTime
+    const startTimeLocal = startTimeUtc ? toZonedTime(startTimeUtc, LOCAL_TIMEZONE) : null;
+    const endTimeLocal = endTimeUtc ? toZonedTime(endTimeUtc, LOCAL_TIMEZONE) : null;
+
+    // Format times in local timezone
+    const formattedStartTime = startTimeLocal ? format(startTimeLocal, 'hh:mm a') : 'N/A';
+    const formattedEndTime = endTimeLocal ? format(endTimeLocal, 'hh:mm a') : 'N/A';
+
+    return {
+      id: session.id,
+      tutorName: session.class?.tutor?.first_name || 'Unknown',
+      name: session.class?.name,
+      date: session.start_time,
+      time: startTimeUtc && endTimeUtc ? `${formattedStartTime} - ${formattedEndTime}` : 'N/A',
+      topic: session.title || 'Unknown',
+      attendance: session.attendance || [],
+      subject: session.class?.subject || null,
+    };
+  });
 
   const filteredData = classData.filter((cls) => {
-    const date = new Date(cls.date!);
+    const sessionDate = cls.date ? new Date(cls.date) : null;
     const from = fromDate ? new Date(fromDate) : null;
     const to = toDate ? new Date(toDate) : null;
 
+    if (!sessionDate) return false;
+
+    const sessionDateOnly = new Date(sessionDate);
+    sessionDateOnly.setHours(0, 0, 0, 0);
+
+    if (from) from.setHours(0, 0, 0, 0);
+    if (to) to.setHours(23, 59, 59, 999);
+
     return (
-      (!from || date >= from) &&
-      (!to || date <= to) &&
+      (!from || sessionDateOnly >= from) &&
+      (!to || sessionDateOnly <= to) &&
       (!selectedTutor ||
         cls.tutorName.toLowerCase().includes(selectedTutor.toLowerCase()))
     );
@@ -113,7 +133,7 @@ const PastSessionsAdmin = ({
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setShowDeleteDialog(false);
     } catch (error) {
-      console.error('Error adding student:', error);
+      console.error('Error deleting class:', error);
     } finally {
       setDeleteClassLoading(false);
     }
@@ -175,7 +195,7 @@ const PastSessionsAdmin = ({
               value={dateRange as any}
               aria-label="Date Range"
               onChange={handleDateRangeChange}
-              onReset={ () => setDateRange(null) }
+              onReset={() => setDateRange(null)}
               className="w-full sm:w-auto border rounded-lg border-gray-300"
             />
           </div>
@@ -262,7 +282,7 @@ const PastSessionsAdmin = ({
                     {/* Delete Button */}
                     <div className="relative group inline-block">
                       <button
-                        className="bg-red-500 text-white px-3 py-1  rounded hover:bg-red-600 transition-colors"
+                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
                         aria-label="Delete"
                         onClick={() => handleViewDeleteDialog(cls.id)}
                       >
