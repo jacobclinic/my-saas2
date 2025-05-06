@@ -69,6 +69,7 @@
     "contentlayer": "0.3.4",
     "cva": "npm:class-variance-authority@^0.7.0",
     "date-fns": "^3.4.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^16.4.7",
     "edge-csrf": "^1.0.9",
     "framer-motion": "^12.5.0",
