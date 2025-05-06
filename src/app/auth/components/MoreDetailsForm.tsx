@@ -22,8 +22,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<{
     displayName?: string;
-    firstName?: string;
-    lastName?: string;
+    names?: string;
     phoneNumber?: string;
     address?: string;
   }>({});
@@ -42,8 +41,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
 
     const errors: {
       displayName?: string;
-      firstName?: string;
-      lastName?: string;
+      names?: string;
       phoneNumber?: string;
     } = {};
 
@@ -52,11 +50,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
     }
 
     if (!firstName || firstName.trim().length < 3) {
-      errors.firstName = 'First name must be at least 3 characters';
+      errors.names = 'Names must be at least 3 characters';
     }
 
     if (!lastName || lastName.trim().length < 3) {
-      errors.lastName = 'Last name must be at least 3 characters';
+      errors.names = 'Names must be at least 3 characters';
     }
 
     if (!phoneNumber || phoneNumber.trim().length < 10) {
@@ -175,16 +173,13 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                   />
                 </TextField.Label>
               </TextField>
-
+              {formErrors.names && (
+                <p className="text-red-500 text-sm">{formErrors.names}</p>
+              )}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <TextField>
                   <TextField.Label>
                     First Name
-                    {formErrors.firstName && (
-                      <p className="text-red-500 text-sm">
-                        {formErrors.firstName}
-                      </p>
-                    )}
                     <TextField.Input
                       name="firstName"
                       required
@@ -197,11 +192,6 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                 <TextField>
                   <TextField.Label>
                     Last Name
-                    {formErrors.lastName && (
-                      <p className="text-red-500 text-sm">
-                        {formErrors.lastName}
-                      </p>
-                    )}
                     <TextField.Input
                       name="lastName"
                       required
