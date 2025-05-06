@@ -4,13 +4,8 @@ import { DateRangePicker } from '@heroui/date-picker';
 import { useEffect, useState } from 'react';
 import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
 import AttendanceDialog from '../../past-sessions/AttendanceDialog';
-import {
-  SelectedSession,
-  SelectedSessionAdmin,
-} from '~/lib/sessions/types/past-sessions';
+import { SelectedSession } from '~/lib/sessions/types/past-sessions';
 import { Check, Delete, Link, Trash, Users } from 'lucide-react';
-
-import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DeleteSessionDialog from '../past-session/DeleteSessionDialog';
 
 interface DateRange {
@@ -45,8 +40,6 @@ const UpcomingSessionsAdmin = ({
   const [selectedTutor, setSelectedTutor] = useState('');
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const csrfToken = useCsrfToken();
 
   const handleDateRangeChange = (value: any) => {
     setDateRange(value);
@@ -158,7 +151,18 @@ const UpcomingSessionsAdmin = ({
               onChange={handleDateRangeChange}
               className="w-full sm:w-auto border rounded-lg border-gray-300"
             />
+           
           </div>
+          <div>
+              <button
+                hidden={!dateRange}
+                onClick={() => setDateRange(null)}
+                className="text-sm border border-gray-300 rounded-md px-3 py-2.5"
+                aria-label="Clear date filter"
+              >
+                Clear
+              </button>
+            </div>
         </div>
 
         {/* Table */}
