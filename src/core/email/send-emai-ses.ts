@@ -18,7 +18,7 @@ interface EmailParams {
 }
 
 // Function to send email
-export const sendEmail = async ({ to, subject, html, text }: EmailParams): Promise<void> => {
+export const sendEmailSES = async ({ to, subject, html, text }: EmailParams): Promise<void> => {
   const params = {
     Source: process.env.SES_FROM_EMAIL!, // Verified sender email
     Destination: {

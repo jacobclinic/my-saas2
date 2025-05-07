@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { createStudentAction } from '~/lib/user/actions/student';
 import { useToast } from '../../lib/hooks/use-toast';
+import { sendEmailMSGToStudentAction } from '~/lib/classes/server-actions-v2';
 
 interface AddStudentDialogProps {
   open: boolean;
@@ -50,18 +51,30 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
     if (!classData?.id) return;
 
     startTransition(async () => {
-      const result = await createStudentAction({
-        ...newStudent,
-        classId: classData.id,
-        nameOfClass: classData.name || '',
-        csrfToken,
-      });
+      // const result = await createStudentAction({
+      //   ...newStudent,
+      //   classId: classData.id,
+      //   nameOfClass: classData.name || '',
+      //   csrfToken,
+      // });
 
-      if (result.success) {
+      const notificationResult = await sendEmailMSGToStudentAction({
+        email: newStudent.email,
+        classId: classData.id,
+        name: newStudent.firstName + ' ' + newStudent.lastName,
+        phoneNumber: newStudent.phone,
+      });
+      if (notificationResult.success) {
         toast({
           title: 'Success',
-          description: 'Student account created and invitation sent',
-          variant: 'success',
+          description: 'Student notified successfully',
+          variant: 'default',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Student invitation failed. Invalid email or phone number',
+          variant: 'destructive',
         });
         onClose();
         setNewStudent({
@@ -69,12 +82,6 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
           lastName: '',
           email: '',
           phone: '',
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to create student account',
-          variant: 'destructive',
         });
       }
     });
@@ -160,11 +167,10 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
           <Alert className="bg-yellow-50 border-yellow-200">
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-yellow-700">
-              The student will receive an email with the
-              instructions to access the platform. 
+              The student will receive an email with the instructions to access
+              the platform.
             </AlertDescription>
           </Alert>
-
         </div>
       </div>
     </BaseDialog>
