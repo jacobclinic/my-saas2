@@ -24,11 +24,15 @@ const PhoneNumberCredentialForm: React.FC<{
 
         onSubmit(phoneNumber);
       },
-      [onSubmit]
+      [onSubmit],
     );
 
   return (
-    <form className={'w-full'} onSubmit={onLinkPhoneNumberSubmit}>
+    <form
+      className={'w-full'}
+      onSubmit={onLinkPhoneNumberSubmit}
+      autoComplete="off"
+    >
       <div className={'flex flex-col space-y-2'}>
         <TextField.Label>
           Phone Number
@@ -39,6 +43,7 @@ const PhoneNumberCredentialForm: React.FC<{
             type={'tel'}
             placeholder={'Ex. +919367788755'}
             disabled={loading}
+            autoComplete="off"
           />
         </TextField.Label>
 

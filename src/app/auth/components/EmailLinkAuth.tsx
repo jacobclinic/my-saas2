@@ -51,7 +51,7 @@ const EmailLinkAuth: React.FC = () => {
   }
 
   return (
-    <form className={'w-full'} onSubmit={onSubmit}>
+    <form className={'w-full'} onSubmit={onSubmit} autoComplete="off">
       <div className={'flex flex-col space-y-4'}>
         <TextField>
           <TextField.Label>
@@ -62,6 +62,7 @@ const EmailLinkAuth: React.FC = () => {
               type="email"
               placeholder={'your@email.com'}
               name={'email'}
+              autoComplete="off"
             />
           </TextField.Label>
         </TextField>

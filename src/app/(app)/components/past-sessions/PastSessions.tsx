@@ -90,9 +90,19 @@ const PastSessions = ({
     setDateRange(value);
   };
 
-  const dateObjectToDate = (dateObj: any): Date | null => {
+  const dateObjectToDate = (
+    dateObj: any,
+    isEndDate: boolean = false,
+  ): Date | null => {
     if (!dateObj) return null;
-    return new Date(dateObj.year, dateObj.month - 1, dateObj.day);
+    const date = new Date(dateObj.year, dateObj.month - 1, dateObj.day);
+
+    // If it's an end date, set time to 11:59:59 PM
+    if (isEndDate) {
+      date.setHours(23, 59, 59, 999);
+    }
+
+    return date;
   };
 
   useEffect(() => {
@@ -111,7 +121,7 @@ const PastSessions = ({
       if (dateRange && dateRange.start && dateRange.end) {
         const sessionDate = new Date(session?.start_time || '');
         const startDate = dateObjectToDate(dateRange.start);
-        const endDate = dateObjectToDate(dateRange.end);
+        const endDate = dateObjectToDate(dateRange.end, true); // Pass true to set end date to 11:59 PM
 
         if (startDate && endDate) {
           matchesDateRange = sessionDate >= startDate && sessionDate <= endDate;
@@ -124,7 +134,6 @@ const PastSessions = ({
 
     onFilterChange(filteredSessions);
   }, [searchQuery, dateRange, allSessionData]);
-
 
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
@@ -144,10 +153,20 @@ const PastSessions = ({
           </div>
           <DateRangePicker
             value={dateRange as any}
-            aria-label='Date Range'
+            aria-label="Date Range"
             onChange={handleDateRangeChange}
             className="w-full sm:w-auto border rounded-lg border-gray-300"
           />
+          <div>
+            <button
+              hidden={!dateRange}
+              onClick={() => setDateRange(null)}
+              className="text-sm border border-gray-300 rounded-md px-3 py-2.5"
+              aria-label="Clear date filter"
+            >
+              Clear
+            </button>
+          </div>
         </div>
 
         <div>
@@ -178,10 +197,7 @@ const PastSessions = ({
       <div className="space-y-6">
         {pastSessionTableData.length > 0 ? (
           pastSessionTableData.map((sessionData) => (
-            <PastSessionsCard
-              key={sessionData.id}
-              sessionData={sessionData}
-            />
+            <PastSessionsCard key={sessionData.id} sessionData={sessionData} />
           ))
         ) : (
           <div className="text-center py-8 text-gray-500">

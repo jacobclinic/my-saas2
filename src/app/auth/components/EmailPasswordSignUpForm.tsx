@@ -21,7 +21,7 @@ const EmailPasswordSignUpForm: React.FCC<{
       repeatPassword: '',
     },
   });
-  
+
   const [userRole, setUserRole] = useState<'student' | 'tutor'>('student'); // Default userRole
 
   const emailControl = register('email', { required: true });
@@ -53,7 +53,7 @@ const EmailPasswordSignUpForm: React.FCC<{
   });
 
   return (
-    <div className='w-full'>
+    <div className="w-full">
       {/* Role Selection Tabs */}
       <div className="flex mb-4">
         <button
@@ -75,7 +75,11 @@ const EmailPasswordSignUpForm: React.FCC<{
           Tutor
         </button>
       </div>
-      <form className={'w-full'} onSubmit={handleSubmit((data) => onSubmit({ ...data, userRole }))}>
+      <form
+        className={'w-full'}
+        onSubmit={handleSubmit((data) => onSubmit({ ...data, userRole }))}
+        autoComplete="off"
+      >
         <div className={'flex-col space-y-4'}>
           <TextField>
             <TextField.Label>
@@ -86,6 +90,7 @@ const EmailPasswordSignUpForm: React.FCC<{
                 required
                 type="email"
                 placeholder={'your@email.com'}
+                autoComplete="new-email"
               />
             </TextField.Label>
 
@@ -101,6 +106,7 @@ const EmailPasswordSignUpForm: React.FCC<{
                 required
                 type="password"
                 placeholder={''}
+                autoComplete="new-password"
               />
               <TextField.Hint>
                 Ensure it&apos;s at least 6 characters
@@ -121,6 +127,7 @@ const EmailPasswordSignUpForm: React.FCC<{
                 required
                 type="password"
                 placeholder={''}
+                autoComplete="new-password"
               />
               <TextField.Hint>Type your password again</TextField.Hint>
               <TextField.Error

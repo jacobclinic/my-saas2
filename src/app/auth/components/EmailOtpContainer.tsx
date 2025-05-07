@@ -55,6 +55,7 @@ function VerifyOtpForm({ email }: { email: string }) {
 
         router.replace(configuration.paths.appHome);
       }}
+      autoComplete="off"
     >
       <div className={'flex flex-col space-y-4'}>
         <VerificationCodeInput
@@ -96,11 +97,17 @@ function EmailOtpForm({
 
         onSuccess(email);
       }}
+      autoComplete="off"
     >
       <div className={'flex flex-col space-y-4'}>
         <TextFieldLabel>
           Email Address
-          <TextFieldInput name={'email'} type={'email'} placeholder={''} />
+          <TextFieldInput
+            name={'email'}
+            type={'email'}
+            placeholder={''}
+            autoComplete="off"
+          />
         </TextFieldLabel>
 
         <Button loading={signInWithOtpMutation.isMutating}>

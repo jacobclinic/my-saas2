@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import type {
-  UpcomingSessionTableData,
-} from '~/lib/sessions/types/upcoming-sessions';
+import type { UpcomingSessionTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Input } from '../base-v2/ui/Input';
 import { Info, Search, X } from 'lucide-react';
@@ -27,14 +25,13 @@ interface DateRange {
 const UpcomingSessions = ({
   upcomingSessionData,
   onFilterChange,
-  allSessionData
+  allSessionData,
 }: {
   upcomingSessionData: UpcomingSession[];
   onFilterChange: (filteredData: UpcomingSession[]) => void;
   allSessionData: UpcomingSession[];
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAlertVisible, setIsAlertVisible] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [upcomingSessionTableData, setUpcomingSessionTableData] = useState<
     UpcomingSessionTableData[]
@@ -44,14 +41,16 @@ const UpcomingSessions = ({
   useEffect(() => {
     if (upcomingSessionData) {
       const formattedData: UpcomingSessionTableData[] = upcomingSessionData.map(
-        (session) => formatSessionData(session)
+        (session) => formatSessionData(session),
       );
       setUpcomingSessionTableData(formattedData);
     }
   }, [upcomingSessionData]);
 
   // Helper function to format session data
-  const formatSessionData = (session: UpcomingSession): UpcomingSessionTableData => {
+  const formatSessionData = (
+    session: UpcomingSession,
+  ): UpcomingSessionTableData => {
     const formattedDate = new Date(
       session?.start_time || '',
     ).toLocaleDateString('en-US', {
@@ -62,7 +61,7 @@ const UpcomingSessions = ({
     });
     const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })} - 
     ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
-    
+
     return {
       id: session.id,
       name: `${session?.class?.name}`,
@@ -88,9 +87,19 @@ const UpcomingSessions = ({
   };
 
   // Helper function to convert date object to JavaScript Date
-  const dateObjectToDate = (dateObj: any): Date | null => {
+  const dateObjectToDate = (
+    dateObj: any,
+    isEndDate: boolean = false,
+  ): Date | null => {
     if (!dateObj) return null;
-    return new Date(dateObj.year, dateObj.month - 1, dateObj.day);
+    const date = new Date(dateObj.year, dateObj.month - 1, dateObj.day);
+
+    // If it's an end date, set time to 11:59:59 PM
+    if (isEndDate) {
+      date.setHours(23, 59, 59, 999);
+    }
+
+    return date;
   };
 
   // Filter the complete dataset when search or date range changes
@@ -99,17 +108,19 @@ const UpcomingSessions = ({
     const filteredSessions = allSessionData.filter((session) => {
       // Apply search term filter
       const matchesSearchTerm = searchTerm
-        ? (session?.class?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+        ? (session?.class?.name || '')
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
         : true;
 
       // Apply date range filter if dateRange is selected
       let matchesDateRange = true;
-      
+
       if (dateRange && dateRange.start && dateRange.end) {
         const sessionDate = new Date(session?.start_time || '');
         const startDate = dateObjectToDate(dateRange.start);
-        const endDate = dateObjectToDate(dateRange.end);
-        
+        const endDate = dateObjectToDate(dateRange.end, true); // Pass true to set end date to 11:59 PM
+
         if (startDate && endDate) {
           matchesDateRange = sessionDate >= startDate && sessionDate <= endDate;
         }
@@ -121,7 +132,6 @@ const UpcomingSessions = ({
 
     // Call the parent's onFilterChange with the filtered data
     onFilterChange(filteredSessions);
-    
   }, [searchTerm, dateRange, allSessionData]);
 
   // Handle date range change
@@ -145,17 +155,26 @@ const UpcomingSessions = ({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           {/* HeroUI DateRangePicker */}
           <DateRangePicker
             value={dateRange as any}
-            aria-label='Date Range'
-            onChange={handleDateRangeChange} 
+            aria-label="Date Range"
+            onChange={handleDateRangeChange}
             className="w-full sm:w-auto border rounded-lg border-gray-300"
           />
+          <div>
+            <button
+              hidden={!dateRange}
+              onClick={() => setDateRange(null)}
+              className="text-sm border border-gray-300 rounded-md px-3 py-2.5"
+              aria-label="Clear date filter"
+            >
+              Clear
+            </button>
+          </div>
         </div>
       </div>
-
 
       {/* Classes List */}
       <div className="space-y-6">

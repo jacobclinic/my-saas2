@@ -19,11 +19,14 @@ import {
   SelectValue,
 } from '../../base-v2/ui/Select';
 import { GRADES } from '~/lib/constants-v2';
-import { format as dateFnsFormat } from 'date-fns';
+import { format, toZonedTime } from 'date-fns-tz';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
 import DeleteClassDialog from '../../classes/DeleteClassDialog';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
+
+// Set the local timezone (e.g., 'Asia/Colombo' for Sri Lanka, GMT+5:30)
+const LOCAL_TIMEZONE = 'Asia/Colombo';
 
 const ClassesAdmin = ({
   classesData,
@@ -34,15 +37,15 @@ const ClassesAdmin = ({
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [showStudentsDialog, setShowStudentsDialog] = useState(false);
-  const [selectedClassName, setSelectedClassName] = useState<string | null>(
-    null,
-  );
+  const [selectedClassName, setSelectedClassName] = useState<string | null>(null);
   const [selectedClassStudents, setSelectedClassStudents] = useState<
     ClassListStudent[]
   >([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
-  const [selectedEditClassData, setSelectedEditClassData] = useState<ClassListData>({} as ClassListData);
+  const [selectedEditClassData, setSelectedEditClassData] = useState<ClassListData>(
+    {} as ClassListData
+  );
 
   const createSchedule = (cls: ClassWithTutorAndEnrollmentAdmin) => {
     return (
@@ -52,7 +55,7 @@ const ClassesAdmin = ({
           // Add a separator for all except the last item
           return acc + timeSlotString + (index < array.length - 1 ? '; ' : '');
         },
-        '',
+        ''
       ) || 'No schedule available'
     );
   };
@@ -62,15 +65,15 @@ const ClassesAdmin = ({
       id: cls.id,
       created_at: undefined, // Not available in input, set to undefined
       name: cls.name,
-      description: cls.description ,
+      description: cls.description,
       subject: cls.subject,
       tutor_id: cls.tutorId,
       fee: cls.fee,
       status: cls.status,
       time_slots: cls.time_slots,
       grade: cls.grade,
-      starting_date: cls.starting_date?.split('T')[0] ?? null, // Not available in input, set to null
-      students: cls.students ?? [], // Convert null/undefined to empty array
+      starting_date: cls.starting_date?.split('T')[0] ?? null,
+      students: cls.students ?? [],
       upcomingSession: cls.upcomingSession,
     };
   };
@@ -79,8 +82,7 @@ const ClassesAdmin = ({
     id: cls.id,
     tutorName: cls.tutor.first_name + ' ' + cls.tutor.last_name,
     name: cls.name,
-    time:
-      cls.time_slots && cls.time_slots.length > 0 ? cls.time_slots[0] : null,
+    time: cls.time_slots && cls.time_slots.length > 0 ? cls.time_slots[0] : null,
     subject: cls.subject,
     time_slots: cls.time_slots,
     grade: cls.grade,
@@ -90,22 +92,20 @@ const ClassesAdmin = ({
     upcomingSession: cls.upcomingSession,
     students: cls.students,
     schedule: createSchedule(cls),
-    classRawData: createClassRawData(cls)
+    classRawData: createClassRawData(cls),
   }));
 
   const filteredData = classData.filter((cls) => {
     const nameMatch = selectedTutor
       ? cls.tutorName.toLowerCase().includes(selectedTutor.toLowerCase())
       : true;
-
-    const yearMatch =
-      selectedYear !== 'all' ? cls.grade === selectedYear : true;
+    const yearMatch = selectedYear !== 'all' ? cls.grade === selectedYear : true;
     return nameMatch && yearMatch;
   });
 
   const handleCopyLink = async (cls: (typeof classData)[0]) => {
     const nextSession = cls?.upcomingSession
-      ? dateFnsFormat(new Date(cls.upcomingSession), 'EEE, MMM dd, yyyy')
+      ? format(new Date(cls.upcomingSession), 'EEE, MMM dd, yyyy')
       : 'No upcoming session';
 
     const clsSchedule =
@@ -114,7 +114,7 @@ const ClassesAdmin = ({
           const timeSlotString = `${slot.day}, ${slot.startTime} - ${slot.endTime}`;
           return acc + timeSlotString + (index < array.length - 1 ? '; ' : '');
         },
-        '',
+        ''
       ) || 'No schedule available';
     const registrationData = {
       classId: cls.id,
@@ -123,8 +123,7 @@ const ClassesAdmin = ({
       time: clsSchedule || '',
     };
 
-    const registrationLink =
-      await generateRegistrationLinkAction(registrationData);
+    const registrationLink = await generateRegistrationLinkAction(registrationData);
 
     navigator.clipboard.writeText(registrationLink);
     setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
@@ -133,22 +132,13 @@ const ClassesAdmin = ({
     }, 2000);
   };
 
-  const handleUpdateClass = async (
-    classId: string,
-    updatedData: EditClassData,
-  ) => {
+  const handleUpdateClass = async (classId: string, updatedData: EditClassData) => {
     try {
       setEditLoading(true);
-      // Here you would make your API call to update the class
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-      // console.log('Updating class:', classId, updatedData);
-
-      // Close dialog and show success message
       setShowEditDialog(false);
-      // You might want to trigger a refresh of the class list or update local state
     } catch (error) {
       console.error('Error updating class:', error);
-      // Handle error (show error message, etc.)
     } finally {
       setEditLoading(false);
     }
@@ -158,7 +148,7 @@ const ClassesAdmin = ({
     return {
       id: cls.id,
       name: cls.name,
-      schedule: cls.schedule|| 'No schedule available',
+      schedule: cls.schedule || 'No schedule available',
       subject: cls.subject ?? undefined,
       status: cls.status!,
       grade: cls.grade,
@@ -169,7 +159,39 @@ const ClassesAdmin = ({
 
   const handleSetEditClassData = (cls: (typeof classData)[0]) => {
     setSelectedEditClassData(() => formatDataForEditCls(cls));
-  }
+  };
+
+  // Helper function to format time for display in local timezone
+  const formatTimeSlotForDisplay = (startTime?: string, endTime?: string) => {
+    if (!startTime || !endTime) {
+      return 'N/A'; // Return N/A if either time is undefined or missing
+    }
+
+    try {
+      // Use a fixed date to parse time-only strings (e.g., "02:30")
+      const referenceDate = '2025-05-11'; // Arbitrary date, time will be overwritten
+      const startDateTime = new Date(`${referenceDate}T${startTime}:00Z`);
+      const endDateTime = new Date(`${referenceDate}T${endTime}:00Z`);
+
+      // Validate dates
+      if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+        return 'N/A'; // Return N/A for invalid times
+      }
+
+      // Convert to local timezone
+      const startTimeLocal = toZonedTime(startDateTime, LOCAL_TIMEZONE);
+      const endTimeLocal = toZonedTime(endDateTime, LOCAL_TIMEZONE);
+
+      // Format as hh:mm a
+      const formattedStart = format(startTimeLocal, 'hh:mm a');
+      const formattedEnd = format(endTimeLocal, 'hh:mm a');
+
+      return `${formattedStart} - ${formattedEnd}`;
+    } catch (error) {
+      console.error('Error formatting time slot:', error);
+      return 'N/A'; // Fallback to N/A on error
+    }
+  };
 
   return (
     <>
@@ -240,15 +262,11 @@ const ClassesAdmin = ({
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredData.map((cls) => (
                 <tr key={cls.id}>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {cls.tutorName}
-                  </td>
+                  <td className="px-5 py-4 whitespace-nowrap">{cls.tutorName}</td>
                   <td className="px-5 py-4 whitespace-nowrap">{cls.name}</td>
+                  <td className="px-5 py-4 whitespace-nowrap">{cls.time?.day}</td>
                   <td className="px-5 py-4 whitespace-nowrap">
-                    {cls.time?.day}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {cls.time?.startTime}-{cls.time?.endTime}
+                    {formatTimeSlotForDisplay(cls.time?.startTime, cls.time?.endTime)}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">{cls.status}</td>
                   <td className="px-5 py-4 whitespace-nowrap space-x-2">
@@ -258,11 +276,7 @@ const ClassesAdmin = ({
                         onClick={() => {
                           setShowStudentsDialog(true);
                           setSelectedClassName(cls.name);
-                          {
-                            cls.students
-                              ? setSelectedClassStudents(cls.students)
-                              : null;
-                          }
+                          cls.students ? setSelectedClassStudents(cls.students) : null;
                         }}
                         className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
                         aria-label="Attendance"
@@ -273,7 +287,6 @@ const ClassesAdmin = ({
                         View Students
                       </span>
                     </div>
-                  
                     {/* Copy Link Button */}
                     <div className="relative group inline-block">
                       <button
@@ -291,16 +304,15 @@ const ClassesAdmin = ({
                         Copy Registration Link
                       </span>
                     </div>
-
-                     {/* Edit class button */}
-                     <div className="relative group inline-block">
+                    {/* Edit class button */}
+                    <div className="relative group inline-block">
                       <button
                         onClick={() => {
                           setShowEditDialog(true);
                           handleSetEditClassData(cls);
                         }}
                         className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                        aria-label="Attendance"
+                        aria-label="Edit"
                       >
                         <Edit className="h-4 w-4" />
                       </button>

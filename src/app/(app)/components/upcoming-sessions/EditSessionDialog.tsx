@@ -150,7 +150,7 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   };
 
   const handleSubmit = () => {
-    console.log('--------------sessionId--------', sessionId);
+    // console.log('--------------sessionId--------', sessionId);
     if (sessionId) {
       startTransition(async () => {
         // Combine date and times before sending to the server
@@ -167,7 +167,7 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
           endTime: combinedEndTime,
         };
 
-        console.log('--------------updatedSession--------', updatedSession);
+        // console.log('--------------updatedSession--------', updatedSession);
 
         const result = await updateSessionAction({
           sessionId,

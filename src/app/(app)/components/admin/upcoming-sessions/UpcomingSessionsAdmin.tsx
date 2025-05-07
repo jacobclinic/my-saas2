@@ -4,26 +4,17 @@ import { DateRangePicker } from '@heroui/date-picker';
 import { useEffect, useState } from 'react';
 import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
 import AttendanceDialog from '../../past-sessions/AttendanceDialog';
-import {
-  SelectedSession,
-  SelectedSessionAdmin,
-} from '~/lib/sessions/types/past-sessions';
+import { SelectedSession } from '~/lib/sessions/types/past-sessions';
 import { Check, Delete, Link, Trash, Users } from 'lucide-react';
-
-import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DeleteSessionDialog from '../past-session/DeleteSessionDialog';
+import { format, toZonedTime } from 'date-fns-tz';
+
+// Set the local timezone (e.g., 'Asia/Colombo' for Sri Lanka, GMT+5:30)
+const LOCAL_TIMEZONE = 'Asia/Colombo';
 
 interface DateRange {
-  start?: {
-    year: number;
-    month: number;
-    day: number;
-  } | null;
-  end?: {
-    year: number;
-    month: number;
-    day: number;
-  } | null;
+  start?: { year: number; month: number; day: number } | null;
+  end?: { year: number; month: number; day: number } | null;
 }
 
 const UpcomingSessionsAdmin = ({
@@ -41,12 +32,8 @@ const UpcomingSessionsAdmin = ({
     null,
   );
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
-
   const [selectedTutor, setSelectedTutor] = useState('');
-
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const csrfToken = useCsrfToken();
 
   const handleDateRangeChange = (value: any) => {
     setDateRange(value);
@@ -61,7 +48,6 @@ const UpcomingSessionsAdmin = ({
     if (dateRange) {
       const from = dateObjectToDate(dateRange.start);
       const to = dateObjectToDate(dateRange.end);
-
       setFromDate(from ? from.toISOString().split('T')[0] : '');
       setToDate(to ? to.toISOString().split('T')[0] : '');
     } else {
@@ -70,30 +56,76 @@ const UpcomingSessionsAdmin = ({
     }
   }, [dateRange]);
 
-  const classData = upcomingSessionData.map((session) => ({
-    id: session.id,
-    tutorName:
-      session.class?.tutor?.first_name +
-        ' ' +
-        session.class?.tutor?.last_name || 'unknown',
-    name: session.class?.name,
-    date: session.start_time,
-    time:
-      session.start_time && session.end_time
-        ? `${session.start_time.split('T')[1]?.split('+')[0].slice(0, 5) || ''} - ${session.end_time.split('T')[1]?.split('+')[0].slice(0, 5) || ''}`
-        : 'N/A',
-    topic: session.title || 'Unknown',
-    subject: session.class?.subject || null,
-  }));
+  const classData = upcomingSessionData.map((session) => {
+    const startTimeUtc = session.start_time
+      ? new Date(session.start_time)
+      : null;
+    const endTimeUtc = session.end_time ? new Date(session.end_time) : null;
+
+    // Convert UTC to local timezone using toZonedTime
+    const startTimeLocal = startTimeUtc
+      ? toZonedTime(startTimeUtc, LOCAL_TIMEZONE)
+      : null;
+    const endTimeLocal = endTimeUtc
+      ? toZonedTime(endTimeUtc, LOCAL_TIMEZONE)
+      : null;
+
+    // Format times in local timezone
+    const formattedStartTime = startTimeLocal
+      ? format(startTimeLocal, 'hh:mm a')
+      : 'N/A';
+    const formattedEndTime = endTimeLocal
+      ? format(endTimeLocal, 'hh:mm a')
+      : 'N/A';
+
+    return {
+      id: session.id,
+      tutorName:
+        session.class?.tutor?.first_name +
+          ' ' +
+          session.class?.tutor?.last_name || 'unknown',
+      name: session.class?.name,
+      date: session.start_time,
+      time:
+        startTimeUtc && endTimeUtc
+          ? `${formattedStartTime} - ${formattedEndTime}`
+          : 'N/A',
+      topic: session.title || 'Unknown',
+      subject: session.class?.subject || null,
+    };
+  });
 
   const filteredData = classData.filter((cls) => {
-    const date = new Date(cls.date!);
+    const sessionDate = cls.date ? new Date(cls.date) : null;
     const from = fromDate ? new Date(fromDate) : null;
     const to = toDate ? new Date(toDate) : null;
 
+    if (!sessionDate) return false;
+
+    const sessionDateOnly = new Date(sessionDate);
+    sessionDateOnly.setHours(0, 0, 0, 0);
+
+    // Create adjusted comparison dates by adding one day
+    let fromCompare = null;
+    let toCompare = null;
+
+    if (from) {
+      fromCompare = new Date(from);
+      fromCompare.setHours(0, 0, 0, 0);
+      // Add one day to from date for comparison
+      fromCompare.setDate(fromCompare.getDate() + 1);
+    }
+
+    if (to) {
+      toCompare = new Date(to);
+      toCompare.setHours(23, 59, 59, 999);
+      // Add one day to to date for comparison
+      toCompare.setDate(toCompare.getDate() + 1);
+    }
+
     return (
-      (!from || date >= from) &&
-      (!to || date <= to) &&
+      (!fromCompare || sessionDateOnly >= fromCompare) &&
+      (!toCompare || sessionDateOnly <= toCompare) &&
       (!selectedTutor ||
         cls.tutorName?.toLowerCase().includes(selectedTutor.toLowerCase()))
     );
@@ -118,7 +150,7 @@ const UpcomingSessionsAdmin = ({
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setShowDeleteDialog(false);
     } catch (error) {
-      console.error('Error adding student:', error);
+      console.error('Error deleting class:', error);
     } finally {
       setDeleteClassLoading(false);
     }
@@ -133,8 +165,6 @@ const UpcomingSessionsAdmin = ({
     <>
       <div className="max-w-7xl p-6">
         <h1 className="text-3xl font-bold mb-6">Upcoming Classes</h1>
-
-        {/* Filters */}
         <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex flex-wrap gap-4 items-end">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -159,9 +189,17 @@ const UpcomingSessionsAdmin = ({
               className="w-full sm:w-auto border rounded-lg border-gray-300"
             />
           </div>
+          <div>
+            <button
+              hidden={!dateRange}
+              onClick={() => setDateRange(null)}
+              className="text-sm border border-gray-300 rounded-md px-3 py-2.5"
+              aria-label="Clear date filter"
+            >
+              Clear
+            </button>
+          </div>
         </div>
-
-        {/* Table */}
         <div className="overflow-x-auto bg-white shadow-md rounded-lg">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -195,7 +233,6 @@ const UpcomingSessionsAdmin = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{cls.time}</td>
                   <td className="px-6 py-4 whitespace-nowrap space-x-2">
-                    {/* Copy Link Button */}
                     <div className="relative group inline-block">
                       <button
                         onClick={() => handleCopyLink(cls)}
@@ -213,11 +250,9 @@ const UpcomingSessionsAdmin = ({
                         Copy student Link
                       </span>
                     </div>
-
-                    {/* Delete Button */}
                     <div className="relative group inline-block">
                       <button
-                        className="bg-red-500 text-white px-3 py-1  rounded hover:bg-red-600 transition-colors"
+                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
                         aria-label="Delete"
                         onClick={() => handleViewDeleteDialog(cls.id)}
                       >
@@ -242,14 +277,11 @@ const UpcomingSessionsAdmin = ({
           </table>
         </div>
       </div>
-
-      {/* Attendance Dialog */}
       <AttendanceDialog
         showAttendanceDialog={showAttendanceDialog}
         setShowAttendanceDialog={setShowAttendanceDialog}
         selectedSession={selectedSession}
       />
-
       <DeleteSessionDialog
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
