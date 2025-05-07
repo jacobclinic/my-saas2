@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import TextField from '~/core/ui/TextField';
 import Button from '~/core/ui/Button';
@@ -14,12 +14,13 @@ const EmailPasswordSignUpForm: React.FCC<{
   }) => unknown;
   loading: boolean;
 }> = ({ onSubmit, loading }) => {
-  const { register, handleSubmit, watch, formState } = useForm({
+  const { register, handleSubmit, watch, formState, trigger } = useForm({
     defaultValues: {
       email: '',
       password: '',
       repeatPassword: '',
     },
+    mode: 'onChange',
   });
 
   const [userRole, setUserRole] = useState<'student' | 'tutor'>('student'); // Default userRole
@@ -27,11 +28,46 @@ const EmailPasswordSignUpForm: React.FCC<{
   const emailControl = register('email', { required: true });
   const errors = formState.errors;
 
+  // Re-validate password when user role changes
+  useEffect(() => {
+    trigger('password');
+    trigger('repeatPassword');
+  }, [userRole, trigger]);
+
   const passwordControl = register('password', {
     required: true,
     minLength: {
       value: 6,
       message: 'Please provide a password with at least 6 characters',
+    },
+    validate: (value) => {
+      // Additional password complexity for tutors
+      if (userRole === 'tutor') {
+        const hasLowercase = /[a-z]/.test(value);
+        const hasUppercase = /[A-Z]/.test(value);
+        const hasDigit = /\d/.test(value);
+        const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(
+          value,
+        );
+
+        if (!hasLowercase) {
+          return 'Password must contain at least one lowercase letter';
+        }
+
+        if (!hasUppercase) {
+          return 'Password must contain at least one uppercase letter';
+        }
+
+        if (!hasDigit) {
+          return 'Password must contain at least one digit';
+        }
+
+        if (!hasSpecialChar) {
+          return 'Password must contain at least one special character';
+        }
+      }
+
+      return true;
     },
   });
 
@@ -109,7 +145,9 @@ const EmailPasswordSignUpForm: React.FCC<{
                 autoComplete="new-password"
               />
               <TextField.Hint>
-                Ensure it&apos;s at least 6 characters
+                {userRole === 'student'
+                  ? "Ensure it's at least 6 characters"
+                  : '6+ characters includes lowercase, uppercase, digit, special character'}
               </TextField.Hint>
               <TextField.Error
                 data-cy="password-error"
