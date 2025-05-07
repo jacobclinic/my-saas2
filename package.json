@@ -34,6 +34,7 @@
     "singleQuote": true
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.804.0",
     "@heroicons/react": "^2.1.1",
     "@heroui/date-picker": "^2.3.16",
     "@heroui/system": "^2.4.12",
