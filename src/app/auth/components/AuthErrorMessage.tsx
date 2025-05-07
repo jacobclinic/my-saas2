@@ -2,10 +2,16 @@ import { AuthError } from '@supabase/gotrue-js';
 import Alert from '~/core/ui/Alert';
 
 const ERROR_CODES: StringObject = {
-  'Invalid login credentials': 'The credentials entered are invalid',
+  'Invalid login credentials':
+    'The email or password you entered is incorrect. Please check your credentials and try again.',
   'User already registered':
-    'This credential is already in use. Please try with another one.',
-  'Email not confirmed': 'Please confirm your email address before signing in',
+    'This email is already in use. Please try with another one.',
+  'Email not confirmed':
+    'Please confirm your email address before signing in. Check your inbox for a confirmation link.',
+  'This email is already in use. Please try with another one.':
+    'This email is already in use. Please try with another one.',
+  'The email or password you entered is incorrect. Please check your credentials and try again.':
+    'The email or password you entered is incorrect. Please check your credentials and try again.',
   default:
     'We have encountered an error. Please ensure you have a working internet connection and try again',
   generic: "Sorry, we weren't able to authenticate you. Please try again.",
@@ -32,12 +38,23 @@ export default function AuthErrorMessage({
   const errorCode =
     error instanceof AuthError ? error.message : (error as string);
 
+  // Direct mapping for our custom error messages
+  if (typeof errorCode === 'string' && errorCode in ERROR_CODES) {
+    return (
+      <Alert className={'w-full'} type={'error'}>
+        <Alert.Heading>Authentication Error</Alert.Heading>
+        <p className={'text-sm font-medium'} data-cy={'auth-error-message'}>
+          {ERROR_CODES[errorCode]}
+        </p>
+      </Alert>
+    );
+  }
+
   return (
     <Alert className={'w-full'} type={'error'}>
-      <Alert.Heading>Sorry, we could not authenticate you</Alert.Heading>
-
+      <Alert.Heading>Authentication Error</Alert.Heading>
       <p className={'text-sm font-medium'} data-cy={'auth-error-message'}>
-        {'errorCode' in ERROR_CODES
+        {typeof errorCode === 'string' && errorCode in ERROR_CODES
           ? ERROR_CODES[errorCode]
           : ERROR_CODES.default}
       </p>
