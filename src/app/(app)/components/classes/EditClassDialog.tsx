@@ -358,7 +358,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
               </Button>
             </div> */}
 
-            <div className="space-y-2 flex flex-col">
+            <div className="space-y-2 flex flex-col pb-2">
               <div className="flex self-end gap-[75px] mr-14">
                 <label className="text-sm font-medium">Start Time</label>
                 <label className="text-sm font-medium">End Time</label>
