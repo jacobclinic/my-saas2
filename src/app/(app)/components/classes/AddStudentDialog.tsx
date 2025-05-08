@@ -7,7 +7,6 @@ import { ClassListData, NewStudentData } from '~/lib/classes/types/class-v2';
 import BaseDialog from '../base-v2/BaseDialog';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { createStudentAction } from '~/lib/user/actions/student';
 import { useToast } from '../../lib/hooks/use-toast';
 import { sendEmailMSGToStudentAction } from '~/lib/classes/server-actions-v2';
 
@@ -51,13 +50,6 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
     if (!classData?.id) return;
 
     startTransition(async () => {
-      // const result = await createStudentAction({
-      //   ...newStudent,
-      //   classId: classData.id,
-      //   nameOfClass: classData.name || '',
-      //   csrfToken,
-      // });
-
       const notificationResult = await sendEmailMSGToStudentAction({
         email: newStudent.email,
         classId: classData.id,

@@ -56,24 +56,14 @@ function JoinClassSignin() {
           return;
         }
 
-        const userId = data.user.id;
-
         // On successful sign-in, redirect redirectUrl
         router.push(
           `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionParams.sessionId}?type=upcoming`,
         );
       } catch (error: any) {
+        console.log('Error:', error);
         // Handle specific error types or messages from the API
-        if (error?.message?.includes('Invalid login credentials')) {
-          setAuthError('Invalid email or password. Please try again.');
-        } else if (error?.message?.includes('Email not confirmed')) {
-          setAuthError('Please verify your email address before signing in.');
-        } else if (error?.message?.includes('rate limit')) {
-          setAuthError('Too many login attempts. Please try again later.');
-        } else {
-          // Generic error message as fallback
-          setAuthError('Unable to sign in. Please try again later.');
-        }
+        setAuthError(error);
 
         console.error('Sign in error:', error);
       }
@@ -82,7 +72,7 @@ function JoinClassSignin() {
   );
 
   return (
-    <div className="w-full mx-auto p-5 font-sans border border-gray-200 rounded-lg shadow-sm">
+    <div className="w-full mx-auto p-1 font-sans rounded-lg">
       <div className="flex justify-between">
         <h2 className="text-center text-2xl font-semibold text-gray-800 flex justify-start mb-0">
           <b>Join Class</b>
