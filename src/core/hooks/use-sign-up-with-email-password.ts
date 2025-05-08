@@ -5,7 +5,7 @@ import configuration from '~/configuration';
 interface Credentials {
   email: string;
   password: string;
-  userRole:string
+  userRole: string;
 }
 
 /**
@@ -18,7 +18,7 @@ function useSignUpWithEmailAndPassword() {
   return useSWRMutation(
     key,
     (_, { arg: credentials }: { arg: Credentials }) => {
-      console.log("onSignupRequested-params", credentials);
+      console.log('onSignupRequested-params', credentials);
       const emailRedirectTo = [
         window.location.origin,
         configuration.paths.authCallback,
@@ -37,7 +37,14 @@ function useSignUpWithEmailAndPassword() {
         })
         .then((response) => {
           if (response.error) {
-            throw response.error.message;
+            // Handle specific error cases with user-friendly messages
+            if (response.error.message.includes('already registered')) {
+              throw 'This email is already in use. Please try with another one.';
+            } else if (response.error.message.includes('password')) {
+              throw response.error.message; // Pass through password-related errors
+            } else {
+              throw response.error.message;
+            }
           }
 
           const user = response.data?.user;
@@ -45,7 +52,7 @@ function useSignUpWithEmailAndPassword() {
 
           // if the user has no identities, it means that the email is taken
           if (identities.length === 0) {
-            throw new Error('User already registered');
+            throw 'This email is already in use. Please try with another one.';
           }
 
           return response.data;

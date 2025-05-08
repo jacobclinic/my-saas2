@@ -12,6 +12,7 @@ import { Info } from 'lucide-react';
 import StudentDashboard from '../components/student-dashboard/StudentDashboard';
 import TutorDBClient from '../components/tutor-dashboard/TutorDashBoardClient';
 import AdminDashboardClient from '../components/admin/dashboard/AdminDashboardClient';
+import UnauthorizedAccessToast from './UnauthorizedAccessToast';
 
 export const metadata = {
   title: 'Dashboard',
@@ -59,6 +60,7 @@ async function DashboardPage() {
       // Render tutor dashboard
       return (
         <>
+          <UnauthorizedAccessToast />
           <AppHeader title="Tutor Dashboard" />
           <PageBody>
             {!sessionData.length ? (
@@ -87,6 +89,7 @@ async function DashboardPage() {
       // Render student dashboard
       return (
         <>
+          <UnauthorizedAccessToast />
           <AppHeader
             title="Student Dashboard"
             description={`Welcome back! ${
@@ -113,20 +116,19 @@ async function DashboardPage() {
           </PageBody>
         </>
       );
-    }
-    else if (userRole === 'admin') {
-      const allUpcomingSessions = await getTodaysAllUpcommingSessionsData(
-        client
-      );
+    } else if (userRole === 'admin') {
+      const allUpcomingSessions =
+        await getTodaysAllUpcommingSessionsData(client);
 
       return (
         <>
+          <UnauthorizedAccessToast />
           <AppHeader
             title="Admin Dashboard"
             description={`Welcome back! ${
               allUpcomingSessions.length
                 ? 'There are upcoming sessions.'
-                : "There are no classes scheduled today"
+                : 'There are no classes scheduled today'
             }`}
           />
           <PageBody>
@@ -134,18 +136,15 @@ async function DashboardPage() {
               <Alert className="bg-blue-50 border-blue-200">
                 <Info className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-blue-700">
-                 There are no classes scheduled today
+                  There are no classes scheduled today
                 </AlertDescription>
               </Alert>
             ) : (
-              <AdminDashboardClient
-                upcomingSessionData={allUpcomingSessions}
-              />
+              <AdminDashboardClient upcomingSessionData={allUpcomingSessions} />
             )}
           </PageBody>
         </>
       );
-
     }
 
     // Handle unknown user role

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import configuration from '~/configuration';
 import { useForm } from 'react-hook-form';
@@ -12,6 +12,9 @@ function JoinClassSignin() {
   const redirectUrl = searchParams.get('redirectUrl');
   // Decode and extract parameters
   const decodedUrl = redirectUrl ? decodeURIComponent(redirectUrl) : '';
+
+  // State for auth error messages
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const sessionParams = {
     sessionId: decodedUrl.match(/sessionId=([^&]+)/)?.[1],
@@ -36,26 +39,40 @@ function JoinClassSignin() {
       password: '',
     },
   });
-
   const onSubmit = useCallback(
     async (params: { email: string; password: string }) => {
       try {
+        // Clear any previous errors
+        setAuthError(null);
+
         const data = await signInMutation.trigger(params);
-        const userId = data?.user?.id;
+
+        // Check if we got a valid response with user data
+        if (!data || !data.user || !data.user.id) {
+          // This handles cases where sign-in fails but doesn't throw an exception
+          setAuthError(
+            'Authentication failed. Please check your credentials and try again.',
+          );
+          return;
+        }
 
         // On successful sign-in, redirect redirectUrl
         router.push(
           `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionParams.sessionId}?type=upcoming`,
         );
-      } catch (error) {
+      } catch (error: any) {
+        console.log('Error:', error);
+        // Handle specific error types or messages from the API
+        setAuthError(error);
+
         console.error('Sign in error:', error);
       }
     },
-    [router],
+    [router, sessionParams.sessionId, setAuthError],
   );
 
   return (
-    <div className="w-full mx-auto p-5 font-sans border border-gray-200 rounded-lg shadow-sm">
+    <div className="w-full mx-auto p-1 font-sans rounded-lg">
       <div className="flex justify-between">
         <h2 className="text-center text-2xl font-semibold text-gray-800 flex justify-start mb-0">
           <b>Join Class</b>
@@ -75,12 +92,15 @@ function JoinClassSignin() {
       !sessionParams.sessionDate &&
       !sessionParams.sessionTime &&
       !sessionParams.sessionSubject &&
-      !sessionParams.sessionTitle ? (
-        null
-      ) : (
+      !sessionParams.sessionTitle ? null : (
         <div className="bg-gray-50 p-4 rounded-md border border-blue-500 mb-6">
           <h3 className="text-base font-medium text-blue-900 mb-2">
-            {sessionParams.className && <b>{sessionParams.className.charAt(0).toUpperCase() + sessionParams.className.slice(1)}</b>}
+            {sessionParams.className && (
+              <b>
+                {sessionParams.className.charAt(0).toUpperCase() +
+                  sessionParams.className.slice(1)}
+              </b>
+            )}
           </h3>
           {sessionParams.sessionDate && (
             <p className="text-sm text-blue-800 mb-1">
@@ -90,19 +110,28 @@ function JoinClassSignin() {
 
           {sessionParams.sessionSubject && (
             <p className="text-sm text-blue-800">
-              Subject: {sessionParams.sessionSubject.charAt(0).toUpperCase() + sessionParams.sessionSubject.slice(1)}
+              Subject:{' '}
+              {sessionParams.sessionSubject.charAt(0).toUpperCase() +
+                sessionParams.sessionSubject.slice(1)}
             </p>
           )}
           {sessionParams.sessionTitle != 'undefined' &&
-            (sessionParams.sessionTitle && (
+            sessionParams.sessionTitle && (
               <p className="text-sm text-blue-800">
-                Title: {sessionParams.sessionTitle.charAt(0).toUpperCase() + sessionParams.sessionTitle.slice(1)}
+                Title:{' '}
+                {sessionParams.sessionTitle.charAt(0).toUpperCase() +
+                  sessionParams.sessionTitle.slice(1)}
               </p>
-            ))}
+            )}
         </div>
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        {authError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-md">
+            <p className="text-sm text-red-600 font-medium">{authError}</p>
+          </div>
+        )}
         <div className="mb-4">
           <input
             type="email" // Changed to email type for proper validation
