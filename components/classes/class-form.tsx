@@ -1,25 +1,36 @@
 "use client";
 
-import { useState } from 'react';
-import { Calendar, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DialogFooter } from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
+import { useState } from "react";
+import { Calendar, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DialogFooter } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
-export function ClassForm() {
+interface ClassFormProps {
+  onSuccess?: () => void;
+}
+
+export function ClassForm({ onSuccess }: ClassFormProps) {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     // Simulate API call
     setTimeout(() => {
       setLoading(false);
+      if (onSuccess) onSuccess();
     }, 1000);
   };
 
@@ -27,14 +38,16 @@ export function ClassForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4">Basic Information</h3>
+          <h3 className="text-lg font-semibold text-neutral-900 mb-4">
+            Basic Information
+          </h3>
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="class-name">Class Name</Label>
-              <Input 
-                id="class-name" 
-                placeholder="e.g., Physics 2026 A/L Group 1" 
-                className="focus-visible:ring-primary-blue-500" 
+              <Input
+                id="class-name"
+                placeholder="e.g., Physics 2026 A/L Group 1"
+                className="focus-visible:ring-primary-blue-500"
               />
             </div>
 
@@ -42,7 +55,10 @@ export function ClassForm() {
               <div className="grid gap-2">
                 <Label htmlFor="subject">Subject</Label>
                 <Select>
-                  <SelectTrigger id="subject" className="focus-visible:ring-primary-blue-500">
+                  <SelectTrigger
+                    id="subject"
+                    className="focus-visible:ring-primary-blue-500"
+                  >
                     <SelectValue placeholder="Select subject" />
                   </SelectTrigger>
                   <SelectContent>
@@ -57,7 +73,10 @@ export function ClassForm() {
               <div className="grid gap-2">
                 <Label htmlFor="year-grade">Year/Grade</Label>
                 <Select>
-                  <SelectTrigger id="year-grade" className="focus-visible:ring-primary-blue-500">
+                  <SelectTrigger
+                    id="year-grade"
+                    className="focus-visible:ring-primary-blue-500"
+                  >
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -71,10 +90,10 @@ export function ClassForm() {
 
             <div className="grid gap-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea 
-                id="description" 
-                placeholder="Describe what students will learn in this class..." 
-                className="focus-visible:ring-primary-blue-500 min-h-[100px] resize-none" 
+              <Textarea
+                id="description"
+                placeholder="Describe what students will learn in this class..."
+                className="focus-visible:ring-primary-blue-500 min-h-[100px] resize-none"
               />
             </div>
           </div>
@@ -83,7 +102,9 @@ export function ClassForm() {
         <Separator />
 
         <div>
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4">Schedule & Fees</h3>
+          <h3 className="text-lg font-semibold text-neutral-900 mb-4">
+            Schedule & Fees
+          </h3>
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="starting-date">Starting Date</Label>
@@ -103,7 +124,10 @@ export function ClassForm() {
               <div className="grid gap-2">
                 <Label htmlFor="day">Day of Week</Label>
                 <Select>
-                  <SelectTrigger id="day" className="focus-visible:ring-primary-blue-500">
+                  <SelectTrigger
+                    id="day"
+                    className="focus-visible:ring-primary-blue-500"
+                  >
                     <SelectValue placeholder="Select day" />
                   </SelectTrigger>
                   <SelectContent>
@@ -149,11 +173,11 @@ export function ClassForm() {
 
             <div className="grid gap-2">
               <Label htmlFor="fee">Monthly Fee (Rs.)</Label>
-              <Input 
-                id="fee" 
-                type="number" 
-                placeholder="Enter monthly fee amount" 
-                className="focus-visible:ring-primary-blue-500" 
+              <Input
+                id="fee"
+                type="number"
+                placeholder="Enter monthly fee amount"
+                className="focus-visible:ring-primary-blue-500"
               />
             </div>
           </div>
@@ -161,19 +185,15 @@ export function ClassForm() {
       </div>
 
       <DialogFooter>
-        <Button 
-          variant="outline" 
-          type="button"
-          className="border-neutral-200"
-        >
+        <Button variant="outline" type="button" className="border-neutral-200">
           Cancel
         </Button>
-        <Button 
+        <Button
           type="submit"
           disabled={loading}
           className="bg-primary-blue-600 hover:bg-primary-blue-700 text-white min-w-[100px]"
         >
-          {loading ? 'Creating...' : 'Create Class'}
+          {loading ? "Creating..." : "Create Class"}
         </Button>
       </DialogFooter>
     </form>

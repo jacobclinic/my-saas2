@@ -1,34 +1,34 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { cn } from '@/lib/utils';
-import { NAV_LINKS, SETTINGS_LINKS } from '@/lib/constants';
-import { 
-  LayoutDashboard, 
-  FolderKanban, 
-  CalendarClock, 
-  CalendarCheck2, 
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { NAV_LINKS, SETTINGS_LINKS } from "@/lib/constants";
+import {
+  LayoutDashboard,
+  Folder, // Replace FolderKanban with Folder
+  CalendarClock,
+  CalendarCheck2,
   Wallet,
   User,
   CreditCard,
   ChevronRight,
   Menu,
   X,
-  LogOut
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+  LogOut,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const icons = {
   LayoutDashboard,
-  FolderKanban,
+  FolderKanban: Folder, // Map FolderKanban to Folder
   CalendarClock,
   CalendarCheck2,
   Wallet,
   User,
-  CreditCard
+  CreditCard,
 };
 
 export function Sidebar() {
@@ -39,7 +39,7 @@ export function Sidebar() {
 
   const handleSignOut = () => {
     // Add sign out logic here
-    router.push('/auth/sign-in');
+    router.push("/auth/sign-in");
   };
 
   return (
@@ -53,10 +53,14 @@ export function Sidebar() {
       </button>
 
       {/* Sidebar */}
-      <div className={cn(
-        "fixed lg:static inset-y-0 left-0 z-40 h-screen w-64 bg-white border-r border-neutral-200 flex flex-col transform transition-transform duration-200 ease-in-out lg:transform-none",
-        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      )}>
+      <div
+        className={cn(
+          "fixed lg:static inset-y-0 left-0 z-40 h-screen w-64 bg-white border-r border-neutral-200 flex flex-col transform transition-transform duration-200 ease-in-out lg:transform-none",
+          isMobileMenuOpen
+            ? "translate-x-0"
+            : "-translate-x-full lg:translate-x-0"
+        )}
+      >
         {/* Logo Section */}
         <div className="flex-shrink-0 px-6 py-6 border-b border-neutral-200">
           <Link href="/" className="flex items-center gap-2">
@@ -100,17 +104,17 @@ export function Sidebar() {
             </div>
 
             <div className="mt-8">
-              <div 
+              <div
                 className="flex items-center justify-between px-3 py-2 text-sm font-medium text-neutral-500 cursor-pointer"
                 onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
               >
                 <span>SETTINGS</span>
-                <ChevronRight 
-                  size={16} 
+                <ChevronRight
+                  size={16}
                   className={cn(
                     "transition-transform duration-200",
                     isSettingsExpanded && "transform rotate-90"
-                  )} 
+                  )}
                 />
               </div>
 
@@ -126,7 +130,9 @@ export function Sidebar() {
                         href={link.href}
                         className={cn(
                           "sidebar-link",
-                          isActive ? "sidebar-link-active" : "sidebar-link-inactive"
+                          isActive
+                            ? "sidebar-link-active"
+                            : "sidebar-link-inactive"
                         )}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -171,7 +177,7 @@ export function Sidebar() {
 
       {/* Overlay for mobile */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
