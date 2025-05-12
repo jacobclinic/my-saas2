@@ -59,11 +59,9 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const zoomMeetingId = sessionData.zoom_meeting_id;
 
   const getAttendance = useCallback(async (): Promise<void> => {
-    console.log('Fetching attendance for:', sessionData);
     const result = await getAttendanceAction({ zoomMeetingId, classId });
     setAttendanceData(result.attendance);
     setShowAttendanceDialog(true);
-    console.log('Fetching attendance for:2222222', result.attendance);
   }, [sessionData, classId]);
 
   return (

@@ -252,6 +252,7 @@ export type Database = {
       };
       sessions: {
         Row: {
+          attendance_marked: boolean;
           class_id: string | null;
           created_at: string;
           description: string | null;
@@ -270,6 +271,7 @@ export type Database = {
           zoom_session_name: string | null;
         };
         Insert: {
+          attendance_marked?: boolean;
           class_id?: string | null;
           created_at?: string;
           description?: string | null;
@@ -288,6 +290,7 @@ export type Database = {
           zoom_session_name?: string | null;
         };
         Update: {
+          attendance_marked?: boolean;
           class_id?: string | null;
           created_at?: string;
           description?: string | null;
@@ -415,24 +418,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'student_payments_class_id_fkey';
-            columns: ['class_id'];
-            isOneToOne: false;
-            referencedRelation: 'classes';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'student_payments_invoice_id_fkey';
+            foreignKeyName: 'fk_student_payments_invoice_id';
             columns: ['invoice_id'];
             isOneToOne: false;
             referencedRelation: 'invoices';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'student_payments_student_id_fkey';
-            columns: ['student_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -440,23 +429,32 @@ export type Database = {
       student_session_attendance: {
         Row: {
           created_at: string;
+          email: string | null;
           id: string;
+          join_time: string;
+          leave_time: string;
+          name: string | null;
           session_id: string | null;
-          student_id: string | null;
           time: string | null;
         };
         Insert: {
           created_at?: string;
+          email?: string | null;
           id?: string;
+          join_time: string;
+          leave_time: string;
+          name?: string | null;
           session_id?: string | null;
-          student_id?: string | null;
           time?: string | null;
         };
         Update: {
           created_at?: string;
+          email?: string | null;
           id?: string;
+          join_time?: string;
+          leave_time?: string;
+          name?: string | null;
           session_id?: string | null;
-          student_id?: string | null;
           time?: string | null;
         };
         Relationships: [
@@ -465,13 +463,6 @@ export type Database = {
             columns: ['session_id'];
             isOneToOne: false;
             referencedRelation: 'sessions';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'student_session_attendance_student_id_fkey';
-            columns: ['student_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];

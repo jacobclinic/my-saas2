@@ -13,8 +13,9 @@ const PastSessionsClient = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1); // Current page number
   const itemsPerPage = 5; // Items per page
-  const [filteredData, setFilteredData] =
-    useState<PastSession[]>(initialSessions);
+  const [filteredData, setFilteredData] = useState<PastSession[]>(
+    initialSessions,
+  );
 
   // Calculate the total number of pages
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -24,10 +25,7 @@ const PastSessionsClient = ({
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
   // Get the current page's data
-  const currentSessions = filteredData.slice(
-    indexOfFirstItem,
-    indexOfLastItem,
-  );
+  const currentSessions = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
   // Handler for when filters are applied in the child component
   const handleFilterChange = (newFilteredData: PastSession[]) => {

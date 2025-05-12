@@ -906,13 +906,11 @@ export async function getAllPastSessionsData(
           ),
           attendance:${STUDENT_SESSION_ATTENDANCE_TABLE}!id (
             id,
-            student_id,
             time,
-            student:${USERS_TABLE}!student_id (
-              id,
-              first_name,
-              last_name
-            )
+            name,
+            email,
+            join_time,
+            leave_time
           )
         `,
         { count: 'exact' },
@@ -928,9 +926,7 @@ export async function getAllPastSessionsData(
 
     if (!data) {
       return [];
-    }
-
-    // Transform the data to get the count directly
+    } // Transform the data to get the count directly
     const transformedData = data?.map((sessionData) => {
       let classTemp;
       let attendanceTemp;
@@ -940,9 +936,15 @@ export async function getAllPastSessionsData(
       }
       if (sessionData?.attendance?.length > 0) {
         attendanceTemp = sessionData.attendance.map((attendee) => {
-          if (Array.isArray(attendee.student))
-            return { ...attendee, student: attendee.student[0] };
-          else return { ...attendee, student: attendee.student };
+          // Ensure each attendance record has all required fields from PastSession
+          return {
+            id: attendee.id,
+            time: attendee.time || null,
+            email: attendee.email || null,
+            name: attendee.name || null,
+            join_time: attendee.join_time,
+            leave_time: attendee.leave_time,
+          };
         });
       }
       return {
@@ -980,6 +982,7 @@ export async function getAllPastSessionsDataAdmin(
           updated_at,
           meeting_url,
           zoom_meeting_id,
+          attendance_marked,
           class:${CLASSES_TABLE}!class_id (
             id,
             name,
@@ -1001,13 +1004,11 @@ export async function getAllPastSessionsDataAdmin(
           ),
           attendance:${STUDENT_SESSION_ATTENDANCE_TABLE}!id (
             id,
-            student_id,
             time,
-            student:${USERS_TABLE}!student_id (
-              id,
-              first_name,
-              last_name
-            )
+            email,
+            name,
+            join_time,
+            leave_time
           )
         `,
         { count: 'exact' },
@@ -1035,9 +1036,15 @@ export async function getAllPastSessionsDataAdmin(
       }
       if (sessionData?.attendance?.length > 0) {
         attendanceTemp = sessionData.attendance.map((attendee) => {
-          if (Array.isArray(attendee.student))
-            return { ...attendee, student: attendee.student[0] };
-          else return { ...attendee, student: attendee.student };
+          // Ensure each attendance record has all required fields from PastSession
+          return {
+            id: attendee.id || '',
+            time: attendee.time || null,
+            email: attendee.email || null,
+            name: attendee.name || null,
+            join_time: attendee.join_time || null,
+            leave_time: attendee.leave_time || null,
+          };
         });
       }
       return {
@@ -1103,6 +1110,7 @@ export async function getAllPastSessionsByTutorIdData(
           updated_at,
           meeting_url,
           zoom_meeting_id,
+          attendance_marked,
           class:${CLASSES_TABLE}!class_id (
             id,
             name,
@@ -1118,13 +1126,11 @@ export async function getAllPastSessionsByTutorIdData(
           ),
           attendance:${STUDENT_SESSION_ATTENDANCE_TABLE}!id (
             id,
-            student_id,
             time,
-            student:${USERS_TABLE}!student_id (
-              id,
-              first_name,
-              last_name
-            )
+            name,
+            email,
+            join_time,
+            leave_time
           )
         `,
         { count: 'exact' },
@@ -1141,9 +1147,7 @@ export async function getAllPastSessionsByTutorIdData(
 
     if (!pastSessions) {
       return [];
-    }
-
-    // Transform the data to get the count directly
+    } // Transform the data to get the count directly
     const transformedData = pastSessions?.map((sessionData) => {
       let classTemp;
       let attendanceTemp;
@@ -1153,9 +1157,15 @@ export async function getAllPastSessionsByTutorIdData(
       }
       if (sessionData?.attendance?.length > 0) {
         attendanceTemp = sessionData.attendance.map((attendee) => {
-          if (Array.isArray(attendee.student))
-            return { ...attendee, student: attendee.student[0] };
-          else return { ...attendee, student: attendee.student };
+          // Ensure each attendance record has all required fields from PastSession
+          return {
+            id: attendee.id || '',
+            time: attendee.time || null,
+            email: attendee.email || null,
+            name: attendee.name || null,
+            join_time: attendee.join_time || null,
+            leave_time: attendee.leave_time || null,
+          };
         });
       }
       return {
@@ -1219,6 +1229,7 @@ export async function getAllUpcomingSessionsByStudentIdData(
           updated_at,
           meeting_url,
           zoom_meeting_id,
+          attendance_marked,
           class:${CLASSES_TABLE}!class_id (
             id,
             name,
@@ -1835,7 +1846,11 @@ export async function checkUpcomingSessionAvailabilityForClass(
   class_id: string,
 ): Promise<boolean> {
   // Validate class_id as a UUID (optional, if strict validation is needed)
-  if (!class_id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+  if (
+    !class_id.match(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    )
+  ) {
     throw new Error('Invalid class_id: must be a valid UUID');
   }
 
@@ -1848,12 +1863,19 @@ export async function checkUpcomingSessionAvailabilityForClass(
       .limit(1);
 
     if (error) {
-      throw new Error(`Error fetching sessions for class ${class_id}: ${error.message}`);
+      throw new Error(
+        `Error fetching sessions for class ${class_id}: ${error.message}`,
+      );
     }
 
     return (count ?? 0) > 0;
   } catch (error) {
-    console.error(`Failed to check session availability for class ${class_id}:`, error);
-    throw new Error(`Failed to check session availability: ${(error as Error).message}`);
+    console.error(
+      `Failed to check session availability for class ${class_id}:`,
+      error,
+    );
+    throw new Error(
+      `Failed to check session availability: ${(error as Error).message}`,
+    );
   }
 }

@@ -45,7 +45,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
             </p>
           </div>
           <Badge variant="outline">
-            {selectedSession?.attendance.length} Students
+            {attendance.length} Students
           </Badge>
         </div>
 
