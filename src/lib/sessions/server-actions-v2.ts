@@ -9,7 +9,7 @@ import {
   uploadMaterialToStorage,
 } from '../utils/upload-material-utils';
 import { getSessionDataById } from './database/queries';
-import { updateSession } from './database/mutations';
+import { updateAttendanceMarked, updateSession } from './database/mutations';
 import { updateZoomSessionAction } from './server-actions-v2-legacy';
 import { fetchMeetingParticipants } from '../zoom/zoom_rec.service';
 import { isAdminOrCLassTutor } from '../classes/database/queries';
@@ -269,14 +269,13 @@ export const deleteSessionMaterialAction = withSession(
   },
 );
 
-
 export const getAttendanceAction = withSession(
   async ({
     zoomMeetingId,
-    classId,
+    sessionId,
   }: {
     zoomMeetingId: string;
-    classId: string;
+    sessionId: string;
   }) => {
     const client = getSupabaseServerActionClient();
 
@@ -289,12 +288,12 @@ export const getAttendanceAction = withSession(
       return {
         success: false,
         error: 'User not authenticated',
-        attendance:[]
+        attendance: [],
       };
     }
 
     const userId = session.user.id;
-    const havePermission = await isAdminOrCLassTutor(client, userId, classId);
+    const havePermission = await isAdminOrCLassTutor(client, userId, sessionId);
 
     if (!havePermission) {
       return {
@@ -309,7 +308,27 @@ export const getAttendanceAction = withSession(
       return { success: true, attendance };
     } catch (error) {
       console.error('Error fetching attendance:', error);
-      return { success: false, error: 'Failed to fetch attendance', attendance: [] };
+      return {
+        success: false,
+        error: 'Failed to fetch attendance',
+        attendance: [],
+      };
     }
   },
 );
+
+export async function updateAttendanceMarkedAction(
+  sessionId: string,
+): Promise<any> {
+  const client = getSupabaseServerActionClient();
+  try {
+    const response = await updateAttendanceMarked(client, sessionId);
+    if (response.error) {
+      throw new Error(`Failed to update attendance_marked`);
+    }
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error updating attendance marked:', error);
+    return { success: false, error: 'Failed to update attendance marked' };
+  }
+}

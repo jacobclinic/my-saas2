@@ -17,7 +17,7 @@ import {
   Link,
 } from 'lucide-react';
 import AttendanceDialog from './AttendanceDialog';
-import { getAttendanceAction } from '~/lib/sessions/server-actions-v2';
+import { getAttendanceAction, updateAttendanceMarkedAction } from '~/lib/sessions/server-actions-v2';
 import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
 import { insertAttendanceAction } from '~/lib/attendance/server-actions';
 
@@ -56,7 +56,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     },
     [],
   );
-  const classId = sessionData.classId;
+
   const zoomMeetingId = sessionData.zoom_meeting_id;
   const sessionId = sessionData.id;
 
@@ -66,7 +66,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
       setShowAttendanceDialog(true);
       return;
     } else {
-      const result = await getAttendanceAction({ zoomMeetingId, classId });
+      const result = await getAttendanceAction({ zoomMeetingId, sessionId });
       const formattedData = result.attendance.map(
         (student: ZoomParticipant) => ({
           time: String(student.duration),
@@ -84,13 +84,23 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
         sessionId: sessionId,
       }));
       try {
-        const attendanceMarkedResult =
-          await insertAttendanceAction(insertAttendanceData);
+        await insertAttendanceAction(insertAttendanceData);
       } catch (error) {
         console.error('Error inserting attendance:', error);
       }
+      // Update the session to mark attendance as true
+      try{
+        const response = await updateAttendanceMarkedAction(sessionId);
+        if (response.success) {
+          console.log('Attendance marked successfully');
+        } else {
+          console.error('Failed to mark attendance:', response.error);
+        }
+      } catch (error) {
+        console.error('Error updating attendance marked:', error);
+      }
     }
-  }, [sessionData, classId]);
+  }, [sessionData, sessionId]);
 
   return (
     <>
