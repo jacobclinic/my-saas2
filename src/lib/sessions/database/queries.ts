@@ -905,7 +905,6 @@ export async function getAllPastSessionsData(
             file_size
           ),
           attendance:${STUDENT_SESSION_ATTENDANCE_TABLE}!id (
-            id,
             time,
             name,
             email,
@@ -938,7 +937,6 @@ export async function getAllPastSessionsData(
         attendanceTemp = sessionData.attendance.map((attendee) => {
           // Ensure each attendance record has all required fields from PastSession
           return {
-            id: attendee.id,
             time: attendee.time || null,
             email: attendee.email || null,
             name: attendee.name || null,
@@ -1003,7 +1001,6 @@ export async function getAllPastSessionsDataAdmin(
             file_size
           ),
           attendance:${STUDENT_SESSION_ATTENDANCE_TABLE}!id (
-            id,
             time,
             email,
             name,
@@ -1038,7 +1035,6 @@ export async function getAllPastSessionsDataAdmin(
         attendanceTemp = sessionData.attendance.map((attendee) => {
           // Ensure each attendance record has all required fields from PastSession
           return {
-            id: attendee.id || '',
             time: attendee.time || null,
             email: attendee.email || null,
             name: attendee.name || null,
@@ -1125,7 +1121,6 @@ export async function getAllPastSessionsByTutorIdData(
             file_size
           ),
           attendance:${STUDENT_SESSION_ATTENDANCE_TABLE}!id (
-            id,
             time,
             name,
             email,
@@ -1159,7 +1154,6 @@ export async function getAllPastSessionsByTutorIdData(
         attendanceTemp = sessionData.attendance.map((attendee) => {
           // Ensure each attendance record has all required fields from PastSession
           return {
-            id: attendee.id || '',
             time: attendee.time || null,
             email: attendee.email || null,
             name: attendee.name || null,

@@ -1,7 +1,7 @@
 'use client';
 
 import { DateRangePicker } from '@heroui/date-picker';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { PastSession } from '~/lib/sessions/types/session-v2';
 import AttendanceDialog from '../../past-sessions/AttendanceDialog';
 import {
@@ -12,6 +12,8 @@ import { Check, Link, Trash, Users } from 'lucide-react';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DeleteSessionDialog from './DeleteSessionDialog';
 import { format, toZonedTime } from 'date-fns-tz';
+import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
+import { getAttendanceAction } from '~/lib/sessions/server-actions-v2';
 
 // Set the local timezone (e.g., 'Asia/Colombo' for Sri Lanka, GMT+5:30)
 const LOCAL_TIMEZONE = 'Asia/Colombo';
@@ -46,6 +48,7 @@ const PastSessionsAdmin = ({
   const [selectedTutor, setSelectedTutor] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
+  const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
 
   const handleDateRangeChange = (value: any) => {
     setDateRange(value);
@@ -70,26 +73,41 @@ const PastSessionsAdmin = ({
   }, [dateRange]);
 
   const classData = pastSessionsData.map((session) => {
-    const startTimeUtc = session.start_time ? new Date(session.start_time) : null;
+    const startTimeUtc = session.start_time
+      ? new Date(session.start_time)
+      : null;
     const endTimeUtc = session.end_time ? new Date(session.end_time) : null;
 
     // Convert UTC to local timezone using toZonedTime
-    const startTimeLocal = startTimeUtc ? toZonedTime(startTimeUtc, LOCAL_TIMEZONE) : null;
-    const endTimeLocal = endTimeUtc ? toZonedTime(endTimeUtc, LOCAL_TIMEZONE) : null;
+    const startTimeLocal = startTimeUtc
+      ? toZonedTime(startTimeUtc, LOCAL_TIMEZONE)
+      : null;
+    const endTimeLocal = endTimeUtc
+      ? toZonedTime(endTimeUtc, LOCAL_TIMEZONE)
+      : null;
 
     // Format times in local timezone
-    const formattedStartTime = startTimeLocal ? format(startTimeLocal, 'hh:mm a') : 'N/A';
-    const formattedEndTime = endTimeLocal ? format(endTimeLocal, 'hh:mm a') : 'N/A';
+    const formattedStartTime = startTimeLocal
+      ? format(startTimeLocal, 'hh:mm a')
+      : 'N/A';
+    const formattedEndTime = endTimeLocal
+      ? format(endTimeLocal, 'hh:mm a')
+      : 'N/A';
 
     return {
       id: session.id,
       tutorName: session.class?.tutor?.first_name || 'Unknown',
       name: session.class?.name,
       date: session.start_time,
-      time: startTimeUtc && endTimeUtc ? `${formattedStartTime} - ${formattedEndTime}` : 'N/A',
+      attendance_marked: session.attendance_marked,
+      time:
+        startTimeUtc && endTimeUtc
+          ? `${formattedStartTime} - ${formattedEndTime}`
+          : 'N/A',
       topic: session.title || 'Unknown',
       attendance: session.attendance || [],
       subject: session.class?.subject || null,
+      zoomMeetingId: session.zoom_meeting_id || null,
     };
   });
 
@@ -150,15 +168,37 @@ const PastSessionsAdmin = ({
     tutorName: cls.tutorName || null,
     topic: cls.topic || null,
     subject: cls.subject || null,
+    attendance_marked: cls.attendance_marked!,
     attendance: cls.attendance.map((att) => ({
-      name: `${att.student?.first_name || ''} ${att.student?.last_name || ''}`.trim(),
-      joinTime: att.time || '',
-      duration: 'N/A', // calculate the duration using join time and leave time. Leave time is not provided
+      name: att.name,
+      join_time: att.join_time || '',
+      leave_time: att.leave_time || '',
+      email: att.email || '',
+      time: att.time || '',
     })),
   });
 
   // Handle View button click to show AttendanceDialog
-  const handleViewAttendance = (cls: (typeof classData)[0]) => {
+  const handleViewAttendance = async (cls: (typeof classData)[0]) => {
+    if (cls.attendance_marked) {
+      setAttendanceData(cls.attendance);
+      setShowAttendanceDialog(true);
+    } else {
+      const classId = cls.id;
+      const zoomMeetingId = cls.zoomMeetingId!;
+      const result = await getAttendanceAction({ zoomMeetingId, classId });
+      const formattedData = result.attendance.map(
+        (student: ZoomParticipant) => ({
+          time: String(student.duration),
+          name: student.name,
+          email: student.email,
+          join_time: student.join_time,
+          leave_time: student.leave_time,
+        }),
+      );
+      setAttendanceData(formattedData);
+      setShowAttendanceDialog(true);
+    }
     setSelectedSession(transformToSelectedSession(cls));
     setShowAttendanceDialog(true);
   };
@@ -167,6 +207,11 @@ const PastSessionsAdmin = ({
     setSelectedSessionId(sessionId);
     setShowDeleteDialog(true);
   };
+
+  // const getAttendance = useCallback(
+  //   async (sessionId: string): Promise<void> => {},
+  //   [pastSessionsData, classId],
+  // );
 
   return (
     <>
@@ -313,6 +358,7 @@ const PastSessionsAdmin = ({
         showAttendanceDialog={showAttendanceDialog}
         setShowAttendanceDialog={setShowAttendanceDialog}
         selectedSession={selectedSession}
+        attendance={attendanceData}
       />
 
       <DeleteSessionDialog

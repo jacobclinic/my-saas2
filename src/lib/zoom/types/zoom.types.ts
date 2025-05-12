@@ -114,3 +114,15 @@ export interface ZoomParticipantsResponse {
   next_page_token: string;
   participants: ZoomParticipant[];
 }
+
+export interface Attendance {
+  time: string | null;
+  email: string | null;
+  name: string | null;
+  join_time: string | null;
+  leave_time: string | null;
+}
+
+export interface AttendanceWithSessionId extends Attendance {
+  sessionId: string;
+}

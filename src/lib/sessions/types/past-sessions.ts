@@ -1,5 +1,5 @@
 import React from 'react';
-import { ZoomParticipant } from '~/lib/zoom/types/zoom.types';
+import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
 
 interface AttendanceRecord {
   name: string;
@@ -23,8 +23,15 @@ interface PastSessionData {
   zoom_meeting_id: string;
   classId: string;
   tutorId: string;
+  attendance_marked: boolean;
   recordingUrl: string[];
-  attendance: AttendanceRecord[];
+  attendance?: {
+    time: string | null;
+    email: string | null;
+    name: string | null;
+    join_time: string | null;
+    leave_time: string | null;
+  }[];
   materials: Material[];
 }
 interface SelectedSession {
@@ -32,7 +39,8 @@ interface SelectedSession {
   name: string;
   date: string;
   time: string;
-  attendance: AttendanceRecord[];
+  attendance_marked: boolean;
+  attendance?: Attendance[];
 }
 
 interface SelectedSessionAdmin extends SelectedSession {
@@ -45,7 +53,7 @@ interface AttendanceDialogProps {
   showAttendanceDialog: boolean;
   setShowAttendanceDialog: (show: boolean) => void;
   selectedSession: SelectedSession | null;
-  attendance: ZoomParticipant[];
+  attendance: Attendance[];
 }
 
 interface PastSessionsCardProps {
@@ -59,5 +67,5 @@ export type {
   SelectedSession,
   AttendanceDialogProps,
   PastSessionsCardProps,
-  SelectedSessionAdmin
+  SelectedSessionAdmin,
 };

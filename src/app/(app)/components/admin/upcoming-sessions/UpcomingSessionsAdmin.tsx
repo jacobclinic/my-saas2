@@ -281,6 +281,7 @@ const UpcomingSessionsAdmin = ({
         showAttendanceDialog={showAttendanceDialog}
         setShowAttendanceDialog={setShowAttendanceDialog}
         selectedSession={selectedSession}
+        attendance={[]}
       />
       <DeleteSessionDialog
         open={showDeleteDialog}

@@ -54,7 +54,6 @@ interface PastSessionAttendanceStudent {
 }
 interface PastSession extends UpcomingSession {
   attendance?: {
-    id: string;
     time: string | null;
     email: string | null;
     name: string | null;

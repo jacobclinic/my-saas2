@@ -61,7 +61,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
               <div>{student.name}</div>
               {/* <div>{student.email}</div> */}
               <div>{student.join_time}</div>
-              <div>{student.duration}</div>
+              {/* <div>{student.duration}</div> */}
             </div>
           ))}
         </div>

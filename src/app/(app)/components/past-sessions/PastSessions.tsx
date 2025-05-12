@@ -69,15 +69,16 @@ const PastSessions = ({
       date: formattedDate,
       time: formattedTime,
       recordingUrl: session?.recording_urls || [],
-      attendance:
-        (session?.attendance || []).map((attendee) => {
-          const formattedTime = `${attendee?.time ? new Date(attendee?.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : ''}`;
-          return {
-            name: `${attendee?.student?.first_name} ${attendee?.student?.last_name}`,
-            joinTime: formattedTime,
-            duration: '',
-          };
-        }) || [],
+      attendance_marked: session.attendance_marked!,
+      attendance: session.attendance?.map((record) => {
+        return {
+          time: record.time || '',
+          name: record.name || '',
+          join_time: record.join_time || '',
+          leave_time: record.leave_time || '',
+          email: record.email || '',
+        };
+      }),
       materials: (session.materials || []).map((material) => {
         return {
           id: material.id,
@@ -137,6 +138,8 @@ const PastSessions = ({
 
     onFilterChange(filteredSessions);
   }, [searchQuery, dateRange, allSessionData]);
+
+  
 
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
