@@ -1,4 +1,5 @@
 import React from 'react';
+import { ZoomParticipant } from '~/lib/zoom/types/zoom.types';
 
 interface AttendanceRecord {
   name: string;
@@ -19,6 +20,9 @@ interface PastSessionData {
   topic: string;
   date: string;
   time: string;
+  zoom_meeting_id: string;
+  classId: string;
+  tutorId: string;
   recordingUrl: string[];
   attendance: AttendanceRecord[];
   materials: Material[];
@@ -41,6 +45,7 @@ interface AttendanceDialogProps {
   showAttendanceDialog: boolean;
   setShowAttendanceDialog: (show: boolean) => void;
   selectedSession: SelectedSession | null;
+  attendance: ZoomParticipant[];
 }
 
 interface PastSessionsCardProps {

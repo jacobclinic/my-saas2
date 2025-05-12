@@ -100,6 +100,16 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           description: 'New class created successfully',
           variant: 'success',
         });
+        setNewClass({
+          name: '',
+          subject: '',
+          description: '',
+          yearGrade: '',
+          monthlyFee: '',
+          startDate: '',
+          timeSlots: [{ day: '', startTime: '', endTime: '' }], // Reset to a single time slot
+          tutorId,
+        });
       } else {
         toast({
           title: 'Error',

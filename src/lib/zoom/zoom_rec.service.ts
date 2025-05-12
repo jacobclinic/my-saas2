@@ -1,6 +1,8 @@
 import fetch from 'node-fetch';
 import { uploadToS3 } from '~/lib/aws/s3.service'; // Import S3 upload function
 import {
+  ZoomParticipant,
+  ZoomParticipantsResponse,
   ZoomRecordingResponse,
   ZoomTokenResponse,
   ZoomUserRecordingsResponse,
@@ -222,10 +224,15 @@ export async function syncZoomRecordings() {
 
             //after successfull upload,
             try {
-              await deleteRecordingFile( zoomMeetingId,file.id);
-              logger.info(`[Cron] Successfully deleted Zoom cloud recording for meeting ${zoomMeetingId}`);
+              await deleteRecordingFile(zoomMeetingId, file.id);
+              logger.info(
+                `[Cron] Successfully deleted Zoom cloud recording for meeting ${zoomMeetingId}`,
+              );
             } catch (error) {
-              logger.error(`[Cron] Failed to delete Zoom cloud recording for meeting ${zoomMeetingId}:`, error);
+              logger.error(
+                `[Cron] Failed to delete Zoom cloud recording for meeting ${zoomMeetingId}:`,
+                error,
+              );
             }
           } else {
             logger.warn(
@@ -286,4 +293,49 @@ export async function processRecording(
   //   await deleteZoomRecording(meetingId);
 
   return signedUrl;
+}
+
+export async function fetchMeetingParticipants(meetingId: string): Promise<ZoomParticipant[]> {
+  const accessToken = await getZoomAccessToken();
+  const participants: ZoomParticipant[] = [];
+  let nextPageToken: string | null = null;
+
+  try {
+    do {
+      const params = new URLSearchParams({
+        query_date_type: 'unique', // Ensures unique users
+        page_size: '300', // Max allowed
+      });
+      if (nextPageToken) {
+        params.append('next_page_token', nextPageToken);
+      }
+
+      const response = await fetch(
+        // `https://api.zoom.us/v2/report/meetings/${meetingId}/participants?${params}`,
+        `https://api.zoom.us/v2/report/meetings/88436663629/participants?${params}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          method: 'GET',
+        },
+      );
+
+      console.log('Response status:', response.status, response.statusText);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch participants: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const data = await response.json() as ZoomParticipantsResponse;
+      console.log('Raw API response:', JSON.stringify(data, null, 2));
+      logger.info(`[Zoom] Fetched ${data.participants.length} participants for meeting ${meetingId}`);
+      participants.push(...data.participants);
+      nextPageToken = data.next_page_token || null;
+    } while (nextPageToken);
+
+    return participants;
+  } catch (error) {
+    console.log('Error fetching participants:', error);
+    logger.error(`[Zoom] Failed to fetch participants for meeting ${meetingId}:`, error);
+    throw new Error('Failed to fetch meeting participants');
+  }
 }

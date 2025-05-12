@@ -17,9 +17,12 @@ import {
   Link,
 } from 'lucide-react';
 import AttendanceDialog from './AttendanceDialog';
+import { getAttendanceAction } from '~/lib/sessions/server-actions-v2';
+import { ZoomParticipant } from '~/lib/zoom/types/zoom.types';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
+  const [attendanceData, setAttendanceData] = useState<ZoomParticipant[]>([]);
   const [linkCopied, setLinkCopied] = useState<{
     recordings?: boolean;
     materials?: boolean;
@@ -52,6 +55,17 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     },
     [],
   );
+  const classId = sessionData.classId;
+  const zoomMeetingId = sessionData.zoom_meeting_id;
+
+  const getAttendance = useCallback(async (): Promise<void> => {
+    console.log('Fetching attendance for:', sessionData);
+    const result = await getAttendanceAction({ zoomMeetingId, classId });
+    setAttendanceData(result.attendance);
+    setShowAttendanceDialog(true);
+    console.log('Fetching attendance for:2222222', result.attendance);
+  }, [sessionData, classId]);
+
   return (
     <>
       <Card className="mb-4">
@@ -119,7 +133,9 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
 
               <Button
                 variant="outline"
-                onClick={() => setShowAttendanceDialog(true)}
+                onClick={() => {
+                  getAttendance();
+                }}
               >
                 <Users className="h-4 w-4 mr-2" />
                 View Attendance
@@ -151,6 +167,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
         showAttendanceDialog={showAttendanceDialog}
         setShowAttendanceDialog={setShowAttendanceDialog}
         selectedSession={sessionData}
+        attendance={attendanceData}
       />
     </>
   );
