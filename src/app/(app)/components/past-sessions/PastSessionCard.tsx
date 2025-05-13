@@ -17,9 +17,17 @@ import {
   Link,
 } from 'lucide-react';
 import AttendanceDialog from './AttendanceDialog';
+import {
+  getAttendanceAction,
+  updateAttendanceMarkedAction,
+} from '~/lib/sessions/server-actions-v2';
+import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
+import { insertAttendanceAction } from '~/lib/attendance/server-actions';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
+  const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
+  const [attendanceMarked, setAttendanceMarked] = useState(false);
   const [linkCopied, setLinkCopied] = useState<{
     recordings?: boolean;
     materials?: boolean;
@@ -52,6 +60,67 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     },
     [],
   );
+
+  const zoomMeetingId = sessionData.zoom_meeting_id;
+  const sessionId = sessionData.id;
+  const classId = sessionData.classId;
+
+  const getAttendance = async (): Promise<void> => {
+    if (sessionData.attendance_marked) {
+      setAttendanceData(sessionData.attendance!);
+      setShowAttendanceDialog(true);
+      return;
+    }else if(attendanceMarked){
+      setShowAttendanceDialog(true);
+      return;
+    } 
+    
+    else {
+      const result = await getAttendanceAction({
+        zoomMeetingId,
+        sessionId,
+        classId,
+      });
+      const formattedData = result.attendance.map(
+        (student: ZoomParticipant) => ({
+          time: String(student.duration),
+          name: student.name,
+          email: student.email,
+          join_time: student.join_time,
+          leave_time: student.leave_time,
+        }),
+      );
+      setAttendanceData(formattedData);
+      setAttendanceMarked(true);
+      setShowAttendanceDialog(true);
+      if (formattedData.length === 0) {
+        return;
+      }
+
+      const insertAttendanceData = formattedData.map((student) => ({
+        ...student,
+        sessionId: sessionId,
+      }));
+      try {
+        await insertAttendanceAction(insertAttendanceData);
+      } catch (error) {
+        console.error('Error inserting attendance:', error);
+        return;
+      }
+      // Update the session to mark attendance as true
+      try {
+        const response = await updateAttendanceMarkedAction(sessionId);
+        if (response.success) {
+          console.log('Attendance marked successfully');
+        } else {
+          console.error('Failed to mark attendance:', response.error);
+        }
+      } catch (error) {
+        console.error('Error updating attendance marked:', error);
+      }
+    }
+  };
+
   return (
     <>
       <Card className="mb-4">
@@ -75,7 +144,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
                   {sessionData.time}
                 </div>
                 <Badge variant="outline">
-                  {sessionData.attendance.length} Students Attended
+                  {sessionData.attendance?.length} Students Attended
                 </Badge>
               </div>
             </div>
@@ -119,7 +188,9 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
 
               <Button
                 variant="outline"
-                onClick={() => setShowAttendanceDialog(true)}
+                onClick={() => {
+                  getAttendance();
+                }}
               >
                 <Users className="h-4 w-4 mr-2" />
                 View Attendance
@@ -151,6 +222,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
         showAttendanceDialog={showAttendanceDialog}
         setShowAttendanceDialog={setShowAttendanceDialog}
         selectedSession={sessionData}
+        attendance={attendanceData}
       />
     </>
   );

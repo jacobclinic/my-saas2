@@ -9,8 +9,10 @@ import {
   uploadMaterialToStorage,
 } from '../utils/upload-material-utils';
 import { getSessionDataById } from './database/queries';
-import { updateSession } from './database/mutations';
+import { updateAttendanceMarked, updateSession } from './database/mutations';
 import { updateZoomSessionAction } from './server-actions-v2-legacy';
+import { fetchMeetingParticipants } from '../zoom/zoom_rec.service';
+import { isAdminOrCLassTutor } from '../classes/database/queries';
 
 const supabase = getSupabaseServerActionClient();
 
@@ -266,3 +268,69 @@ export const deleteSessionMaterialAction = withSession(
     return { success: true };
   },
 );
+
+export const getAttendanceAction = withSession(
+  async ({
+    zoomMeetingId,
+    sessionId,
+    classId
+  }: {
+    zoomMeetingId: string;
+    sessionId: string;
+    classId: string;
+  }) => {
+    const client = getSupabaseServerActionClient();
+
+    // Get the current user's session
+    const {
+      data: { session },
+      error: sessionError,
+    } = await client.auth.getSession();
+    if (sessionError || !session?.user) {
+      return {
+        success: false,
+        error: 'User not authenticated',
+        attendance: [],
+      };
+    }
+
+    const userId = session.user.id;
+    const havePermission = await isAdminOrCLassTutor(client, userId, classId);
+
+    if (!havePermission) {
+      return {
+        success: false,
+        error: 'User does not have permission to access this data',
+        attendance: [],
+      };
+    }
+
+    try {
+      const attendance = await fetchMeetingParticipants(zoomMeetingId);
+      return { success: true, attendance };
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+      return {
+        success: false,
+        error: 'Failed to fetch attendance',
+        attendance: [],
+      };
+    }
+  },
+);
+
+export async function updateAttendanceMarkedAction(
+  sessionId: string,
+): Promise<any> {
+  const client = getSupabaseServerActionClient();
+  try {
+    const response = await updateAttendanceMarked(client, sessionId);
+    if (response.error) {
+      throw new Error(`Failed to update attendance_marked`);
+    }
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error updating attendance marked:', error);
+    return { success: false, error: 'Failed to update attendance marked' };
+  }
+}

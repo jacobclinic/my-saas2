@@ -116,7 +116,7 @@ export async function registerStudentViaLoginAction(
       await Promise.all([
         // Send welcome email
         sendEmail({
-          from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
+          from: process.env.EMAIL_SENDER! ,
           to: validated.email,
           subject: 'Welcome to Your Class - Login Credentials',
           html,

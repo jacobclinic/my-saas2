@@ -15,6 +15,7 @@ interface Session {
   zoom_session_name?: string | null
   zoom_host_token?: string | null
   zoom_participant_token?: string | null
+  attendance_marked?: boolean | null
 }
 
 interface SessionClass {
@@ -53,10 +54,11 @@ interface PastSessionAttendanceStudent {
 }
 interface PastSession extends UpcomingSession {
   attendance?: {
-    id: string;
-    student_id: string | null;
     time: string | null;
-    student: PastSessionAttendanceStudent;
+    email: string | null;
+    name: string | null;
+    join_time: string | null;
+    leave_time: string | null;
   }[];
 }
 

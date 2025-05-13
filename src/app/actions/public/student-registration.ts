@@ -8,6 +8,7 @@ import sendEmail from '../../../core/email/send-email';
 import { getStudentCredentialsEmailTemplate } from '../../../core/email/templates/student-credentials';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
+import { updateUserWithRetry } from '~/lib/user/actions.server';
 
 // Helper function to wait
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -21,36 +22,6 @@ async function checkUserExists(client: any, userId: string) {
     .single();
 
   return !!data;
-}
-
-// Helper function to update user with retry
-async function updateUserWithRetry(
-  client: any,
-  userId: string,
-  updateData: any,
-  maxRetries = 5,
-  delay = 1000,
-) {
-  for (let i = 0; i < maxRetries; i++) {
-    // Check if user exists
-    const exists = await checkUserExists(client, userId);
-
-    if (exists) {
-      // User exists, proceed with update
-      const { error } = await client
-        .from('users')
-        .update(updateData)
-        .eq('id', userId);
-
-      if (!error) return { success: true };
-      throw error;
-    }
-
-    // User doesn't exist yet, wait before retrying
-    await wait(delay);
-  }
-
-  throw new Error('Failed to update user after maximum retries');
 }
 
 const registrationSchema = z.object({

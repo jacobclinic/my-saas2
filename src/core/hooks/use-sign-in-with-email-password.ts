@@ -16,7 +16,14 @@ function useSignInWithEmailPassword() {
   return useMutation(key, (_, { arg: credentials }: { arg: Credentials }) => {
     return client.auth.signInWithPassword(credentials).then((response) => {
       if (response.error) {
-        throw response.error.message;
+        // Handle specific auth error codes with more user-friendly messages
+        if (response.error.message === 'Invalid login credentials') {
+          throw 'The email or password you entered is incorrect. Please check your credentials and try again.';
+        } else if (response.error.message.includes('Email not confirmed')) {
+          throw 'Please confirm your email address before signing in. Check your inbox for a confirmation link.';
+        } else {
+          throw response.error.message;
+        }
       }
 
       return response.data;

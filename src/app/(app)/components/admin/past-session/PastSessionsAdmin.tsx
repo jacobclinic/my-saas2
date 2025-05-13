@@ -1,10 +1,11 @@
 'use client';
 
 import { DateRangePicker } from '@heroui/date-picker';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { PastSession } from '~/lib/sessions/types/session-v2';
 import AttendanceDialog from '../../past-sessions/AttendanceDialog';
 import {
+  PastSessionData,
   SelectedSession,
   SelectedSessionAdmin,
 } from '~/lib/sessions/types/past-sessions';
@@ -12,6 +13,12 @@ import { Check, Link, Trash, Users } from 'lucide-react';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DeleteSessionDialog from './DeleteSessionDialog';
 import { format, toZonedTime } from 'date-fns-tz';
+import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
+import {
+  getAttendanceAction,
+  updateAttendanceMarkedAction,
+} from '~/lib/sessions/server-actions-v2';
+import { insertAttendanceAction } from '~/lib/attendance/server-actions';
 
 // Set the local timezone (e.g., 'Asia/Colombo' for Sri Lanka, GMT+5:30)
 const LOCAL_TIMEZONE = 'Asia/Colombo';
@@ -39,13 +46,17 @@ const PastSessionsAdmin = ({
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
   const [selectedSession, setSelectedSession] =
-    useState<SelectedSession | null>(null);
+    useState<PastSessionData | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
   );
   const [selectedTutor, setSelectedTutor] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
+  const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
+  const [attendanceMarkedStatus, setAttendanceMarkedStatus] = useState<
+    Record<string, boolean>
+  >({});
 
   const handleDateRangeChange = (value: any) => {
     setDateRange(value);
@@ -55,7 +66,6 @@ const PastSessionsAdmin = ({
     if (!dateObj) return null;
     return new Date(dateObj.year, dateObj.month - 1, dateObj.day);
   };
-
   useEffect(() => {
     if (dateRange) {
       const from = dateObjectToDate(dateRange.start);
@@ -69,27 +79,57 @@ const PastSessionsAdmin = ({
     }
   }, [dateRange]);
 
+  // Initialize the attendance marked status from class data
+  useEffect(() => {
+    const initialAttendanceStatus: Record<string, boolean> = {};
+
+    pastSessionsData.forEach((session) => {
+      if (session.id && session.attendance_marked) {
+        initialAttendanceStatus[session.id] = session.attendance_marked;
+      }
+    });
+
+    setAttendanceMarkedStatus(initialAttendanceStatus);
+  }, [pastSessionsData]);
+
   const classData = pastSessionsData.map((session) => {
-    const startTimeUtc = session.start_time ? new Date(session.start_time) : null;
+    const startTimeUtc = session.start_time
+      ? new Date(session.start_time)
+      : null;
     const endTimeUtc = session.end_time ? new Date(session.end_time) : null;
 
     // Convert UTC to local timezone using toZonedTime
-    const startTimeLocal = startTimeUtc ? toZonedTime(startTimeUtc, LOCAL_TIMEZONE) : null;
-    const endTimeLocal = endTimeUtc ? toZonedTime(endTimeUtc, LOCAL_TIMEZONE) : null;
+    const startTimeLocal = startTimeUtc
+      ? toZonedTime(startTimeUtc, LOCAL_TIMEZONE)
+      : null;
+    const endTimeLocal = endTimeUtc
+      ? toZonedTime(endTimeUtc, LOCAL_TIMEZONE)
+      : null;
 
     // Format times in local timezone
-    const formattedStartTime = startTimeLocal ? format(startTimeLocal, 'hh:mm a') : 'N/A';
-    const formattedEndTime = endTimeLocal ? format(endTimeLocal, 'hh:mm a') : 'N/A';
+    const formattedStartTime = startTimeLocal
+      ? format(startTimeLocal, 'hh:mm a')
+      : 'N/A';
+    const formattedEndTime = endTimeLocal
+      ? format(endTimeLocal, 'hh:mm a')
+      : 'N/A';
 
     return {
       id: session.id,
       tutorName: session.class?.tutor?.first_name || 'Unknown',
       name: session.class?.name,
       date: session.start_time,
-      time: startTimeUtc && endTimeUtc ? `${formattedStartTime} - ${formattedEndTime}` : 'N/A',
+      attendance_marked: session.attendance_marked,
+      time:
+        startTimeUtc && endTimeUtc
+          ? `${formattedStartTime} - ${formattedEndTime}`
+          : 'N/A',
       topic: session.title || 'Unknown',
       attendance: session.attendance || [],
       subject: session.class?.subject || null,
+      zoomMeetingId: session.zoom_meeting_id || null,
+      classId: session.class_id || null,
+      noOfStudents: session.class?.students?.length || 0,
     };
   });
 
@@ -138,27 +178,88 @@ const PastSessionsAdmin = ({
       setDeleteClassLoading(false);
     }
   };
-
-  // Transform cls to SelectedSession
+  // Transform cls to PastSessionData
   const transformToSelectedSession = (
     cls: (typeof classData)[0],
-  ): SelectedSessionAdmin => ({
+  ): PastSessionData => ({
     id: cls.id,
     name: cls.name || '',
     date: cls.date?.split('T')[0] || '',
     time: cls.time || '',
-    tutorName: cls.tutorName || null,
-    topic: cls.topic || null,
-    subject: cls.subject || null,
+    topic: cls.topic || '',
+    zoom_meeting_id: cls.zoomMeetingId || '',
+    classId: cls.classId || '',
+    tutorId: '', // Add a placeholder or retrieve actual tutorId if available
+    attendance_marked: cls.attendance_marked!,
+    recordingUrl: [],
+    materials: [],
     attendance: cls.attendance.map((att) => ({
-      name: `${att.student?.first_name || ''} ${att.student?.last_name || ''}`.trim(),
-      joinTime: att.time || '',
-      duration: 'N/A', // calculate the duration using join time and leave time. Leave time is not provided
+      name: att.name,
+      join_time: att.join_time || '',
+      leave_time: att.leave_time || '',
+      email: att.email || '',
+      time: att.time || '',
     })),
+    noOfStudents: cls.noOfStudents || 0,
   });
-
   // Handle View button click to show AttendanceDialog
-  const handleViewAttendance = (cls: (typeof classData)[0]) => {
+  const handleViewAttendance = async (cls: (typeof classData)[0]) => {
+    if (cls.attendance_marked) {
+      console.log('Attendance already marked', cls.attendance);
+      setAttendanceData(cls.attendance);
+      setShowAttendanceDialog(true);
+      // Update the local state to reflect that attendance is marked
+      setAttendanceMarkedStatus((prev) => ({
+        ...prev,
+        [cls.id]: true,
+      }));
+    } else {
+      const sessionId = cls.id;
+      const zoomMeetingId = cls.zoomMeetingId!;
+      const classId = cls.classId || '';
+
+      const result = await getAttendanceAction({
+        zoomMeetingId,
+        sessionId,
+        classId,
+      });
+      const formattedData = result.attendance.map(
+        (student: ZoomParticipant) => ({
+          time: String(student.duration),
+          name: student.name,
+          email: student.email,
+          join_time: student.join_time,
+          leave_time: student.leave_time,
+        }),
+      );
+      setAttendanceData(formattedData);
+      setShowAttendanceDialog(true);
+      const insertAttendanceData = formattedData.map((student) => ({
+        ...student,
+        sessionId: sessionId,
+      }));
+      try {
+        await insertAttendanceAction(insertAttendanceData);
+      } catch (error) {
+        console.error('Error inserting attendance:', error);
+      }
+      // Update the session to mark attendance as true
+      try {
+        const response = await updateAttendanceMarkedAction(sessionId);
+        if (response.success) {
+          console.log('Attendance marked successfully');
+          // Update the attendance status for this specific session
+          setAttendanceMarkedStatus((prev) => ({
+            ...prev,
+            [sessionId]: true,
+          }));
+        } else {
+          console.error('Failed to mark attendance:', response.error);
+        }
+      } catch (error) {
+        console.error('Error updating attendance marked:', error);
+      }
+    }
     setSelectedSession(transformToSelectedSession(cls));
     setShowAttendanceDialog(true);
   };
@@ -167,6 +268,11 @@ const PastSessionsAdmin = ({
     setSelectedSessionId(sessionId);
     setShowDeleteDialog(true);
   };
+
+  // const getAttendance = useCallback(
+  //   async (sessionId: string): Promise<void> => {},
+  //   [pastSessionsData, classId],
+  // );
 
   return (
     <>
@@ -245,6 +351,7 @@ const PastSessionsAdmin = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{cls.time}</td>
                   <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                    {' '}
                     {/* Attendance Button */}
                     <div className="relative group inline-block">
                       <button
@@ -256,10 +363,11 @@ const PastSessionsAdmin = ({
                         <span className="sr-only">Attendance</span>
                       </button>
                       <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        Attendance
+                        {cls.attendance_marked || attendanceMarkedStatus[cls.id]
+                          ? 'View Attendance'
+                          : 'Mark Attendance'}
                       </span>
                     </div>
-
                     {/* Copy Link Button */}
                     <div className="relative group inline-block">
                       <button
@@ -278,7 +386,6 @@ const PastSessionsAdmin = ({
                         Copy student Link
                       </span>
                     </div>
-
                     {/* Delete Button */}
                     <div className="relative group inline-block">
                       <button
@@ -306,15 +413,14 @@ const PastSessionsAdmin = ({
             </tbody>
           </table>
         </div>
-      </div>
-
+      </div>{' '}
       {/* Attendance Dialog */}
       <AttendanceDialog
         showAttendanceDialog={showAttendanceDialog}
         setShowAttendanceDialog={setShowAttendanceDialog}
         selectedSession={selectedSession}
+        attendance={attendanceData}
       />
-
       <DeleteSessionDialog
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}

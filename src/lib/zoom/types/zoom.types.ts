@@ -98,3 +98,31 @@ export interface ZoomUserRecordingsResponse {
     }[];
   }[];
 }
+
+export interface ZoomParticipant {
+  name: string | null;
+  email: string | null;
+  join_time: string;
+  leave_time: string;
+  duration: number;
+}
+
+export interface ZoomParticipantsResponse {
+  page_count: number;
+  page_size: number;
+  total_records: number;
+  next_page_token: string;
+  participants: ZoomParticipant[];
+}
+
+export interface Attendance {
+  time: string | null;
+  email: string | null;
+  name: string | null;
+  join_time: string | null;
+  leave_time: string | null;
+}
+
+export interface AttendanceWithSessionId extends Attendance {
+  sessionId: string;
+}

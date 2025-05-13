@@ -9,17 +9,21 @@ import {
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { ClassType, NewClassData } from './types/class-v2';
-import {
-  getUpcomingOccurrences,
-  getUpcomingOccurrencesForYear,
-} from '../utils/date-utils';
+import { getUpcomingOccurrences } from '../utils/date-utils';
 import { zoomService } from '../zoom/zoom.service';
-import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
+import { SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
-import { isAdminOrCLassTutor } from './database/queries';
-import { getAllUpcommingSessionsData, getSessionDataById } from '../sessions/database/queries';
-import { updateZoomSessionAction } from '../sessions/server-actions-v2-legacy';
-import { title } from 'process';
+import {
+  getClassDataByIdwithNextSession,
+  isAdminOrCLassTutor,
+} from './database/queries';
+import { getAllUpcommingSessionsData } from '../sessions/database/queries';
+
+import { getStudentInvitationToClass } from '~/core/email/templates/addStudentToClass';
+import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
+import { format as dateFnsFormat } from 'date-fns';
+import sendEmail from '~/core/email/send-email';
+import { sendSingleSMS } from '../notifications/sms/sms.notification.service';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -182,6 +186,33 @@ export const updateClassAction = withSession(
   async (params: UpdateClassParams) => {
     const client = getSupabaseServerActionClient();
 
+    // Get the current user's session
+    const {
+      data: { session },
+      error: sessionError,
+    } = await client.auth.getSession();
+    if (sessionError || !session?.user) {
+      return {
+        success: false,
+        error: 'User not authenticated',
+      };
+    }
+
+    const userId = session.user.id;
+
+    // Check if the user has permission to update this class
+    const hasPermission = await isAdminOrCLassTutor(
+      client,
+      userId,
+      params.classId,
+    );
+    if (!hasPermission) {
+      return {
+        success: false,
+        error: "You don't have permissions to update this class",
+      };
+    }
+
     const result = await updateClass(client, params.classId, params.classData);
 
     revalidatePath('/classes');
@@ -218,6 +249,7 @@ export const deleteClassAction = withSession(
 
     // Check user role and permissions
     const havePermission = await isAdminOrCLassTutor(client, userId, classId);
+    console.log( 'havePermission', havePermission);
     if (!havePermission) {
       return {
         success: false,
@@ -372,3 +404,81 @@ export const getAllUpcominSessionsAdmin = async () => {
   }
   return data;
 };
+
+export const getClassDataByIdAction = withSession(async (classId: string) => {
+  const client = getSupabaseServerActionClient();
+  const data = await getClassDataByIdwithNextSession(client, classId);
+  if (!data) {
+    throw new Error('Failed to fetch class data');
+  }
+  return data;
+});
+
+export const sendEmailMSGToStudentAction = withSession(
+  async (params: {
+    name: string;
+    phoneNumber: string;
+    email: string;
+    classId: string;
+  }) => {
+    const { name, phoneNumber, email, classId } = params;
+
+    const classData = await getClassDataByIdAction(classId);
+    // Send email logic here (e.g., using a third-party service)
+    const schedule =
+      classData?.time_slots?.reduce(
+        (acc: string, slot: any, index: number, array) => {
+          const timeSlotString = `${slot.day}, ${slot.startTime} - ${slot.endTime}`;
+          // Add a separator for all except the last item
+          return acc + timeSlotString + (index < array.length - 1 ? '; ' : '');
+        },
+        '',
+      ) || 'No schedule available';
+
+    const formattedDate = classData?.nextSession
+      ? dateFnsFormat(new Date(classData.nextSession), 'EEE, MMM dd, yyyy')
+      : 'No upcoming session';
+
+    const registrationData = {
+      classId,
+      className: classData.name || '',
+      nextSession: formattedDate,
+      time: schedule || '',
+    };
+
+    const registrationLink =
+      await generateRegistrationLinkAction(registrationData);
+    const emailContent = getStudentInvitationToClass({
+      studentName: name,
+      email: email,
+      className: classData.name,
+      loginUrl: registrationLink,
+    });
+
+    try {
+      await Promise.all([
+        sendEmail({
+          from: process.env.EMAIL_SENDER!,
+          to: email,
+          subject: 'Welcome to Your Class - Login Credentials',
+          html: emailContent.html,
+          text: emailContent.text,
+        }),
+        // send welcome sms
+        sendSingleSMS({
+          phoneNumber: phoneNumber,
+          message: `Welcome to ${classData.name}! Your are invited to join the class. Click on the link and Register with ${email}.
+                      \n${registrationLink}
+                      \n-Comma Education`,
+        }),
+      ]);
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+
+    return {
+      success: true,
+      message: 'Email sent successfully',
+    };
+  },
+);

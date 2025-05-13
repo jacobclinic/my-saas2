@@ -10,8 +10,8 @@ import ErrorBoundary from '~/core/ui/ErrorBoundary';
 import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import { useFormStatus } from 'react-dom';
 import Alert from '~/core/ui/Alert';
-import { deleteStudentEnrollment } from '~/lib/user/actions/student';
 import { generateStudentPDF } from '~/lib/utils/pdfGenerator';
+import { deleteStudentEnrollment } from '~/lib/user/actions.server';
 
 interface Student {
   id: string;

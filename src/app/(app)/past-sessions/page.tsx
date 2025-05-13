@@ -17,20 +17,6 @@ export const metadata = {
 async function PastSessionsPage() {
   const client = getSupabaseServerComponentClient();
   const { data: user } = await client.auth.getUser();
-
-  // Fetch all sessions (without pagination)
-  const tutorSessionData = await getAllPastSessionsByTutorIdData(
-    client,
-    user?.user?.id || '',
-  );
-
-  const studentSessionData = await getAllPastSessionsByStudentIdData(
-    client,
-    user?.user?.id || '',
-  );
-
-  const pastSessionsAdmin = await getAllPastSessionsDataAdmin(client);
-
   // Get user role
   const { data: userData, error: userError } = await client
     .from('users')
@@ -44,19 +30,40 @@ async function PastSessionsPage() {
 
   const userRole = userData?.user_role;
 
+  // Fetch all sessions (without pagination)
+  if (!userRole) {
+    window.location.href = `/auth/sign-in`;
+  }
+
+  let sessionData;
+
+  if (userRole === 'admin') {
+    sessionData = await getAllPastSessionsDataAdmin(client);
+  } else if (userRole === 'tutor') {
+    sessionData = await getAllPastSessionsByTutorIdData(
+      client,
+      user?.user?.id || '',
+    );
+  } else if (userRole === 'student') {
+    sessionData = await getAllPastSessionsByStudentIdData(
+      client,
+      user?.user?.id || '',
+    );
+  }
+
   return (
     <>
       <AppHeader title={''} description={''} />
       <PageBody>
         {userRole === 'student' ? (
           <StudentPastSessionClient
-            pastSessionData={studentSessionData}
+            pastSessionData={sessionData!}
             userId={user.user!.id}
           />
         ) : userRole === 'tutor' ? (
-          <PastSessionsClient initialSessions={tutorSessionData} />
+          <PastSessionsClient initialSessions={sessionData!} />
         ) : (
-          <PastSessionsAdmin pastSessionsData={pastSessionsAdmin} />
+          <PastSessionsAdmin pastSessionsData={sessionData!} />
         )}
       </PageBody>
     </>

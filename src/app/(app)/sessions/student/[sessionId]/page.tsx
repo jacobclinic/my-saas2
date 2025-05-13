@@ -1,10 +1,15 @@
 import { useSearchParams } from 'next/navigation';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
-import { getSessionByStudentIdData, isStudentEnrolledInSessionClass } from '~/lib/sessions/database/queries';
+import {
+  getSessionByStudentIdData,
+  isStudentEnrolledInSessionClass,
+} from '~/lib/sessions/database/queries';
 import { redirect } from 'next/navigation';
 import StudentSessionDetails from '~/app/(app)/components/student-sessions/StudentSessionDetails';
 import { getClassDataByIdwithNextSession } from '~/lib/classes/database/queries';
+import { USER_ROLES } from '~/lib/constants';
+import { getUserRoleAction } from '~/lib/user/actions.server';
 
 interface Params {
   params: {
@@ -25,9 +30,23 @@ export default async function SessionViewPage({ params }: Params) {
 
   // Handle authentication error
   if (authError || !user?.id) {
-    console.error('Authentication error:', authError);
-    console.log("Session ID: " +params.sessionId);
+    // console.error('Authentication error:', authError);
+    // console.log('Session ID: ' + params.sessionId);
     redirect('/auth/join-class-signin?sessionId=' + params.sessionId);
+  }
+
+  // Check user role
+  const userRole = await getUserRoleAction(user.id)
+  if (!userRole) {
+    console.error('Error fetching user role');
+    redirect('/dashboard');
+  }
+
+  // Check if user is a student, if not redirect to dashboard
+  if (userRole !== USER_ROLES.STUDENT) {
+    // Server-side redirects don't allow direct toast notifications,
+    // but we can redirect to dashboard with a query param to show a message
+    redirect('/dashboard?message=unauthorized&role=student');
   }
 
   const sessionData = await getSessionByStudentIdData(
@@ -49,14 +68,17 @@ export default async function SessionViewPage({ params }: Params) {
       </PageBody>
     );
   }
-    
+
   const isStudentEnrolledToClass = await isStudentEnrolledInSessionClass(
     client,
     sessionData.id,
-    user.id
-  )
+    user.id,
+  );
 
-  const classData = await getClassDataByIdwithNextSession(client, sessionData.class_id!);
+  const classData = await getClassDataByIdwithNextSession(
+    client,
+    sessionData.class_id!,
+  );
 
   // Determine session type based on start time
   const sessionType =
@@ -74,8 +96,8 @@ export default async function SessionViewPage({ params }: Params) {
           sessionData={sessionData}
           type={sessionType}
           studentId={user.id}
-          isEnrolledToClass = {isStudentEnrolledToClass}
-          classData = {classData!}
+          isEnrolledToClass={isStudentEnrolledToClass}
+          classData={classData!}
         />
       </PageBody>
     </>

@@ -181,12 +181,15 @@ export async function updateRecordingUrl(
     // Step 1: Fetch the existing recording_urls array
     const { data: session, error: fetchError } = await client
       .from(SESSIONS_TABLE)
-      .select("recording_urls")
-      .eq("zoom_meeting_id", zoomMeetingId)
+      .select('recording_urls')
+      .eq('zoom_meeting_id', zoomMeetingId)
       .single();
 
     if (fetchError) {
-      logger.error(`Error fetching session for Zoom Meeting ID ${zoomMeetingId}:`, fetchError);
+      logger.error(
+        `Error fetching session for Zoom Meeting ID ${zoomMeetingId}:`,
+        fetchError,
+      );
       throw fetchError;
     }
 
@@ -201,29 +204,69 @@ export async function updateRecordingUrl(
     });
 
     // Step 2: Append the new URL to the array
-    const currentUrls: string[] = Array.isArray(session.recording_urls) ? session.recording_urls : [];
+    const currentUrls: string[] = Array.isArray(session.recording_urls)
+      ? session.recording_urls
+      : [];
     const updatedUrls = [...currentUrls, recordingUrl];
 
     // Step 3: Update the row with the new array
     const { data, error: updateError } = await client
       .from(SESSIONS_TABLE)
       .update({ recording_urls: updatedUrls })
-      .eq("zoom_meeting_id", zoomMeetingId)
+      .eq('zoom_meeting_id', zoomMeetingId)
       .select()
       .single();
 
     if (updateError) {
-      logger.error(`Error updating recording URLs for Zoom Meeting ID ${zoomMeetingId}:`, updateError);
+      logger.error(
+        `Error updating recording URLs for Zoom Meeting ID ${zoomMeetingId}:`,
+        updateError,
+      );
       throw updateError;
     }
 
-    logger.info(`Successfully updated recording URLs for Zoom Meeting ID ${zoomMeetingId}:`, {
-      updatedUrls,
-    });
+    logger.info(
+      `Successfully updated recording URLs for Zoom Meeting ID ${zoomMeetingId}:`,
+      {
+        updatedUrls,
+      },
+    );
     return data;
   } catch (error) {
-    logger.error(`Failed to update recording URL for Zoom Meeting ID ${zoomMeetingId}:`, error);
-    console.error(`Failed to update recording URL for Zoom Meeting ID ${zoomMeetingId}:`, error);
-    throw new Error("Failed to update recording URL. Please try again.");
+    logger.error(
+      `Failed to update recording URL for Zoom Meeting ID ${zoomMeetingId}:`,
+      error,
+    );
+    console.error(
+      `Failed to update recording URL for Zoom Meeting ID ${zoomMeetingId}:`,
+      error,
+    );
+    throw new Error('Failed to update recording URL. Please try again.');
+  }
+}
+
+export async function updateAttendanceMarked(
+  client: SupabaseClient,
+  sessionId: string,
+): Promise<any> {
+  try {
+    // Update the attendance_marked column to true
+    const result = await client
+      .from(SESSIONS_TABLE)
+      .update({ attendance_marked: true })
+      .eq('id', sessionId)
+      .select()
+      .single(); // Expect a single record
+
+    if (result.error) {
+      throw new Error(`Failed to update attendance_marked`);
+    }
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error in updateAttendanceMarked:', {
+      error: error instanceof Error ? error.message : String(error),
+      sessionId,
+    });
+    throw new Error('Failed to update attendance_marked. Please try again.');
   }
 }
