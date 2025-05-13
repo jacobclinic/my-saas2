@@ -6,8 +6,7 @@ import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
 import { Download } from 'lucide-react';
 import BaseDialog from '../base-v2/BaseDialog';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { generateCustomPDF } from '~/lib/utils/pdfGenerator';
 
 const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
   showAttendanceDialog,
@@ -34,54 +33,50 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
       return;
     }
 
-    // Create a new PDF document
-    const doc = new jsPDF();
-    const currentDate = new Date().toLocaleDateString();
-
-    // Add title and class information
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text(`Class Attendance - ${selectedSession.name}`, 14, 15);
-
     // Format class time to ensure it's on a single line
     const formattedTime = selectedSession.time.replace(/\s+/g, ' ');
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.text(`Date: ${selectedSession.date}`, 14, 25);
-    doc.text(`Time: ${formattedTime}`, 14, 30);
-    doc.text(`Total Students: ${attendance.length - 1}`, 14, 35);
-
-    // Prepare table data
-    const tableColumn = [
+    // Prepare data for PDF generation
+    const columnNames = [
       'Student Name',
       'Email',
       'Join Time',
       'Leave Time',
       'Duration',
     ];
-    const tableRows = attendance.map((student) => [
-      student.name || 'Unknown',
-      student.email || 'N/A',
-      student.join_time ? extractTimeFromTimestamp(student.join_time) : 'N/A',
-      student.leave_time ? extractTimeFromTimestamp(student.leave_time) : 'N/A',
-      student.leave_time && student.join_time
-        ? calculateDuration(student.join_time, student.leave_time)
+
+    const columnKeys = ['name', 'email', 'join_time', 'leave_time', 'duration'];
+
+    // Transform attendance data to include formatted values
+    const formattedData = attendance.map((student) => ({
+      name: student.name || 'Unknown',
+      email: student.email || 'N/A',
+      join_time: student.join_time
+        ? extractTimeFromTimestamp(student.join_time)
         : 'N/A',
-    ]);
+      leave_time: student.leave_time
+        ? extractTimeFromTimestamp(student.leave_time)
+        : 'N/A',
+      duration:
+        student.leave_time && student.join_time
+          ? calculateDuration(student.join_time, student.leave_time)
+          : 'N/A',
+    }));
 
-    // Add the table to the PDF
-    autoTable(doc, {
-      startY: 45,
-      head: [tableColumn],
-      body: tableRows,
-      styles: { fontSize: 10, cellPadding: 3 },
-      headStyles: { fillColor: [22, 160, 133] },
+    // Generate PDF using the custom PDF generator
+    generateCustomPDF({
+      data: formattedData,
+      columnNames: columnNames,
+      columnKeys: columnKeys,
+      title: `Class Attendance - ${selectedSession.name}`,
+      headerData: {
+        className: selectedSession.name,
+        classDate: selectedSession.date,
+        classTime: formattedTime,
+        numberOfStudents: attendance.length - 1, // Excluding the tutor
+      },
+      filename: `Attendance_${selectedSession.name.replace(/\s+/g, '_')}_${selectedSession.date.replace(/\//g, '-')}`,
     });
-
-    // Save the PDF
-    const fileName = `Attendance_${selectedSession.name.replace(/\s+/g, '_')}_${selectedSession.date.replace(/\//g, '-')}.pdf`;
-    doc.save(fileName);
   };
 
   // Helper function to calculate duration between two ISO timestamp strings
@@ -146,7 +141,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
             Attendance Rate:{' '}
             {selectedSession?.noOfStudents !== undefined &&
             selectedSession?.noOfStudents > 0
-              ? `${((attendance.length - 1) / selectedSession.noOfStudents * 100).toFixed(1)}%`
+              ? `${(((attendance.length - 1) / selectedSession.noOfStudents) * 100).toFixed(1)}%`
               : '0%'}
           </p>
           {/* (attendance.length - 1) to exclude the tutor */}
@@ -164,8 +159,9 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
               <div></div>
               <div></div>
               <div>
-                {student.join_time && student.leave_time ? 
-                  calculateDuration(student.join_time, student.leave_time) : 'N/A'}
+                {student.join_time && student.leave_time
+                  ? calculateDuration(student.join_time, student.leave_time)
+                  : 'N/A'}
               </div>
             </div>
           ))}
