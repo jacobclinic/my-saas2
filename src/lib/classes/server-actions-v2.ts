@@ -249,6 +249,7 @@ export const deleteClassAction = withSession(
 
     // Check user role and permissions
     const havePermission = await isAdminOrCLassTutor(client, userId, classId);
+    console.log( 'havePermission', havePermission);
     if (!havePermission) {
       return {
         success: false,

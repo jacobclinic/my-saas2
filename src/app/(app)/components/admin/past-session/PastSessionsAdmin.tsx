@@ -127,6 +127,7 @@ const PastSessionsAdmin = ({
       attendance: session.attendance || [],
       subject: session.class?.subject || null,
       zoomMeetingId: session.zoom_meeting_id || null,
+      classId: session.class_id || null,
     };
   });
 
@@ -210,8 +211,13 @@ const PastSessionsAdmin = ({
     } else {
       const sessionId = cls.id;
       const zoomMeetingId = cls.zoomMeetingId!;
+      const classId = cls.classId || '';
 
-      const result = await getAttendanceAction({ zoomMeetingId, sessionId });
+      const result = await getAttendanceAction({
+        zoomMeetingId,
+        sessionId,
+        classId,
+      });
       const formattedData = result.attendance.map(
         (student: ZoomParticipant) => ({
           time: String(student.duration),

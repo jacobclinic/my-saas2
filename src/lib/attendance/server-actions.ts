@@ -7,6 +7,10 @@ import getSupabaseServerActionClient from '~/core/supabase/action-client';
 export async function insertAttendanceAction(
   attendance: AttendanceWithSessionId[],
 ): Promise<void> {
+  // Validate input
+  if (!attendance || !Array.isArray(attendance) || attendance.length === 0) {
+    return;
+  }
   const client = getSupabaseServerActionClient();
   try {
     const result = await insertAttendance(client, attendance);

@@ -7,11 +7,7 @@ export async function insertAttendance(
   client: SupabaseClient,
   attendance: AttendanceWithSessionId[],
 ): Promise<AttendanceWithSessionId[] | null> {
-  // Validate input
-  if (!attendance || !Array.isArray(attendance) || attendance.length === 0) {
-    console.error('Invalid input: attendance array is empty or not an array');
-    throw new Error('Attendance array cannot be empty');
-  }
+
 
   // Validate each attendance record
   for (let index = 0; index < attendance.length; index++) {

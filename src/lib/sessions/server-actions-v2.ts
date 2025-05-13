@@ -273,9 +273,11 @@ export const getAttendanceAction = withSession(
   async ({
     zoomMeetingId,
     sessionId,
+    classId
   }: {
     zoomMeetingId: string;
     sessionId: string;
+    classId: string;
   }) => {
     const client = getSupabaseServerActionClient();
 
@@ -293,7 +295,7 @@ export const getAttendanceAction = withSession(
     }
 
     const userId = session.user.id;
-    const havePermission = await isAdminOrCLassTutor(client, userId, sessionId);
+    const havePermission = await isAdminOrCLassTutor(client, userId, classId);
 
     if (!havePermission) {
       return {

@@ -39,7 +39,6 @@ async function PastSessionsPage() {
 
   if (userRole === 'admin') {
     sessionData = await getAllPastSessionsDataAdmin(client);
-    console.log('sessionData', sessionData);
   } else if (userRole === 'tutor') {
     sessionData = await getAllPastSessionsByTutorIdData(
       client,
