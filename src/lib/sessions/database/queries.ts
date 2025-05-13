@@ -1078,7 +1078,7 @@ export async function getAllPastSessionsDataWithinLastHour(
 ): Promise<pastSessionsForAttendance[] | []> {
   try {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const twoHourAgo = new Date(Date.now() - 7*24 * 60 * 60 * 1000).toISOString();
+    const twoHourAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
     const { data, error } = await client
       .from(SESSIONS_TABLE)
       .select(
