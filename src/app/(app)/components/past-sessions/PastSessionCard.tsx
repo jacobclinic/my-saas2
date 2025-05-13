@@ -78,7 +78,6 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     else {
       const result = await getAttendanceAction({
         zoomMeetingId,
-        sessionId,
         classId,
       });
       const formattedData = result.attendance.map(

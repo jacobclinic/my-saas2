@@ -62,4 +62,10 @@ interface PastSession extends UpcomingSession {
   }[];
 }
 
-export type { Session, UpcomingSession, PastSession };
+interface pastSessionsForAttendance {
+  id: string;
+  attendance_marked: boolean;
+  zoom_meeting_id: string;
+}
+
+export type { Session, UpcomingSession, PastSession, pastSessionsForAttendance };

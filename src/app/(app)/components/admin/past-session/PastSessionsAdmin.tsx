@@ -220,7 +220,6 @@ const PastSessionsAdmin = ({
 
       const result = await getAttendanceAction({
         zoomMeetingId,
-        sessionId,
         classId,
       });
       const formattedData = result.attendance.map(
