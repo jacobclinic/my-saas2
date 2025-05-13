@@ -87,6 +87,7 @@ const PastSessions = ({
           file_size: material.file_size || '',
         };
       }),
+      noOfStudents: session.class?.students?.length || 0,
     };
   };
 

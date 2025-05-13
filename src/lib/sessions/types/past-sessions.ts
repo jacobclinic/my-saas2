@@ -25,14 +25,9 @@ interface PastSessionData {
   tutorId: string;
   attendance_marked: boolean;
   recordingUrl: string[];
-  attendance?: {
-    time: string | null;
-    email: string | null;
-    name: string | null;
-    join_time: string | null;
-    leave_time: string | null;
-  }[];
+  attendance?:  Attendance[];
   materials: Material[];
+  noOfStudents: number;
 }
 interface SelectedSession {
   id: string;
@@ -52,7 +47,7 @@ interface SelectedSessionAdmin extends SelectedSession {
 interface AttendanceDialogProps {
   showAttendanceDialog: boolean;
   setShowAttendanceDialog: (show: boolean) => void;
-  selectedSession: SelectedSession | null;
+  selectedSession: PastSessionData | null;
   attendance: Attendance[];
 }
 

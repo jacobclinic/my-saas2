@@ -29,7 +29,6 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
       return 'N/A';
     }
   };
-
   const handleExport = () => {
     if (!selectedSession || attendance.length === 0) {
       return;
@@ -44,17 +43,28 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
     doc.setFontSize(16);
     doc.text(`Class Attendance - ${selectedSession.name}`, 14, 15);
 
+    // Format class time to ensure it's on a single line
+    const formattedTime = selectedSession.time.replace(/\s+/g, ' ');
+
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     doc.text(`Date: ${selectedSession.date}`, 14, 25);
-    doc.text(`Time: ${selectedSession.time}`, 14, 30);
-    doc.text(`Total Students: ${attendance.length}`, 14, 35);
+    doc.text(`Time: ${formattedTime}`, 14, 30);
+    doc.text(`Total Students: ${attendance.length - 1}`, 14, 35);
 
     // Prepare table data
-    const tableColumn = ['Student Name', 'Join Time', 'Duration'];
+    const tableColumn = [
+      'Student Name',
+      'Email',
+      'Join Time',
+      'Leave Time',
+      'Duration',
+    ];
     const tableRows = attendance.map((student) => [
       student.name || 'Unknown',
+      student.email || 'N/A',
       student.join_time ? extractTimeFromTimestamp(student.join_time) : 'N/A',
+      student.leave_time ? extractTimeFromTimestamp(student.leave_time) : 'N/A',
       student.leave_time && student.join_time
         ? calculateDuration(student.join_time, student.leave_time)
         : 'N/A',
@@ -62,7 +72,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
 
     // Add the table to the PDF
     autoTable(doc, {
-      startY: 40,
+      startY: 45,
       head: [tableColumn],
       body: tableRows,
       styles: { fontSize: 10, cellPadding: 3 },
@@ -97,7 +107,11 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
   };
 
   const dialogFooter = (
-    <Button className="w-full" onClick={handleExport}>
+    <Button
+      className="w-full"
+      onClick={handleExport}
+      disabled={attendance.length === 0}
+    >
       <Download className="h-4 w-4 mr-2" />
       Export Attendance
     </Button>
@@ -124,29 +138,35 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
           </div>
           <Badge variant="outline">{attendance.length} Students</Badge>
         </div>{' '}
+        <div>
+          <p className="text-sm text-gray-600">
+            Total Students: {selectedSession?.noOfStudents}
+          </p>
+          <p className="text-sm text-gray-600">
+            Attendance Rate:{' '}
+            {selectedSession?.noOfStudents !== undefined &&
+            selectedSession?.noOfStudents > 0
+              ? `${((attendance.length - 1) / selectedSession.noOfStudents * 100).toFixed(1)}%`
+              : '0%'}
+          </p>
+          {/* (attendance.length - 1) to exclude the tutor */}
+        </div>
         <div className="border rounded-lg">
           <div className="grid grid-cols-4 gap-4 p-3 bg-gray-50 font-medium border-b">
-            <div>Student Name</div>
-            <div>Email</div>
-            <div>Join Time</div>
-            <div>Leave Time</div>
+            <div>Name</div>
+            <div></div>
+            <div></div>
+            <div>Duration</div>
           </div>
           {attendance?.map((student, idx) => (
             <div key={idx} className="grid grid-cols-4 gap-4 p-3 border-b">
               <div>{student.name}</div>
-              <div>{student.email}</div>
+              <div></div>
+              <div></div>
               <div>
-                {student.join_time
-                  ? extractTimeFromTimestamp(student.join_time)
-                  : 'N/A'}
+                {student.join_time && student.leave_time ? 
+                  calculateDuration(student.join_time, student.leave_time) : 'N/A'}
               </div>
-              <div>
-                {student.leave_time
-                  ? extractTimeFromTimestamp(student.leave_time)
-                  : 'N/A'}
-              </div>
-              {/* Uncomment if you want to show duration */}
-              {/* <div>{student.duration}</div> */}
             </div>
           ))}
         </div>
