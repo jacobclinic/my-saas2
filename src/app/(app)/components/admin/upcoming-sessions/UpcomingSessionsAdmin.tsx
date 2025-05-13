@@ -25,9 +25,6 @@ const UpcomingSessionsAdmin = ({
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
-  const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
-  const [selectedSession, setSelectedSession] =
-    useState<SelectedSession | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
   );
@@ -277,12 +274,6 @@ const UpcomingSessionsAdmin = ({
           </table>
         </div>
       </div>
-      <AttendanceDialog
-        showAttendanceDialog={showAttendanceDialog}
-        setShowAttendanceDialog={setShowAttendanceDialog}
-        selectedSession={selectedSession}
-        attendance={[]}
-      />
       <DeleteSessionDialog
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PastSession } from '~/lib/sessions/types/session-v2';
 import AttendanceDialog from '../../past-sessions/AttendanceDialog';
 import {
+  PastSessionData,
   SelectedSession,
   SelectedSessionAdmin,
 } from '~/lib/sessions/types/past-sessions';
@@ -45,7 +46,7 @@ const PastSessionsAdmin = ({
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
   const [selectedSession, setSelectedSession] =
-    useState<SelectedSession | null>(null);
+    useState<PastSessionData | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
   );
@@ -128,6 +129,7 @@ const PastSessionsAdmin = ({
       subject: session.class?.subject || null,
       zoomMeetingId: session.zoom_meeting_id || null,
       classId: session.class_id || null,
+      noOfStudents: session.class?.students?.length || 0,
     };
   });
 
@@ -176,19 +178,21 @@ const PastSessionsAdmin = ({
       setDeleteClassLoading(false);
     }
   };
-
-  // Transform cls to SelectedSession
+  // Transform cls to PastSessionData
   const transformToSelectedSession = (
     cls: (typeof classData)[0],
-  ): SelectedSessionAdmin => ({
+  ): PastSessionData => ({
     id: cls.id,
     name: cls.name || '',
     date: cls.date?.split('T')[0] || '',
     time: cls.time || '',
-    tutorName: cls.tutorName || null,
-    topic: cls.topic || null,
-    subject: cls.subject || null,
+    topic: cls.topic || '',
+    zoom_meeting_id: cls.zoomMeetingId || '',
+    classId: cls.classId || '',
+    tutorId: '', // Add a placeholder or retrieve actual tutorId if available
     attendance_marked: cls.attendance_marked!,
+    recordingUrl: [],
+    materials: [],
     attendance: cls.attendance.map((att) => ({
       name: att.name,
       join_time: att.join_time || '',
@@ -196,6 +200,7 @@ const PastSessionsAdmin = ({
       email: att.email || '',
       time: att.time || '',
     })),
+    noOfStudents: cls.noOfStudents || 0,
   });
   // Handle View button click to show AttendanceDialog
   const handleViewAttendance = async (cls: (typeof classData)[0]) => {
@@ -408,8 +413,7 @@ const PastSessionsAdmin = ({
             </tbody>
           </table>
         </div>
-      </div>
-
+      </div>{' '}
       {/* Attendance Dialog */}
       <AttendanceDialog
         showAttendanceDialog={showAttendanceDialog}
@@ -417,7 +421,6 @@ const PastSessionsAdmin = ({
         selectedSession={selectedSession}
         attendance={attendanceData}
       />
-
       <DeleteSessionDialog
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
