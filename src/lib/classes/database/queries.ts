@@ -464,6 +464,184 @@ export async function getAllClassesByTutorIdDataPerWeek(
   }
 }
 
+// export async function getAllClassesByStudentIdData(
+//   client: SupabaseClient<Database>,
+//   student_id: string,
+// ): Promise<ClassForStudentType[] | []> {
+//   try {
+//     // Create base query
+//     let query = client
+//       .from(STUDENT_CLASS_ENROLLMENTS_TABLE)
+//       .select(
+//         `
+//           id,
+//           class_id,
+//           student_id,
+//           class:${CLASSES_TABLE}!class_id (
+//             id,
+//             name,
+//             description,
+//             subject,
+//             tutor_id,
+//             fee,
+//             status,
+//             time_slots,
+//             starting_date,
+//             grade,
+//             tutor:${USERS_TABLE}!tutor_id (
+//               id,
+//               first_name,
+//               last_name
+//             ),
+//             fee,
+//             status,            
+//             grade
+//           )
+//         `,
+//       )
+//       .eq('student_id', student_id)
+//       .order('created_at', { ascending: false });
+
+//     const { data, error } = await query;
+
+//     // console.log('getAllClassesByStudentIdData', data);
+
+//     if (!data) {
+//       return [];
+//     }
+
+//     const transformedData = data?.map((classData) => {
+//       let classTemp;
+//       let tutorTemp;
+//       if (classData?.class) {
+//         if (Array.isArray(classData.class)) classTemp = classData.class[0];
+//         else classTemp = classData.class;
+//       }
+//       if (classTemp?.tutor) {
+//         if (Array.isArray(classTemp.tutor)) tutorTemp = classTemp.tutor[0];
+//         else tutorTemp = classTemp.tutor;
+//       }
+//       return {
+//         ...classData,
+//         class: {
+//           ...classTemp,
+//           tutor: tutorTemp,
+//         },
+//       };
+//     });
+
+//     if (error) {
+//       throw new Error(
+//         `Error fetching classes: ${(error as PostgrestError).message}`,
+//       );
+//     }
+
+//     return transformedData;
+//   } catch (error) {
+//     console.error('Failed to fetch classes:', error);
+//     throw error;
+//   }
+// }
+
+// export async function getAllClassesByStudentIdData(
+//   client: SupabaseClient<Database>,
+//   student_id: string,
+// ): Promise<ClassForStudentType | []> {
+//   try {
+//     // Create base query
+//     let query = client
+//       .from(STUDENT_CLASS_ENROLLMENTS_TABLE)
+//       .select(
+//         `
+//           id,
+//           class_id,
+//           student_id,
+//           class:${CLASSES_TABLE}!class_id (
+//             id,
+//             name,
+//             description,
+//             subject,
+//             tutor_id,
+//             fee,
+//             status,
+//             time_slots,
+//             starting_date,
+//             grade,
+//             tutor:${USERS_TABLE}!tutor_id (
+//               id,
+//               first_name,
+//               last_name
+//             )
+//           )
+//         `,
+//       )
+//       .eq('student_id', student_id)
+//       .order('created_at', { ascending: false })
+//       .single();
+
+//     const { data, error } = await query;
+
+//     console.log('getAllClassesByStudentIdData raw data:', data);
+
+//     if (error) {
+//       throw new Error(`Error fetching classes: ${(error as PostgrestError).message}`);
+//     }
+
+//     if (!data) {
+//       return [];
+//     }
+
+//     const transformedData = await Promise.all(
+//       data.class.map(async (enrollmentData) => {
+//         const classData = enrollmentData || {};
+//         const tutorData = classData.tutor[0] || {};
+
+//         const { data: sessionsData } = await client
+//           .from(SESSIONS_TABLE)
+//           .select(`id, start_time`)
+//           .eq('class_id', classData.id)
+//           .gt('start_time', new Date().toISOString())
+//           .order('start_time', { ascending: true })
+//           .limit(1);
+
+//         const timeSlots = classData.time_slots as
+//           | { day: string; startTime: string; endTime: string }[]
+//           | null;
+
+//         return {
+//           id: enrollmentData.id,
+//           class_id: data.class_id,
+//           student_id: data.student_id,
+//           class: {
+//             id: classData.id || null,
+//             name: classData.name || null,
+//             description: classData.description || null,
+//             subject: classData.subject || null,
+//             tutor_id: classData.tutor_id || null,
+//             tutor: {
+//               id: tutorData.id || null,
+//               first_name: tutorData.first_name || null,
+//               last_name: tutorData.last_name || null,
+//             },
+//             time_slots: timeSlots,
+//             fee: classData.fee || null,
+//             status: classData.status || null,
+//             grade: classData.grade || null,
+//             upcomingSession: sessionsData?.[0]?.start_time || null,
+//           },
+//         };
+//       }),
+//     );
+
+//     console.log('Transformed data:', transformedData);
+
+//     return transformedData;
+//   } catch (error) {
+//     console.error('Failed to fetch classes:', error);
+//     throw error;
+//   }
+// }
+
 export async function getAllClassesByStudentIdData(
   client: SupabaseClient<Database>,
   student_id: string,
@@ -483,14 +661,16 @@ export async function getAllClassesByStudentIdData(
             description,
             subject,
             tutor_id,
+            fee,
+            status,
+            time_slots,
+            starting_date,
+            grade,
             tutor:${USERS_TABLE}!tutor_id (
               id,
               first_name,
               last_name
-            ),
-            fee,
-            status,            
-            grade
+            )
           )
         `,
       )
@@ -499,37 +679,61 @@ export async function getAllClassesByStudentIdData(
 
     const { data, error } = await query;
 
-    // console.log('getAllClassesByStudentIdData', data);
+    console.log('getAllClassesByStudentIdData raw data:', data);
 
-    if (!data) {
+    if (error) {
+      throw new Error(`Error fetching classes: ${(error as PostgrestError).message}`);
+    }
+
+    if (!data || data.length === 0) {
       return [];
     }
 
-    const transformedData = data?.map((classData) => {
-      let classTemp;
-      let tutorTemp;
-      if (classData?.class) {
-        if (Array.isArray(classData.class)) classTemp = classData.class[0];
-        else classTemp = classData.class;
-      }
-      if (classTemp?.tutor) {
-        if (Array.isArray(classTemp.tutor)) tutorTemp = classTemp.tutor[0];
-        else tutorTemp = classTemp.tutor;
-      }
-      return {
-        ...classData,
-        class: {
-          ...classTemp,
-          tutor: tutorTemp,
-        },
-      };
-    });
+    const transformedData = await Promise.all(
+      data.map(async (enrollmentData: any) => {
+        const classData = enrollmentData.class || {};
+        const tutorData = Array.isArray(classData.tutor) ? classData.tutor[0] || null : classData.tutor || null;
 
-    if (error) {
-      throw new Error(
-        `Error fetching classes: ${(error as PostgrestError).message}`,
-      );
-    }
+        const { data: sessionsData } = await client
+          .from(SESSIONS_TABLE)
+          .select(`id, start_time`)
+          .eq('class_id', classData.id)
+          .gt('start_time', new Date().toISOString())
+          .order('start_time', { ascending: true })
+          .limit(1);
+
+        const timeSlots = classData.time_slots as
+          | { day: string; startTime: string; endTime: string }[]
+          | null;
+
+        return {
+          id: enrollmentData.id || null,
+          class_id: enrollmentData.class_id || null,
+          student_id: enrollmentData.student_id || null,
+          class: {
+            id: classData.id || null,
+            name: classData.name || null,
+            description: classData.description || null,
+            subject: classData.subject || null,
+            tutor_id: classData.tutor_id || null,
+            tutor: tutorData
+              ? {
+                  id: tutorData.id || null,
+                  first_name: tutorData.first_name || null,
+                  last_name: tutorData.last_name || null,
+                }
+              : null,
+            time_slots: timeSlots,
+            fee: classData.fee || null,
+            status: classData.status || null,
+            grade: classData.grade || null,
+            upcomingSession: sessionsData?.[0]?.start_time || null,
+          },
+        } as ClassForStudentType;
+      }),
+    );
+
+    console.log('Transformed data:', transformedData);
 
     return transformedData;
   } catch (error) {

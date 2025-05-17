@@ -1,35 +1,69 @@
 // components/classes/StudentClassList.tsx
-'use client'
+'use client';
 
 import React, { useEffect, useState } from 'react';
+import { Search } from 'lucide-react';
 import {
-  Search
-} from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base-v2/ui/Select';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../base-v2/ui/Select';
 import { Input } from '../base-v2/ui/Input';
 import StudentClassCard from './StudentClassCard';
-import { ClassForStudentType, StudentClassListType } from '~/lib/classes/types/class-v2';
+import {
+  ClassForStudentType,
+  StudentClassListType,
+} from '~/lib/classes/types/class-v2';
+import { format as dateFnsFormat } from 'date-fns';
 
-const StudentClassesList = ({ studentClassesData }: { studentClassesData: ClassForStudentType[] }) => {
+const StudentClassesList = ({
+  studentClassesData,
+}: {
+  studentClassesData: ClassForStudentType[];
+}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
-  const [classTableData, setClassTableData] = useState<StudentClassListType[]>([]);
+  const [classTableData, setClassTableData] = useState<StudentClassListType[]>(
+    [],
+  );
 
   useEffect(() => {
     if (studentClassesData) {
-        const formattedData = studentClassesData.map((classData) => {
-            return {
-                id: classData.id || "",
-                name: classData.class.name || "",
-                schedule: "test parameter",
-                subject: classData.class.subject || "",
-                status: classData.class.status || "",
-                students: 10,
-                grade: classData.class.grade || "",
-                fee: classData.class.fee || 0,
-                payments: [],
-            }
-        })
+      const formattedData = studentClassesData.map((classData) => {
+        const schedule =
+          classData?.class?.time_slots?.reduce(
+            (acc: string, slot: any, index: number, array) => {
+              const timeSlotString = `${slot.day}, ${slot.startTime} - ${slot.endTime}`;
+              // Add a separator for all except the last item
+              return (
+                acc + timeSlotString + (index < array.length - 1 ? '; ' : '')
+              );
+            },
+            '',
+          ) || 'No schedule available';
+
+        const formattedDate = classData?.class?.upcomingSession
+          ? dateFnsFormat(
+              new Date(classData.class.upcomingSession),
+              'EEE, MMM dd, yyyy',
+            )
+          : 'No upcoming session';
+
+        return {
+          id: classData.id || '',
+          name: classData.class.name || '',
+          schedule: schedule,
+          subject: classData.class.subject || '',
+          status: classData.class.status || '',
+          students: 10,
+          grade: classData.class.grade || '',
+          fee: classData.class.fee || 0,
+          payments: [],
+          nextClass: formattedDate,
+        };
+      });
       setClassTableData(formattedData);
     }
   }, [studentClassesData]);
@@ -52,7 +86,7 @@ const StudentClassesList = ({ studentClassesData }: { studentClassesData: ClassF
             className="pl-8"
           />
         </div>
-        
+
         <Select value={selectedYear} onValueChange={setSelectedYear}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by year" />
@@ -66,9 +100,9 @@ const StudentClassesList = ({ studentClassesData }: { studentClassesData: ClassF
       </div>
 
       {/* Classes List */}
-      <div className='lg:min-w-[600px]'>
+      <div className="lg:min-w-[600px]">
         {classTableData
-          .filter(cls => {
+          .filter((cls) => {
             if (searchQuery) {
               if (!cls?.name) return false;
               return cls.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -78,16 +112,11 @@ const StudentClassesList = ({ studentClassesData }: { studentClassesData: ClassF
             }
             return true;
           })
-          .map(classData => (
-            <StudentClassCard 
-              key={classData.id} 
-              classData={classData}
-            />
-          ))
-        }
+          .map((classData) => (
+            <StudentClassCard key={classData.id} classData={classData} />
+          ))}
       </div>
     </div>
-    
   );
 };
 
