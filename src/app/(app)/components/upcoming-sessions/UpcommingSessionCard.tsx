@@ -31,6 +31,7 @@ import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 import { parse, format } from 'date-fns';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { convertTimeRangeToISO } from '~/lib/utils/date-utils';
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
@@ -76,38 +77,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
   console.log('lessonDetails:', sessionData.time);
 
-  function convertTimeRangeToISO(
-    timeRange: string,
-    date: Date = new Date('2025-05-03'),
-  ): TimeRange {
-    try {
-      // Validate and split the input (e.g., "6:13 AM - 6:22 AM" -> ["6:13 AM", "6:22 AM"])
-      const timeParts = timeRange.split(' - ').map((part) => part.trim());
-      if (timeParts.length !== 2) {
-        throw new Error(
-          'Invalid time range format. Expected "h:mm A - h:mm A"',
-        );
-      }
-
-      // Parse start and end times
-      const start = parse(timeParts[0], 'h:mm a', date);
-      const end = parse(timeParts[1], 'h:mm a', date);
-
-      // Validate parsed times
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        throw new Error('Invalid time format. Use "h:mm A" (e.g., "6:13 AM")');
-      }
-
-      // Convert to ISO 8601 (UTC)
-      const startTime = format(start, "yyyy-MM-dd'T'HH:mm:ss'Z'");
-      const endTime = format(end, "yyyy-MM-dd'T'HH:mm:ss'Z'");
-
-      return { startTime, endTime };
-    } catch (error) {
-      console.error(`Failed to convert time range "${timeRange}":`, error);
-      throw new Error(`Invalid time range: ${(error as Error).message}`);
-    }
-  }
 
   const joinMeetingAsTutor = useCallback(async () => {
     startTransition(async () => {

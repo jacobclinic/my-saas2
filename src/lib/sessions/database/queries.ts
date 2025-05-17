@@ -370,7 +370,7 @@ export async function getTodaysAllUpcommingSessionsData(
   try {
     const today = new Date().toISOString();
     const tommorow = new Date(
-      new Date().getTime() + 24 * 60 * 60 * 1000,
+      new Date().getTime() + 9*24 * 60 * 60 * 1000,
     ).toISOString();
 
     const { data, error } = await client

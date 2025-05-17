@@ -249,7 +249,7 @@ export const deleteClassAction = withSession(
 
     // Check user role and permissions
     const havePermission = await isAdminOrCLassTutor(client, userId, classId);
-    console.log( 'havePermission', havePermission);
+    console.log('havePermission', havePermission);
     if (!havePermission) {
       return {
         success: false,
@@ -368,7 +368,7 @@ export const createZoomMeeting = async (
   }
 };
 
-export const getAllUpcominSessionsAdmin = async () => {
+export const getAllUpcominSessionsAdmin = withSession(async () => {
   const client = getSupabaseServerActionClient();
   const {
     data: { session },
@@ -403,7 +403,7 @@ export const getAllUpcominSessionsAdmin = async () => {
     throw new Error('Failed to fetch upcoming sessions data');
   }
   return data;
-};
+});
 
 export const getClassDataByIdAction = withSession(async (classId: string) => {
   const client = getSupabaseServerActionClient();
