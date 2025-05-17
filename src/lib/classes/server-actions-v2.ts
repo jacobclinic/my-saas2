@@ -49,24 +49,23 @@ export const createClassAction = withSession(
     // Create the class
     const classResult = await createClass(client, classData);
 
-    // Get tutor's email (for Zoom meeting setup)
+    // Get tutor's email (for Zoom meeting setup)    
     const { data: tutorData } = await client
       .from('users')
       .select('email')
       .eq('id', classData.tutorId)
-      .single();
+      .single(); // Generate initial sessions for the month and create one Zoom meeting per time slot
 
-    // Generate initial sessions for the month and create one Zoom meeting per time slot
     const initialSessions = await Promise.all(
-      classData.timeSlots.map(async (timeSlot) => {
-        // Get all upcoming occurrences for year
+      classData.timeSlots.map(async (timeSlot) => {        // Get end date for this year (December 31st)
+        const endDate = new Date(new Date().getFullYear(), 11, 31)
+          .toISOString()
+          .split('T')[0]; // Get all upcoming occurrences for year
         const nextOccurrences = getUpcomingOccurrences(
           timeSlot,
           classData.startDate,
-          new Date(new Date().getFullYear(), 11, 31)
-            .toISOString()
-            .split('T')[0],
-        );
+          endDate,
+        );        // Take the first occurrence
 
         // Take the first occurrence for Zoom meeting creation
         const firstOccurrence = nextOccurrences[0];
@@ -160,7 +159,7 @@ export const updateClassAction = withSession(
     if (!result) {
       return {
         success: false,
-        error: "There was an error updating the class. Please try again",
+        error: 'There was an error updating the class. Please try again',
       };
     }
 

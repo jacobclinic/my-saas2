@@ -36,13 +36,29 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
 
+  // Get today's date in Sri Lanka timezone (UTC+5:30) in YYYY-MM-DD format
+  const getTodayInSriLankaTimezone = () => {
+    const now = new Date();
+    const currentTime = now.getTime();
+    const sriLankaTime = currentTime + 5.5 * 60 * 60 * 1000;
+    const sriLankaDate = new Date(sriLankaTime);
+
+    const year = sriLankaDate.getUTCFullYear();
+    const month = String(sriLankaDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(sriLankaDate.getUTCDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const today = getTodayInSriLankaTimezone();
+
   const [newClass, setNewClass] = useState<NewClassData>({
     name: '',
     subject: '',
     description: '',
     yearGrade: '',
     monthlyFee: '',
-    startDate: '',
+    startDate: today, // Default to today's date in local timezone
     timeSlots: [{ day: '', startTime: '', endTime: '' }], // Single time slot
     tutorId,
   });
@@ -82,14 +98,8 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 
   const handleSubmit = () => {
     startTransition(async () => {
-      // Create a copy of newClass with the adjusted start date
-      const classDataWithAdjustedDate = {
-        ...newClass,
-        startDate: decrementDate(newClass.startDate),
-      };
-
       const result = await createClassAction({
-        classData: classDataWithAdjustedDate,
+        classData: newClass,
         csrfToken,
       });
 
@@ -158,13 +168,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       timeSlots: [{ day: '', startTime: '', endTime: '' }], // Reset to a single time slot
       tutorId,
     });
-  };
-
-  //function to decrement a day from the starting date to fix the issue of not creating a class on the selected day. It creates class from the next week onward
-  const decrementDate = (date: string): string => {
-    const inputDate = new Date(date);
-    inputDate.setDate(inputDate.getDate() - 1);
-    return inputDate.toISOString().split('T')[0];
   };
 
   return (
