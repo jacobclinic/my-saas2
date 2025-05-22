@@ -4,6 +4,20 @@ import {
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 
+import { 
+  LayoutDashboard, 
+  FolderKanban, 
+  CalendarClock, 
+  CalendarCheck2, 
+  Wallet,
+  User,
+  CreditCard,
+  ChevronRight,
+  Menu,
+  X,
+  LogOut
+} from 'lucide-react';
+
 type Divider = {
   divider: true;
 };
@@ -34,8 +48,8 @@ const NAVIGATION_CONFIG: NavigationConfig = {
     {
       label: 'Dashboard',
       path: '/dashboard',
-      Icon: ({ className }: { className: string }) => {
-        return <Squares2X2Icon className={className} />;
+      Icon: () => {
+        return <LayoutDashboard size={20} />;
       },
       end: true,
       userRole: ['admin', 'tutor', 'student'],
@@ -43,8 +57,8 @@ const NAVIGATION_CONFIG: NavigationConfig = {
     {
       label: 'Class Groups',
       path: '/classes',
-      Icon: ({ className }: { className: string }) => {
-        return <Squares2X2Icon className={className} />;
+      Icon: () => {
+        return <FolderKanban size={20} />;
       },
       end: true,
       userRole: ['admin', 'tutor', 'student'],
@@ -52,8 +66,8 @@ const NAVIGATION_CONFIG: NavigationConfig = {
     {
       label: 'Tutors',
       path: '/tutors',
-      Icon: ({ className }: { className: string }) => {
-        return <Squares2X2Icon className={className} />;
+      Icon: () => {
+        return <FolderKanban size={20} />;
       },
       end: true,
       userRole: ['admin'],
@@ -70,8 +84,8 @@ const NAVIGATION_CONFIG: NavigationConfig = {
     {
       label: 'Upcoming Classes',
       path: '/upcoming-sessions',
-      Icon: ({ className }: { className: string }) => {
-        return <Squares2X2Icon className={className} />;
+      Icon: () => {
+        return <CalendarClock size={20} />;
       },
       end: true,
       userRole: ['admin', 'tutor','student'],
@@ -79,8 +93,8 @@ const NAVIGATION_CONFIG: NavigationConfig = {
     {
       label: 'Past Classes',
       path: '/past-sessions',
-      Icon: ({ className }: { className: string }) => {
-        return <Squares2X2Icon className={className} />;
+      Icon: () => {
+        return <CalendarCheck2 size={20} />;
       },
       end: true,
       userRole: ['admin', 'tutor','student'],
@@ -97,8 +111,8 @@ const NAVIGATION_CONFIG: NavigationConfig = {
     {
       label: 'Payments',
       path: '/payments',
-      Icon: ({ className }: { className: string }) => {
-        return <Squares2X2Icon className={className} />;
+      Icon: () => {
+        return <Wallet size={20} />;
       },
       end: true,
       userRole: ['admin', 'tutor'],
@@ -110,16 +124,16 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         {
           label: 'Profile',
           path: '/settings/profile',
-          Icon: ({ className }: { className: string }) => {
-            return <UserIcon className={className} />;
+          Icon: () => {
+            return <User size={20} />;
           },
           userRole: ['admin', 'tutor', 'student'],
         },
         {
           label: 'Subscription',
           path: '/settings/subscription',
-          Icon: ({ className }: { className: string }) => {
-            return <CreditCardIcon className={className} />;
+          Icon: () => {
+            return <CreditCard size={20} />;
           },
           userRole: ['admin', 'tutor', 'student'],
         },
