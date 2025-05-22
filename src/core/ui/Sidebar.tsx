@@ -35,7 +35,7 @@ export function SidebarContent({
 }>) {
   return (
     <div
-      className={cn('flex w-full flex-col px-container space-y-1.5', className)}
+      className={cn('flex w-full flex-col px-3 space-y-1.5', className)}
     >
       {children}
     </div>
@@ -195,7 +195,7 @@ function getSidebarItemClassBuilder() {
       variants: {
         collapsed: {
           true: `justify-center py-2 [&>span]:hidden`,
-          false: `py-2 px-3 pr-12 space-x-2.5`,
+          false: `py-2 px-3 space-x-2.5`,
         },
         active: {
           true: `bg-primary-blue-50 dark:bg-primary-300/10 font-medium text-primary-blue-800`,
