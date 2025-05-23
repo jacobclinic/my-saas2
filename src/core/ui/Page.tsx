@@ -48,7 +48,7 @@ export function PageHeader({
     <div className={'flex items-center justify-between p-6 border-b border-neutral-200'}>
       <div
         className={
-          'w-full flex space-x-2 items-center lg:space-x-0'
+          'w-full flex flex-col space-x-2 lg:space-x-0'
         }
       >
         <div className={'flex items-center lg:hidden'}>{mobileNavigation}</div>
