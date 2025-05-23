@@ -6,24 +6,25 @@ import {
   UpcommingSessionCardProps,
   UploadedMaterial,
 } from '~/lib/sessions/types/upcoming-sessions';
-import { Card, CardContent, CardHeader, CardTitle } from '../base-v2/ui/Card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../base-v2/ui/Card';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
 import { Textarea } from '../base-v2/ui/Textarea';
 import { Input } from '../base-v2/ui/Input';
 import { cn } from '../../lib/utils';
 import {
-  Camera,
-  Copy,
   Check,
   Upload,
   Edit,
-  Plus,
   Link,
   Clock,
   File,
   Save,
   Calendar,
+  BookOpen,
+  PlusCircle,
+  Users,
+  ExternalLink,
 } from 'lucide-react';
 import MaterialUploadDialog from './MaterialUploadDialog';
 import EditSessionDialog from './EditSessionDialog';
@@ -31,6 +32,7 @@ import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 import { parse, format } from 'date-fns';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base-v2/ui/tooltip';
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
@@ -134,46 +136,60 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   return (
     <>
       <Card
-        className={cn('mb-6', isDashboard && 'border-green-200 bg-green-50')}
+        className={cn('mb-6', isDashboard && '')}
       >
-        <CardContent className="p-6">
+        <CardContent className='p-0'>
           <div className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h2
-                    className={cn(
-                      'text-xl font-semibold',
-                      isDashboard && 'text-green-800',
+            <CardHeader className="pb-3 border-b border-neutral-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-blue-50 text-primary-blue-600">
+                    <BookOpen size={20} />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold text-neutral-900">
+                      {sessionData.name}
+                    </CardTitle>
+                    {sessionData.subject && (
+                      <Badge variant="outline" className="mt-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200">
+                        {sessionData.subject?.replace(/\b([a-z])/, (match) =>
+                          match.toUpperCase(),
+                        )}
+                      </Badge>
                     )}
-                  >
-                    {sessionData.name}
-                  </h2>
-                  {sessionData.subject && (
-                    <Badge variant="secondary">
-                      {sessionData.subject?.replace(/\b([a-z])/, (match) =>
-                        match.toUpperCase(),
-                      )}
-                    </Badge>
-                  )}
+                  </div>
                 </div>
-                <div className="flex items-center mt-2 text-gray-600">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span>{sessionData.date}</span>
-                </div>
-                <div className="flex items-center mt-1 text-gray-600">
-                  <Clock className="h-4 w-4 mr-2" />
-                  <span>{sessionData.time}</span>
-                </div>
-                <Badge variant="outline" className="mt-2">
-                  {sessionData.registeredStudents} Students
-                </Badge>
               </div>
-            </div>
+            </CardHeader>
+            <CardContent className="">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
+                  <Calendar size={18} className="text-primary-blue-600" />
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900">{sessionData.date}</p>
+                    <p className="text-xs text-neutral-600">Date</p>
+                  </div>
+                </div>
 
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
+                  <Clock size={18} className="text-primary-blue-600" />
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900">{sessionData.time}</p>
+                    <p className="text-xs text-neutral-600">Time</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
+                  <Users size={18} className="text-primary-blue-600" />
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900">{sessionData.registeredStudents} Students</p>
+                    <p className="text-xs text-neutral-600">Enrolled</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
             {/* Lesson Details */}
-            <div>
+            <CardContent className="pb-3">
               {iseditingLesson ? (
                 <div className="space-y-4">
                   <div>
@@ -236,25 +252,29 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
               ) : (
                 <div>
                   {!lessonDetails.title ? (
+
                     <Button
-                      variant="outline"
+                      variant="ghost"
+                      size="sm"
+                      className={`pl-0 text-primary-blue-700 hover:text-primary-blue-800 hover:bg-primary-blue-50`}
                       onClick={() => setIsEditingLesson(true)}
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <PlusCircle size={16} className="mr-2" />
                       Add Lesson Details
                     </Button>
                   ) : (
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-medium">
+                    <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
+                      <h3 className="font-medium">
                         {lessonDetails.title}
                       </h3>
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 text-sm">
                         {lessonDetails.description}
                       </p>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsEditingLesson(true)}
+                        className='pl-0 text-primary-blue-700 hover:text-primary-blue-800 hover:bg-primary-blue-50'
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Details
@@ -263,11 +283,11 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                   )}
                 </div>
               )}
-            </div>
+            </CardContent>
 
             {/* Materials Section */}
             {sessionData.materials && sessionData.materials.length > 0 && (
-              <div className="border-t pt-4">
+              <div className="border-t px-6 pt-4">
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-medium">Class Materials</h4>
                   <Badge variant="outline">
@@ -292,48 +312,93 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 </div>
               </div>
             )}
+            <CardFooter className="pt-3 grid grid-cols-2 md:grid-cols-4 gap-2 border-t border-neutral-100">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full bg-primary-blue-50 text-primary-blue-700 hover:bg-primary-blue-100 border border-primary-blue-100 group-hover:bg-primary-blue-100"
+                      onClick={joinMeetingAsTutor} 
+                      disabled={isPending}
+                    >
+                      <ExternalLink size={16} className="mr-2" />
+                      <span>Join Class</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Join the class as a tutor</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-            {/* Actions */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button onClick={joinMeetingAsTutor} disabled={isPending}>
-                <Camera className="h-4 w-4 mr-2" />
-                Join as Tutor
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  handleCopyLink(
-                    `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`)}`,
-                    'student',
-                  )
-                }
-              >
-                {' '}
-                {linkCopied.student ? (
-                  <Check className="h-4 w-4 mr-2" />
-                ) : (
-                  <Link className="h-4 w-4 mr-2" />
-                )}
-                {linkCopied.student ? 'Copied!' : 'Copy Student Link'}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
+                      onClick={() =>
+                        handleCopyLink(
+                          `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`)}`,
+                          'student',
+                        )
+                      }
+                    >
+                      {' '}
+                      {linkCopied.student ? (
+                        <Check className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Link className="h-4 w-4 mr-2" />
+                      )}
+                      {linkCopied.student ? 'Copied!' : 'Copy Student Link'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy student link to clipboard</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-              <Button
-                variant="outline"
-                onClick={() => setShowMaterialDialog(true)}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {sessionData.materials?.length
-                  ? 'Update Materials'
-                  : 'Upload Materials'}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={`w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200 ${sessionData.materials && sessionData.materials?.length > 0 ? 'bg-primary-blue-50 border-primary-blue-100' : ''}`}
+                      onClick={() => setShowMaterialDialog(true)}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {sessionData.materials?.length
+                        ? 'Update Materials'
+                        : 'Upload Materials'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Manage class materials</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-              <Button
-                variant="outline"
-                onClick={() => setShowSessionEditDialog(true)}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Class
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
+                      onClick={() => setShowSessionEditDialog(true)}
+                    >
+                      <Edit size={16} className="mr-2" />
+                      <span>Edit Class</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit class schedule</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </CardFooter>
+            {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-6 pt-0">
 
               {sessionData.materials && sessionData.materials.length > 0 && (
                 <Button
@@ -351,15 +416,15 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     handleCopyLink(materialsText, 'materials');
                   }}
                 >
-                  {/* {linkCopied.materials ? (
+                  {linkCopied.materials ? (
                     <Check className="h-4 w-4 mr-2" />
                   ) : (
                     <Copy className="h-4 w-4 mr-2" />
                   )}
-                  {linkCopied.materials ? 'Materials Links Copied!' : 'Copy Materials Links'} */}
+                  {linkCopied.materials ? 'Materials Links Copied!' : 'Copy Materials Links'}
                 </Button>
               )}
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>
