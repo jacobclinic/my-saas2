@@ -14,7 +14,7 @@ const Logo: React.FCC<{
         alt="Logo"
         width={100}
         height={100}
-        className="hidden lg:block" />
+        className="lg:block" />
     </Link>
   );
 };
