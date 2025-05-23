@@ -140,11 +140,8 @@ const UpcomingSessions = ({
   };
 
   return (
-    <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
-      {/* Header & Search */}
+    <div className="xl:min-w-[900px] space-y-6">
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Upcoming Classes</h1>
-
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
