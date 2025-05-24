@@ -12,10 +12,9 @@ export async function getAllUpcomingSessionsWithin24_25Hrs(
   client: SupabaseClient<Database>,
 ): Promise<NotificationClass[] | []> {
   try {
-    // Calculate the timestamp for 24 hours from now
-    // Account for the Indian timezone (UTC+5:30)
+    // Calculate the timestamp for 24-25 hours from now in UTC
     const now = new Date();
-    // Adjust for timezone: add 24 hours for notifications
+    // Add 24 hours for notifications
     const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const next25Hours = new Date(now.getTime() + 25 * 60 * 60 * 1000);
 
@@ -136,7 +135,7 @@ export async function getSessions2_1HrsAfterSession(
   client: SupabaseClient<Database>,
 ): Promise<NotificationClass[] | []> {
   try {
-    // Calculate timestamps for sessions that ended 1-2 hours ago
+    // Calculate timestamps for sessions that ended 1-2 hours ago (in UTC)
     const now = new Date();
     const last2Hours = new Date(now.getTime() - 2 * 60 * 60 * 1000);
     const lastHour = new Date(now.getTime() - 1 * 60 * 60 * 1000);

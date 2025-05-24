@@ -141,16 +141,10 @@ export async function notifyUpcomingSessionsBefore24Hrs(
 
   // Log details of each session for debugging
   sessions.forEach((session, index) => {
-    // Convert UTC time to IST for logging
+    // Use standard date formatting for logging
     const sessionTime = new Date(session.start_time);
-    const istTime = new Intl.DateTimeFormat('en-IN', {
-      dateStyle: 'full',
-      timeStyle: 'long',
-      timeZone: 'Asia/Kolkata',
-    }).format(sessionTime);
-
     console.log(
-      `Upcoming Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, Start Time (IST): ${istTime}`,
+      `Upcoming Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, Start Time (UTC): ${sessionTime.toISOString()}`,
     );
   });
 

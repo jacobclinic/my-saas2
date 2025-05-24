@@ -3,13 +3,26 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import { Input } from '../base-v2/ui/Input';
 import { Textarea } from '../base-v2/ui/Textarea';
-import { AlertTriangle, X, Upload, File, Plus, Trash } from 'lucide-react';
+import {
+  AlertTriangle,
+  X,
+  Upload,
+  File,
+  Plus,
+  Trash,
+  Clock,
+} from 'lucide-react';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import BaseDialog from '../base-v2/BaseDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { Button } from '../base-v2/ui/Button';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import { useToast } from '../../lib/hooks/use-toast';
+import {
+  convertToLocalTime,
+  getUserTimezone,
+} from '~/lib/utils/timezone-utils';
+import TimezoneIndicator from '../TimezoneIndicator';
 
 interface Material {
   id: string;
@@ -70,20 +83,26 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         endTime: sessionData.endTime || '',
         materials: sessionData.materials || [],
         meetingUrl: sessionData.meetingUrl || '',
-      });
-
-      // Set the date and time inputs based on the session data
+      }); // Set the date and time inputs based on the session data, converted to local time
       if (sessionData.startTime) {
-        const startDate = new Date(sessionData.startTime);
-        setSessionDate(startDate.toISOString().split('T')[0]);
-        setSessionStartTime(
-          startDate.toISOString().split('T')[1].substring(0, 5),
-        );
+        // Convert UTC time to user's local timezone
+        const localStartDate = convertToLocalTime(sessionData.startTime);
+        if (localStartDate) {
+          setSessionDate(localStartDate.toISOString().split('T')[0]);
+          setSessionStartTime(
+            localStartDate.toISOString().split('T')[1].substring(0, 5),
+          );
+        }
       }
 
       if (sessionData.endTime) {
-        const endDate = new Date(sessionData.endTime);
-        setSessionEndTime(endDate.toISOString().split('T')[1].substring(0, 5));
+        // Convert UTC time to user's local timezone
+        const localEndDate = convertToLocalTime(sessionData.endTime);
+        if (localEndDate) {
+          setSessionEndTime(
+            localEndDate.toISOString().split('T')[1].substring(0, 5),
+          );
+        }
       }
     }
   }, [sessionData]);
@@ -136,16 +155,15 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     editedSession.meetingUrl,
     sessionData,
   ]);
-
-  // Function to combine date and time into ISO format
+  // Function to combine date and time into ISO format and convert to UTC
   const combineDateAndTime = (date: string, time: string): string => {
     if (!date || !time) return '';
 
-    // Create a proper ISO string with timezone information
-    // First create a Date object with the combined date and time
+    // Create a Date object with the combined date and time
+    // This will be in local time zone
     const combinedDateTime = new Date(`${date}T${time}:00`);
 
-    // Return the ISO string
+    // Convert to UTC by using the ISO string representation
     return combinedDateTime.toISOString();
   };
 
@@ -246,7 +264,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
             }
           />
         </div>
-
         <div>
           <label className="text-sm font-medium">Description</label>
           <Textarea
@@ -260,17 +277,16 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
             }
             className="h-24"
           />
-        </div>
-
-        <div>
+        </div>{' '}
+        <div className="flex justify-between items-center">
           <label className="text-sm font-medium">Session Date</label>
-          <Input
-            type="date"
-            value={sessionDate}
-            onChange={(e) => setSessionDate(e.target.value)}
-          />
+          <TimezoneIndicator showIcon={false} className="text-xs" />
         </div>
-
+        <Input
+          type="date"
+          value={sessionDate}
+          onChange={(e) => setSessionDate(e.target.value)}
+        />
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Start Time</label>

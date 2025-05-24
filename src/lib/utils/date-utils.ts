@@ -139,17 +139,15 @@ export function getUpcomingOccurrences(
   startDate: string,
   endDate: string,
 ): { startTime: Date; endTime: Date }[] {
-  // Function to adjust date to Sri Lanka timezone (UTC+5:30)
-  function adjustToSriLankaTime(dateStr: string) {
-    const date = new Date(dateStr);
-    const sriLankaTime = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
-    return sriLankaTime;
+  // Function to create date objects from date strings
+  function createDateObject(dateStr: string, timeStr: string = '00:00:00') {
+    // Just parse the date directly without timezone adjustment
+    return new Date(`${dateStr.split('T')[0]}T${timeStr}`);
   }
 
-  // Create dates with Sri Lanka timezone adjustment
-  const startDateStr = startDate.split('T')[0]; 
-  const startDateObj = adjustToSriLankaTime(`${startDateStr}T00:00:00`);
-  const endDateObj = adjustToSriLankaTime(`${endDate.split('T')[0]}T23:59:59`);
+  // Create date objects from the input strings
+  const startDateObj = createDateObject(startDate);
+  const endDateObj = createDateObject(endDate, '23:59:59');
   // Get the day numbers (0-6 Sunday-Saturday)
   const targetDay = dayMap[timeSlot.day.toLowerCase()];
   const startDateDay = startDateObj.getDay();
@@ -162,7 +160,7 @@ export function getUpcomingOccurrences(
   const [endHours, endMinutes] = timeSlot.endTime.split(':').map(Number);
 
   let firstOccurrenceDate: Date;
-  
+
   // For classes, we always want to include the session on the start date
   // if it's the same day of week, regardless of time
   if (startDateDay === targetDay) {
@@ -183,7 +181,8 @@ export function getUpcomingOccurrences(
     });
 
     // For next weekly occurrence
-    firstOccurrenceDate = addDays(startDateObj, 7);  } else {
+    firstOccurrenceDate = addDays(startDateObj, 7);
+  } else {
     // Find the next occurrence of the target day after start date
     const daysToAdd = (targetDay - startDateDay + 7) % 7;
     firstOccurrenceDate = addDays(startDateObj, daysToAdd);
@@ -212,9 +211,9 @@ export function getUpcomingOccurrences(
 
   // Log the first few occurrences for debugging
   occurrences.slice(0, 3).forEach((occ, i) => {
-    console.log(`Occurrence ${i+1}:`, {
+    console.log(`Occurrence ${i + 1}:`, {
       date: occ.startTime.toDateString(),
-      time: occ.startTime.toTimeString().split(' ')[0]
+      time: occ.startTime.toTimeString().split(' ')[0],
     });
   });
 

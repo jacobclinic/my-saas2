@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import type { PastSessionData } from '~/lib/sessions/types/past-sessions';
-import { Input } from '../base-v2/ui/Input';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
-import { Search, Info, X } from 'lucide-react';
-import PastSessionsCard from './PastSessionCard';
+import { Input } from '../base-v2/ui/Input';
+import { Info, Search, X } from 'lucide-react';
+import PastSessionCard from './PastSessionCard';
 import { PastSession } from '~/lib/sessions/types/session-v2';
-import 'react-datepicker/dist/react-datepicker.css';
 import { DateRangePicker } from '@heroui/date-picker';
+import { formatDateTimeRange } from '~/lib/utils/timezone-utils';
+import TimezoneIndicator from '../TimezoneIndicator';
+import { PastSessionData } from '~/lib/sessions/types/past-sessions';
+
 interface DateRange {
   start?: {
     year: number;
@@ -41,24 +43,20 @@ const PastSessions = ({
 
   useEffect(() => {
     if (pastSessionsData) {
-      const formattedData: PastSessionData[] = pastSessionsData.map((session) =>
-        formatSessionData(session),
+      const formattedData: PastSessionData[] = pastSessionsData.map(
+        (session) => formatSessionData(session),
       );
       setPastSessionTableData(formattedData);
     }
   }, [pastSessionsData]);
-
   const formatSessionData = (session: PastSession): PastSessionData => {
-    const formattedDate = new Date(
-      session?.start_time || '',
-    ).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })} - 
-          ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
+    // Format date and time using timezone utility to respect user's timezone
+    const { formattedDate, formattedTime } = formatDateTimeRange(
+      session?.start_time,
+      session?.end_time,
+      'EEEE, MMMM d, yyyy',
+      'h:mm a',
+    );
     return {
       id: session.id,
       name: `${session?.class?.name}`,
@@ -140,13 +138,15 @@ const PastSessions = ({
     onFilterChange(filteredSessions);
   }, [searchQuery, dateRange, allSessionData]);
 
-  
-
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
+      {' '}
       {/* Header & Search */}
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Past Classes</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Past Classes</h1>
+          <TimezoneIndicator />
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
@@ -199,18 +199,21 @@ const PastSessions = ({
           </Alert>
         </div>
       </div>
-
       {/* Sessions List */}
       <div className="space-y-6">
         {pastSessionTableData.length > 0 ? (
           pastSessionTableData.map((sessionData) => (
-            <PastSessionsCard key={sessionData.id} sessionData={sessionData} />
+            <PastSessionCard key={sessionData.id} sessionData={sessionData} />
           ))
         ) : (
           <div className="text-center py-8 text-gray-500">
             No upcoming classes match your search criteria.
           </div>
         )}
+      </div>
+      {/* Timezone Indicator - Always show the user's current timezone */}
+      <div className="mt-4">
+        <TimezoneIndicator />
       </div>
     </div>
   );

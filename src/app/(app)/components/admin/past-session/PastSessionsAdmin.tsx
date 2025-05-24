@@ -12,16 +12,14 @@ import {
 import { Check, Link, Trash, Users } from 'lucide-react';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DeleteSessionDialog from './DeleteSessionDialog';
-import { format, toZonedTime } from 'date-fns-tz';
+import { format } from 'date-fns';
 import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
 import {
   getAttendanceAction,
   updateAttendanceMarkedAction,
 } from '~/lib/sessions/server-actions-v2';
 import { insertAttendanceAction } from '~/lib/attendance/server-actions';
-
-// Set the local timezone (e.g., 'Asia/Colombo' for Sri Lanka, GMT+5:30)
-const LOCAL_TIMEZONE = 'Asia/Colombo';
+import { convertToLocalTime } from '~/lib/utils/timezone-utils';
 
 interface DateRange {
   start?: {
@@ -91,22 +89,12 @@ const PastSessionsAdmin = ({
 
     setAttendanceMarkedStatus(initialAttendanceStatus);
   }, [pastSessionsData]);
-
   const classData = pastSessionsData.map((session) => {
-    const startTimeUtc = session.start_time
-      ? new Date(session.start_time)
-      : null;
-    const endTimeUtc = session.end_time ? new Date(session.end_time) : null;
+    // Convert UTC to local timezone respecting user's timezone
+    const startTimeLocal = convertToLocalTime(session.start_time);
+    const endTimeLocal = convertToLocalTime(session.end_time);
 
-    // Convert UTC to local timezone using toZonedTime
-    const startTimeLocal = startTimeUtc
-      ? toZonedTime(startTimeUtc, LOCAL_TIMEZONE)
-      : null;
-    const endTimeLocal = endTimeUtc
-      ? toZonedTime(endTimeUtc, LOCAL_TIMEZONE)
-      : null;
-
-    // Format times in local timezone
+    // Format times in user's local timezone
     const formattedStartTime = startTimeLocal
       ? format(startTimeLocal, 'hh:mm a')
       : 'N/A';
@@ -121,7 +109,7 @@ const PastSessionsAdmin = ({
       date: session.start_time,
       attendance_marked: session.attendance_marked,
       time:
-        startTimeUtc && endTimeUtc
+        startTimeLocal && endTimeLocal
           ? `${formattedStartTime} - ${formattedEndTime}`
           : 'N/A',
       topic: session.title || 'Unknown',
