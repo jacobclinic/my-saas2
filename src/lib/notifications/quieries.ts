@@ -13,9 +13,16 @@ export async function getAllUpcomingSessionsWithin24_25Hrs(
 ): Promise<NotificationClass[] | []> {
   try {
     // Calculate the timestamp for 24 hours from now
+    // Account for the Indian timezone (UTC+5:30)
     const now = new Date();
+    // Adjust for timezone: add 24 hours for notifications
     const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const next25Hours = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+
+    // Log the window for debugging
+    console.log(
+      `Looking for sessions between ${next24Hours.toISOString()} and ${next25Hours.toISOString()}`,
+    );
 
     const { data, error } = await client
       .from(SESSIONS_TABLE)
@@ -129,10 +136,15 @@ export async function getSessions2_1HrsAfterSession(
   client: SupabaseClient<Database>,
 ): Promise<NotificationClass[] | []> {
   try {
-    // Calculate the timestamp for 24 hours from now
+    // Calculate timestamps for sessions that ended 1-2 hours ago
     const now = new Date();
     const last2Hours = new Date(now.getTime() - 2 * 60 * 60 * 1000);
     const lastHour = new Date(now.getTime() - 1 * 60 * 60 * 1000);
+
+    // Log the time window for debugging
+    console.log(
+      `Looking for completed sessions between ${last2Hours.toISOString()} and ${lastHour.toISOString()}`,
+    );
 
     const { data, error } = await client
       .from(SESSIONS_TABLE)
@@ -296,12 +308,14 @@ export async function getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(
     }
 
     // Cast rawSessionData to our Session type, fixing Supabase's array inference
-    const sessionData: SessionForUnpaidStudents[] = rawSessionData.map((session) => ({
-      ...session,
-      class: Array.isArray(session.class)
-        ? session.class[0] || null
-        : session.class || null,
-    }));
+    const sessionData: SessionForUnpaidStudents[] = rawSessionData.map(
+      (session) => ({
+        ...session,
+        class: Array.isArray(session.class)
+          ? session.class[0] || null
+          : session.class || null,
+      }),
+    );
 
     // Fetch all relevant student payments
     const studentIds = sessionData

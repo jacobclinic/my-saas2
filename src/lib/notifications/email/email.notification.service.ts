@@ -40,17 +40,32 @@ async function sendNotifySessionEmails(
 
     // Function to send a single email
     const sendSingleEmail = async (task: (typeof emailTasks)[number]) => {
+      // Parse the session start time for proper date formatting
+      const sessionDate = new Date(task.start_time);
+
+      // Format the date in India timezone (IST)
+      const localDate = new Intl.DateTimeFormat('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'Asia/Kolkata',
+      }).format(sessionDate);
+
+      // Format the time in India timezone (IST)
+      const localTime = new Intl.DateTimeFormat('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata',
+      }).format(sessionDate);
+
       if (beforeOrAfter === 'before') {
         const { html, text } = getStudentNotifyBeforeEmailTemplate({
           studentName: task.first_name!,
           className: task.class_name,
-          sessionDate: new Date(task.start_time).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          sessionTime: task.start_time,
+          sessionDate: localDate,
+          sessionTime: localTime,
           topic: task.topic,
           classId: task.class_id,
           studentEmail: task.to,
@@ -120,11 +135,41 @@ export async function notifyUpcomingSessionsBefore24Hrs(
   client: SupabaseClient,
 ) {
   const sessions = await getAllUpcomingSessionsWithin24_25Hrs(client);
+  console.log(
+    `Found ${sessions.length} upcoming sessions for email notifications in the 24-25 hour window`,
+  );
+
+  // Log details of each session for debugging
+  sessions.forEach((session, index) => {
+    // Convert UTC time to IST for logging
+    const sessionTime = new Date(session.start_time);
+    const istTime = new Intl.DateTimeFormat('en-IN', {
+      dateStyle: 'full',
+      timeStyle: 'long',
+      timeZone: 'Asia/Kolkata',
+    }).format(sessionTime);
+
+    console.log(
+      `Upcoming Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, Start Time (IST): ${istTime}`,
+    );
+  });
+
   await sendNotifySessionEmails(sessions, 'before');
 }
 
 export async function notifyAfterSessionsEmail(client: SupabaseClient) {
   const sessions = await getSessions2_1HrsAfterSession(client);
+  console.log(
+    `Found ${sessions.length} sessions for after-session email notifications`,
+  );
+
+  // Log details of each session for debugging
+  sessions.forEach((session, index) => {
+    console.log(
+      `Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, End Time: ${session.end_time}`,
+    );
+  });
+
   await sendNotifySessionEmails(sessions, 'after');
 }
 
