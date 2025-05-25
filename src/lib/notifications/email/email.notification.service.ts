@@ -70,6 +70,8 @@ async function sendNotifySessionEmails(
           classId: task.class_id,
           studentEmail: task.to,
         });
+        // const emailService = EmailService.getInstance();
+        // await emailService.sendEmail
         await sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: task.to,
