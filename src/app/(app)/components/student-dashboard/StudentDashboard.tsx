@@ -248,47 +248,54 @@ const StudentDashboard = ({
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
        
 
         {/* Next Session */}
-        {nextSession && (
-          <StudentNextSessionCard
-            key={nextSession.id}
-            sessionData={nextSession}
-            isPending={isPending}
-            setSelectedSession={setSelectedSession}
-            setShowPaymentDialog={setShowPaymentDialog}
-            joinMeetingAsStudent={joinMeetingAsStudent}
-          />
-        )}
-
-        {/* Upcoming Sessions */}
-        {upcomingSessions.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <Calendar className="h-5 w-5 mr-2" />
-              <h2 className="text-xl font-bold">Upcoming Classes</h2>
-            </div>
-            {currentUpcomingSessions.map((sessionData) => (
-              <StudentSessionCard
-                key={sessionData.id}
-                sessionData={sessionData}
-                type="upcoming"
+        <div className='lg:col-span-1 order-1'>
+          <h2 className="text-lg font-semibold text-gray-900 p-4">Next Class</h2>
+          <div className='p-4'>
+            {nextSession && (
+              <StudentNextSessionCard
+                key={nextSession.id}
+                sessionData={nextSession}
                 isPending={isPending}
                 setSelectedSession={setSelectedSession}
                 setShowPaymentDialog={setShowPaymentDialog}
                 joinMeetingAsStudent={joinMeetingAsStudent}
               />
-            ))}
-            {/* Pagination Controls for Upcoming Sessions */}
-            {totalPagesOfUpcmingSessions > 1 && (
-              <PaginationControls
-                currentPage={upcomingCurrentPage}
-                totalPages={totalPagesOfUpcmingSessions}
-                onPageChange={handleUpcomingPageChange}
-              />
             )}
+          </div>
+        </div>
+
+        {/* Upcoming Sessions */}
+        {upcomingSessions.length > 0 && (
+          <div className="lg:col-span-2 order-2 bg-white rounded-lg shadow-sm border border-gray-200 bg-gradient-to-br from-blue-50 to-purple-50 border-none shadow-lg">
+            <div className="flex items-center p-4">
+              <h2 className="text-lg font-semibold text-gray-900">This Week's Classes</h2>
+            </div>
+            <div className='p-4'>
+              {currentUpcomingSessions.map((sessionData) => (
+                <StudentSessionCard
+                  key={sessionData.id}
+                  sessionData={sessionData}
+                  type="upcoming"
+                  isPending={isPending}
+                  setSelectedSession={setSelectedSession}
+                  setShowPaymentDialog={setShowPaymentDialog}
+                  joinMeetingAsStudent={joinMeetingAsStudent}
+                />
+              ))}
+              {/* Pagination Controls for Upcoming Sessions */}
+              {totalPagesOfUpcmingSessions > 1 && (
+                <PaginationControls
+                  currentPage={upcomingCurrentPage}
+                  totalPages={totalPagesOfUpcmingSessions}
+                  onPageChange={handleUpcomingPageChange}
+                />
+              )}
+
+            </div>
           </div>
         )}
         {showPaymentDialog && selectedSession && (

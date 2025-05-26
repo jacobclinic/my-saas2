@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "../base-v2/ui/Card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../base-v2/ui/Card";
 import { Button } from "../base-v2/ui/Button";
 import { Badge } from "../base-v2/ui/Badge";
 import { Alert, AlertDescription } from "../base-v2/ui/Alert";
@@ -12,10 +12,13 @@ import {
   DollarSign,
   Camera,
   AlertTriangle,
+  User,
+  FileText,
 } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface StudentNextSessionCardProps {
     sessionData: SessionStudentTableData;
@@ -32,25 +35,16 @@ const StudentNextSessionCard = ({
   setShowPaymentDialog,
   joinMeetingAsStudent,
 }: StudentNextSessionCardProps) => {
+  const router = useRouter();
+  
   return (
-    <Card className="border-2 border-blue-200 bg-blue-50">
+    <Card className="transform transition-all hover:scale-[1.02]">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-xl text-blue-800">Next Class</CardTitle>
-            {/* <p className="text-blue-700 font-medium mt-1">{sessionData.name}</p> */}
-            <Link 
-              href={`/sessions/student/${sessionData.id}?type=next`}
-              className="text-blue-700 font-medium mt-1 hover:text-blue-800 hover:underline cursor-pointer"
-            >
-              {sessionData.name}
-            </Link>
+            <h3 className="text-lg font-semibold text-gray-900">{sessionData.name}</h3>
+            <Badge variant="blue" className="mt-2">{sessionData.name}</Badge> {/* replace with subject */}
           </div>
-          {sessionData.paymentStatus === PAYMENT_STATUS.PENDING && (
-            <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100 border-red-500">
-              Payment Pending
-            </Badge>
-          )}
           {sessionData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION && (
             <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-500">
               Payment pending verification
@@ -59,32 +53,28 @@ const StudentNextSessionCard = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <h3 className="font-medium text-blue-900">{sessionData.topic}</h3>
-          <div className="flex items-center text-blue-700">
-            <Calendar className="h-4 w-4 mr-2" />
-            {sessionData.date}
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center text-sm text-gray-600">
+            <Calendar size={16} className="mr-2" />
+            <span>{sessionData.date}</span>
           </div>
-          <div className="flex items-center text-blue-700">
-            <Clock className="h-4 w-4 mr-2" />
-            {sessionData.time}
+          <div className="flex items-center text-sm text-gray-600">
+            <Clock size={16} className="mr-2" />
+            <span>{sessionData.time}</span>
+          </div>
+          <div className="flex items-center text-sm text-gray-600">
+            <User size={16} className="mr-2" />
+            <span>Tutor Name</span>
           </div>
         </div>
-
         {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
-          <Alert className="border-red-500 bg-red-50">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-700">
-              Please complete the payment of Rs. {sessionData.paymentAmount} to access the class
-            </AlertDescription>
-          </Alert>
+          <div className="mt-3">
+            <Badge variant="yellow" title={`Please complete the payment of Rs. ${sessionData.paymentAmount} to access the class`}>Rs. {sessionData.paymentAmount} Payment Required </Badge>
+          </div>
         ) : sessionData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
-          <Alert className="border-yellow-500 bg-yellow-50">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-700">
-              Payment is pending for verification from the admin. Please wait for the admin to verify the payment.
-            </AlertDescription>
-          </Alert>
+          <div className="mt-3">
+            <Badge variant="green" title="Payment is pending for verification from the admin. Please wait for the admin to verify the payment.">Payment pending verification</Badge>
+          </div>
         ) : null}
 
         {sessionData?.materials && sessionData?.materials?.length > 0 && (
@@ -106,29 +96,39 @@ const StudentNextSessionCard = ({
             </div>
           </div>
         )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      </CardContent>
+      <CardFooter className="border-t border-gray-200 bg-gray-50 p-4">
+        <div className="flex items-center gap-2">
           {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
             <Button
-              className="w-full bg-red-600 hover:bg-red-700"
+              className="w-[118px] text-sm font-medium"
               onClick={() => {
                 setSelectedSession(sessionData);
                 setShowPaymentDialog(true);
               }}
             >
               <DollarSign className="h-4 w-4 mr-2" />
-              Make Payment
+              Pay Now
             </Button>
           ) : sessionData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
             null
           ) : (
-            <Button className="w-full" onClick={() => joinMeetingAsStudent(sessionData)} disabled={isPending}>
+            <Button className="w-full flex-1" onClick={() => joinMeetingAsStudent(sessionData)} disabled={isPending}>
               <Camera className="h-4 w-4 mr-2" />
               Join Class
             </Button>
           )}
+          <Button 
+            variant="outline"
+            className='flex-1 gap-1'
+            onClick={() =>
+              router.push(`/sessions/student/${sessionData.id}?type=next`)
+          }>
+            <FileText size={16} />
+            View Class
+          </Button>
         </div>
-      </CardContent>
+      </CardFooter>
     </Card>
   )
 };
