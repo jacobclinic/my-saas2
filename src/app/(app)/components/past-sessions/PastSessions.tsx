@@ -139,7 +139,7 @@ const PastSessions = ({
   }, [searchQuery, dateRange, allSessionData]);
 
   return (
-    <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
+    <div className="xl:min-w-[900px] space-y-6">
       {' '}
       {/* Header & Search */}
       <div className="space-y-4">
@@ -209,10 +209,6 @@ const PastSessions = ({
             No upcoming classes match your search criteria.
           </div>
         )}
-      </div>
-      {/* Timezone Indicator - Always show the user's current timezone */}
-      <div className="mt-4">
-        <TimezoneIndicator />
       </div>
     </div>
   );
