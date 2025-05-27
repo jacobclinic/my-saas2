@@ -115,7 +115,7 @@ const StudentClassesList = ({
           ))}
       </div>
     </div>
-
+    </>
   );
 };
 
