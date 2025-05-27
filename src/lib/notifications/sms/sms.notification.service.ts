@@ -176,7 +176,7 @@ async function sendNotificationSms(
     }).format(sessionDate);
 
     if (status === 'before') {
-      message = `REMINDER: Your ${session.class.name} is tomorrow ${localDate} at ${localTime}. \nAccess everything for this class here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}?type=upcoming \n-Comma Education`;
+      message = `REMINDER: Your ${session.class.name} class is tomorrow ${localDate} at ${localTime}. \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}?type=upcoming \n-Comma Education`;
     } else {
       message = `Your ${session.class.name} recording from today is now available. Access it and all class materials here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
     }

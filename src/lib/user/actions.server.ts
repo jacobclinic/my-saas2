@@ -283,7 +283,7 @@ export async function createStudentAction({
       });
 
       await sendEmail({
-        from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
+        from: process.env.EMAIL_SENDER! ,
         to: email,
         subject: 'Welcome to Your Class - Login Credentials',
         html,
