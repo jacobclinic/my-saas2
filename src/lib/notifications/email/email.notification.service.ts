@@ -4,18 +4,20 @@ import {
   getSessions2_1HrsAfterSession,
   getUpcomingSessionsWithUnpaidStudentsBetween3_4Days,
 } from '../quieries';
-import sendEmail from '~/core/email/send-email';
 import { getStudentNotifyBeforeEmailTemplate } from '~/core/email/templates/studentNotifyBefore';
 import { getStudentNotifyAfterEmailTemplate } from '~/core/email/templates/studentNotifyAfter';
 import { paymentReminderEmaiTemplate } from '~/core/email/templates/paymentReminder';
 import { format, parseISO } from 'date-fns';
 import getLogger from '~/core/logger';
+import { EmailService } from '~/core/email/send-email-mailtrap';
 
 const logger = getLogger();
 
 // Process emails with a throttle (2 per second = 500ms per request)
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const rateLimitDelay = 500; // 500ms = 2 requests per second
+const rateLimitDelay = 1000; // 1000ms = 1 requests per second
+
+const emailService = EmailService.getInstance();
 
 async function sendNotifySessionEmails(
   data: NotificationClass[],
@@ -70,9 +72,8 @@ async function sendNotifySessionEmails(
           classId: task.class_id,
           studentEmail: task.to,
         });
-        // const emailService = EmailService.getInstance();
-        // await emailService.sendEmail
-        await sendEmail({
+        
+        await emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: task.to,
           subject: `Upcoming Class Notification`,
@@ -94,7 +95,7 @@ async function sendNotifySessionEmails(
           classId: task.class_id,
           studentEmail: task.to,
         });
-        await sendEmail({
+        await emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: task.to,
           subject: `Your ${task.class_name} Class Recording Is Now Available`,
@@ -209,7 +210,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
         classFee: task.fee,
         paymentUrl: task.paymentUrl,
       });
-      await sendEmail({
+      await emailService.sendEmail({
         from: process.env.EMAIL_SENDER!,
         to: task.to,
         subject: `Payment Reminder for class ${task.class_name} for ${new Date(

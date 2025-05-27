@@ -24,6 +24,7 @@ import { generateRegistrationLinkAction } from '~/app/actions/registration-link'
 import { format as dateFnsFormat } from 'date-fns';
 import sendEmail from '~/core/email/send-email';
 import { sendSingleSMS } from '../notifications/sms/sms.notification.service';
+import { EmailService } from '~/core/email/send-email-mailtrap';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -487,10 +488,10 @@ export const sendEmailMSGToStudentAction = withSession(
       className: classData.name,
       loginUrl: registrationLink,
     });
-
+    const emailService = EmailService.getInstance();
     try {
       await Promise.all([
-        sendEmail({
+        emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: email,
           subject: 'Welcome to Your Class - Login Credentials',

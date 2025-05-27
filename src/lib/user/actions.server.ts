@@ -17,6 +17,7 @@ import { getUserCredentialsEmailTemplate } from '~/core/email/templates/user-cre
 import { getStudentCredentialsEmailTemplate } from '~/core/email/templates/student-credentials';
 import { withSession } from '~/core/generic/actions-utils';
 import { fetchUserRole } from './database/queries';
+import { EmailService } from '~/core/email/send-email-mailtrap';
 
 export async function deleteUserAccountAction() {
   const logger = getLogger();
@@ -107,8 +108,8 @@ export const createUserByAdminAction = async (params: CreateUserByAdminActionPar
         userRole: userRole,
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`
       });
-
-      await sendEmail({
+      const emailService = EmailService.getInstance();
+      await emailService.sendEmail({
         from: configuration.email.fromAddress || 'noreply@yourinstitute.com',
         to: email || '',
         subject: `Welcome to Your ${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Account`,
@@ -281,8 +282,8 @@ export async function createStudentAction({
         className: nameOfClass,
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`
       });
-
-      await sendEmail({
+      const emailService = EmailService.getInstance();
+      await emailService.sendEmail({
         from: process.env.EMAIL_SENDER! ,
         to: email,
         subject: 'Welcome to Your Class - Login Credentials',
