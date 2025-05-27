@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import UpcomingClassesSection from './tutor-db-sections/UpcomingClasses';
 import PaginationControls from '../PaginationControls';
+import { Users, BookOpen, Calendar, Clock } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../base-v2/ui/Card';
 
 const TutorDBClient = ({
   upcomingSessionDataPerWeek
@@ -35,8 +37,62 @@ const TutorDBClient = ({
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-8">
+    <div className="space-y-8">
       {/* Render the Upcoming component */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-primary-blue-50 to-white border-primary-blue-100">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium text-primary-blue-800">Total Students</CardTitle>
+            <CardDescription>Across all your classes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-primary-blue-600 mr-3" />
+              <div className="text-3xl font-bold text-primary-blue-900">3</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-primary-orange-50 to-white border-primary-orange-100">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium text-primary-orange-800">Active Classes</CardTitle>
+            <CardDescription>Currently running classes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center">
+              <BookOpen className="h-8 w-8 text-primary-orange-600 mr-3" />
+              <div className="text-3xl font-bold text-primary-orange-900">3</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium text-blue-800">Next Class</CardTitle>
+            <CardDescription>Your upcoming class</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5 text-blue-600" />
+              <div className="text-sm font-medium text-blue-900">May 8, 2025</div>
+            </div>
+            <div className="flex items-center space-x-2 mt-2">
+              <Clock className="h-5 w-5 text-blue-600" />
+              <div className="text-sm font-medium text-blue-900">2:30 PM</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-50 to-white border-green-100">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium text-green-800">Monthly Earnings</CardTitle>
+            <CardDescription>Current month</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-900">Rs. 15,000</div>
+          </CardContent>
+        </Card>
+      </div>
       <UpcomingClassesSection upcomingSessionDataPerWeek={currentUpcomingClasses} />
 
       {totalPages > 1 && (

@@ -15,6 +15,15 @@ import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
 import PaymentDialog from '../student-payments/PaymentDialog';
+import {
+  formatDateTimeRange,
+  getUserTimezone,
+} from '~/lib/utils/timezone-utils';
+import {
+  datePickerObjectToLocalDate,
+  utcToLocalDate,
+} from '~/lib/utils/timezone-utils-filter';
+import TimezoneIndicator from '../TimezoneIndicator';
 
 interface DateRange {
   start?: {
@@ -65,33 +74,17 @@ const StudentUpcomingSessions = ({
       setUpcomingSessions([]);
     }
   }, [upcomingSessionData]);
-
   // Helper function to format session data
   const formatSessionData = (
     sessionData: UpcomingSession | PastSession,
   ): SessionStudentTableData => {
-    const formattedDate = new Date(
-      sessionData.start_time || '',
-    ).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-
-    const formattedTime = `${new Date(
-      sessionData.start_time || '',
-    ).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
-    })} - ${new Date(
-      sessionData.end_time || sessionData.start_time || '',
-    ).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
-    })}`;
+    // Format date and time using timezone utility to respect user's timezone
+    const { formattedDate, formattedTime } = formatDateTimeRange(
+      sessionData.start_time,
+      sessionData.end_time,
+      'EEEE, MMMM d, yyyy',
+      'h:mm a',
+    );
 
     return {
       id: sessionData.id,
@@ -138,13 +131,6 @@ const StudentUpcomingSessions = ({
     },
     [userSession],
   );
-
-  // Helper function to convert date object to JavaScript Date
-  const dateObjectToDate = (dateObj: any): Date | null => {
-    if (!dateObj) return null;
-    return new Date(dateObj.year, dateObj.month - 1, dateObj.day);
-  };
-
   // Filter the complete dataset when search or date range changes
   useEffect(() => {
     // Apply filters to the FULL dataset
@@ -160,12 +146,14 @@ const StudentUpcomingSessions = ({
       let matchesDateRange = true;
 
       if (dateRange && dateRange.start && dateRange.end) {
-        const sessionDate = new Date(session?.start_time || '');
-        const startDate = dateObjectToDate(dateRange.start);
-        const endDate = dateObjectToDate(dateRange.end);
+        const sessionStartUtc = new Date(session?.start_time || '');
+        const sessionEndUtc = new Date(session?.end_time || '');
+        const startDate = datePickerObjectToLocalDate(dateRange.start);
+        const endDate = datePickerObjectToLocalDate(dateRange.end, true); // Pass true to set end date to 11:59 PM
 
         if (startDate && endDate) {
-          matchesDateRange = sessionDate >= startDate && sessionDate <= endDate;
+          matchesDateRange =
+            sessionStartUtc >= startDate && sessionEndUtc <= endDate;
         }
       }
 
@@ -184,9 +172,12 @@ const StudentUpcomingSessions = ({
 
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
-      {/* Header & Search */}
+      {/* Header & Search */}{' '}
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Upcoming Classes</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Upcoming Classes</h1>
+          <TimezoneIndicator />
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
@@ -208,7 +199,6 @@ const StudentUpcomingSessions = ({
           />
         </div>
       </div>
-
       {/* Upcoming Sessions */}
       {upcomingSessions.length > 0 && (
         <div className="space-y-4">

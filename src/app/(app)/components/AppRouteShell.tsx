@@ -79,7 +79,7 @@ function RouteShellWithSidebar(
 
         <div
           className={
-            'relative mx-auto h-screen w-full overflow-y-auto' +
+            'relative mx-auto h-screen w-full overflow-y-auto bg-neutral-50' +
             ' flex flex-col flex-1'
           }
         >

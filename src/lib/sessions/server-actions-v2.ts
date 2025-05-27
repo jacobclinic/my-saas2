@@ -11,7 +11,7 @@ import {
 import { getSessionDataById } from './database/queries';
 import { updateAttendanceMarked, updateSession } from './database/mutations';
 import { updateZoomSessionAction } from './server-actions-v2-legacy';
-import { fetchMeetingParticipants } from '../zoom/zoom_rec.service';
+import { fetchMeetingParticipants } from '../zoom/zoom-other.service';
 import { isAdminOrCLassTutor } from '../classes/database/queries';
 
 const supabase = getSupabaseServerActionClient();
@@ -272,11 +272,9 @@ export const deleteSessionMaterialAction = withSession(
 export const getAttendanceAction = withSession(
   async ({
     zoomMeetingId,
-    sessionId,
-    classId
+    classId,
   }: {
     zoomMeetingId: string;
-    sessionId: string;
     classId: string;
   }) => {
     const client = getSupabaseServerActionClient();

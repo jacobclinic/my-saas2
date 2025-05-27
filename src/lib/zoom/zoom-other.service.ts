@@ -295,7 +295,9 @@ export async function processRecording(
   return signedUrl;
 }
 
-export async function fetchMeetingParticipants(meetingId: string): Promise<ZoomParticipant[]> {
+export async function fetchMeetingParticipants(
+  meetingId: string,
+): Promise<ZoomParticipant[] | []> {
   const accessToken = await getZoomAccessToken();
   const participants: ZoomParticipant[] = [];
   let nextPageToken: string | null = null;
@@ -322,12 +324,17 @@ export async function fetchMeetingParticipants(meetingId: string): Promise<ZoomP
       console.log('Response status:', response.status, response.statusText);
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to fetch participants: ${response.status} ${response.statusText} - ${errorText}`);
+        logger.error(
+          `[Zoom] Failed to fetch participants for meeting ${meetingId}: ${errorText}`,
+        );
+        return [];
       }
 
-      const data = await response.json() as ZoomParticipantsResponse;
+      const data = (await response.json()) as ZoomParticipantsResponse;
       console.log('Raw API response:', JSON.stringify(data, null, 2));
-      logger.info(`[Zoom] Fetched ${data.participants.length} participants for meeting ${meetingId}`);
+      logger.info(
+        `[Zoom] Fetched ${data.participants.length} participants for meeting ${meetingId}`,
+      );
       participants.push(...data.participants);
       nextPageToken = data.next_page_token || null;
     } while (nextPageToken);
@@ -335,7 +342,10 @@ export async function fetchMeetingParticipants(meetingId: string): Promise<ZoomP
     return participants;
   } catch (error) {
     console.log('Error fetching participants:', error);
-    logger.error(`[Zoom] Failed to fetch participants for meeting ${meetingId}:`, error);
-    throw new Error('Failed to fetch meeting participants');
+    logger.error(
+      `[Zoom] Failed to fetch participants for meeting ${meetingId}:`,
+      error,
+    );
+    return [];
   }
 }

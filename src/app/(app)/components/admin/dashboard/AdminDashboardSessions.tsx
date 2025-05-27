@@ -8,6 +8,15 @@ import UpcommingSessionCard from './AdminSessionCard';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { DateRangePicker } from '@heroui/date-picker';
 import AdminSessionCard from './AdminSessionCard';
+import {
+  formatDateTimeRange,
+  getUserTimezone,
+} from '~/lib/utils/timezone-utils';
+import {
+  datePickerObjectToLocalDate,
+  utcToLocalDate,
+} from '~/lib/utils/timezone-utils-filter';
+import TimezoneIndicator from '../../TimezoneIndicator';
 
 interface DateRange {
   start?: {
@@ -45,21 +54,17 @@ const AdminDashboardSessions = ({
       setUpcomingSessionTableData(formattedData);
     }
   }, [upcomingSessionData]);
-
   // Helper function to format session data
   const formatSessionData = (
     session: UpcomingSession,
   ): UpcomingSessionTableData => {
-    const formattedDate = new Date(
-      session?.start_time || '',
-    ).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })} - 
-    ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
+    // Format date and time using timezone utility to respect user's timezone
+    const { formattedDate, formattedTime } = formatDateTimeRange(
+      session?.start_time,
+      session?.end_time,
+      'EEEE, MMMM d, yyyy',
+      'h:mm a',
+    );
 
     return {
       id: session.id,
@@ -102,14 +107,17 @@ const AdminDashboardSessions = ({
 
     // Call the parent's onFilterChange with the filtered data
     onFilterChange(filteredSessions);
-  }, [searchTerm,  allSessionData]);
+  }, [searchTerm, allSessionData]);
 
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
+      {' '}
       {/* Header & Search */}
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Upcoming Classes</h1>
-
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Upcoming Classes</h1>
+          <TimezoneIndicator />
+        </div>
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
@@ -122,15 +130,11 @@ const AdminDashboardSessions = ({
           </div>
         </div>
       </div>
-
       {/* Classes List */}
       <div className="space-y-6">
         {upcomingSessionTableData.length > 0 ? (
           upcomingSessionTableData.map((sessionData) => (
-            <AdminSessionCard
-              key={sessionData.id}
-              sessionData={sessionData}
-            />
+            <AdminSessionCard key={sessionData.id} sessionData={sessionData} />
           ))
         ) : (
           <div className="text-center py-8 text-gray-500">

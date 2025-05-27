@@ -1,19 +1,19 @@
 // components/classes/StudentClassList.tsx
-'use client'
+'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent } from "../base-v2/ui/Card";
-import { Button } from "../base-v2/ui/Button";
-import { Badge } from "../base-v2/ui/Badge";
-import {
-  Calendar,
-  Clock,
-  DollarSign
-} from 'lucide-react';
+import { Card, CardContent } from '../base-v2/ui/Card';
+import { Button } from '../base-v2/ui/Button';
+import { Badge } from '../base-v2/ui/Badge';
+import { Calendar, Clock, DollarSign } from 'lucide-react';
 import PaymentHistoryDialog from './PaymentHistoryDialog';
 import { StudentClassListType } from '~/lib/classes/types/class-v2';
 
-const StudentClassCard = ({ classData }: { classData: StudentClassListType }) => {
+const StudentClassCard = ({
+  classData,
+}: {
+  classData: StudentClassListType;
+}) => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
 
   return (
@@ -27,14 +27,14 @@ const StudentClassCard = ({ classData }: { classData: StudentClassListType }) =>
               </h3>
               <div className="flex items-center text-sm text-gray-600">
                 <Calendar className="h-4 w-4 mr-2" />
-                {classData?.schedule || 'Schedule'}
+                {classData?.schedule}
               </div>
               <div className="flex items-center text-sm text-gray-600">
                 <Clock className="h-4 w-4 mr-2" />
-                Next class: {classData?.nextClass || 'Next Class'}
+                Next class: {classData?.nextClass}
               </div>
             </div>
-            <Badge variant="outline">{classData?.subject || 'Subject'}</Badge>
+            <Badge variant="blue">{classData?.subject || 'Subject'}</Badge>
           </div>
 
           <div className="flex items-center justify-between">

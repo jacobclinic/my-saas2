@@ -67,82 +67,6 @@ const StudentDashboard = ({
     ],
   };
 
-  const upcomingSessionsSampleData = useMemo(
-    () => [
-      {
-        id: '2',
-        created_at: new Date().toISOString(),
-        class_id: '1',
-        recording_urls: [],
-        status: 'scheduled',
-        start_time: '2024-12-25T16:00:00Z',
-        end_time: '2024-12-25T18:00:00Z',
-        title: 'Manufacturing Accounts - Part 2',
-        description: '',
-        updated_at: new Date().toISOString(),
-        meeting_url: 'https://zoom.us/j/123456789',
-        zoom_meeting_id: '123456789',
-        payment_status: PaymentStatus.VERIFIED,
-        payment_amount: 5000,
-        class: {
-          id: '1',
-          name: 'A/L 2025 Accounting Batch 04',
-          subject: 'Accounting',
-          tutor_id: '1',
-          fee: 5000,
-        },
-        materials: [
-          {
-            id: '3',
-            name: 'Manufacturing Accounts Part 2.pdf',
-            file_size: '3.0 MB',
-            url: 'https://example.com/materials/3',
-          },
-        ],
-        recurring_session_id: null,
-      },
-      {
-        id: '4',
-        created_at: new Date().toISOString(),
-        class_id: '1',
-        recording_urls: [],
-        status: 'scheduled',
-        start_time: '2025-01-01T16:00:00Z',
-        end_time: '2025-01-01T18:00:00Z',
-        title: 'Introduction to Partnership Accounts',
-        description: '',
-        updated_at: new Date().toISOString(),
-        meeting_url: 'https://zoom.us/j/123456789',
-        zoom_meeting_id: '123456789',
-        payment_status: PaymentStatus.PENDING,
-        payment_amount: 5000,
-        class: {
-          id: '1',
-          name: 'A/L 2025 Accounting Batch 04',
-          subject: 'Accounting',
-          tutor_id: '1',
-          fee: 5000,
-        },
-        materials: [
-          {
-            id: '5',
-            name: 'Partnership Accounts Notes.pdf',
-            file_size: '2.5 MB',
-            url: 'https://example.com/materials/5',
-          },
-          {
-            id: '6',
-            name: 'Practice Problems Set.pdf',
-            file_size: '1.8 MB',
-            url: 'https://example.com/materials/6',
-          },
-        ],
-        recurring_session_id: null,
-      },
-    ],
-    [],
-  );
-
   // Transform upcoming sessions data
   useEffect(() => {
     if (upcomingSessionData?.length > 0) {
@@ -248,47 +172,54 @@ const StudentDashboard = ({
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
        
 
         {/* Next Session */}
-        {nextSession && (
-          <StudentNextSessionCard
-            key={nextSession.id}
-            sessionData={nextSession}
-            isPending={isPending}
-            setSelectedSession={setSelectedSession}
-            setShowPaymentDialog={setShowPaymentDialog}
-            joinMeetingAsStudent={joinMeetingAsStudent}
-          />
-        )}
-
-        {/* Upcoming Sessions */}
-        {upcomingSessions.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <Calendar className="h-5 w-5 mr-2" />
-              <h2 className="text-xl font-bold">Upcoming Classes</h2>
-            </div>
-            {currentUpcomingSessions.map((sessionData) => (
-              <StudentSessionCard
-                key={sessionData.id}
-                sessionData={sessionData}
-                type="upcoming"
+        <div className='lg:col-span-1 order-1'>
+          <h2 className="text-lg font-semibold text-gray-900 p-4">Next Class</h2>
+          <div className='p-4'>
+            {nextSession && (
+              <StudentNextSessionCard
+                key={nextSession.id}
+                sessionData={nextSession}
                 isPending={isPending}
                 setSelectedSession={setSelectedSession}
                 setShowPaymentDialog={setShowPaymentDialog}
                 joinMeetingAsStudent={joinMeetingAsStudent}
               />
-            ))}
-            {/* Pagination Controls for Upcoming Sessions */}
-            {totalPagesOfUpcmingSessions > 1 && (
-              <PaginationControls
-                currentPage={upcomingCurrentPage}
-                totalPages={totalPagesOfUpcmingSessions}
-                onPageChange={handleUpcomingPageChange}
-              />
             )}
+          </div>
+        </div>
+
+        {/* Upcoming Sessions */}
+        {upcomingSessions.length > 0 && (
+          <div className="lg:col-span-2 order-2 bg-white rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-purple-50 border-none shadow-lg">
+            <div className="flex items-center p-4">
+              <h2 className="text-lg font-semibold text-gray-900">This Week&apos;s Classes</h2>
+            </div>
+            <div className='p-4'>
+              {currentUpcomingSessions.map((sessionData) => (
+                <StudentSessionCard
+                  key={sessionData.id}
+                  sessionData={sessionData}
+                  type="upcoming"
+                  isPending={isPending}
+                  setSelectedSession={setSelectedSession}
+                  setShowPaymentDialog={setShowPaymentDialog}
+                  joinMeetingAsStudent={joinMeetingAsStudent}
+                />
+              ))}
+              {/* Pagination Controls for Upcoming Sessions */}
+              {totalPagesOfUpcmingSessions > 1 && (
+                <PaginationControls
+                  currentPage={upcomingCurrentPage}
+                  totalPages={totalPagesOfUpcmingSessions}
+                  onPageChange={handleUpcomingPageChange}
+                />
+              )}
+
+            </div>
           </div>
         )}
         {showPaymentDialog && selectedSession && (

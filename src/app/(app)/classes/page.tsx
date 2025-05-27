@@ -62,9 +62,7 @@ async function ClassesPage() {
 
   return (
     <>
-      <AppHeader title={''} description={''} />
-
-      <PageBody>
+      <div className='w-full h-full lg:pb-6 lg:pt-0 flex flex-col flex-1'>
         {userRole === 'student' ? (
           <StudentClassClient studentClassesData={studentClassesData} />
         ) : userRole === 'tutor' ? (
@@ -77,7 +75,7 @@ async function ClassesPage() {
           // /////////////////////////////////////////////////
           <ClassesAdmin classesData={classesData} />
         )}
-      </PageBody>
+      </div>
     </>
   );
 }

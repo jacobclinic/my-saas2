@@ -67,7 +67,7 @@ async function UpcomingSessionsPage() {
 
   return (
     <>
-      <AppHeader title={''} description={''} />
+      <AppHeader title={'Upcoming Classes'} description={''} />
 
       <PageBody>
         {userRole === 'student' ? (

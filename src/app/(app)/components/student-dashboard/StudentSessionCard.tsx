@@ -13,6 +13,8 @@ import {
   Camera,
   Download,
   BookOpen,
+  Book,
+  User,
 } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
@@ -100,48 +102,51 @@ const StudentSessionCard = ({
 
   return (
     <Card className="mb-4">
-      <CardContent className="p-4 space-y-4">
-        <div>
-          <div className="flex justify-between items-start">
-            <div>
-              <Link
-                href={`/sessions/student/${sessionData.id}?type=${type}`}
-                className="font-medium hover:text-blue-600 hover:underline cursor-pointer"
-              >
-                {sessionData.name}
-              </Link>
-              <p className="text-blue-600">{sessionData.topic}</p>
+      <CardContent className="p-5">
+        <div className="flex items-start">
+          <div className="mr-4 p-2 bg-blue-100 rounded-lg">
+            <Book className="h-5 w-5 text-blue-600" />
+          </div>
+
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900">{sessionData.name}</h3>
+            {sessionData.topic ? (
+              <p className="text-sm text-gray-600 mt-1">{sessionData.topic}</p>
+            ) : (
+              <p className="text-sm text-gray-500 italic mt-1">Lesson details will be updated soon</p>
+            )}
+            <Badge variant="blue" className="mt-2">{"Subject Name"}</Badge>
+
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center text-sm text-gray-600">
+                <Calendar size={16} className="mr-2" />
+                <span>{sessionData.date}</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <Clock size={16} className="mr-2" />
+                <span>{sessionData.time}</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <User size={16} className="mr-2" />
+                <span>{"Tutor Name"}</span>
+              </div>
             </div>
+
             {sessionData.paymentStatus === PAYMENT_STATUS.PENDING &&
               type === 'upcoming' && (
-                <Badge
-                  variant="destructive"
-                  className="bg-red-100 text-red-700 hover:bg-red-100 border-red-500"
-                >
-                  Payment Pending
-                </Badge>
+                <Badge variant="yellow">Payment Pending</Badge>
               )}
             {sessionData.paymentStatus ===
               PAYMENT_STATUS.PENDING_VERIFICATION &&
               type === 'upcoming' && (
-                <Badge
-                  variant="secondary"
-                  className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-500"
-                >
+                <Badge variant="yellow">
                   Payment pending verification
                 </Badge>
               )}
           </div>
-          <div className="flex items-center mt-2 text-gray-600">
-            <Calendar className="h-4 w-4 mr-2" />
-            {sessionData.date}
-          </div>
-          <div className="flex items-center mt-1 text-gray-600">
-            <Clock className="h-4 w-4 mr-2" />
-            {sessionData.time}
-          </div>
         </div>
-
+      </CardContent>
+      <CardContent className="p-4 space-y-4">
         {sessionData?.materials && sessionData.materials?.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-medium">Class Materials</h4>
@@ -180,7 +185,7 @@ const StudentSessionCard = ({
                 </Button>
               ) : sessionData.paymentStatus ===
                 PAYMENT_STATUS.PENDING_VERIFICATION ? null : sessionData.paymentStatus ===
-                PAYMENT_STATUS.REJECTED ? (
+                  PAYMENT_STATUS.REJECTED ? (
                 <Button
                   className="bg-red-600 hover:bg-red-700"
                   onClick={() => {
@@ -231,7 +236,7 @@ const StudentSessionCard = ({
                   className="w-full"
                   disabled={isPending}
                   onClick={() =>
-                    router.push(`/sessions/student/${sessionData.id}`)
+                    router.push(`/sessions/student/${sessionData.id}?type=${type}`)
                   }
                 >
                   View Class

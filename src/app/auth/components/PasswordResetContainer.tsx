@@ -37,7 +37,8 @@ function PasswordResetContainer() {
     <>
       <If condition={success}>
         <Alert type={'success'}>
-          Check your Inbox! We emailed you a link for resetting your Password
+          Check your Inbox! If this email is registered, a reset link has been sent to your email
+          address. If you do not see it, this account may have not been registered.
         </Alert>
       </If>
 

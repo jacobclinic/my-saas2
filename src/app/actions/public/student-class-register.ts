@@ -9,6 +9,7 @@ import { USERS_TABLE } from '~/lib/db-tables';
 import sendEmail from '~/core/email/send-email';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
+import { EmailService } from '~/core/email/send-email-mailtrap';
 
 const registrationSchema = z.object({
   email: z.string().email(),
@@ -112,10 +113,10 @@ export async function registerStudentViaLoginAction(
         className: formData.className,
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
       });
-
+      const emailService = EmailService.getInstance();
       await Promise.all([
         // Send welcome email
-        sendEmail({
+        emailService.sendEmail({
           from: process.env.EMAIL_SENDER! ,
           to: validated.email,
           subject: 'Welcome to Your Class - Login Credentials',

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent } from '../base-v2/ui/Card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../base-v2/ui/Card';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
 import {
@@ -14,6 +14,9 @@ import {
   ChevronRight,
   Calendar,
   Building,
+  BookOpen,
+  UserPlus,
+  Edit,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
@@ -94,86 +97,114 @@ const ClassCard: React.FC<ClassCardProps> = ({
 
   return (
     <>
-      <Card className={cn('mb-4', isDashboard && 'border-blue-200 bg-blue-50')}>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <div className="space-y-1">
-                  <h3 className="text-lg font-semibold">{classData.name}</h3>
-
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CalendarDays className="h-4 w-4 mr-2" />
-
-                    {classData.schedule?.replace(/\b([a-z])/, (match) =>
-                      match.toUpperCase(),
-                    )}
-                  </div>
-                  {'nextClass' in classData && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Next class: {classData.nextClass}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="outline">{classData.students} Students</Badge>
-                  {'grade' in classData && (
-                    <Badge variant="secondary">{classData.grade}</Badge>
-                  )}
-                </div>
+      <Card className="group bg-white border-neutral-200 shadow-sm hover:shadow-md transition-all duration-300 h-full">
+        <CardHeader className="pb-3 border-b border-neutral-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-blue-50 text-primary-blue-600">
+                <BookOpen size={20} />
               </div>
               <div>
-                {classData.status === 'active' ? (
-                  <Badge variant="secondary">{classData.status}</Badge>
-                ) : (
-                  <Badge variant="destructive">{classData.status}</Badge>
+                <CardTitle className="text-lg font-semibold text-neutral-900">
+                  {classData.name}
+                </CardTitle>
+                {classData.classRawData ? <Badge variant="outline" className="mt-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200">
+                  {classData.classRawData.subject}
+                </Badge> : null}
+                {'grade' in classData && (
+                  <Badge variant="secondary" className="mt-1 ml-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200">
+                    {classData.grade}</Badge>
+                )}
+              </div>
+            </div>
+            {classData.status === 'active' && (
+              <Badge variant="outline" className="bg-success text-white">
+                active
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent className="pt-4 pb-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
+              <div>
+                <div className="flex items-center text-sm text-gray-600">
+                  <CalendarDays className="h-4 w-4 mr-2 text-primary-blue-600" />
+
+                  {classData.schedule?.replace(/\b([a-z])/, (match) =>
+                    match.toUpperCase(),
+                  )}
+                </div>
+                {'nextClass' in classData && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Calendar className="h-4 w-4 mr-2 text-primary-blue-600" />
+                    Next class: {classData.nextClass}
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowStudentsDialog(true)}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                View Students
-              </Button>
-
-              <Button variant="outline" onClick={() => setShowEditDialog(true)}>
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit Class
-              </Button>
-              <Button variant="outline" onClick={() => handleCopyLink()}>
-                {linkCopied ? (
-                  <Check className="h-4 w-4 mr-2" />
-                ) : (
-                  <Copy className="h-4 w-4 mr-2" />
-                )}
-                {linkCopied ? 'Copied!' : 'Registration Link'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowAddStudentDialog(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Student
-              </Button>
-              {showViewDetails && (
-                <Button
-                  variant="outline"
-                  // onClick={() =>
-                  //   (window.location.href = `/classes/${classData.id}`)
-                  // }
-                >
-                  <ChevronRight className="h-4 w-4 mr-2" />
-                  View Details
-                </Button>
-              )}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
+              <Users size={18} className="text-primary-blue-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-neutral-900">{classData.students} Students</p>
+                <p className="text-xs text-neutral-600">Enrolled</p>
+              </div>
             </div>
           </div>
+
+          <div className="flex gap-2 mt-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary-blue-700 hover:text-primary-blue-800 hover:bg-primary-blue-50"
+              onClick={() => setShowAddStudentDialog(true)}
+            >
+              <UserPlus size={16} className="mr-2" />
+              Add Student
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`text-primary-blue-700 hover:text-primary-blue-800 hover:bg-primary-blue-50 ${linkCopied ? 'bg-primary-blue-50' : ''}`}
+              onClick={handleCopyLink}
+            >
+              {linkCopied ? (
+                <>
+                  <Check size={16} className="mr-2" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy size={16} className="mr-2" />
+                  Copy Link
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
+
+        <CardFooter className="pt-3 grid grid-cols-2 gap-2 border-t border-neutral-100">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-primary-blue-200 text-primary-blue-700 hover:bg-primary-blue-50 group-hover:bg-primary-blue-50"
+            onClick={() => setShowEditDialog(true)}
+          >
+            <Edit size={16} className="mr-2" />
+            Edit Class
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-primary-blue-200 text-primary-blue-700 hover:bg-primary-blue-50 group-hover:bg-primary-blue-50"
+            onClick={() => setShowStudentsDialog(true)}
+          >
+            View Students
+          </Button>
+        </CardFooter>
       </Card>
 
       <RegisteredStudentsDialog

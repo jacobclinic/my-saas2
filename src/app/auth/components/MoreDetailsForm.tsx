@@ -28,6 +28,33 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
   }>({});
   const client = useSupabase();
 
+  // Handler to prevent numbers in name fields
+  const handleNameInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const key = e.key;
+    // Allow arrow keys, delete, backspace, tab, etc.
+    if (
+      key === 'ArrowLeft' ||
+      key === 'ArrowRight' ||
+      key === 'Backspace' ||
+      key === 'Delete' ||
+      key === 'Tab' ||
+      key === ' ' ||
+      key === '-'
+    ) {
+      return;
+    }
+
+    // Block any digit keys
+    if (/^\d$/.test(key)) {
+      e.preventDefault();
+    }
+
+    // block any simbols
+    if (/[^a-zA-Z\s]/.test(key)) {
+      e.preventDefault();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -42,6 +69,8 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
     const errors: {
       displayName?: string;
       names?: string;
+      firstName?: string;
+      lastName?: string;
       phoneNumber?: string;
     } = {};
 
@@ -50,11 +79,21 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
     }
 
     if (!firstName || firstName.trim().length < 3) {
-      errors.names = 'Names must be at least 3 characters';
+      errors.firstName = 'First name must be at least 3 characters';
+    }
+
+    // Check if firstName contains numbers
+    if (/\d/.test(firstName)) {
+      errors.firstName = 'First name cannot contain numbers';
     }
 
     if (!lastName || lastName.trim().length < 3) {
-      errors.names = 'Names must be at least 3 characters';
+      errors.lastName = 'Last name must be at least 3 characters';
+    }
+
+    // Check if lastName contains numbers
+    if (/\d/.test(lastName)) {
+      errors.lastName = 'Last name cannot contain numbers';
     }
 
     if (!phoneNumber || phoneNumber.trim().length < 10) {
@@ -65,6 +104,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
       )
     ) {
       errors.phoneNumber = 'Please enter a valid phone number';
+    }
+
+    // Set any combined errors for names for backwards compatibility
+    if (errors.firstName || errors.lastName) {
+      errors.names = errors.firstName || errors.lastName;
     }
 
     setFormErrors(errors);
@@ -180,11 +224,17 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                 <TextField>
                   <TextField.Label>
                     First Name
+                    {formErrors.names && (
+                      <p className="text-red-500 text-sm">{formErrors.names}</p>
+                    )}
                     <TextField.Input
                       name="firstName"
                       required
                       minLength={2}
                       placeholder="Your first name"
+                      onKeyDown={handleNameInput}
+                      pattern="^[^0-9]+$"
+                      title="First name cannot contain numbers"
                     />
                   </TextField.Label>
                 </TextField>
@@ -192,11 +242,17 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                 <TextField>
                   <TextField.Label>
                     Last Name
+                    {formErrors.names && (
+                      <p className="text-red-500 text-sm">{formErrors.names}</p>
+                    )}
                     <TextField.Input
                       name="lastName"
                       required
                       minLength={2}
                       placeholder="Your last name"
+                      onKeyDown={handleNameInput}
+                      pattern="^[^0-9]+$"
+                      title="Last name cannot contain numbers"
                     />
                   </TextField.Label>
                 </TextField>

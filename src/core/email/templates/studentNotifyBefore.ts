@@ -17,9 +17,9 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
     studentEmail,
   } = params;
 
-  const dateObj = new Date(sessionDate);
-  const date = dateObj.toLocaleDateString('en-GB');
-  const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+  // No need to re-parse the date since we're already passing formatted strings
+  const date = sessionDate;
+  const timeStr = sessionTime;
 
   const html = `
   <!DOCTYPE html>

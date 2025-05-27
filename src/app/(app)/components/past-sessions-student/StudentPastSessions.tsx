@@ -8,13 +8,14 @@ import type {
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Input } from '../base-v2/ui/Input';
 import { Calendar, Info, Search, X } from 'lucide-react';
-import { PastSession} from '~/lib/sessions/types/session-v2';
+import { PastSession } from '~/lib/sessions/types/session-v2';
 import { DateRangePicker } from '@heroui/date-picker';
 import StudentSessionCard from '../student-dashboard/StudentSessionCard';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
 import PaymentDialog from '../student-payments/PaymentDialog';
+import { formatDateTimeRange } from '~/lib/utils/timezone-utils';
 
 interface DateRange {
   start?: {
@@ -64,33 +65,17 @@ const StudentPastSessions = ({
       setUpcomingSessions([]);
     }
   }, [pastSessionData]);
-
   // Helper function to format session data
   const formatSessionData = (
     sessionData: PastSession,
   ): SessionStudentTableData => {
-    const formattedDate = new Date(
-      sessionData.start_time || '',
-    ).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-
-    const formattedTime = `${new Date(
-      sessionData.start_time || '',
-    ).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
-    })} - ${new Date(
-      sessionData.end_time || sessionData.start_time || '',
-    ).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
-    })}`;
+    // Format date and time using timezone utility to respect user's timezone
+    const { formattedDate, formattedTime } = formatDateTimeRange(
+      sessionData.start_time,
+      sessionData.end_time,
+      'EEEE, MMMM d, yyyy',
+      'h:mm a',
+    );
 
     return {
       id: sessionData.id,
@@ -182,11 +167,9 @@ const StudentPastSessions = ({
   };
 
   return (
-    <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
+    <div className="xl:min-w-[900px] space-y-6">
       {/* Header & Search */}
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Past Classes</h1>
-
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />

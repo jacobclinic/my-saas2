@@ -8,6 +8,15 @@ import { Info, Search, X } from 'lucide-react';
 import UpcommingSessionCard from './UpcommingSessionCard';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { DateRangePicker } from '@heroui/date-picker';
+import {
+  formatDateTimeRange,
+  getUserTimezone,
+} from '~/lib/utils/timezone-utils';
+import {
+  datePickerObjectToLocalDate,
+  utcToLocalDate,
+} from '~/lib/utils/timezone-utils-filter';
+import TimezoneIndicator from '../TimezoneIndicator';
 
 interface DateRange {
   start?: {
@@ -46,21 +55,17 @@ const UpcomingSessions = ({
       setUpcomingSessionTableData(formattedData);
     }
   }, [upcomingSessionData]);
-
   // Helper function to format session data
   const formatSessionData = (
     session: UpcomingSession,
   ): UpcomingSessionTableData => {
-    const formattedDate = new Date(
-      session?.start_time || '',
-    ).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })} - 
-    ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
+    // Format date and time using timezone utility to respect user's timezone
+    const { formattedDate, formattedTime } = formatDateTimeRange(
+      session?.start_time,
+      session?.end_time,
+      'EEEE, MMMM d, yyyy',
+      'h:mm a',
+    );
 
     return {
       id: session.id,
@@ -86,22 +91,6 @@ const UpcomingSessions = ({
     };
   };
 
-  // Helper function to convert date object to JavaScript Date
-  const dateObjectToDate = (
-    dateObj: any,
-    isEndDate: boolean = false,
-  ): Date | null => {
-    if (!dateObj) return null;
-    const date = new Date(dateObj.year, dateObj.month - 1, dateObj.day);
-
-    // If it's an end date, set time to 11:59:59 PM
-    if (isEndDate) {
-      date.setHours(23, 59, 59, 999);
-    }
-
-    return date;
-  };
-
   // Filter the complete dataset when search or date range changes
   useEffect(() => {
     // Apply filters to the FULL dataset
@@ -117,12 +106,29 @@ const UpcomingSessions = ({
       let matchesDateRange = true;
 
       if (dateRange && dateRange.start && dateRange.end) {
-        const sessionDate = new Date(session?.start_time || '');
-        const startDate = dateObjectToDate(dateRange.start);
-        const endDate = dateObjectToDate(dateRange.end, true); // Pass true to set end date to 11:59 PM
+        const sessionStartUtc = new Date(session?.start_time || '');
+        const sessionEndUtc = new Date(session?.end_time || '');
+        const startDate = datePickerObjectToLocalDate(dateRange.start);
+        const endDate = datePickerObjectToLocalDate(dateRange.end, true); // Pass true to set end date to 11:59 PM
 
         if (startDate && endDate) {
-          matchesDateRange = sessionDate >= startDate && sessionDate <= endDate;
+          // Convert to user's local time zone for comparison
+          const userTimezone = getUserTimezone();
+          const sessionStartInUserTZ = utcToLocalDate(
+            sessionStartUtc,
+            userTimezone,
+          );
+          const sessionEndInUserTZ = utcToLocalDate(
+            sessionEndUtc,
+            userTimezone,
+          );
+          const startDateInUserTZ = utcToLocalDate(startDate, userTimezone);
+          const endDateInUserTZ = utcToLocalDate(endDate, userTimezone);
+
+          matchesDateRange = 
+            !!sessionStartInUserTZ && !!startDateInUserTZ && !!sessionEndInUserTZ && !!endDateInUserTZ &&
+            sessionStartInUserTZ >= startDateInUserTZ &&
+            sessionEndInUserTZ <= endDateInUserTZ;
         }
       }
 
@@ -141,9 +147,13 @@ const UpcomingSessions = ({
 
   return (
     <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
+      {' '}
       {/* Header & Search */}
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Upcoming Classes</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Upcoming Classes</h1>
+          <TimezoneIndicator />
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
@@ -175,7 +185,6 @@ const UpcomingSessions = ({
           </div>
         </div>
       </div>
-
       {/* Classes List */}
       <div className="space-y-6">
         {upcomingSessionTableData.length > 0 ? (
@@ -190,6 +199,10 @@ const UpcomingSessions = ({
             No upcoming classes match your search criteria.
           </div>
         )}
+      </div>
+      {/* Timezone Indicator - Always show the user's current timezone */}
+      <div className="mt-4">
+        <TimezoneIndicator />
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Info } from 'lucide-react';
 import {
   UpcomingSessionTableData,
 } from '~/lib/sessions/types/upcoming-sessions';
@@ -79,7 +78,6 @@ const UpcomingClassesSection = ({
       {/* Next Class */}
       <div className="space-y-2">
         <div className="flex items-center">
-          <Info className="h-5 w-5 mr-2" />
           <h2 className="text-xl font-bold">Upcoming Class</h2>
         </div>
         {upcomingSessionTableData.length > 0 ? (

@@ -4,18 +4,20 @@ import {
   getSessions2_1HrsAfterSession,
   getUpcomingSessionsWithUnpaidStudentsBetween3_4Days,
 } from '../quieries';
-import sendEmail from '~/core/email/send-email';
 import { getStudentNotifyBeforeEmailTemplate } from '~/core/email/templates/studentNotifyBefore';
 import { getStudentNotifyAfterEmailTemplate } from '~/core/email/templates/studentNotifyAfter';
 import { paymentReminderEmaiTemplate } from '~/core/email/templates/paymentReminder';
 import { format, parseISO } from 'date-fns';
 import getLogger from '~/core/logger';
+import { EmailService } from '~/core/email/send-email-mailtrap';
 
 const logger = getLogger();
 
 // Process emails with a throttle (2 per second = 500ms per request)
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const rateLimitDelay = 500; // 500ms = 2 requests per second
+const rateLimitDelay = 1000; // 1000ms = 1 requests per second
+
+const emailService = EmailService.getInstance();
 
 async function sendNotifySessionEmails(
   data: NotificationClass[],
@@ -40,22 +42,38 @@ async function sendNotifySessionEmails(
 
     // Function to send a single email
     const sendSingleEmail = async (task: (typeof emailTasks)[number]) => {
+      // Parse the session start time for proper date formatting
+      const sessionDate = new Date(task.start_time);
+
+      // Format the date in India timezone (IST)
+      const localDate = new Intl.DateTimeFormat('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'Asia/Kolkata',
+      }).format(sessionDate);
+
+      // Format the time in India timezone (IST)
+      const localTime = new Intl.DateTimeFormat('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata',
+      }).format(sessionDate);
+
       if (beforeOrAfter === 'before') {
         const { html, text } = getStudentNotifyBeforeEmailTemplate({
           studentName: task.first_name!,
           className: task.class_name,
-          sessionDate: new Date(task.start_time).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          sessionTime: task.start_time,
+          sessionDate: localDate,
+          sessionTime: localTime,
           topic: task.topic,
           classId: task.class_id,
           studentEmail: task.to,
         });
-        await sendEmail({
+        
+        await emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: task.to,
           subject: `Upcoming Class Notification`,
@@ -77,7 +95,7 @@ async function sendNotifySessionEmails(
           classId: task.class_id,
           studentEmail: task.to,
         });
-        await sendEmail({
+        await emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: task.to,
           subject: `Your ${task.class_name} Class Recording Is Now Available`,
@@ -120,11 +138,35 @@ export async function notifyUpcomingSessionsBefore24Hrs(
   client: SupabaseClient,
 ) {
   const sessions = await getAllUpcomingSessionsWithin24_25Hrs(client);
+  console.log(
+    `Found ${sessions.length} upcoming sessions for email notifications in the 24-25 hour window`,
+  );
+
+  // Log details of each session for debugging
+  sessions.forEach((session, index) => {
+    // Use standard date formatting for logging
+    const sessionTime = new Date(session.start_time);
+    console.log(
+      `Upcoming Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, Start Time (UTC): ${sessionTime.toISOString()}`,
+    );
+  });
+
   await sendNotifySessionEmails(sessions, 'before');
 }
 
 export async function notifyAfterSessionsEmail(client: SupabaseClient) {
   const sessions = await getSessions2_1HrsAfterSession(client);
+  console.log(
+    `Found ${sessions.length} sessions for after-session email notifications`,
+  );
+
+  // Log details of each session for debugging
+  sessions.forEach((session, index) => {
+    console.log(
+      `Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, End Time: ${session.end_time}`,
+    );
+  });
+
   await sendNotifySessionEmails(sessions, 'after');
 }
 
@@ -168,7 +210,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
         classFee: task.fee,
         paymentUrl: task.paymentUrl,
       });
-      await sendEmail({
+      await emailService.sendEmail({
         from: process.env.EMAIL_SENDER!,
         to: task.to,
         subject: `Payment Reminder for class ${task.class_name} for ${new Date(

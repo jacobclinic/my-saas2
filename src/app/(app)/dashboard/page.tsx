@@ -54,8 +54,6 @@ async function DashboardPage() {
       const [sessionData] = await Promise.all([
         getAllUpcommingSessionsByTutorIdData(client, user.id, true),
       ]);
-      // console.log("DashboardPage-UpcomingSession-server-component------", sessionData);
-      // console.log("DashboardPage-Classes-server-component------", classesData);
 
       // Render tutor dashboard
       return (

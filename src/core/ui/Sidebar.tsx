@@ -35,7 +35,7 @@ export function SidebarContent({
 }>) {
   return (
     <div
-      className={cn('flex w-full flex-col px-container space-y-1.5', className)}
+      className={cn('flex w-full flex-col px-3 space-y-1.5', className)}
     >
       {children}
     </div>
@@ -179,7 +179,7 @@ function getClassNameBuilder() {
       variants: {
         collapsed: {
           true: `w-[6rem]`,
-          false: `w-2/12 lg:w-[17rem]`,
+          false: `w-64`,
         },
       },
     },
@@ -189,17 +189,17 @@ function getClassNameBuilder() {
 function getSidebarItemClassBuilder() {
   return cva(
     [
-      `flex w-full items-center rounded-md border-transparent text-sm font-base transition-colors duration-100`,
+      `flex w-full items-center rounded-md border-transparent font-base transition-colors duration-100`,
     ],
     {
       variants: {
         collapsed: {
           true: `justify-center py-2 [&>span]:hidden`,
-          false: `py-2 px-3 pr-12 space-x-2.5`,
+          false: `py-2 px-3 space-x-2.5`,
         },
         active: {
-          true: `bg-primary/5 dark:bg-primary-300/10 font-medium`,
-          false: `ring-transparent hover:bg-gray-50 dark:hover:bg-dark-800/40 active:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:active:bg-dark-700`,
+          true: `bg-primary-blue-50 dark:bg-primary-300/10 font-medium text-primary-blue-800`,
+          false: `ring-transparent hover:bg-gray-50 dark:hover:bg-dark-800/40 active:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:active:bg-dark-700 text-neutral-600 hover:bg-primary-blue-50/70 hover:text-primary-blue-700`,
         },
       },
       compoundVariants: [

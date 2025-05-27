@@ -10,7 +10,12 @@ import {
   STUDENT_PAYMENTS_TABLE,
 } from '~/lib/db-tables';
 import { SessionsWithTableData } from '../types/session';
-import { PastSession, Session, UpcomingSession } from '../types/session-v2';
+import {
+  PastSession,
+  pastSessionsForAttendance,
+  Session,
+  UpcomingSession,
+} from '../types/session-v2';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
@@ -1062,6 +1067,43 @@ export async function getAllPastSessionsDataAdmin(
     });
 
     return transformedData;
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error);
+    throw error;
+  }
+}
+
+export async function getAllPastSessionsDataWithinLastHour(
+  client: SupabaseClient<Database>,
+): Promise<pastSessionsForAttendance[] | []> {
+  try {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const twoHourAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          zoom_meeting_id,
+          attendance_marked
+        `,
+      )
+      .lt('end_time', oneHourAgo)
+      .gt('end_time', twoHourAgo)
+      .eq('attendance_marked', 'FALSE')
+      .order('end_time', { ascending: false })
+      .returns<pastSessionsForAttendance[]>();
+
+    // console.log("getAllSessionsData", data)
+
+    if (error) {
+      throw new Error(`Error fetching sessions: ${error.message}`);
+    }
+
+    if (!data) {
+      return [];
+    }
+    return data;
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
     throw error;

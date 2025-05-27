@@ -9,6 +9,7 @@ import { getStudentCredentialsEmailTemplate } from '../../../core/email/template
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { updateUserWithRetry } from '~/lib/user/actions.server';
+import { EmailService } from '~/core/email/send-email-mailtrap';
 
 // Helper function to wait
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -138,9 +139,9 @@ export async function registerStudentAction(
           className: validated.nameOfClass,
           loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
         });
-
+        const emailService = EmailService.getInstance();
         await Promise.all([
-          sendEmail({
+          emailService.sendEmail({
             from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
             to: validated.email,
             subject: 'Welcome to Your Class - Login Credentials',
