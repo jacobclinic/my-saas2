@@ -5,10 +5,10 @@ import getLogger from '~/core/logger';
 
 import { USERS_TABLE } from '~/lib/db-tables';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import sendEmail from '~/core/email/send-email';
 import renderAccountDeleteEmail from '~/lib/emails/account-delete';
 
 import type { Database } from '~/database.types';
+import { EmailService } from '~/core/email/send-email-mailtrap';
 
 type Params = {
   client: SupabaseClient<Database>;
@@ -126,11 +126,12 @@ async function sendAccountDeleteEmail(params: {
   if (!from) {
     throw new Error(`Missing EMAIL_SENDER env variable.`);
   }
-
-  return sendEmail({
+  const emailService = EmailService.getInstance();
+  return emailService.sendEmail({
     to: params.email,
     subject,
     html: accountDeleteEmail,
+    text: accountDeleteEmail.replace(/<[^>]*>/g, ''), // Simple HTML to text conversion
     from,
   });
 }

@@ -7,10 +7,11 @@ import AttendanceDialog from '../../past-sessions/AttendanceDialog';
 import { SelectedSession } from '~/lib/sessions/types/past-sessions';
 import { Check, Delete, Link, Trash, Users } from 'lucide-react';
 import DeleteSessionDialog from '../past-session/DeleteSessionDialog';
-import { format, toZonedTime } from 'date-fns-tz';
-
-// Set the local timezone (e.g., 'Asia/Colombo' for Sri Lanka, GMT+5:30)
-const LOCAL_TIMEZONE = 'Asia/Colombo';
+import { format } from 'date-fns';
+import {
+  convertToLocalTime,
+  getUserTimezone,
+} from '~/lib/utils/timezone-utils';
 
 interface DateRange {
   start?: { year: number; month: number; day: number } | null;
@@ -52,22 +53,12 @@ const UpcomingSessionsAdmin = ({
       setToDate('');
     }
   }, [dateRange]);
-
   const classData = upcomingSessionData.map((session) => {
-    const startTimeUtc = session.start_time
-      ? new Date(session.start_time)
-      : null;
-    const endTimeUtc = session.end_time ? new Date(session.end_time) : null;
+    // Convert UTC to local timezone respecting user's timezone
+    const startTimeLocal = convertToLocalTime(session.start_time);
+    const endTimeLocal = convertToLocalTime(session.end_time);
 
-    // Convert UTC to local timezone using toZonedTime
-    const startTimeLocal = startTimeUtc
-      ? toZonedTime(startTimeUtc, LOCAL_TIMEZONE)
-      : null;
-    const endTimeLocal = endTimeUtc
-      ? toZonedTime(endTimeUtc, LOCAL_TIMEZONE)
-      : null;
-
-    // Format times in local timezone
+    // Format times in user's local timezone
     const formattedStartTime = startTimeLocal
       ? format(startTimeLocal, 'hh:mm a')
       : 'N/A';
@@ -84,7 +75,7 @@ const UpcomingSessionsAdmin = ({
       name: session.class?.name,
       date: session.start_time,
       time:
-        startTimeUtc && endTimeUtc
+        startTimeLocal && endTimeLocal
           ? `${formattedStartTime} - ${formattedEndTime}`
           : 'N/A',
       topic: session.title || 'Unknown',

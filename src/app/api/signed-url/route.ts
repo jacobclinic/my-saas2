@@ -13,11 +13,11 @@ export async function GET(req: Request) {
   }
 
   try {
-    logger.info(`[API] Generating signed URL for ${fileName}`);
+    // logger.info(`[API] Generating signed URL for ${fileName}`);
     const url = await getSignedUrl(fileName);
     return NextResponse.json({ signedUrl: url });
   } catch (error) {
-    logger.error(`[API] Error generating signed URL for ${fileName}:`, error);
+    // logger.error(`[API] Error generating signed URL for ${fileName}:`, error);
     return NextResponse.json({ error: 'Failed to generate signed URL' }, { status: 500 });
   }
 }

@@ -45,6 +45,11 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
 
+  // Add a state to store the original class data for comparison
+  const [originalClass, setOriginalClass] = useState<EditClassData | null>(
+    null,
+  );
+
   const [editedClass, setEditedClass] = useState<EditClassData>({
     name: '',
     subject: '',
@@ -102,7 +107,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
         },
       ) || [{ day: '', startTime: '', endTime: '' }];
 
-      setEditedClass({
+      const initialData = {
         name: classData?.classRawData?.name || '',
         subject: classData?.classRawData?.subject || '',
         description: classData?.classRawData?.description || '',
@@ -115,7 +120,11 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
         status:
           (classData?.classRawData?.status as 'active' | 'canceled') ||
           'active',
-      });
+      };
+
+      setEditedClass(initialData);
+      // Store the original data for comparison
+      setOriginalClass(JSON.parse(JSON.stringify(initialData)));
     }
   }, [classData]);
 
@@ -207,21 +216,66 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
     return date.toISOString().split('T')[0]; // Extract the YYYY-MM-DD part
   };
 
+  // Function to check if any changes were made to the class data
+  const hasChanges = (): boolean => {
+    if (!originalClass) return false;
+
+    // Check primitive fields
+    if (
+      editedClass.name !== originalClass.name ||
+      editedClass.subject !== originalClass.subject ||
+      editedClass.description !== originalClass.description ||
+      editedClass.yearGrade !== originalClass.yearGrade ||
+      editedClass.monthlyFee !== originalClass.monthlyFee ||
+      editedClass.startDate !== originalClass.startDate ||
+      editedClass.status !== originalClass.status
+    ) {
+      return true;
+    }
+
+    // Check time slots
+    if (editedClass.timeSlots.length !== originalClass.timeSlots.length) {
+      return true;
+    }
+
+    // Check each time slot
+    for (let i = 0; i < editedClass.timeSlots.length; i++) {
+      const editedSlot = editedClass.timeSlots[i];
+      const originalSlot = originalClass.timeSlots[i];
+
+      if (
+        editedSlot.day !== originalSlot.day ||
+        editedSlot.startTime !== originalSlot.startTime ||
+        editedSlot.endTime !== originalSlot.endTime
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   const handleClose = () => {
     onClose();
-    setEditedClass({
-      name: classData?.classRawData?.name || '',
-      subject: classData?.classRawData?.subject || '',
-      description: classData?.classRawData?.description || '',
-      yearGrade: classData?.classRawData?.grade || '',
-      monthlyFee: classData?.classRawData?.fee || 0,
-      startDate: classData?.classRawData?.starting_date || '',
-      timeSlots: classData?.classRawData?.time_slots || [
-        { day: '', startTime: '', endTime: '' },
-      ],
-      status:
-        (classData?.classRawData?.status as 'active' | 'canceled') || 'active',
-    });
+    // Reset edited class to original data
+    if (originalClass) {
+      setEditedClass(JSON.parse(JSON.stringify(originalClass)));
+    } else {
+      setEditedClass({
+        name: classData?.classRawData?.name || '',
+        subject: classData?.classRawData?.subject || '',
+        description: classData?.classRawData?.description || '',
+        yearGrade: classData?.classRawData?.grade || '',
+        monthlyFee: classData?.classRawData?.fee || 0,
+        startDate: classData?.classRawData?.starting_date || '',
+        timeSlots: classData?.classRawData?.time_slots || [
+          { day: '', startTime: '', endTime: '' },
+        ],
+        status:
+          (classData?.classRawData?.status as 'active' | 'canceled') ||
+          'active',
+      });
+    }
   };
 
   return (
@@ -247,6 +301,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
           onClose();
         }}
         deleteClassBtnDisabled={classData!.status !== 'active'}
+        confirmButtonDisabled={!isValid || !hasChanges() || loading}
       >
         <div className="space-y-4">
           <div>

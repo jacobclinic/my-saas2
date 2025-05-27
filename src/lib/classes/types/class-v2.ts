@@ -1,6 +1,6 @@
-import { Json } from "~/database.types";
-import { PaymentStatus } from "~/lib/payments/types/admin-payments";
-import { ClassWithTutorAndEnrollmentAndNextSession } from "./class";
+import { Json } from '~/database.types';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
+import { ClassWithTutorAndEnrollmentAndNextSession } from './class';
 
 // types.ts
 
@@ -23,23 +23,25 @@ interface NextSession {
 }
 
 export interface ClassType {
-  id: string
-  created_at?: string
-  name?: string | null
-  description: string | null
-  subject: string | null
-  tutor_id: string
-  fee: number | null
-  status: string | null  
-  time_slots: {
-    day: string;
-    startTime: string;
-    endTime: string;
-  }[] | null
-  grade: string | null
-  starting_date: string | null
-  students?: ClassListStudent[] | []
-  upcomingSession: string | null
+  id: string;
+  created_at?: string;
+  name?: string | null;
+  description: string | null;
+  subject: string | null;
+  tutor_id: string;
+  fee: number | null;
+  status: string | null;
+  time_slots:
+    | {
+        day: string;
+        startTime: string;
+        endTime: string;
+      }[]
+    | null;
+  grade: string | null;
+  starting_date: string | null;
+  students?: ClassListStudent[] | [];
+  upcomingSession: string | null;
 }
 
 export interface ClassForStudentType {
@@ -57,9 +59,17 @@ export interface ClassForStudentType {
       first_name: string | null;
       last_name: string | null;
     };
+    time_slots:
+      | {
+          day: string;
+          startTime: string;
+          endTime: string;
+        }[]
+      | null;
     fee?: number | null;
     status?: string | null;
     grade?: string | null;
+    upcomingSession: string | null;
   };
 }
 
@@ -72,7 +82,7 @@ export interface StudentPayment {
 
 export interface StudentClassListType {
   id: string;
-  name?: string | null
+  name?: string | null;
   schedule?: string;
   nextClass?: string;
   subject?: string;
@@ -84,7 +94,7 @@ export interface StudentClassListType {
 }
 export interface ClassListData {
   id: string;
-  name?: string | null
+  name?: string | null;
   schedule?: string;
   subject?: string;
   status?: string;
@@ -93,20 +103,20 @@ export interface ClassListData {
   registrationLink?: string;
   nextClass?: string;
   description?: string;
-  timeSlots?: { day: string; time: string; }[];
+  timeSlots?: { day: string; time: string }[];
   classRawData?: ClassType;
 }
 
 export interface ClassData {
   id: string;
-  name?: string | null
+  name?: string | null;
   schedule?: string;
   subject?: string;
   status?: string;
   registrationLink?: string;
   nextClass?: string;
   description?: string;
-  timeSlots?: { day: string; time: string; }[];
+  timeSlots?: { day: string; time: string }[];
   classRawData?: ClassWithTutorAndEnrollmentAndNextSession;
 }
 
@@ -139,11 +149,13 @@ export interface NewClassData {
   monthlyFee: string;
   startDate: string;
   // endDate: string;
-  timeSlots: [{
-    day: string;
-    startTime: string;
-    endTime: string;
-  }];
+  timeSlots: [
+    {
+      day: string;
+      startTime: string;
+      endTime: string;
+    },
+  ];
   tutorId: string;
 }
 
@@ -203,18 +215,20 @@ export interface ClassWithTutorAndEnrollmentAdmin {
 }
 
 export interface SelectedClassAdmin {
-  id: string
-  name?: string | null
-  description: string | null
-  subject: string | null
-  tutorName: string | null
-  fee: number | null
-  status: string | null  
-  time_slots: {
-    day: string;
-    start_time: string;
-    end_time: string;
-  }[] | null
-  grade: string | null
-  upcomingSession: string | null
+  id: string;
+  name?: string | null;
+  description: string | null;
+  subject: string | null;
+  tutorName: string | null;
+  fee: number | null;
+  status: string | null;
+  time_slots:
+    | {
+        day: string;
+        start_time: string;
+        end_time: string;
+      }[]
+    | null;
+  grade: string | null;
+  upcomingSession: string | null;
 }

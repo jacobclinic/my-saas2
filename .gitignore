@@ -46,3 +46,6 @@ cypress/screenshots
 
 public/robots.txt
 public/sitemap.xml
+
+# testing api
+src/app/api/public/test/route.ts

@@ -24,8 +24,6 @@ async function MoreDetailsPage() {
 
   const userData = await getUserByIdAction(session.user.id);
 
-  console.log('User data on moredetails page:', userData);
-
   // Only redirect if we have valid non-empty values for all required fields
   const hasRequiredDetails =
     userData?.first_name &&
