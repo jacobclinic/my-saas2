@@ -118,7 +118,6 @@ const AdminDashboardSessions = ({
           <h1 className="text-2xl font-bold">Upcoming Classes</h1>
           <TimezoneIndicator />
         </div>
-
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />

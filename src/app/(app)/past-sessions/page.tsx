@@ -53,7 +53,7 @@ async function PastSessionsPage() {
 
   return (
     <>
-      <AppHeader title={''} description={''} />
+      <AppHeader title={'Past Classes'} description={''} />
       <PageBody>
         {userRole === 'student' ? (
           <StudentPastSessionClient

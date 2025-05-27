@@ -1,140 +1,105 @@
-'use client'
-
-import React from 'react';
-import { InvoiceDialogProps, Payment, PaymentCardProps } from '~/lib/payments/types/tutor-payments';
-import { Card, CardContent, CardHeader, CardTitle } from "../base-v2/ui/Card";
+import { Download, Printer } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../base-v2/ui/Dialog";
+import { Separator } from "../base-v2/ui/separator";
 import { Button } from "../base-v2/ui/Button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../base-v2/ui/Dialog";
-import { Download } from 'lucide-react';
-import BaseDialog from '../base-v2/BaseDialog';
-import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
-const InvoiceDialog: React.FC<InvoiceDialogProps> = ({ selectedInvoice, onClose }) => {
-  if (!selectedInvoice) return null;
-
-  const handleDownloadInvoice = () => {
-    // Implement invoice download logic
-    console.log('Downloading invoice:', selectedInvoice.id);
+interface InvoiceViewProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  invoice: {
+    id: string;
+    classTitle: string;
+    date: string;
+    amount: number;
+    students: number;
   };
+}
 
-  const handleDownloadReceipt = () => {
-    // Implement receipt download logic
-    console.log('Downloading receipt for transaction:', selectedInvoice.transactionId);
-  };
-
-  const dialogContent = (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-medium">Payment #{selectedInvoice.id}</h3>
-              <p className="text-sm text-gray-600">{selectedInvoice.period}</p>
-            </div>
-            <Button variant="outline" onClick={handleDownloadInvoice}>
-              <Download className="h-4 w-4 mr-2" />
-              Download Invoice
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Generated Date</p>
-              <p className="font-medium">{selectedInvoice.generatedDate}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Due Date</p>
-              <p className="font-medium">{selectedInvoice.dueDate}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Status</p>
-              <p className={`font-medium ${
-                selectedInvoice.status === PaymentStatus.VERIFIED ? 'text-green-600' : 'text-amber-600'
-              }`}>
-                {selectedInvoice.status === PaymentStatus.VERIFIED ? 'Paid' : 'Pending'}
-              </p>
-            </div>
-            {selectedInvoice.status === PaymentStatus.VERIFIED && (
-              <div>
-                <p className="text-sm text-gray-600">Payment Date</p>
-                <p className="font-medium">{selectedInvoice.paidDate}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="border-t pt-4 mt-4">
-            <h4 className="font-medium mb-3">Payment Breakdown</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Total Amount:</span>
-                <span className="font-medium">Rs. {selectedInvoice.totalAmount.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Platform Fee (20%):</span>
-                <span>Rs. {selectedInvoice.platformFee.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between font-medium text-green-600 pt-2 border-t">
-                <span>Net Amount:</span>
-                <span>Rs. {selectedInvoice.netAmount.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t pt-4 mt-4">
-            <h4 className="font-medium mb-3">Classes Conducted</h4>
-            <div className="space-y-2">
-              {selectedInvoice.classes.map((cls, idx) => (
-                <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                  <div>
-                    <p className="font-medium">{cls.name}</p>
-                    <p className="text-sm text-gray-600">{cls.schedule}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{cls.sessions} sessions</p>
-                    <p className="text-sm text-gray-600">Rs. {cls.amount.toLocaleString()}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {selectedInvoice.status === PaymentStatus.VERIFIED && selectedInvoice.transactionId && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Payment Receipt</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-              <div>
-                <p className="font-medium">Bank Transfer</p>
-                <p className="text-sm text-gray-600">Transaction ID: {selectedInvoice.transactionId}</p>
-              </div>
-              <Button variant="outline" onClick={handleDownloadReceipt}>
-                <Download className="h-4 w-4 mr-2" />
-                Download Receipt
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+export function InvoiceView({ open, onOpenChange, invoice }: InvoiceViewProps) {
+  const commissionRate = 0.15; // 15% commission
+  const commissionAmount = invoice.amount * commissionRate;
+  const tutorAmount = invoice.amount - commissionAmount;
 
   return (
-    <BaseDialog
-      open={!!selectedInvoice}
-      onClose={onClose}
-      title="Payment Details"
-      maxWidth="2xl"
-      showCloseButton
-      closeButtonText="Close"
-    >
-      {dialogContent}
-    </BaseDialog>
-  );
-};
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Invoice Details</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-semibold text-lg">Comma Education</h3>
+              <p className="text-sm text-neutral-600">123 Education Street</p>
+              <p className="text-sm text-neutral-600">Colombo, Sri Lanka</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-medium">Invoice #{invoice.id}</p>
+              <p className="text-sm text-neutral-600">{invoice.date}</p>
+            </div>
+          </div>
 
-export default InvoiceDialog;
+          <Separator />
+
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-medium mb-2">Class Details</h4>
+              <p className="text-sm">{invoice.classTitle}</p>
+              <p className="text-sm text-neutral-600">Number of Students: {invoice.students}</p>
+            </div>
+
+            <div className="bg-neutral-50 p-4 rounded-lg space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Monthly Fee</span>
+                  <span className="text-sm">Rs. {(invoice.amount / invoice.students).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Students</span>
+                  <span className="text-sm">× {invoice.students}</span>
+                </div>
+                <Separator className="my-1" />
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total Amount</span>
+                  <span className="font-medium">Rs. {invoice.amount.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-neutral-600">
+                  <span className="text-sm">Comma Education Commission (15%)</span>
+                  <span className="text-sm">- Rs. {commissionAmount.toFixed(2)}</span>
+                </div>
+                <Separator className="my-1" />
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-success-dark">Net Amount (Tutor)</span>
+                  <span className="font-medium text-success-dark">Rs. {tutorAmount.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              className="text-neutral-700"
+              onClick={() => window.print()}
+            >
+              <Printer size={16} className="mr-2" />
+              Print
+            </Button>
+            <Button
+              className="bg-primary-blue-600 hover:bg-primary-blue-700 text-white"
+            >
+              <Download size={16} className="mr-2" />
+              Download PDF
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

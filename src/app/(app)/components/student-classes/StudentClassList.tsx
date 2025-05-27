@@ -17,6 +17,7 @@ import {
   StudentClassListType,
 } from '~/lib/classes/types/class-v2';
 import { format as dateFnsFormat } from 'date-fns';
+import AppHeader from '../AppHeader';
 
 const StudentClassesList = ({
   studentClassesData,
@@ -69,36 +70,33 @@ const StudentClassesList = ({
   }, [studentClassesData]);
 
   return (
-    <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Your Classes</h1>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="Search classes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8"
-          />
+    <>
+      <AppHeader title={'Your Classes'} description={''} />
+      <div className="p-6 xl:min-w-[900px] space-y-6">
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Search classes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by year" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Years</SelectItem>
+              <SelectItem value="2024/2025">2024/2025</SelectItem>
+              <SelectItem value="2023/2024">2023/2024</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-
-        <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by year" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Years</SelectItem>
-            <SelectItem value="2024/2025">2024/2025</SelectItem>
-            <SelectItem value="2023/2024">2023/2024</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
+        
       {/* Classes List */}
       <div className="lg:min-w-[600px]">
         {classTableData
@@ -117,6 +115,7 @@ const StudentClassesList = ({
           ))}
       </div>
     </div>
+
   );
 };
 

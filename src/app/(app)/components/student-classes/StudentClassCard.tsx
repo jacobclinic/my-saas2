@@ -34,7 +34,7 @@ const StudentClassCard = ({
                 Next class: {classData?.nextClass}
               </div>
             </div>
-            <Badge variant="outline">{classData?.subject || 'Subject'}</Badge>
+            <Badge variant="blue">{classData?.subject || 'Subject'}</Badge>
           </div>
 
           <div className="flex items-center justify-between">

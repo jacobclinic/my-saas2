@@ -27,7 +27,7 @@ export function PageBody(
   }>,
 ) {
   const className = classNames(
-    'w-full h-full px-container flex flex-col flex-1',
+    'w-full h-full px-4 lg:p-6 flex flex-col flex-1',
     props.className,
   );
 
@@ -45,17 +45,17 @@ export function PageHeader({
   mobileNavigation?: React.ReactNode;
 }>) {
   return (
-    <div className={'flex items-start justify-between p-container'}>
+    <div className={'flex items-center justify-between p-6 border-b border-neutral-200'}>
       <div
         className={
-          'flex space-x-2 items-center lg:items-start lg:flex-col lg:space-x-0'
+          'w-full flex flex-col space-x-2 lg:space-x-0'
         }
       >
         <div className={'flex items-center lg:hidden'}>{mobileNavigation}</div>
 
         <Heading type={3}>
           <span className={'flex items-center space-x-0.5 lg:space-x-2'}>
-            <span className={'font-semibold dark:text-white'}>{title}</span>
+            <span className={'text-xl sm:text-2xl font-bold text-neutral-900'}>{title}</span>
           </span>
         </Heading>
 
