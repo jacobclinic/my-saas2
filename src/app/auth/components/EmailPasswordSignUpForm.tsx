@@ -95,7 +95,7 @@ const EmailPasswordSignUpForm: React.FCC<{
         <button
           type="button"
           className={`w-1/2 p-2 ${
-            userRole === 'student' ? 'bg-primary text-white' : 'bg-gray-100'
+            userRole === 'student' ? 'text-white bg-gradient-to-br from-primary-700 to-primary-800' : 'bg-gray-100'
           }`}
           onClick={() => setUserRole('student')}
         >
@@ -104,7 +104,7 @@ const EmailPasswordSignUpForm: React.FCC<{
         <button
           type="button"
           className={`w-1/2 p-2 ${
-            userRole === 'tutor' ? 'bg-primary text-white' : 'bg-gray-100'
+            userRole === 'tutor' ? 'text-white bg-gradient-to-br from-primary-700 to-primary-800' : 'bg-gray-100'
           }`}
           onClick={() => setUserRole('tutor')}
         >
@@ -118,7 +118,7 @@ const EmailPasswordSignUpForm: React.FCC<{
       >
         <div className={'flex-col space-y-4'}>
           <TextField>
-            <TextField.Label>
+            <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
               Email
               <TextField.Input
                 {...emailControl}
@@ -127,6 +127,7 @@ const EmailPasswordSignUpForm: React.FCC<{
                 type="email"
                 placeholder={'your@email.com'}
                 autoComplete="new-email"
+                className='text-sm sm:text-base'
               />
             </TextField.Label>
 
@@ -134,7 +135,7 @@ const EmailPasswordSignUpForm: React.FCC<{
           </TextField>
 
           <TextField>
-            <TextField.Label>
+            <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
               Password
               <TextField.Input
                 {...passwordControl}
@@ -143,6 +144,7 @@ const EmailPasswordSignUpForm: React.FCC<{
                 type="password"
                 placeholder={''}
                 autoComplete="new-password"
+                className='text-sm sm:text-base'
               />
               <TextField.Hint>
                 {userRole === 'student'
@@ -157,7 +159,7 @@ const EmailPasswordSignUpForm: React.FCC<{
           </TextField>
 
           <TextField>
-            <TextField.Label>
+            <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
               Repeat Password
               <TextField.Input
                 {...repeatPasswordControl}
@@ -166,6 +168,7 @@ const EmailPasswordSignUpForm: React.FCC<{
                 type="password"
                 placeholder={''}
                 autoComplete="new-password"
+                className='text-sm sm:text-base'
               />
               <TextField.Hint>Type your password again</TextField.Hint>
               <TextField.Error
@@ -178,7 +181,7 @@ const EmailPasswordSignUpForm: React.FCC<{
           <div>
             <Button
               data-cy={'auth-submit-button'}
-              className={'w-full'}
+              className={'w-full btn bg-secondary-600 text-white hover:bg-secondary-500 focus:ring-secondary-500/50 bg-gradient-to-br from-secondary-500 to-secondary-600'}
               type="submit"
               loading={loading}
             >
