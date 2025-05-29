@@ -15,6 +15,8 @@ import {
   BookOpen,
   Book,
   User,
+  ExternalLink,
+  FileText,
 } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
@@ -174,7 +176,7 @@ const StudentSessionCard = ({
             <>
               {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
                 <Button
-                  className="bg-red-600 hover:bg-red-700"
+                  variant={"primary"}
                   onClick={() => {
                     setSelectedSession(sessionData);
                     setShowPaymentDialog(true);
@@ -232,15 +234,26 @@ const StudentSessionCard = ({
                 //     </div>
                 //   </DialogContent>
                 // </Dialog>
-                <Button
-                  className="w-full"
-                  disabled={isPending}
-                  onClick={() =>
-                    router.push(`/sessions/student/${sessionData.id}?type=${type}`)
-                  }
-                >
-                  View Class
-                </Button>
+                <div className='flex items-center gap-2'>
+                  <Button 
+                    variant={"primary"}
+                    className="w-[150px]" 
+                    onClick={() => joinMeetingAsStudent(sessionData)} disabled={isPending}>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Join Class
+                  </Button>
+                  <Button
+                    variant={"outline"}
+                    className="w-[150px]"
+                    disabled={isPending}
+                    onClick={() =>
+                      router.push(`/sessions/student/${sessionData.id}?type=${type}`)
+                    }
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    View Class
+                  </Button>
+                </div>
               )}
             </>
           ) : (

@@ -17,7 +17,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        darkBlue: "text-sm sm:text-base py-2 sm:py-2.5 bg-primary-800 text-white hover:bg-primary-700 focus:ring-primary-600/50 bg-gradient-to-br from-primary-700 to-primary-800 w-full"
+        darkBlue: "text-sm sm:text-base py-2 sm:py-2.5 bg-primary-800 text-white hover:bg-primary-700 focus:ring-primary-600/50 bg-gradient-to-br from-primary-700 to-primary-800 w-full",
+        primary: "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300"
       },
       size: {
         default: "h-10 px-4 py-2",

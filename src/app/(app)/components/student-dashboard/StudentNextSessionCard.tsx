@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   User,
   FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
@@ -101,6 +102,7 @@ const StudentNextSessionCard = ({
         <div className="flex items-center gap-2">
           {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
             <Button
+              variant={"primary"}
               className="w-[118px] text-sm font-medium"
               onClick={() => {
                 setSelectedSession(sessionData);
@@ -113,8 +115,11 @@ const StudentNextSessionCard = ({
           ) : sessionData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
             null
           ) : (
-            <Button className="w-full flex-1" onClick={() => joinMeetingAsStudent(sessionData)} disabled={isPending}>
-              <Camera className="h-4 w-4 mr-2" />
+            <Button 
+              variant={"primary"}
+              className="w-full flex-1" 
+              onClick={() => joinMeetingAsStudent(sessionData)} disabled={isPending}>
+              <ExternalLink className="h-4 w-4 mr-2" />
               Join Class
             </Button>
           )}
