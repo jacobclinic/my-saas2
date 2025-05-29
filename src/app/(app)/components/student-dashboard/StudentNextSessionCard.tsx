@@ -77,7 +77,7 @@ const StudentNextSessionCard = ({
           </div>
         ) : null}
 
-        {sessionData?.materials && sessionData?.materials?.length > 0 && (
+        {/* {sessionData?.materials && sessionData?.materials?.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-medium text-blue-900">Class Materials</h4>
             <div className="space-y-2">
@@ -95,7 +95,7 @@ const StudentNextSessionCard = ({
               ))}
             </div>
           </div>
-        )}
+        )} */}
       </CardContent>
       <CardFooter className="border-t border-gray-200 bg-gray-50 p-4">
         <div className="flex items-center gap-2">

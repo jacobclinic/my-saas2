@@ -147,7 +147,7 @@ const StudentSessionCard = ({
         </div>
       </CardContent>
       <CardContent className="p-4 space-y-4">
-        {sessionData?.materials && sessionData.materials?.length > 0 && (
+        {/* {sessionData?.materials && sessionData.materials?.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-medium">Class Materials</h4>
             <div className="space-y-2">
@@ -167,7 +167,7 @@ const StudentSessionCard = ({
               ))}
             </div>
           </div>
-        )}
+        )} */}
 
         <div className="flex flex-wrap gap-2">
           {type === 'upcoming' ? (
