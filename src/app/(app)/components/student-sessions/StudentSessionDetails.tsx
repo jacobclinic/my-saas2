@@ -185,12 +185,13 @@ const StudentSessionDetails = ({
                     <Badge variant="blue">{"Subject"}</Badge>
                     {type !== 'past' && formattedSessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
                       <Badge variant="yellow" className="ml-2">Payment Required</Badge>
-                    ) : <Badge variant="gray" className="ml-2">Completed</Badge>}
+                    ) : null}
+                    {type === "past" && <Badge variant="gray" className="ml-2">Completed</Badge>}
 
                   </div>
                 </div>
 
-                {true && (
+                {type !== 'past' && formattedSessionData.paymentStatus === PAYMENT_STATUS.VERIFIED && (
                   <Button
                     variant="primary"
                     onClick={() => window.open(formattedSessionData.zoomLink, '_blank')}
