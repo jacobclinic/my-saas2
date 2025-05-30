@@ -125,7 +125,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         className={cn('mb-6', isDashboard && '')}
       >
         <CardContent className='p-0'>
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Header */}
             <CardHeader className="pb-3 border-b border-neutral-100">
               <div className="flex items-center justify-between">
@@ -137,27 +137,27 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     <CardTitle className="text-lg font-semibold text-neutral-900">
                       {sessionData.name}
                     </CardTitle>
-                    {sessionData.subject && (
-                      <Badge variant="outline" className="mt-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200">
-                        {sessionData.subject?.replace(/\b([a-z])/, (match) =>
-                          match.toUpperCase(),
-                        )}
+                    <div className='mt-1 flex items-center gap-2 text-sm'>
+                      {sessionData.subject && (
+                        <Badge variant="outline" className="bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200">
+                          {sessionData.subject?.replace(/\b([a-z])/, (match) =>
+                            match.toUpperCase(),
+                          )}
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="flex items-center text-gray-900">
+                        <User className="h-4 w-4 mr-2" />
+                        <span>
+                          Tutor:{' '}
+                          {sessionData.sessionRawData?.class?.tutor?.first_name} {sessionData.sessionRawData?.class?.tutor?.last_name}
+                        </span>
                       </Badge>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
             </CardHeader>
-            <CardContent >
-              <div className="flex items-center mt-2 text-gray-900">
-                <User className="h-4 w-4 mr-2" />
-                <span>
-                  Tutor:{' '}
-                  {sessionData.sessionRawData?.class?.tutor?.first_name}
-                </span>
-              </div>
-            </CardContent>
-            <CardContent className="">
+            <CardContent className="py-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
                   <Calendar size={18} className="text-primary-blue-600" />
@@ -187,7 +187,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
 
             {/* Lesson Details */}
-            <CardContent className="pb-3">
+            <CardContent className="pb-3 py-0">
               {iseditingLesson ? (
                 <div className="space-y-4">
                   <div>

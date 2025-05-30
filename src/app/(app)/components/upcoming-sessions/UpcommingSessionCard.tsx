@@ -108,7 +108,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         className={cn('mb-6', isDashboard && '')}
       >
         <CardContent className='p-0'>
-          <div className="space-y-6">
+          <div className="space-y-4">
             <CardHeader className="pb-3 border-b border-neutral-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -130,7 +130,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="">
+            <CardContent className="py-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
                   <Calendar size={18} className="text-primary-blue-600" />
@@ -158,7 +158,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
               </div>
             </CardContent>
             {/* Lesson Details */}
-            <CardContent className="pb-3">
+            <CardContent className="pb-3 py-0">
               {iseditingLesson ? (
                 <div className="space-y-4">
                   <div>
