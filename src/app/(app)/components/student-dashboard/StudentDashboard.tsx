@@ -137,7 +137,7 @@ const StudentDashboard = ({
     };
   };
 
-  const joinMeetingAsStudent = useCallback(
+  const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
       startTransition(async () => {
         const result = await joinMeetingAsUser({
@@ -186,7 +186,7 @@ const StudentDashboard = ({
                 isPending={isPending}
                 setSelectedSession={setSelectedSession}
                 setShowPaymentDialog={setShowPaymentDialog}
-                joinMeetingAsStudent={joinMeetingAsStudent}
+                joinMeetingAsStudent={joinMeetingAsStudentUser}
               />
             )}
           </div>
@@ -207,7 +207,7 @@ const StudentDashboard = ({
                   isPending={isPending}
                   setSelectedSession={setSelectedSession}
                   setShowPaymentDialog={setShowPaymentDialog}
-                  joinMeetingAsStudent={joinMeetingAsStudent}
+                  joinMeetingAsStudent={joinMeetingAsStudentUser}
                 />
               ))}
               {/* Pagination Controls for Upcoming Sessions */}

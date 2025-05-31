@@ -90,11 +90,6 @@ async function DashboardPage() {
           <UnauthorizedAccessToast />
           <AppHeader
             title="Student Dashboard"
-            description={`Welcome back! ${
-              upcomingSessions.length
-                ? 'You have upcoming sessions. Get ready!'
-                : "You don't have any upcoming sessions. Check back soon or explore new classes!"
-            }`}
           />
           <PageBody>
             {!upcomingSessions.length ? (

@@ -43,6 +43,16 @@ module.exports = {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
           ...colors.violet,
+          50: '#EFF6FF',
+          100: '#DBEAFE',
+          200: '#BFDBFE',
+          300: '#93C5FD',
+          400: '#60A5FA',
+          500: '#3B82F6',
+          600: '#2563EB',
+          700: '#1D4ED8',
+          800: '#1E3A8A', // Brand dark blue
+          900: '#172554',
           blue: {
             50: '#EFF6FF',
             100: '#DBEAFE',
@@ -67,6 +77,16 @@ module.exports = {
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
+          50: '#FFF7ED',
+          100: '#FFEDD5',
+          200: '#FED7AA',
+          300: '#FDBA74',
+          400: '#FB923C',
+          500: '#F97316',
+          600: '#EA580C', // Brand dark orange
+          700: '#C2410C',
+          800: '#9A3412',
+          900: '#7C2D12',
         },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',

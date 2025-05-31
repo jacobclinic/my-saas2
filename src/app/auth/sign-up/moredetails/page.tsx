@@ -4,6 +4,7 @@ import getSupabaseServerComponentClient from '~/core/supabase/server-component-c
 import configuration from '~/configuration';
 import { getUserByIdAction } from './actions';
 import MoreDetailsForm from '../../components/MoreDetailsForm';
+import LogoImage from '~/core/ui/Logo/LogoImage';
 
 export const metadata: Metadata = {
   title: 'Complete Your Profile',
@@ -39,7 +40,8 @@ async function MoreDetailsPage() {
   }
 
   return (
-    <div className="min-h-[100%] max-h-screen flex items-center justify-center py-1 px-4 sm:px-6 lg:px-4 bg-background md:border md:px-8 md:py-2 md:shadow-xl dark:md:border-dark-800  dark:bg-background dark:shadow-[0_0_1200px_0] dark:shadow-primary/30 bg-white">
+    <div className="flex w-full max-w-lg flex-col items-center space-y-4 rounded-xl border-transparent bg-white px-2 py-6 dark:bg-background dark:shadow-[0_0_1200px_0] dark:shadow-primary/30 md:w-8/12 md:border md:px-8 md:py-8 md:shadow-xl dark:md:border-dark-800 lg:px-6">
+        <LogoImage className='mb-4'/>
         <MoreDetailsForm user={session.user} />
     </div>
   );

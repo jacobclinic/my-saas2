@@ -7,6 +7,8 @@ import UserSessionContext from '~/core/session/contexts/user-session';
 import UserSession from '~/core/session/types/user-session';
 import AuthChangeListener from '~/components/AuthChangeListener';
 
+import { usePathname } from 'next/navigation';
+
 function SiteHeaderSessionProvider(
   props: React.PropsWithChildren<{
     data: Maybe<{
@@ -17,6 +19,11 @@ function SiteHeaderSessionProvider(
 ) {
   const [userSession, setUserSession] = useState(props.data);
 
+  const pathname = usePathname();
+  
+  if (pathname.startsWith('/self-registration/')) {
+    return null;
+  }
   return (
     <UserSessionContext.Provider value={{ userSession, setUserSession }}>
       <AuthChangeListener accessToken={props.data?.auth?.accessToken}>
