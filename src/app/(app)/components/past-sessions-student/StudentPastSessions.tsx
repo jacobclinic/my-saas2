@@ -102,7 +102,7 @@ const StudentPastSessions = ({
     };
   };
 
-  const joinMeetingAsStudent = useCallback(
+  const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
       startTransition(async () => {
         const result = await joinMeetingAsUser({
@@ -202,7 +202,7 @@ const StudentPastSessions = ({
               isPending={isPending}
               setSelectedSession={setSelectedSession}
               setShowPaymentDialog={setShowPaymentDialog}
-              joinMeetingAsStudent={joinMeetingAsStudent}
+              joinMeetingAsStudent={joinMeetingAsStudentUser}
             />
           ))}
 
