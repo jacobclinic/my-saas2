@@ -135,7 +135,7 @@ const StudentRegistrationViaLogin = ({
             </Button>
           </form>
           <p className="text-sm text-gray-600 mt-4 text-center">
-            Don't have an account? <a onClick={() => setIsRegisterViaLogin(false)} className="text-blue-600 font-medium hover:underline transition-all cursor-pointer">Sign up</a>
+            Don&apos;t have an account? <a onClick={() => setIsRegisterViaLogin(false)} className="text-blue-600 font-medium hover:underline transition-all cursor-pointer">Sign up</a>
           </p>
 
         </CardContent>

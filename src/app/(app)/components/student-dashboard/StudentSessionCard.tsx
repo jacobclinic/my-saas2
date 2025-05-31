@@ -8,11 +8,8 @@ import {
   Video,
   Clock,
   Calendar,
-  File,
   DollarSign,
-  Camera,
   Download,
-  BookOpen,
   Book,
   User,
   ExternalLink,
@@ -20,14 +17,6 @@ import {
 } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
-import Link from 'next/link';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../base-v2/ui/Dialog';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';

@@ -26,7 +26,7 @@ export default async function RegisterPage({ params }: { params: { token: string
           Register for Classes
         </h2>
         <p className="text-blue-100 text-sm">
-          Join Sri Lanka's premier online tuition platform
+          Join Sri Lanka&apos;s premier online tuition platform
         </p>
       </div>
       <div className='w-full max-w-md'>
