@@ -72,12 +72,26 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     const date = new Date(parseInt(year), parseInt(month) - 1);
     return format(date, 'MMMM yyyy');
   };
-
-  // Generate period options (last 12 months)
+  // Generate period options (last 10 months and next upcoming month)
   const periodOptions = useMemo(() => {
     const options = [];
     const currentDate = new Date();
-    for (let i = 0; i < 12; i++) {
+
+    // Add next month first
+    const nextMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+    );
+    const nextPeriod = `${nextMonth.getFullYear()}-${(nextMonth.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}`;
+    options.push({
+      label: formatPeriod(nextPeriod),
+      value: nextPeriod,
+    });
+
+    // Add current month and last 9 months (total 10 months)
+    for (let i = 0; i < 10; i++) {
       const date = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth() - i,
@@ -135,7 +149,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
         setSelectedPeriod(month);
         fetchPaymentsForPeriod(month);
       }
-    } else{
+    } else {
       const month = new Date().toISOString().slice(0, 7); // YYYY-MM format
       setSelectedPeriod(month);
       fetchPaymentsForPeriod(month);
