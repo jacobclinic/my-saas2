@@ -1,17 +1,18 @@
 'use client';
 
-import React from 'react';
-import { Badge } from '../base-v2/ui/Badge';
+import React, { useState } from 'react';
 import BaseDialog from '../base-v2/BaseDialog';
 import { ClassListStudent } from '~/lib/classes/types/class-v2';
 import Button from '~/core/ui/Button';
 import Modal from '~/core/ui/Modal';
 import ErrorBoundary from '~/core/ui/ErrorBoundary';
-import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import { useFormStatus } from 'react-dom';
 import Alert from '~/core/ui/Alert';
 import { generateStudentPDF } from '~/lib/utils/pdfGenerator';
 import { deleteStudentEnrollment } from '~/lib/user/actions.server';
+import { Download, Mail, MapPin, Phone, Search, Trash2 } from 'lucide-react';
+import { Input } from '../base-v2/ui/Input';
+import { ScrollArea } from '../base-v2/ui/scroll-area';
 
 interface Student {
   id: string;
@@ -37,6 +38,8 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
 }) => {
   // console.log('studentData', studentData)
   // Sample students data - in real app, this would come from props or API
+  const [searchTerm, setSearchTerm] = useState('');
+
   const students: Student[] = studentData.map((student) => {
     let studentTemp;
     if (student?.student) {
@@ -49,9 +52,14 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
       name: `${studentTemp?.first_name} ${studentTemp?.last_name}`,
       email: studentTemp?.email || '',
       phone_number: studentTemp?.phone_number || '',
-      status: studentTemp?.status || '',    
+      status: studentTemp?.status || '',
     })
   });
+
+  const filteredStudents = students.filter(student =>
+    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.phone_number.includes(searchTerm)
+  );
 
   return (
     <BaseDialog
@@ -59,38 +67,64 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
       onClose={onClose}
       title={`Registered Students - ${classDataName}`}
       maxWidth="2xl"
-      showCloseButton={true}
-      closeButtonText="Close"
-      onConfirm={() => generateStudentPDF(students, classDataName || "")}
-      confirmButtonText="Export Students List"
+      showCloseButton={false}
     >
-      <div className="space-y-4">
-        <div className="border rounded-lg divide-y">
-          {students.length > 0 ? (
-            students.map((student) => (
+      <div className="space-y-4 py-2">
+        <div className="flex items-center justify-between">
+          <div className="relative flex-grow max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
+            <Input
+              placeholder="Search students..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button
+            onClick={() => generateStudentPDF(students, classDataName || "")}
+            className="bg-primary-blue-600 hover:bg-primary-blue-700 text-white"
+          >
+            <Download size={16} className="mr-2" />
+            Export List
+          </Button>
+        </div>
+        <ScrollArea className="h-[400px] rounded-md border">
+          <div className="space-y-2 p-4">
+            {filteredStudents.map((student) => (
               <div
                 key={student.id}
-                className="p-4 flex justify-between items-center"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-neutral-50 rounded-lg transition-colors"
               >
-                <div>
-                  <p className="font-medium">{student.name}</p>
-                  <p className="text-sm text-gray-600">{student.email}</p>
-                  <p className="text-sm text-gray-600">{student.phone_number}</p>
+                <div className="flex items-center gap-3 mb-2 sm:mb-0">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-blue-100 text-primary-blue-600 font-medium">
+                    {student.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-neutral-900">{student.name}</h3>
+                    <div className="flex items-center gap-2 text-sm text-neutral-600">
+                      <Mail size={16} className="text-neutral-400" />
+                      {student.email}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <RemoveStudentModal enrollmentId={student?.enrollmentId} />
+
+                <div className="flex flex-col sm:flex-row gap-4 text-sm text-neutral-600">
+                  <div className="flex items-center gap-2">
+                    <Phone size={16} className="text-neutral-400" />
+                    {student.phone_number}
+                  </div>
+
                 </div>
-                {/* <Badge variant="outline">{student.status}</Badge> */}
+                <RemoveStudentModal enrollmentId={student?.enrollmentId} />
               </div>
-            ))
-          ) : (
-            <div className="p-4 flex justify-center items-center">
-              <p className="text-sm text-gray-600">
-                No students registered yet.
-              </p>
-            </div>
-          )}
-        </div>
+            ))}
+            {filteredStudents.length === 0 && (
+              <div className="text-center py-8 text-neutral-500">
+                <p>No students found matching your search.</p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
       </div>
     </BaseDialog>
   );
@@ -103,8 +137,8 @@ function RemoveStudentModal({ enrollmentId }: { enrollmentId: string }) {
     <Modal
       heading={`Remove student`}
       Trigger={
-        <Button data-cy={'remove-student-button'} variant={'destructive'} size={'small'}>
-          Remove
+        <Button data-cy={'remove-student-button'} variant={'ghost'} size={'small'} className='p-0'>
+          <Trash2 size={16} />
         </Button>
       }
     >
