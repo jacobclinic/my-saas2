@@ -112,7 +112,7 @@ const StudentRegistrationForm = ({
   };
 
   if (isRegisterViaLogin) {
-    return <StudentRegistrationViaLogin classData={classData} nextSessionData={nextSessionData}/>
+    return <StudentRegistrationViaLogin classData={classData} nextSessionData={nextSessionData} setIsRegisterViaLogin={setIsRegisterViaLogin}/>
   }
 
   if (isRegistrationSuccess) {
@@ -151,25 +151,11 @@ const StudentRegistrationForm = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl text-blue-600">
-            Join Your Class
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="flex items-center justify-center">
+      <Card className="w-full max-w-2xl rounded-2xl shadow-lg">
+        <CardContent className='p-6'>
+          <h2 className='text-2xl font-bold mb-6 text-gray-900'>Create Your Account</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Class Info */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h2 className="font-semibold text-lg mb-2">
-                {classData.className}
-              </h2>
-              <p className="text-blue-600">
-                Next class : {classData.nextSession}
-              </p>
-              <p className="text-blue-600">Class time: {classData.time}</p>
-            </div>
 
             {/* Personal Information */}
             <div className="space-y-4">
@@ -279,7 +265,9 @@ const StudentRegistrationForm = ({
               </div>
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button 
+              type="submit" 
+              variant={"darkBlue"}>
               <div className="flex items-center justify-center gap-2">
                 Complete Registration
                 {/* lets add right arrow icon */}
@@ -287,17 +275,9 @@ const StudentRegistrationForm = ({
               </div>
             </Button>
             {/* Button to login if already have an account, set isRegisterViaLogin true when clicked */}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => setIsRegisterViaLogin(true)}
-            >
-              <div className="flex items-center justify-center gap-2">
-                Already have an account? Login
-                <ArrowRight className="h-4 w-4 text-white" />
-              </div>
-            </Button>
+            <p className="text-sm text-gray-600 mt-4 text-center">
+               Already have an account? <a onClick={() => setIsRegisterViaLogin(true)} className="text-blue-600 font-medium hover:underline transition-all cursor-pointer">Log in</a>
+            </p>
           </form>
         </CardContent>
       </Card>

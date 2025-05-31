@@ -7,6 +7,8 @@ import { Badge } from '../base-v2/ui/Badge';
 import { Download } from 'lucide-react';
 import BaseDialog from '../base-v2/BaseDialog';
 import { generateCustomPDF } from '~/lib/utils/pdfGenerator';
+import { ScrollArea } from '../base-v2/ui/scroll-area';
+import { parseISO, format } from 'date-fns';
 
 const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
   showAttendanceDialog,
@@ -117,55 +119,58 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
       open={showAttendanceDialog}
       onClose={() => setShowAttendanceDialog(false)}
       title={`Class Attendance - ${selectedSession?.name}`}
-      footer={dialogFooter}
+      footer={attendance.length > 0 ? dialogFooter : null}
       maxWidth="2xl"
       showCloseButton={false}
     >
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-600">
-              Date: {selectedSession?.date}
-            </p>
-            <p className="text-sm text-gray-600">
-              Time: {selectedSession?.time}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="p-4 bg-neutral-50 rounded-lg">
+            <p className="text-sm font-medium text-neutral-600">Total Students</p>
+            <p className="text-2xl font-bold text-neutral-900">{selectedSession?.noOfStudents}</p>
+          </div>
+          <div className="p-4 bg-primary-blue-50 rounded-lg">
+            <p className="text-sm font-medium text-primary-blue-600">Attended</p>
+            <p className="text-2xl font-bold text-primary-blue-700">{attendance.length}</p>
+          </div>
+          <div className="p-4 bg-primary-blue-50 rounded-lg">
+            <p className="text-sm font-medium text-primary-blue-600">Attendance Rate</p>
+            <p className="text-2xl font-bold text-primary-blue-700">
+              {selectedSession?.noOfStudents !== undefined &&
+                selectedSession?.noOfStudents > 0
+                ? `${(((attendance.length - 1) / selectedSession.noOfStudents) * 100).toFixed(1)}%`
+                : '0%'}
             </p>
           </div>
-          <Badge variant="outline">{attendance.length} Students</Badge>
-        </div>{' '}
-        <div>
-          <p className="text-sm text-gray-600">
-            Total Students: {selectedSession?.noOfStudents}
-          </p>
-          <p className="text-sm text-gray-600">
-            Attendance Rate:{' '}
-            {selectedSession?.noOfStudents !== undefined &&
-            selectedSession?.noOfStudents > 0
-              ? `${(((attendance.length - 1) / selectedSession.noOfStudents) * 100).toFixed(1)}%`
-              : '0%'}
-          </p>
-          {/* (attendance.length - 1) to exclude the tutor */}
         </div>
-        <div className="border rounded-lg">
-          <div className="grid grid-cols-4 gap-4 p-3 bg-gray-50 font-medium border-b">
-            <div>Name</div>
-            <div></div>
-            <div></div>
-            <div>Duration</div>
-          </div>
-          {attendance?.map((student, idx) => (
-            <div key={idx} className="grid grid-cols-4 gap-4 p-3 border-b">
-              <div>{student.name}</div>
-              <div></div>
-              <div></div>
-              <div>
-                {student.join_time && student.leave_time
-                  ? calculateDuration(student.join_time, student.leave_time)
-                  : 'N/A'}
-              </div>
+        {attendance.length > 0 ? <div className="space-y-4">
+          <h3 className="text-sm font-medium text-neutral-900">Students Present</h3>
+          <ScrollArea className="h-[300px] rounded-md border border-neutral-200">
+            <div className="p-4 space-y-2">
+              {attendance?.map((student, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-2 px-3 hover:bg-neutral-50 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    {student.name ? <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-blue-100 text-primary-blue-600 font-medium">
+                      {student.name.charAt(0)}
+                    </div> : null}
+                    <div>
+                      <p className="text-sm font-medium text-neutral-900">{student.name}</p>
+                      {student.join_time ? <p className="text-xs text-neutral-500">Joined at {format(parseISO(student.join_time), 'h.mma')}</p> : null}
+                    </div>
+                  </div>
+                  <div className="text-sm text-neutral-600">
+                    {student.join_time && student.leave_time
+                      ? calculateDuration(student.join_time, student.leave_time)
+                      : 'N/A'}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </ScrollArea>
+        </div> : null}
       </div>
     </BaseDialog>
   );

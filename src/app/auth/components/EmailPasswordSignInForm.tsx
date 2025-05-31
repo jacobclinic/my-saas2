@@ -25,7 +25,7 @@ const EmailPasswordSignInForm: React.FCC<{
     <form className={'w-full'} onSubmit={handleSubmit(onSubmit)}>
       <div className={'flex-col space-y-4'}>
         <TextField>
-          <TextField.Label>
+          <TextField.Label  className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
             Email
             <TextField.Input
               data-cy={'email-input'}
@@ -33,12 +33,13 @@ const EmailPasswordSignInForm: React.FCC<{
               type="email"
               placeholder={'your@email.com'}
               {...emailControl}
+              className='text-sm sm:text-base'
             />
           </TextField.Label>
         </TextField>
 
         <TextField>
-          <TextField.Label>
+          <TextField.Label  className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
             Password
             <TextField.Input
               required
@@ -46,10 +47,11 @@ const EmailPasswordSignInForm: React.FCC<{
               type="password"
               placeholder={''}
               {...passwordControl}
+              className='text-sm sm:text-base'
             />
             <div className={'py-0.5 text-xs'}>
-              <Link href={'/auth/password-reset'} className={'hover:underline'}>
-                Password forgotten?
+              <Link href={'/auth/password-reset'} className={'text-sm font-medium text-primary-800 hover:text-primary-700'}>
+                Forgot password?
               </Link>
             </div>
           </TextField.Label>
@@ -57,7 +59,7 @@ const EmailPasswordSignInForm: React.FCC<{
 
         <div>
           <Button
-            className={'w-full'}
+            className={'text-sm sm:text-base py-2 sm:py-2.5 bg-primary-800 text-white hover:bg-primary-700 focus:ring-primary-600/50 bg-gradient-to-br from-primary-700 to-primary-800 w-full'}
             data-cy="auth-submit-button"
             type="submit"
             loading={loading}

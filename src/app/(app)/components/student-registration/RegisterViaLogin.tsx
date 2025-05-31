@@ -18,11 +18,13 @@ interface RegistrationViaLoginFormData {
 interface StudentRegistrationFormrops {
   classData: ClassRegistrationData;
   nextSessionData: UpcomingSession;
+  setIsRegisterViaLogin: (isRegisterViaLogin: boolean) => void;
 }
 
 const StudentRegistrationViaLogin = ({
   classData,
   nextSessionData,
+  setIsRegisterViaLogin
 }: StudentRegistrationFormrops) => {
   const [formData, setFormData] = useState<RegistrationViaLoginFormData>({
     email: '',
@@ -82,26 +84,11 @@ const StudentRegistrationViaLogin = ({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl text-blue-600">
-            Join Your Class
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="flex items-center justify-center">
+      <Card className="w-full max-w-2xl rounded-2xl shadow-lg">
+        <CardContent className='p-6'>
+          <h2 className='text-2xl font-bold mb-6 text-gray-900'>Log in to your account</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Class Info */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h2 className="font-semibold text-lg mb-2">
-                {classData.className}
-              </h2>
-              <p className="text-blue-600">
-                Next class : {classData.nextSession}
-              </p>
-              <p className="text-blue-600">Class time: {classData.time}</p>
-            </div>
-
             {/* Personal Information */}
             <div className="space-y-4">
               <div>
@@ -137,7 +124,9 @@ const StudentRegistrationViaLogin = ({
               </div>
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button 
+              type="submit" 
+              variant={"darkBlue"}>
               <div className="flex items-center justify-center gap-2">
                 Complete Registration
                 {/* lets add right arrow icon */}
@@ -145,6 +134,10 @@ const StudentRegistrationViaLogin = ({
               </div>
             </Button>
           </form>
+          <p className="text-sm text-gray-600 mt-4 text-center">
+            Don't have an account? <a onClick={() => setIsRegisterViaLogin(false)} className="text-blue-600 font-medium hover:underline transition-all cursor-pointer">Sign up</a>
+          </p>
+
         </CardContent>
       </Card>
     </div>

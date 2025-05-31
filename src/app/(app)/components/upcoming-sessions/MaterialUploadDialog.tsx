@@ -4,7 +4,7 @@
 import React, { useState, useTransition } from 'react'
 import type { MaterialUploadDialogProps } from '~/lib/sessions/types/upcoming-sessions'
 import { Textarea } from "../base-v2/ui/Textarea"
-import { Trash, Upload } from 'lucide-react'
+import { FileText, Trash2, Upload } from 'lucide-react'
 import BaseDialog from '../base-v2/BaseDialog'
 import { FileUploadDropzone } from '../base-v2/FileUploadDropzone'
 import { FileUploadItem } from '../base-v2/FileUploadItem'
@@ -22,7 +22,7 @@ interface UploadingFile {
   error?: string
 }
 
-const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({ 
+const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
   showMaterialDialog,
   setShowMaterialDialog,
   sessionId,
@@ -32,7 +32,7 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
   console.log('existingMaterials', existingMaterials)
   const [isPending, startTransition] = useTransition()
   const csrfToken = useCsrfToken()
-  
+
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([])
   const [description, setDescription] = useState('')
   const [materialsToDelete, setMaterialsToDelete] = useState<string[]>([])
@@ -78,7 +78,7 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
 
     try {
       // Update all files to uploading status
-      setUploadingFiles(prev => 
+      setUploadingFiles(prev =>
         prev.map(f => ({ ...f, status: 'uploading' as const }))
       )
 
@@ -86,7 +86,7 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
       // for (let i = 0; i < uploadingFiles.length; i++) {
       //   const uploadingFile = uploadingFiles[i]
       //   const file = uploadingFile.file
-        
+
       //   try {
       //     // Convert file to buffer
       //     const buffer = await getFileBuffer(file)
@@ -154,7 +154,7 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
           description: description,
         })
       }
-      
+
       const result = await updateSessionMaterialsAction({ materialData: filesToUpdateInDB })
 
       if (result.success) {
@@ -180,7 +180,7 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
           materialUrl,
           csrfToken
         })
-        
+
         if (result.success) {
           setMaterialsToDelete(prev => [...prev, materialId])
           // onSuccess?.()
@@ -219,34 +219,34 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
     >
       <div className="space-y-6">
         {/* Existing Materials */}
-        {existingMaterials.length > 0 && (
+        {existingMaterials.length > 0 ? (
           <div className="space-y-3">
-            <h3 className="font-medium">Existing Materials</h3>
             {existingMaterials
               .filter(material => !materialsToDelete.includes(material.id))
               .map((material) => (
                 <div
                   key={material.id}
-                  className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
                 >
-                  <div className="flex items-center">
-                    <span className="text-sm">{material.name}</span>
-                    <span className="text-sm text-gray-600 ml-2">
-                      ({material.file_size} MB)
-                    </span>
+                  <div className="flex items-center gap-3">
+                    <FileText size={18} className="text-primary-blue-600" />
+                    <div>
+                      <p className="text-sm font-medium">{material.name}</p>
+                      <p className="text-xs text-neutral-500">{material.file_size} MB</p>
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
+                    className="h-8 w-8 text-neutral-500 hover:text-error hover:bg-error-light"
                     onClick={() => handleDeleteMaterial(material.id, material.url || "")}
-                    className="text-red-500 hover:text-red-700"
                   >
-                    <Trash className="h-4 w-4" />
+                    <Trash2 size={16} />
                   </Button>
                 </div>
               ))}
           </div>
-        )}
+        ) : null}
         <FileUploadDropzone onFilesAdded={handleFilesAdded} />
 
         {uploadingFiles.length > 0 && (
@@ -265,7 +265,7 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-2 pb-2">
           <label className="text-sm font-medium">Description for Students</label>
           <Textarea
             placeholder="Add a description or instructions for these materials..."

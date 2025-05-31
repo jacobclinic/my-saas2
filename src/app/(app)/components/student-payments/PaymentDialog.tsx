@@ -178,7 +178,6 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       title="Payment Details"
       maxWidth="lg"
       showCloseButton={true}
-      headerClassName='text-amber-600'
     >
       <div className="space-y-6">
         {/* Payment Details */}

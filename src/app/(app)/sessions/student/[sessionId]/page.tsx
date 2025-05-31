@@ -10,6 +10,7 @@ import StudentSessionDetails from '~/app/(app)/components/student-sessions/Stude
 import { getClassDataByIdwithNextSession } from '~/lib/classes/database/queries';
 import { USER_ROLES } from '~/lib/constants';
 import { getUserRoleAction } from '~/lib/user/actions.server';
+import AppHeader from '~/app/(app)/components/AppHeader';
 
 interface Params {
   params: {
@@ -86,10 +87,7 @@ export default async function SessionViewPage({ params }: Params) {
 
   return (
     <>
-      {/* <AppHeader
-        title={`${new Date(sessionData?.startTime || '').toLocaleString()} - ${sessionData?.class?.name}`}
-        description={`Attendance - ${sessionData?.noOfAtendedStudents}, Status - ${sessionData?.status}`}
-      /> */}
+      <AppHeader title={"Class Details"} />
 
       <PageBody>
         <StudentSessionDetails

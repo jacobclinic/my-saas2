@@ -176,11 +176,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
 
   return (
     <div className="flex flex-col items-center h-[100%] overflow-hidden">
-      <div className="flex flex-col items-center w-full max-w-5xl mx-auto h-[70vh] overflow-y-auto md:overflow-y-hidden">
-        <div className="w-full px-4 flex-1 flex flex-col justify-center">
-          <form onSubmit={handleSubmit} className="space-y-2">
+      <div className="flex flex-col items-center w-full mx-auto overflow-y-auto md:overflow-y-hidden">
+        <div className="w-full flex-1 flex flex-col justify-center">
+          <form onSubmit={handleSubmit} className="space-y-2 px-1">
             <div className="flex flex-col items-center justify-center pt-4">
-              <div className="w-full max-w-xs">
+              <div className="w-full">
                 <ImageUploader
                   value={photoUrl}
                   onValueChange={uploadProfilePhoto}
@@ -201,7 +201,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
 
             <div className="space-y-2">
               <TextField>
-                <TextField.Label>
+                <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
                   Display Name
                   {formErrors.displayName && (
                     <p className="text-red-500 text-sm">
@@ -222,7 +222,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
               )}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <TextField>
-                  <TextField.Label>
+                  <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
                     First Name
                     {formErrors.names && (
                       <p className="text-red-500 text-sm">{formErrors.names}</p>
@@ -240,7 +240,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                 </TextField>
 
                 <TextField>
-                  <TextField.Label>
+                  <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
                     Last Name
                     {formErrors.names && (
                       <p className="text-red-500 text-sm">{formErrors.names}</p>
@@ -259,7 +259,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
               </div>
 
               <TextField>
-                <TextField.Label>
+                <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
                   Phone Number
                   {formErrors.phoneNumber && (
                     <p className="text-red-500 text-sm">
@@ -276,7 +276,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
               </TextField>
 
               <TextField>
-                <TextField.Label>
+                <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
                   Address
                   {formErrors.address && (
                     <p className="text-red-500 text-sm">{formErrors.address}</p>
@@ -292,7 +292,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                 <Button
                   type="submit"
                   loading={isSubmitting}
-                  className="w-full py-2 text-base font-medium"
+                  className={'w-full btn bg-secondary-600 text-white hover:bg-secondary-500 focus:ring-secondary-500/50 bg-gradient-to-br from-secondary-500 to-secondary-600'}
                 >
                   Complete Profile & Continue
                 </Button>
