@@ -171,7 +171,7 @@ const StudentUpcomingSessions = ({
   };
 
   return (
-    <div className="p-6 max-w-6xl xl:min-w-[900px] mx-auto space-y-6">
+    <div className="xl:min-w-[900px] space-y-6">
       {/* Header & Search */}{' '}
       <div className="space-y-4">
         <div className="flex justify-between items-center">

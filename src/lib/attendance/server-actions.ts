@@ -30,9 +30,9 @@ export async function markAttendanceAction(
   client: SupabaseClient,
 ): Promise<void> {
   const sessions = await getAllPastSessionsDataWithinLastHour(client);
-  console.log(
-    `Found ${sessions.length} past sessions within the last hour.`, );
-  console.log(sessions);
+  // console.log(
+  //   `Found ${sessions.length} past sessions within the last hour.`, );
+  // console.log(sessions);
 
   if (!sessions || sessions.length === 0) {
     console.log('No past sessions found within the last hour.');

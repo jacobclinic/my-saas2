@@ -35,9 +35,9 @@ const TimezoneIndicator = ({
       const hours = Math.floor(Math.abs(offset) / 60);
       const minutes = Math.abs(offset) % 60;
       const sign = offset >= 0 ? '+' : '-';
-      const formattedOffset = `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      //const formattedOffset = `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
-      setFormattedTimezone(`${timezoneAbbr} (GMT${formattedOffset})`);
+      setFormattedTimezone(`${timezoneAbbr}`);
     } catch (error) {
       console.error('Error formatting timezone:', error);
       setFormattedTimezone(userTimezone); // Fallback to raw timezone id

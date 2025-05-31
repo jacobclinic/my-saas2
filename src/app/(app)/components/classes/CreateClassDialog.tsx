@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../base-v2/ui/Select';
+import TimezoneIndicator from '../TimezoneIndicator';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { createClassAction } from '~/lib/classes/server-actions-v2';
@@ -273,7 +274,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
-
           {/* <div>
             <label className="text-sm font-medium">End Date</label>
             <Input
@@ -284,10 +284,15 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               }
               min={new Date().toISOString().split('T')[0]}
             />
-          </div> */}
+          </div> */}{' '}
         </div>
 
+        {/* Class Schedule with Timezone Indicator */}
         <div>
+          <div className="flex justify-between items-center mb-2">
+            <label className="text-sm font-medium">Class Schedule</label>
+            <TimezoneIndicator />
+          </div>
           {/* <div className="flex justify-between items-center mb-2">
             <label className="text-sm font-medium">Class Schedule</label>
             <Button
