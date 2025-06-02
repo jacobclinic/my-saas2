@@ -254,7 +254,6 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
       }
     });
   };
-
   const handleRejectPayment = async (paymentId: string, reason: string) => {
     startTransition(async () => {
       const result = await rejectStudentPaymentAction({
@@ -277,6 +276,35 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
         console.error('Failed to reject payment:', result.error);
       }
     });
+  };
+  const handlePaymentUpload = async (paymentId: string, url: string) => {
+    // Update the payment with the new proof URL and status
+    setPayments((prevPayments) =>
+      prevPayments.map((payment) =>
+        payment.id === paymentId
+          ? {
+              ...payment,
+              paymentProofUrl: url,
+              status: PaymentStatus.PENDING_VERIFICATION,
+            }
+          : payment,
+      ),
+    );
+
+    // Update the selected payment if it's the same one
+    if (selectedPayment?.id === paymentId) {
+      setSelectedPayment((prev) =>
+        prev
+          ? {
+              ...prev,
+              paymentProofUrl: url,
+              status: PaymentStatus.PENDING_VERIFICATION,
+            }
+          : prev,
+      );
+    }
+
+    toast.success('Payment proof uploaded successfully');
   };
 
   const getStatusBadge = (status: PaymentStatus) => {
@@ -482,7 +510,6 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
           onChange={handlePeriodChange}
         />
       </div>
-
       {/* Payments Table */}
       {isLoading ? (
         <div className="py-8 text-center">
@@ -505,8 +532,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
           pageCount={pageCount}
           onPaginationChange={handlePaginationChange}
         />
-      )}
-
+      )}{' '}
       {/* Payment Details Dialog */}
       {selectedPayment && (
         <PaymentDetailsDialog
@@ -515,6 +541,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
           payment={selectedPayment}
           onApprove={handleApprovePayment}
           onReject={handleRejectPayment}
+          onPaymentUpload={handlePaymentUpload}
         />
       )}
     </div>
