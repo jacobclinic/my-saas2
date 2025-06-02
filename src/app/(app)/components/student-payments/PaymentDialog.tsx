@@ -33,6 +33,7 @@ interface PaymentDialogProps {
   onClose: () => void;
   sessionData: SessionStudentTableData;
   studentId: string;
+  onPaymentSuccess?: () => void;
 }
 
 const PaymentDialog: React.FC<PaymentDialogProps> = ({
@@ -40,6 +41,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   onClose,
   sessionData,
   studentId,
+  onPaymentSuccess,
 }) => {
   const csrfToken = useCsrfToken();
   const [uploadingFile, setUploadingFile] = useState<UploadingFile | null>(
@@ -56,7 +58,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     accountName: 'Comma Education',
     accountNumber: '1234567890',
     branch: 'Colombo',
-  }
+  };
 
   const whatsappNumber = '+947XXXXXXX';
   const whatsappLink = `https://wa.me/${whatsappNumber}`;
@@ -97,7 +99,6 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         },
         csrfToken,
       });
-
       if (result.success) {
         setUploadingFile((prev) =>
           prev
@@ -108,6 +109,11 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
               }
             : null,
         );
+
+        // Call the success callback to update parent state
+        if (onPaymentSuccess) {
+          onPaymentSuccess();
+        }
 
         // Show success message and close dialog after delay
         setTimeout(() => {
@@ -194,8 +200,9 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
                 Rs. {sessionData.paymentAmount}
               </div>
               <div>
-                <p className="text-xs text-amber-600">Payment Due: 8 { monthName} {year}</p>
-
+                <p className="text-xs text-amber-600">
+                  Payment Due: 8 {monthName} {year}
+                </p>
               </div>
             </div>
           </div>
