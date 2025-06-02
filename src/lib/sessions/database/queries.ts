@@ -1410,7 +1410,13 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
             name,
             subject,
             tutor_id,
-            fee
+            fee,
+            tutor:${USERS_TABLE}!tutor_id (
+            id, 
+            first_name, 
+            last_name, 
+            email
+            )
           ),
           materials:${RESOURCE_MATERIALS_TABLE}!id (
             id,
@@ -1487,7 +1493,18 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
 
       return {
         ...sessionData,
-        class: classTemp,
+        class: classTemp
+          ? {
+              id: classTemp.id,
+              name: classTemp.name,
+              subject: classTemp.subject,
+              tutor_id: classTemp.tutor_id,
+              fee: classTemp.fee,
+              tutor: Array.isArray(classTemp.tutor)
+                ? classTemp.tutor[0]
+                : classTemp.tutor || undefined,
+            }
+          : undefined,
         materials: transformedMaterials || [],
         payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
         payment_amount: currentPayment?.amount || classTemp?.fee || null,

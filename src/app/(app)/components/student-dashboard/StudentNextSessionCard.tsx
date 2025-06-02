@@ -4,21 +4,16 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../base-v2/ui/Card";
 import { Button } from "../base-v2/ui/Button";
 import { Badge } from "../base-v2/ui/Badge";
-import { Alert, AlertDescription } from "../base-v2/ui/Alert";
 import {
   Clock,
   Calendar,
-  File,
   DollarSign,
-  Camera,
-  AlertTriangle,
   User,
   FileText,
   ExternalLink,
 } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 interface StudentNextSessionCardProps {
@@ -44,7 +39,12 @@ const StudentNextSessionCard = ({
         <div className="flex justify-between items-start">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{sessionData.name}</h3>
-            <Badge variant="blue" className="mt-2">{sessionData.name}</Badge> {/* replace with subject */}
+            {sessionData.topic ? (
+              <p className="text-sm text-gray-600 mt-1">{sessionData.topic}</p>
+            ) : (
+              <p className="text-sm text-gray-500 italic mt-1">Lesson details will be updated soon</p>
+            )}
+            <Badge variant="blue" className="mt-2">{sessionData.sessionRawData?.class?.subject}</Badge>
           </div>
           {sessionData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION && (
             <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-500">
@@ -65,7 +65,7 @@ const StudentNextSessionCard = ({
           </div>
           <div className="flex items-center text-sm text-gray-600">
             <User size={16} className="mr-2" />
-            <span>Tutor Name</span>
+            <span>{sessionData.sessionRawData?.class?.tutor?.first_name+' '+sessionData.sessionRawData?.class?.tutor?.last_name}</span>
           </div>
         </div>
         {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
@@ -99,7 +99,7 @@ const StudentNextSessionCard = ({
         )} */}
       </CardContent>
       <CardFooter className="border-t border-gray-200 bg-gray-50 p-4">
-        <div className="flex items-center gap-2">
+        <div className="flex justify-between gap-2 w-full">
           {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
             <Button
               variant={"primary"}
@@ -125,7 +125,7 @@ const StudentNextSessionCard = ({
           )}
           <Button 
             variant="outline"
-            className='flex-1 gap-1'
+            className='w-full flex-1 gap-1'
             onClick={() =>
               router.push(`/sessions/student/${sessionData.id}?type=next`)
           }>
