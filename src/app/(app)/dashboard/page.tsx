@@ -12,7 +12,7 @@ import { Info } from 'lucide-react';
 import StudentDashboard from '../components/student-dashboard/StudentDashboard';
 import TutorDBClient from '../components/tutor-dashboard/TutorDashBoardClient';
 import AdminDashboardClient from '../components/admin/dashboard/AdminDashboardClient';
-import UnauthorizedAccessToast from './UnauthorizedAccessToast';
+import UnauthorizedAccessToast from '../components/UnauthorizedAccessToast';
 
 export const metadata = {
   title: 'Dashboard',
