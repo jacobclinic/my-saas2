@@ -1,7 +1,6 @@
+import { CLASSES_TABLE, INVOICES_TABLE, STUDENT_PAYMENTS_TABLE } from '~/lib/db-tables';
 import { generateMonthlyInvoices } from './mutations';
 import { SupabaseClient } from '@supabase/supabase-js';
-
-
 
 export async function getMonthlyInvoices(
   client: SupabaseClient,
@@ -85,6 +84,82 @@ export async function getMonthlyInvoices(
     });
   } catch (error) {
     console.error('Failed to fetch invoices:', error);
+    throw error;
+  }
+}
+
+export async function getStudentInvoices(
+  client: SupabaseClient,
+  studentId: string,
+): Promise<Invoice[]> {
+  try {
+    const { data, error } = await client
+      .from(INVOICES_TABLE)
+      .select(
+        `
+          id,
+          student_id,
+          class_id,
+          invoice_no,
+          invoice_period,
+          amount,
+          invoice_date,
+          due_date,
+          status,
+          class:${CLASSES_TABLE}!class_id (
+            name,
+            subject
+          ),
+          payments:${STUDENT_PAYMENTS_TABLE}!invoice_id (
+            status,
+            payment_proof_url
+          )
+        `,
+      )
+      .eq('student_id', studentId)
+      .order('invoice_date', { ascending: false });
+
+    if (error) {
+      throw new Error(`Error fetching student invoices: ${error.message}`);
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    return data.map((invoice) => {
+      // Handle possible array returns from Supabase joins
+      const classData = Array.isArray(invoice.class)
+        ? invoice.class[0]
+        : invoice.class;
+      const payment = Array.isArray(invoice.payments)
+        ? invoice.payments[0]
+        : invoice.payments;
+
+      return {
+        id: invoice.id,
+        student_id: invoice.student_id,
+        student_name: '', // Not needed for student view
+        class_id: invoice.class_id,
+        class_name: classData?.name || null,
+        class_subject: classData?.subject || null,
+        month: invoice.invoice_period,
+        payment_status:
+          payment?.status === 'verified'
+            ? 'completed'
+            : payment?.status === 'pending' || payment?.payment_proof_url
+              ? 'pending'
+              : 'not_paid',
+        payment_proof_url: payment?.payment_proof_url || null,
+        invoice_no: invoice.invoice_no || null,
+        amount: invoice.amount || null,
+        invoice_date: invoice.invoice_date,
+        due_date: invoice.due_date || null,
+        status: invoice.status,
+      };
+    });
+  } catch (error) {
+    console.error('Failed to fetch student invoices:', error);
     throw error;
   }
 }

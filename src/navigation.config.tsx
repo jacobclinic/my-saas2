@@ -4,18 +4,18 @@ import {
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 
-import { 
-  LayoutDashboard, 
-  FolderKanban, 
-  CalendarClock, 
-  CalendarCheck2, 
+import {
+  LayoutDashboard,
+  FolderKanban,
+  CalendarClock,
+  CalendarCheck2,
   Wallet,
   User,
   CreditCard,
   ChevronRight,
   Menu,
   X,
-  LogOut
+  LogOut,
 } from 'lucide-react';
 
 type Divider = {
@@ -88,7 +88,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <CalendarClock size={20} />;
       },
       end: true,
-      userRole: ['admin', 'tutor','student'],
+      userRole: ['admin', 'tutor', 'student'],
     },
     {
       label: 'Past Classes',
@@ -97,7 +97,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <CalendarCheck2 size={20} />;
       },
       end: true,
-      userRole: ['admin', 'tutor','student'],
+      userRole: ['admin', 'tutor', 'student'],
     },
     // {
     //   label: 'Sessions',
@@ -115,7 +115,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <Wallet size={20} />;
       },
       end: true,
-      userRole: ['admin', 'tutor'],
+      userRole: ['admin', 'tutor', 'student'],
     },
     {
       label: 'Settings',

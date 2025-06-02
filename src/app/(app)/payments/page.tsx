@@ -12,6 +12,7 @@ import { Info } from 'lucide-react';
 import AdminPaymentsPanel from '~/app/(app)/components/admin-payments/AdminPaymentsPanel';
 import { getAllStudentPayments } from '~/lib/payments/database/queries';
 import { getPaymentSummaryForPage } from './actions';
+import StudentPaymentsView from '~/app/(app)/components/student-payments/StudentPaymentsView';
 
 export const metadata = {
   title: 'Payments Management',
@@ -105,8 +106,29 @@ async function PaymentsPage({
           </PageBody>
         </>
       );
+    } else if (userRole === 'student') {
+      // For students, show their invoices and payment options
+      return (
+        <>
+          <AppHeader
+            title="My Payments"
+            description="View and manage your class fee payments"
+          />
+          <PageBody>
+            <Suspense
+              fallback={
+                <div className="flex justify-center py-8">
+                  Loading your invoices...
+                </div>
+              }
+            >
+              <StudentPaymentsView />
+            </Suspense>
+          </PageBody>
+        </>
+      );
     } else {
-      // Students and other roles should not access this page
+      // Unknown roles should not access this page
       redirect('/dashboard');
     }
   } catch (error) {
