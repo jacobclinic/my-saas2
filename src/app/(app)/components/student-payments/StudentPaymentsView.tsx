@@ -123,29 +123,6 @@ const StudentPaymentsView: React.FC = () => {
       .sort((a, b) => b.value.localeCompare(a.value));
   };
 
-  const getPaymentSummary = () => {
-    const total = invoices.length;
-    const paid = invoices.filter(
-      (inv) => inv.payment_status === 'completed',
-    ).length;
-    const pending = invoices.filter(
-      (inv) => inv.payment_status === 'pending',
-    ).length;
-    const unpaid = invoices.filter(
-      (inv) => inv.payment_status === 'not_paid',
-    ).length;
-    const totalAmount = invoices.reduce(
-      (sum, inv) => sum + (inv.amount || 0),
-      0,
-    );
-    const paidAmount = invoices
-      .filter((inv) => inv.payment_status === 'completed')
-      .reduce((sum, inv) => sum + (inv.amount || 0), 0);
-
-    return { total, paid, pending, unpaid, totalAmount, paidAmount };
-  };
-
-  const summary = getPaymentSummary();
 
   if (loading) {
     return (
@@ -160,43 +137,7 @@ const StudentPaymentsView: React.FC = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">My Payments</h1>
-        <p className="text-gray-600">
-          Manage your class fee payments and invoices
-        </p>
-      </div>
-
-      {/* Payment Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-blue-600">{summary.total}</p>
-            <p className="text-sm text-gray-600">Total Invoices</p>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">{summary.paid}</p>
-            <p className="text-sm text-gray-600">Paid</p>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-yellow-600">
-              {summary.pending}
-            </p>
-            <p className="text-sm text-gray-600">Pending</p>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-red-600">{summary.unpaid}</p>
-            <p className="text-sm text-gray-600">Unpaid</p>
-          </div>
-        </div>
-      </div>
-
+      
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6">
         <div className="flex flex-wrap gap-4 items-center">
@@ -237,15 +178,6 @@ const StudentPaymentsView: React.FC = () => {
               ))}
             </SelectContent>
           </Select>
-
-          <Button
-            variant="outline"
-            onClick={fetchInvoices}
-            className="flex items-center gap-2"
-          >
-            <RefreshCcw className="h-4 w-4" />
-            Refresh
-          </Button>
         </div>
       </div>
 

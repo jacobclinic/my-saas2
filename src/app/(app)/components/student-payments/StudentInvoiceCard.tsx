@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../base-v2/ui/Card';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
@@ -12,34 +12,49 @@ import {
   Book,
   DollarSign,
 } from 'lucide-react';
+import StudentInvoiceDialog from './StudentInvoiceDialog';
+import { generateInvoicePDF } from '~/lib/utils/pdfGenerator';
 
 interface StudentInvoiceCardProps {
   invoice: {
     id: string;
-    invoice_no: string | null;
+    student_id: string;
+    student_name: string;
+    class_id: string;
     class_name: string | null;
     class_subject?: string | null;
-    amount: number | null;
-    due_date: string | null;
-    payment_status: 'completed' | 'pending' | 'not_paid';
     month: string;
+    payment_status: 'completed' | 'pending' | 'not_paid';
+    payment_proof_url: string | null;
+    invoice_no: string | null;
+    amount: number | null;
+    invoice_date: string;
+    due_date: string | null;
+    status: string;
   };
 }
 
 const StudentInvoiceCard: React.FC<StudentInvoiceCardProps> = ({ invoice }) => {
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+
   const handleViewInvoice = () => {
-    // TODO: Implement view invoice functionality
-    console.log('View invoice:', invoice.id);
+    // Open the invoice details dialog
+    setShowInvoiceDialog(true);
   };
 
   const handleDownloadInvoice = () => {
-    // TODO: Implement download invoice functionality
-    console.log('Download invoice:', invoice.id);
+    // Generate and download PDF invoice
+    try {
+      generateInvoicePDF(invoice);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate invoice PDF. Please try again.');
+    }
   };
 
   const handlePayNow = () => {
     // TODO: Implement payment functionality
-    console.log('Pay now:', invoice.id );
+    console.log('Pay now:', invoice.id);
   };
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -118,7 +133,16 @@ const StudentInvoiceCard: React.FC<StudentInvoiceCardProps> = ({ invoice }) => {
                 )}
               </div>
             </div>
+            <div className="flex items-center text-sm">
+              <Calendar className="h-4 w-4 text-orange-600 mr-2" />
+              <div>
+                <p className="font-medium">{formatDate(invoice.due_date)}</p>
+                <p className="text-gray-600">Payment Due Date</p>
+              </div>
+            </div>
+          </div>
 
+          <div className="space-y-3">
             <div className="flex items-center text-sm">
               <DollarSign className="h-4 w-4 text-green-600 mr-2" />
               <div>
@@ -126,16 +150,6 @@ const StudentInvoiceCard: React.FC<StudentInvoiceCardProps> = ({ invoice }) => {
                   Rs. {invoice.amount ? invoice.amount.toLocaleString() : '0'}
                 </p>
                 <p className="text-gray-600">Class Fee</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center text-sm">
-              <Calendar className="h-4 w-4 text-orange-600 mr-2" />
-              <div>
-                <p className="font-medium">{formatDate(invoice.due_date)}</p>
-                <p className="text-gray-600">Payment Due Date</p>
               </div>
             </div>
           </div>
@@ -151,7 +165,6 @@ const StudentInvoiceCard: React.FC<StudentInvoiceCardProps> = ({ invoice }) => {
             <FileText className="h-4 w-4" />
             View Invoice
           </Button>
-
           <Button
             variant="outline"
             size="sm"
@@ -160,8 +173,7 @@ const StudentInvoiceCard: React.FC<StudentInvoiceCardProps> = ({ invoice }) => {
           >
             <Download className="h-4 w-4" />
             Download Invoice
-          </Button>
-
+          </Button>{' '}
           {invoice.payment_status !== 'completed' && (
             <Button
               size="sm"
@@ -174,6 +186,13 @@ const StudentInvoiceCard: React.FC<StudentInvoiceCardProps> = ({ invoice }) => {
           )}
         </div>
       </CardContent>
+
+      {/* Invoice Details Dialog */}
+      <StudentInvoiceDialog
+        open={showInvoiceDialog}
+        onClose={() => setShowInvoiceDialog(false)}
+        invoice={invoice}
+      />
     </Card>
   );
 };
