@@ -48,12 +48,7 @@ async function ClassesPage() {
   let studentClassesData: any[] = [];
   let tutorId;
 
-  if (userRole === 'student') {
-    studentClassesData = await getAllClassesByStudentIdData(
-      client,
-      user?.id || '',
-    );
-  } else if (userRole === 'tutor') {
+  if (userRole === 'tutor') {
     classesData = await getAllClassesByTutorIdData(client, user?.id || '');
     tutorId = user?.id;
   } else if (userRole === 'admin') {
@@ -62,7 +57,7 @@ async function ClassesPage() {
 
   return (
     <>
-      <div className='w-full h-full lg:pb-6 lg:pt-0 flex flex-col flex-1'>
+      {/* <div className='w-full h-full lg:pb-6 lg:pt-0 flex flex-col flex-1'>
         {userRole === 'student' ? (
           <StudentClassClient studentClassesData={studentClassesData} />
         ) : userRole === 'tutor' ? (
@@ -72,7 +67,17 @@ async function ClassesPage() {
             tutorId={tutorId}
           />
         ) : (
-          // /////////////////////////////////////////////////
+          <ClassesAdmin classesData={classesData} />
+        )}
+      </div> */}
+      <div className='w-full h-full lg:pb-6 lg:pt-0 flex flex-col flex-1'>
+        {userRole === 'tutor' ? (
+          <ClassesListClient
+            classesData={classesData}
+            userRole={userRole}
+            tutorId={tutorId}
+          />
+        ) : (
           <ClassesAdmin classesData={classesData} />
         )}
       </div>
