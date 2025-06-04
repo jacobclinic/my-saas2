@@ -10,6 +10,7 @@ import { redirect } from 'next/navigation';
 import StudentUpcomingSessionClient from '../components/upcoming-sessions-student/StudentUpcomingSessionClient';
 import UpcomingSessionsAdmin from '../components/admin/upcoming-sessions/UpcomingSessionsAdmin';
 import { getAllUpcominSessionsAdmin } from '~/lib/classes/server-actions-v2';
+import TimezoneIndicator from '../components/TimezoneIndicator';
 
 export const metadata = {
   title: 'Sessions',
@@ -67,7 +68,11 @@ async function UpcomingSessionsPage() {
 
   return (
     <>
-      <AppHeader title={'Upcoming Classes'} description={''} />
+      <AppHeader title={'Upcoming Classes'} description={''} >
+        <div className='w-[225px]'>
+          <TimezoneIndicator />
+        </div>
+      </AppHeader>
 
       <PageBody>
         {userRole === 'student' ? (
