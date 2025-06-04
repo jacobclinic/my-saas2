@@ -2,9 +2,10 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import {
+  getAllUpcomingSessionsWithin1_2Hrs,
   getAllUpcomingSessionsWithin24_25Hrs,
   getSessions2_1HrsAfterSession,
-  getUpcomingSessionsWithUnpaidStudentsBetween3_4Days,
+  getUpcomingSessionsWithUnpaidStudentsBetween2_3Days,
 } from '../quieries';
 import { stat } from 'fs';
 
@@ -86,12 +87,12 @@ async function sendBulkSMS(request: SMSRequest): Promise<APIResponse> {
  * Sends payment reminder SMS 3 days prior to unpaid students
  * @param client Supabase client instance
  */
-export async function remindPayments3DaysPrior(
+export async function remindPayments2DaysPrior(
   client: SupabaseClient,
 ): Promise<void> {
   try {
     const sessions: SessionWithUnpaidStudents[] =
-      await getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(client);
+      await getUpcomingSessionsWithUnpaidStudentsBetween2_3Days(client);
 
     if (sessions.length === 0) {
       console.log('No sessions with unpaid students found for reminders');
@@ -110,11 +111,8 @@ export async function remindPayments3DaysPrior(
         continue;
       }
 
-      const message = `PAYMENT REMINDER: Your fees of Rs.${session.class.fee} for the class ${session.class.name} due on ${session.start_time!.split('T')[0].slice(0, 10)}. Upload your receipt here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}
-                        \nBank: Commercial Bank
-                        \nAcc: 1234567890
-                        \nName: Comma Education
-                        \n-Comma Education`;
+      const message = `Friendly reminder: Payment for ${session.class.name} is due on (2 days). Submit receipt here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id} 
+      \n- Comma Education`;
 
       const smsRequest: SMSRequest = {
         phoneNumbers,
@@ -146,7 +144,7 @@ export async function remindPayments3DaysPrior(
  */
 async function sendNotificationSms(
   session: NotificationClass,
-  status: 'before' | 'after',
+  status: 'before' | 'after' | 'before1Hour',
 ): Promise<void> {
   try {
     const phoneNumbers = session.class.students
@@ -176,9 +174,11 @@ async function sendNotificationSms(
     }).format(sessionDate);
 
     if (status === 'before') {
-      message = `REMINDER: Your ${session.class.name} class is tomorrow ${localDate} at ${localTime}. \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}?type=upcoming \n-Comma Education`;
+      message = `REMINDER: Your ${session.class.name} class is tomorrow ${localDate} at ${localTime}. \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
+    } else if(status === 'after'){
+      message = `The recording for your ${session.class.name} class is ready! Access it and all class materials here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
     } else {
-      message = `Your ${session.class.name} recording from today is now available. Access it and all class materials here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
+      message = `Your ${session.class.name} class is starting at ${localTime} today! \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
     }
 
     const smsRequest: SMSRequest = {
@@ -271,6 +271,40 @@ export async function notifyUpcomingSessionsSMS(
     // Process each session individually
     for (const session of sessions) {
       await sendNotificationSms(session, 'before');
+    }
+  } catch (error) {
+    console.error('Error in notifyUpcomingSessionsBefore24Hrs:', error);
+  }
+}
+
+export async function notifyUpcomingSessionsBefore1HourSMS(
+  client: SupabaseClient,
+): Promise<void> {
+  try {
+    const sessions: NotificationClass[] =
+      await getAllUpcomingSessionsWithin1_2Hrs(client);
+
+    if (sessions.length === 0) {
+      console.log(
+        'No upcoming sessions found for pre-session SMS notifications',
+      );
+      return;
+    }
+
+    console.log(
+      `Found ${sessions.length} upcoming sessions for SMS notifications in the 24-25 hour window`,
+    ); // Log details of each session for debugging
+    sessions.forEach((session, index) => {
+      // Use standard date formatting for logging
+      const sessionTime = new Date(session.start_time);
+      console.log(
+        `Upcoming Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, Start Time (UTC): ${sessionTime.toISOString()}`,
+      );
+    });
+
+    // Process each session individually
+    for (const session of sessions) {
+      await sendNotificationSms(session, 'before1Hour');
     }
   } catch (error) {
     console.error('Error in notifyUpcomingSessionsBefore24Hrs:', error);

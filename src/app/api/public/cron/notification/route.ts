@@ -5,6 +5,7 @@ import {
 } from '~/lib/notifications/email/email.notification.service';
 import {
   notifyAfterSessionSMS,
+  notifyUpcomingSessionsBefore1HourSMS,
   notifyUpcomingSessionsSMS,
 } from '~/lib/notifications/sms/sms.notification.service';
 
@@ -40,6 +41,9 @@ export async function POST(req: Request) {
     console.log('Processing after-session notifications (SMS)...');
     await notifyAfterSessionSMS(supabase);
 
+    console.log('Processing upcoming session before 1 hour notifications (SMS)...');
+    await notifyUpcomingSessionsBefore1HourSMS(supabase);
+    
     console.log('All notification processes completed.');
 
     return new Response('Notification sent successfully', { status: 200 });

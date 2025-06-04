@@ -94,3 +94,4 @@ interface SessionWithUnpaidStudents {
     }[];
   };
 };
+

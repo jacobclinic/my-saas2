@@ -126,9 +126,8 @@ export async function registerStudentViaLoginAction(
         // send welcome sms
         sendSingleSMS({
           phoneNumber: userDetails?.phone_number!,
-          message: `Welcome to ${formData.className}! Your registration is confirmed. Login to your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
-                \nUsername: Your email
-                \nUse the entered Password you used
+          message: `Welcome to ${formData.className}! Access your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
+                \nLogin with your registration email/password.
                 \n-Comma Education`,
         }),
       ]);
