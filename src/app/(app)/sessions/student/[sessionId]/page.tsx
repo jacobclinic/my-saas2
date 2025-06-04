@@ -49,8 +49,6 @@ export default async function SessionViewPage({ params }: Params) {
     params.sessionId,
   );
 
-  console.log('Session Data:________', sessionData);
-
   if (!sessionData) {
     // Handle not found case
     return (
