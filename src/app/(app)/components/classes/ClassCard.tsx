@@ -205,7 +205,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
               ) : (
                 <>
                   <Copy size={16} className="mr-2" />
-                  Copy Link
+                  Registration Link
                 </>
               )}
             </Button>

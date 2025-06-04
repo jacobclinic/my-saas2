@@ -61,7 +61,16 @@ const NAVIGATION_CONFIG: NavigationConfig = {
         return <FolderKanban size={20} />;
       },
       end: true,
-      userRole: ['admin', 'tutor'],
+      userRole: ['admin'],
+    },
+    {
+      label: 'Your Classes',
+      path: '/classes',
+      Icon: () => {
+        return <FolderKanban size={20} />;
+      },
+      end: true,
+      userRole: ['tutor'],
     },
     {
       label: 'Tutors',
