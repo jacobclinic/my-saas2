@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import {
   notifyAfterSessionsEmail,
+  notifyUpcomingSessionsBefore1Hrs,
   notifyUpcomingSessionsBefore24Hrs,
 } from '~/lib/notifications/email/email.notification.service';
 import {
@@ -28,22 +29,25 @@ export async function POST(req: Request) {
     console.log('Starting notification cron job...');
 
     // Notify upcoming sessions before 24 hours - run one at a time for better debugging
-    console.log('Processing upcoming session notifications (email)...');
-    await notifyUpcomingSessionsBefore24Hrs(supabase);
 
-    console.log('Processing upcoming session notifications (SMS)...');
-    await notifyUpcomingSessionsSMS(supabase);
+    await Promise.all([
+      notifyUpcomingSessionsBefore24Hrs (supabase),
+      notifyUpcomingSessionsSMS(supabase)
+    ])
 
     // Notify after completed sessions - run one at a time for better debugging
-    console.log('Processing after-session notifications (email)...');
-    await notifyAfterSessionsEmail(supabase);
+    await Promise.all([
+      notifyAfterSessionsEmail(supabase),
+      notifyAfterSessionSMS(supabase)
+    ])
 
-    console.log('Processing after-session notifications (SMS)...');
-    await notifyAfterSessionSMS(supabase);
-
+    // Notify upcoming sessions before 1 hour notifications
     console.log('Processing upcoming session before 1 hour notifications (SMS)...');
-    await notifyUpcomingSessionsBefore1HourSMS(supabase);
-    
+    await Promise.all([
+      notifyUpcomingSessionsBefore1HourSMS(supabase),
+      notifyUpcomingSessionsBefore1Hrs(supabase)
+    ])
+
     console.log('All notification processes completed.');
 
     return new Response('Notification sent successfully', { status: 200 });
