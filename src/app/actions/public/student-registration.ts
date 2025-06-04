@@ -5,11 +5,11 @@ import { z } from 'zod';
 import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
 import sendEmail from '../../../core/email/send-email';
-import { getStudentCredentialsEmailTemplate } from '../../../core/email/templates/student-credentials';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { updateUserWithRetry } from '~/lib/user/actions.server';
 import { EmailService } from '~/core/email/send-email-mailtrap';
+import { getStudentCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
 
 // Helper function to wait
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
