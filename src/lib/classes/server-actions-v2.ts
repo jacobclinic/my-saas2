@@ -19,12 +19,12 @@ import {
 } from './database/queries';
 import { getAllUpcommingSessionsData } from '../sessions/database/queries';
 
-import { getStudentInvitationToClass } from '~/core/email/templates/addStudentToClass';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
 import { format as dateFnsFormat } from 'date-fns';
 import sendEmail from '~/core/email/send-email';
 import { sendSingleSMS } from '../notifications/sms/sms.notification.service';
 import { EmailService } from '~/core/email/send-email-mailtrap';
+import { getStudentInvitationToClass } from '~/core/email/templates/emailTemplate';
 
 type CreateClassParams = {
   classData: NewClassData;

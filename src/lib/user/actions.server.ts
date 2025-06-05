@@ -13,11 +13,10 @@ import { revalidatePath } from 'next/cache';
 import { USER_ROLES } from '../constants';
 import { generateSecurePassword } from '../utility-functions';
 import UserType from './types/user';
-import { getUserCredentialsEmailTemplate } from '~/core/email/templates/user-credentials';
-import { getStudentCredentialsEmailTemplate } from '~/core/email/templates/student-credentials';
 import { withSession } from '~/core/generic/actions-utils';
 import { fetchUserRole } from './database/queries';
 import { EmailService } from '~/core/email/send-email-mailtrap';
+import { getStudentCredentialsEmailTemplate, getUserCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
 
 export async function deleteUserAccountAction() {
   const logger = getLogger();

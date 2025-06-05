@@ -12,8 +12,8 @@ interface ClassType {
 // Tutor object structure for fetched data
 interface ClassTableTutor {
   id: string;
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
 }
 
 interface TimeSlot {
@@ -44,6 +44,18 @@ interface ClassWithTutorAndEnrollmentAndNextSession {
   nextSession: string | null;
 }
 
+interface ClassWithTutorDetails{
+  id: string;
+  name: string;
+  description?: string;
+  subject: string;
+  tutorId: string;
+  fee: number;
+  status: string;
+  time_slots?: TimeSlot[];
+  tutor: ClassTableTutor;
+}
+
 type ClassTableData = {
   id: string;
   name: string;
@@ -54,4 +66,4 @@ type ClassTableData = {
 };
 
 export default ClassType;
-export type { ClassWithTutorAndEnrollment, ClassWithTutorAndEnrollmentAndNextSession, TimeSlot, ClassTableData };
+export type { ClassWithTutorAndEnrollment, ClassWithTutorDetails, ClassWithTutorAndEnrollmentAndNextSession, TimeSlot, ClassTableData };

@@ -13,6 +13,7 @@ import StudentDashboard from '../components/student-dashboard/StudentDashboard';
 import TutorDBClient from '../components/tutor-dashboard/TutorDashBoardClient';
 import AdminDashboardClient from '../components/admin/dashboard/AdminDashboardClient';
 import UnauthorizedAccessToast from '../components/UnauthorizedAccessToast';
+import { getTutorDashboardDataAction } from '~/lib/tutorStats/server-action';
 
 export const metadata = {
   title: 'Dashboard',
@@ -55,6 +56,28 @@ async function DashboardPage() {
         getAllUpcommingSessionsByTutorIdData(client, user.id, true),
       ]);
 
+      const { tutorStat, error } = await getTutorDashboardDataAction(user.id);
+      if (error) {
+        console.error('Error fetching tutor dashboard data:', error);
+        return (
+          <>
+            <AppHeader
+              title="Dashboard Error"
+              description="We encountered an error while loading your dashboard"
+            />
+            <PageBody>
+              <Alert className="bg-red-50 border-red-200">
+                <Info className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-700">
+                  Unable to load tutor dashboard data. Please try refreshing the
+                  page or contact support if the problem persists.
+                </AlertDescription>
+              </Alert>
+            </PageBody>
+          </>
+        );
+      }
+
       // Render tutor dashboard
       return (
         <>
@@ -72,7 +95,7 @@ async function DashboardPage() {
             ) : (
               <TutorDBClient
                 upcomingSessionDataPerWeek={sessionData}
-                // activeClassesData={classesData}
+                tutorStat={tutorStat!}
               />
             )}
           </PageBody>
@@ -88,9 +111,7 @@ async function DashboardPage() {
       return (
         <>
           <UnauthorizedAccessToast />
-          <AppHeader
-            title="Student Dashboard"
-          />
+          <AppHeader title="Student Dashboard" />
           <PageBody>
             {!upcomingSessions.length ? (
               <Alert className="bg-blue-50 border-blue-200">

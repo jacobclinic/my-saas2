@@ -1,15 +1,20 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
+  getAllUpcomingSessionsWithin1_2Hrs,
   getAllUpcomingSessionsWithin24_25Hrs,
   getSessions2_1HrsAfterSession,
-  getUpcomingSessionsWithUnpaidStudentsBetween3_4Days,
+  getUpcomingSessionsWithUnpaidStudentsBetween2_3Days,
 } from '../quieries';
-import { getStudentNotifyBeforeEmailTemplate } from '~/core/email/templates/studentNotifyBefore';
-import { getStudentNotifyAfterEmailTemplate } from '~/core/email/templates/studentNotifyAfter';
-import { paymentReminderEmaiTemplate } from '~/core/email/templates/paymentReminder';
+
 import { format, parseISO } from 'date-fns';
 import getLogger from '~/core/logger';
 import { EmailService } from '~/core/email/send-email-mailtrap';
+import {
+  getStudentNotifyAfterEmailTemplate,
+  getStudentNotifyBefore1HrEmailTemplate,
+  getStudentNotifyBeforeEmailTemplate,
+  paymentReminderEmaiTemplate,
+} from '~/core/email/templates/emailTemplate';
 
 const logger = getLogger();
 
@@ -21,7 +26,7 @@ const emailService = EmailService.getInstance();
 
 async function sendNotifySessionEmails(
   data: NotificationClass[],
-  beforeOrAfter: 'before' | 'after',
+  beforeOrAfter: 'before' | 'after' | 'before1Hour',
 ) {
   try {
     // Flatten all students across all sessions into a single array
@@ -71,8 +76,9 @@ async function sendNotifySessionEmails(
           topic: task.topic,
           classId: task.class_id,
           studentEmail: task.to,
-        });
-        
+        }); 
+        console.log('sending email to', task.to);
+
         await emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: task.to,
@@ -80,8 +86,7 @@ async function sendNotifySessionEmails(
           html: html,
           text: text,
         });
-      }
-      if (beforeOrAfter === 'after') {
+      } else if (beforeOrAfter === 'after') {
         const { html, text } = getStudentNotifyAfterEmailTemplate({
           studentName: task.first_name!,
           className: task.class_name,
@@ -99,6 +104,24 @@ async function sendNotifySessionEmails(
           from: process.env.EMAIL_SENDER!,
           to: task.to,
           subject: `Your ${task.class_name} Class Recording Is Now Available`,
+          html: html,
+          text: text,
+        });
+      } else if (beforeOrAfter === 'before1Hour') {
+        const { html, text } = getStudentNotifyBefore1HrEmailTemplate({
+          studentName: task.first_name!,
+          className: task.class_name,
+          sessionDate: localDate,
+          sessionTime: localTime,
+          topic: task.topic,
+          classId: task.class_id,
+          studentEmail: task.to,
+        });
+
+        await emailService.sendEmail({
+          from: process.env.EMAIL_SENDER!,
+          to: task.to,
+          subject: `Upcoming Class Notification`,
           html: html,
           text: text,
         });
@@ -152,6 +175,24 @@ export async function notifyUpcomingSessionsBefore24Hrs(
   });
 
   await sendNotifySessionEmails(sessions, 'before');
+}
+
+export async function notifyUpcomingSessionsBefore1Hrs(client: SupabaseClient) {
+  const sessions = await getAllUpcomingSessionsWithin1_2Hrs(client);
+  console.log(
+    `Found ${sessions.length} upcoming sessions for email notifications in the 24-25 hour window`,
+  );
+
+  // Log details of each session for debugging
+  sessions.forEach((session, index) => {
+    // Use standard date formatting for logging
+    const sessionTime = new Date(session.start_time);
+    console.log(
+      `Upcoming Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, Start Time (UTC): ${sessionTime.toISOString()}`,
+    );
+  });
+
+  await sendNotifySessionEmails(sessions, 'before1Hour');
 }
 
 export async function notifyAfterSessionsEmail(client: SupabaseClient) {
@@ -247,6 +288,6 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
 
 export async function remindPayments3DaysPrior(client: SupabaseClient) {
   const sessions =
-    await getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(client);
+    await getUpcomingSessionsWithUnpaidStudentsBetween2_3Days(client);
   await sendPaymentReminderEmails(sessions);
 }

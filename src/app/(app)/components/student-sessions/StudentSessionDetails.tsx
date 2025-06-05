@@ -57,7 +57,7 @@ const StudentSessionDetails = ({
             email: userSession?.auth?.user?.email || '',
           },
         });
-        
+
         startTransition(() => {
           if (result.success) {
             window.open(result.start_url, '_blank');
@@ -202,9 +202,7 @@ const StudentSessionDetails = ({
             {type !== 'past' && (
               <Button
                 variant="primary"
-                onClick={() =>
-                  joinMeetingAsStudentUser(formattedSessionData)
-                }
+                onClick={() => joinMeetingAsStudentUser(formattedSessionData)}
               >
                 <ExternalLink size={16} /> Join Class
               </Button>
@@ -274,9 +272,9 @@ const StudentSessionDetails = ({
                     <div>
                       <p className="text-sm font-medium text-gray-500">Tutor</p>
                       <p className="mt-1 text-sm text-gray-900">
-                        {'Tutor Name'}
+                        {classData?.tutor?.first_name}{' '}
+                        {classData?.tutor?.last_name}
                       </p>
-                      <p className="text-sm text-gray-500">{'Tutor email'}</p>
                     </div>
 
                     <div>
@@ -289,7 +287,7 @@ const StudentSessionDetails = ({
                         </p>
                       ) : (
                         <p className="mt-1 text-sm text-gray-500 italic">
-                          Lesson details will be updated soon
+                          {sessionData.title}
                         </p>
                       )}
                     </div>

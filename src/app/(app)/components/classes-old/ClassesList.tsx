@@ -140,7 +140,7 @@ function DataTableExample({
   const tableData: ClassTableData[] = classesData.map((classData) => ({
     id: classData?.id,
     name: classData?.name,
-    tutor: `${classData?.tutor?.firstName} ${classData?.tutor?.lastName}`,
+    tutor: `${classData?.tutor?.first_name} ${classData?.tutor?.last_name}`,
     subject: classData?.subject,
     noOfStudents: classData?.noOfStudents || 0,
     action: 'Manage',

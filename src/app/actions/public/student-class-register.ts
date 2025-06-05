@@ -4,12 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
-import { getStudentCredentialsEmailTemplate } from '~/core/email/templates/student-credentials';
 import { USERS_TABLE } from '~/lib/db-tables';
 import sendEmail from '~/core/email/send-email';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { EmailService } from '~/core/email/send-email-mailtrap';
+import { getStudentCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
 
 const registrationSchema = z.object({
   email: z.string().email(),
@@ -126,9 +126,8 @@ export async function registerStudentViaLoginAction(
         // send welcome sms
         sendSingleSMS({
           phoneNumber: userDetails?.phone_number!,
-          message: `Welcome to ${formData.className}! Your registration is confirmed. Login to your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
-                \nUsername: Your email
-                \nUse the entered Password you used
+          message: `Welcome to ${formData.className}! Access your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
+                \nLogin with your registration email/password.
                 \n-Comma Education`,
         }),
       ]);

@@ -9,6 +9,7 @@ import {
 import {
   ClassWithTutorAndEnrollment,
   ClassWithTutorAndEnrollmentAndNextSession,
+  ClassWithTutorDetails,
 } from '../types/class';
 import {
   ClassForStudentType,
@@ -133,6 +134,49 @@ export async function getClassDataByIdwithNextSession(
 
   return transformedData;
 }
+
+// export async function getClassDataByIdWithTutorData(
+//   client: SupabaseClient<Database>,
+//   classId: string,
+// ): Promise<ClassWithTutorDetails | null> {
+//   const result = (await client
+//     .from(CLASSES_TABLE)
+//     .select(
+//       `
+//         id,
+//         name,
+//         description,
+//         subject,
+//         tutor_id,
+//         tutor:${USERS_TABLE}!tutor_id (
+//           id,
+//           first_name,
+//           last_name
+//         ),
+//         fee,
+//         status,
+//         time_slots,
+//         noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
+//       `,
+//       { count: 'exact' },
+//     )
+//     .eq('id', classId)
+//     .maybeSingle()) as {
+//     data: ClassWithTutorAndEnrollmentRawData | null;
+//     error: unknown;
+//   };
+
+//   if (result.error) {
+//     console.error('Error fetching class data:', result.error);
+//     return null;
+//   }
+
+//   if (!result.data) {
+//     console.error('No class data found for ID:', classId);
+//     return null;
+//   }
+
+// }
 
 export async function getAllClassesData(
   client: SupabaseClient<Database>,

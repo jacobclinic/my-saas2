@@ -27,12 +27,7 @@ export default async function SessionViewPage({ params }: Params) {
     error: authError,
   } = await client.auth.getUser();
 
-  // console.log("--------------user----------------", user?.id, params.sessionId)
-
-  // Handle authentication error
   if (authError || !user?.id) {
-    // console.error('Authentication error:', authError);
-    // console.log('Session ID: ' + params.sessionId);
     redirect('/auth/join-class-signin?sessionId=' + params.sessionId);
   }
 
@@ -45,8 +40,6 @@ export default async function SessionViewPage({ params }: Params) {
 
   // Check if user is a student, if not redirect to dashboard
   if (userRole !== USER_ROLES.STUDENT) {
-    // Server-side redirects don't allow direct toast notifications,
-    // but we can redirect to dashboard with a query param to show a message
     redirect('/dashboard?message=unauthorized&role=student');
   }
 
