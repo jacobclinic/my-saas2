@@ -47,7 +47,13 @@ module.exports = composedConfig;
 
 function getRemotePatterns() {
   // add here the remote patterns for your images
-  const remotePatterns = [];
+  const remotePatterns = [
+    {
+      protocol: 'https',
+      hostname: 'tjsqhhtjbpmswapalqsl.supabase.co',
+      pathname: '/storage/v1/object/public/**',
+    },
+  ];
 
   return IS_PRODUCTION
     ? remotePatterns
@@ -56,5 +62,6 @@ function getRemotePatterns() {
           protocol: 'http',
           hostname: '127.0.0.1',
         },
+        ...remotePatterns,
       ];
 }

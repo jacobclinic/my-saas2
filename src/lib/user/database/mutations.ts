@@ -17,6 +17,10 @@ export function updateUserData(
     .update({
       display_name: data.displayName,
       photo_url: data.photoUrl,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      phone_number: data.phone_number,
+      address: data.address,
     })
     .match({ id })
     .throwOnError();
