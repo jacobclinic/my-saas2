@@ -1,5 +1,4 @@
 import { useContext } from 'react';
-import Link from 'next/link';
 import classNames from 'clsx';
 
 import {
@@ -15,7 +14,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '~/core/ui/Tooltip';
 
 import SidebarContext from '~/lib/contexts/sidebar';
 import configuration from '~/configuration';
-import SubscriptionStatusBadge from '~/app/(app)/components/SubscriptionStatusBadge';
 import useUserSession from '~/core/hooks/use-user-session';
 import useSignOut from '~/core/hooks/use-sign-out';
 import ProfileDropdown from '~/components/ProfileDropdown';
@@ -76,28 +74,8 @@ function ProfileDropdownContainer(props: { collapsed: boolean }) {
 }
 
 function StatusBadge() {
-  const userSession = useUserSession();
-  const subscription = userSession?.subscription;
-
-  const isActive = ['active', 'trialing'].includes(
-    subscription?.status ?? 'free',
-  );
-
-  // if the organization has an active subscription
-  // we do not show the subscription status badge
-  if (isActive || !subscription) {
-    return null;
-  }
-
-  const href = `/settings/subscription`;
-
-  // in all other cases we show the subscription status badge
-  // which will show the subscription status and a link to the subscription page
-  return (
-    <Link href={href}>
-      <SubscriptionStatusBadge subscription={subscription} />
-    </Link>
-  );
+  // Subscription status badge functionality removed
+  return null;
 }
 
 function CollapsibleButton({

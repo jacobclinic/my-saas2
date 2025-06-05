@@ -137,15 +137,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
             return <User size={20} />;
           },
           userRole: ['admin', 'tutor', 'student'],
-        },
-        {
-          label: 'Subscription',
-          path: '/settings/subscription',
-          Icon: () => {
-            return <CreditCard size={20} />;
-          },
-          userRole: ['admin', 'tutor', 'student'],
-        },
+        }
       ],
     },
   ],
