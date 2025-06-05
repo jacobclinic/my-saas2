@@ -120,9 +120,8 @@ const UpdatePasswordForm: React.FCC<{ user: User }> = ({ user }) => {
       <div className={'flex flex-col space-y-4'}>
         <If condition={data}>
           <Alert type={'success'}>
-            <Alert.Heading>Password update request successful</Alert.Heading>
-            We sent you an email to confirm your new password. Please check your
-            inbox and click on the link to confirm your new password.
+            <Alert.Heading>Password update successful</Alert.Heading>
+            Please use the updated password to sign in next time.
           </Alert>
         </If>
 

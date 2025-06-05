@@ -70,16 +70,22 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
     description: sessionData.lessonDescription || '',
   });
 
+  // Store original lesson details to track changes
+  const [originalLessonDetails, setOriginalLessonDetails] =
+    useState<LessonDetails>({
+      title: sessionData.lessonTitle || '',
+      description: sessionData.lessonDescription || '',
+    });
+
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
   const [editSessionLoading, setEditSessionLoading] = useState(false);
   const [showLessonDetailsDialog, setShowLessonDetailsDialog] = useState(false);
-
   const saveLessonDetails = async () => {
     setEditSessionLoading(true);
     const result = await updateSessionAction({
       sessionId: sessionData.id,
       sessionData: lessonDetails,
-      csrfToken
+      csrfToken,
     });
 
     if (result.success) {
@@ -87,6 +93,11 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         title: 'Success',
         description: 'Session edited successfully',
         variant: 'success',
+      });
+      // Update original lesson details to reflect the saved state
+      setOriginalLessonDetails({
+        title: lessonDetails.title,
+        description: lessonDetails.description,
       });
     } else {
       toast({
@@ -97,7 +108,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
     }
     setEditSessionLoading(false);
     setShowLessonDetailsDialog(false);
-  }
+  };
 
   const handleCopyLink = (
     link: string,
@@ -124,10 +135,8 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   }, [sessionData]);
   return (
     <>
-      <Card
-        className={cn('mb-6', isDashboard && '')}
-      >
-        <CardContent className='p-0'>
+      <Card className={cn('mb-6', isDashboard && '')}>
+        <CardContent className="p-0">
           <div className="space-y-4">
             {/* Header */}
             <CardHeader className="pb-3 border-b border-neutral-100">
@@ -140,19 +149,26 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     <CardTitle className="text-lg font-semibold text-neutral-900">
                       {sessionData.name}
                     </CardTitle>
-                    <div className='mt-1 flex items-center gap-2 text-sm'>
+                    <div className="mt-1 flex items-center gap-2 text-sm">
                       {sessionData.subject && (
-                        <Badge variant="outline" className="bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200">
+                        <Badge
+                          variant="outline"
+                          className="bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200"
+                        >
                           {sessionData.subject?.replace(/\b([a-z])/, (match) =>
                             match.toUpperCase(),
                           )}
                         </Badge>
                       )}
-                      <Badge variant="outline" className="flex items-center text-gray-900">
+                      <Badge
+                        variant="outline"
+                        className="flex items-center text-gray-900"
+                      >
                         <User className="h-4 w-4 mr-2" />
                         <span>
                           Tutor:{' '}
-                          {sessionData.sessionRawData?.class?.tutor?.first_name} {sessionData.sessionRawData?.class?.tutor?.last_name}
+                          {sessionData.sessionRawData?.class?.tutor?.first_name}{' '}
+                          {sessionData.sessionRawData?.class?.tutor?.last_name}
                         </span>
                       </Badge>
                     </div>
@@ -165,7 +181,9 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
                   <Calendar size={18} className="text-primary-blue-600" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-900">{sessionData.date}</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {sessionData.date}
+                    </p>
                     <p className="text-xs text-neutral-600">Date</p>
                   </div>
                 </div>
@@ -173,7 +191,9 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
                   <Clock size={18} className="text-primary-blue-600" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-900">{sessionData.time}</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {sessionData.time}
+                    </p>
                     <p className="text-xs text-neutral-600">Time</p>
                   </div>
                 </div>
@@ -181,7 +201,9 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
                   <Users size={18} className="text-primary-blue-600" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-900">{sessionData.registeredStudents} Students</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {sessionData.registeredStudents} Students
+                    </p>
                     <p className="text-xs text-neutral-600">Enrolled</p>
                   </div>
                 </div>
@@ -205,9 +227,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     <h3 className="text-lg font-medium">
                       {lessonDetails.title}
                     </h3>
-                    <p className="text-gray-600">
-                      {lessonDetails.description}
-                    </p>
+                    <p className="text-gray-600">{lessonDetails.description}</p>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -333,7 +353,6 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
           </div>
         </CardContent>
       </Card>
-
       <MaterialUploadDialog
         showMaterialDialog={showMaterialDialog}
         setShowMaterialDialog={setShowMaterialDialog}
@@ -352,29 +371,33 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionData={{
           title: sessionData?.sessionRawData?.title || '',
           description: sessionData?.sessionRawData?.description || '',
-          startTime: convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-            .startTime || '',
-          endTime: convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-            .endTime || '',
+          startTime:
+            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
+              .startTime || '',
+          endTime:
+            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
+              .endTime || '',
           meetingUrl: sessionData?.sessionRawData?.meeting_url || '',
           materials: sessionData?.materials || [],
         }}
         loading={editSessionLoading}
-      />
+      />{' '}
       <AddLessonDetailsDialog
         open={showLessonDetailsDialog}
         onClose={() => {
+          // Reset to the last saved state, not the original session data
           setLessonDetails({
-            title: sessionData?.sessionRawData?.title || '',
-            description:
-              sessionData?.sessionRawData?.description || '',
+            title: originalLessonDetails.title,
+            description: originalLessonDetails.description,
           });
-          setShowLessonDetailsDialog(false)
+          setShowLessonDetailsDialog(false);
         }}
         lessonDetails={lessonDetails}
         setLessonDetails={setLessonDetails}
         onConfirm={saveLessonDetails}
-        loading={editSessionLoading} />
+        loading={editSessionLoading}
+        originalLessonDetails={originalLessonDetails}
+      />
     </>
   );
 };
