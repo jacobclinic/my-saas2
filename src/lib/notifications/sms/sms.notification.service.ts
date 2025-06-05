@@ -87,7 +87,7 @@ async function sendBulkSMS(request: SMSRequest): Promise<APIResponse> {
  * Sends payment reminder SMS 3 days prior to unpaid students
  * @param client Supabase client instance
  */
-export async function remindPayments2DaysPrior(
+export async function remindPayments2DaysPriorSMS(
   client: SupabaseClient,
 ): Promise<void> {
   try {
@@ -175,7 +175,7 @@ async function sendNotificationSms(
 
     if (status === 'before') {
       message = `REMINDER: Your ${session.class.name} class is tomorrow ${localDate} at ${localTime}. \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
-    } else if(status === 'after'){
+    } else if (status === 'after') {
       message = `The recording for your ${session.class.name} class is ready! Access it and all class materials here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
     } else {
       message = `Your ${session.class.name} class is starting at ${localTime} today! \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
