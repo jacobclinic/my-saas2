@@ -12,6 +12,7 @@ import CsrfTokenContext from '~/lib/contexts/csrf';
 import SidebarContext from '~/lib/contexts/sidebar';
 import UserSessionContext from '~/core/session/contexts/user-session';
 import AuthChangeListener from '~/components/AuthChangeListener';
+import configuration from '~/configuration';
 import type loadAppData from '~/lib/server/loaders/load-app-data';
 
 const RouteShell: React.FCC<{
@@ -43,7 +44,7 @@ const RouteShell: React.FCC<{
         <CsrfTokenContext.Provider value={data.csrfToken}>
           <AuthChangeListener
             accessToken={data.auth?.accessToken}
-            whenSignedOut={'/'}
+            whenSignedOut={configuration.paths.signIn}
           >
             <main>
               <Toaster richColors={false} />
