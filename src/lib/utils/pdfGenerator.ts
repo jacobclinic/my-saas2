@@ -168,7 +168,7 @@ export const generateInvoicePDF = (invoiceData: {
   yPos += 4;
   doc.text('Colombo, Sri Lanka', 20, yPos);
   yPos += 4;
-  doc.text('Phone: +94 XX XXX XXXX', 20, yPos);
+  doc.text('Phone: +94716751777', 20, yPos);
   yPos += 4;
   doc.text('Email: info@commaeducation.com', 20, yPos);
   yPos += 15;
