@@ -14,7 +14,7 @@ const configuration = {
     description: 'Your SaaS Description',
     themeColor: '#ffffff',
     themeColorDark: '#0a0a0a',
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://makerkit.dev",
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://makerkit.dev',
     siteName: 'Comma Education',
     twitterHandle: '',
     githubHandle: '',
@@ -39,7 +39,8 @@ const configuration = {
   production,
   environment: process.env.NEXT_PUBLIC_ENVIRONMENT,
   features: {
-    enableThemeSwitcher: true,
+    // Disabled theme switcher to prevent changing from light to dark mode
+    enableThemeSwitcher: false, // was: true
     enableAccountDeletion:
       process.env.NEXT_PUBLIC_ENABLE_ACCOUNT_DELETION === 'true',
   },
@@ -136,7 +137,7 @@ const configuration = {
   },
   email: {
     fromAddress: process.env.EMAIL_SENDER,
-  }
+  },
 };
 
 export default configuration;

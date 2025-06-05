@@ -21,6 +21,7 @@ interface Props {
   setLessonDetails: (arg: LessonDetails) => void;
   onConfirm: () => void;
   loading: boolean;
+  originalLessonDetails?: LessonDetails;
 }
 
 const AddLessonDetailsDialog: React.FC<Props> = ({
@@ -29,8 +30,19 @@ const AddLessonDetailsDialog: React.FC<Props> = ({
   lessonDetails,
   setLessonDetails,
   onConfirm,
-  loading
+  loading,
+  originalLessonDetails
 }) => {
+
+  // Check if there are any changes from the original state
+  const hasChanges = () => {
+    if (!originalLessonDetails) return true; // Allow saving if no original state
+    
+    return (
+      lessonDetails.title !== (originalLessonDetails.title || '') ||
+      lessonDetails.description !== (originalLessonDetails.description || '')
+    );
+  };
 
   return (
     <BaseDialog
@@ -40,7 +52,8 @@ const AddLessonDetailsDialog: React.FC<Props> = ({
       maxWidth="xl"
       onConfirm={onConfirm}
       confirmButtonText="Save Changes"
-      confirmButtonVariant={'default'}
+      confirmButtonVariant={hasChanges() ? 'default' : 'secondary'}
+      confirmButtonDisabled={!hasChanges()}
       loading={loading}
     >
       <div className="">

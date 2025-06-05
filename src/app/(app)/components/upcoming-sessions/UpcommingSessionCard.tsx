@@ -6,7 +6,13 @@ import {
   UpcommingSessionCardProps,
   UploadedMaterial,
 } from '~/lib/sessions/types/upcoming-sessions';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../base-v2/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '../base-v2/ui/Card';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
 import { cn } from '../../lib/utils';
@@ -29,7 +35,12 @@ import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 import { parse, format } from 'date-fns';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base-v2/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../base-v2/ui/tooltip';
 import { convertTimeRangeToISO } from '~/lib/utils/date-utils';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
 
@@ -55,8 +66,13 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [uploadedMaterials, setUploadedMaterials] = useState<
     UploadedMaterial[]
   >([]);
-  const [materialDescription, setMaterialDescription] = useState('');
-  const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
+  const [materialDescription, setMaterialDescription] = useState('');  const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
+    title: sessionData?.sessionRawData?.title || '',
+    description: sessionData?.sessionRawData?.description || '',
+  });
+
+  // Store original lesson details to track changes
+  const [originalLessonDetails, setOriginalLessonDetails] = useState<LessonDetails>({
     title: sessionData?.sessionRawData?.title || '',
     description: sessionData?.sessionRawData?.description || '',
   });
@@ -78,7 +94,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
   console.log('lessonDetails:', sessionData.time);
 
-
   const joinMeetingAsTutor = useCallback(async () => {
     startTransition(async () => {
       const result = await joinMeetingAsHost({
@@ -91,7 +106,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       }
     });
   }, [sessionData]);
-
   const saveLessonDetails = async () => {
     // Save lesson details logic here
     try {
@@ -101,7 +115,14 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionData: lessonDetails,
         csrfToken,
       });
-
+      
+      if (result.success) {
+        // Update original lesson details to reflect the saved state
+        setOriginalLessonDetails({
+          title: lessonDetails.title,
+          description: lessonDetails.description,
+        });
+      }
     } catch (error) {
       console.error('Error saving lesson details:', error);
     } finally {
@@ -111,10 +132,8 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   };
   return (
     <>
-      <Card
-        className={cn('mb-6', isDashboard && '')}
-      >
-        <CardContent className='p-0'>
+      <Card className={cn('mb-6', isDashboard && '')}>
+        <CardContent className="p-0">
           <div className="space-y-4">
             <CardHeader className="pb-3 border-b border-neutral-100">
               <div className="flex items-center justify-between">
@@ -127,7 +146,10 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                       {sessionData.name}
                     </CardTitle>
                     {sessionData.subject && (
-                      <Badge variant="outline" className="mt-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200">
+                      <Badge
+                        variant="outline"
+                        className="mt-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200"
+                      >
                         {sessionData.subject?.replace(/\b([a-z])/, (match) =>
                           match.toUpperCase(),
                         )}
@@ -142,7 +164,9 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
                   <Calendar size={18} className="text-primary-blue-600" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-900">{sessionData.date}</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {sessionData.date}
+                    </p>
                     <p className="text-xs text-neutral-600">Date</p>
                   </div>
                 </div>
@@ -150,7 +174,9 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
                   <Clock size={18} className="text-primary-blue-600" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-900">{sessionData.time}</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {sessionData.time}
+                    </p>
                     <p className="text-xs text-neutral-600">Time</p>
                   </div>
                 </div>
@@ -158,7 +184,9 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
                   <Users size={18} className="text-primary-blue-600" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-900">{sessionData.registeredStudents} Students</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {sessionData.registeredStudents} Students
+                    </p>
                     <p className="text-xs text-neutral-600">Enrolled</p>
                   </div>
                 </div>
@@ -179,9 +207,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                   </Button>
                 ) : (
                   <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
-                    <h3 className="font-medium">
-                      {lessonDetails.title}
-                    </h3>
+                    <h3 className="font-medium">{lessonDetails.title}</h3>
                     <p className="text-gray-600 text-sm">
                       {lessonDetails.description}
                     </p>
@@ -189,7 +215,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowLessonDetailsDialog(true)}
-                      className='pl-0 text-primary-blue-700 hover:text-primary-blue-800 hover:bg-primary-blue-50'
+                      className="pl-0 text-primary-blue-700 hover:text-primary-blue-800 hover:bg-primary-blue-50"
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Details
@@ -371,21 +397,22 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
           materials: sessionData.materials || [],
         }}
         loading={editSessionLoading}
-      />
-      <AddLessonDetailsDialog
+      />      <AddLessonDetailsDialog
         open={showLessonDetailsDialog}
         onClose={() => {
+          // Reset to the last saved state, not the original session data
           setLessonDetails({
-            title: sessionData?.sessionRawData?.title || '',
-            description:
-              sessionData?.sessionRawData?.description || '',
+            title: originalLessonDetails.title,
+            description: originalLessonDetails.description,
           });
-          setShowLessonDetailsDialog(false)
+          setShowLessonDetailsDialog(false);
         }}
         lessonDetails={lessonDetails}
         setLessonDetails={setLessonDetails}
         onConfirm={saveLessonDetails}
-        loading={loading} />
+        loading={loading}
+        originalLessonDetails={originalLessonDetails}
+      />
     </>
   );
 };

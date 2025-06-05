@@ -211,7 +211,7 @@ export function paymentReminderEmaiTemplate(params: {
           <h3>Need Help?</h3>
           <p>If you have any questions about your payment:</p>
           <ul>
-            <li>WhatsApp us at +94 XX XXX XXXX</li>
+            <li>WhatsApp us at +94716751777</li>
             <li>Email us at <a href="mailto:payments@commaeducation.com">payments@commaeducation.com</a></li>
           </ul>
         </div>
@@ -264,7 +264,7 @@ export function paymentReminderEmaiTemplate(params: {
         Need Help?
         ---------
         If you have any questions about your payment:
-        - WhatsApp us at +94 XX XXX XXXX
+        - WhatsApp us at +94716751777
         - Email us at payments@commaeducation.com
 
         ---
@@ -467,7 +467,7 @@ export function getStudentNotifyAfterEmailTemplate(params: {
           <h3>Need Help?</h3>
           <p>If you have any issues accessing your recording:</p>
           <ul>
-            <li>WhatsApp us at +94 XX XXX XXXX</li>
+            <li>WhatsApp us at +94716751777</li>
             <li>Email us at <a href="mailto:support@commaeducation.com">support@commaeducation.com</a></li>
           </ul>
         </div>
@@ -509,7 +509,7 @@ export function getStudentNotifyAfterEmailTemplate(params: {
         Need Help?
         ---------
         If you have any issues accessing your recording:
-        - WhatsApp us at +94 XX XXX XXXX
+        - WhatsApp us at +94716751777
         - Email us at support@commaeducation.com
 
         ---
@@ -622,7 +622,7 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
           <h3>Need Help?</h3>
           <p>If you have any issues accessing your class:</p>
           <ul>
-            <li>WhatsApp us at +94 XX XXX XXXX</li>
+            <li>WhatsApp us at +94716751777</li>
             <li>Email us at <a href="mailto:support@commaeducation.com">support@commaeducation.com</a></li>
           </ul>
         </div>
@@ -662,7 +662,7 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
         Need Help?
         ---------
         If you have any issues accessing your class:
-        - WhatsApp us at +94 XX XXX XXXX
+        - WhatsApp us at +94716751777
         - Email us at support@commaeducation.com
 
         ---
@@ -774,7 +774,7 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
           <h3>Need Help?</h3>
           <p>If you have any issues accessing your class:</p>
           <ul>
-            <li>WhatsApp us at +94 XX XXX XXXX</li>
+            <li>WhatsApp us at +94716751777</li>
             <li>Email us at <a href="mailto:support@commaeducation.com">support@commaeducation.com</a></li>
           </ul>
         </div>
@@ -814,7 +814,7 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
         Need Help?
         ---------
         If you have any issues accessing your class:
-        - WhatsApp us at +94 XX XXX XXXX
+        - WhatsApp us at +94716751777
         - Email us at support@commaeducation.com
 
         ---

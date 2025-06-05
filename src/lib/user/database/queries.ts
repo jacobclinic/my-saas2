@@ -18,7 +18,9 @@ export async function getUserDataById(
       displayName: display_name,
       photoUrl: photo_url,
       first_name,
-      last_name
+      last_name,
+      phone_number,
+      address
     `,
     )
     .eq('id', userId)
@@ -34,7 +36,7 @@ export async function getUserDataById(
  */
 export async function fetchUserRole(
   client: SupabaseClient,
-  userId: string
+  userId: string,
 ): Promise<string> {
   if (!userId) {
     throw new Error('User ID is required.');
@@ -57,16 +59,15 @@ export async function fetchUserRole(
   return data.user_role;
 }
 
-
 export async function getAllUsersByUserRoleData(
   client: SupabaseClient<Database>,
-  userRole: string
+  userRole: string,
 ): Promise<UserType[] | []> {
   try {
     const { data, error } = await client
       .from(USERS_TABLE)
       .select()
-      .eq('user_role', userRole)
+      .eq('user_role', userRole);
 
     // console.log("getAllUsersData", data)
 
@@ -77,8 +78,8 @@ export async function getAllUsersByUserRoleData(
     if (!data) {
       return [];
     }
-    
-    return data.map(user => ({
+
+    return data.map((user) => ({
       ...user,
       email: user.email || undefined,
       display_name: user.display_name || undefined,
@@ -87,9 +88,8 @@ export async function getAllUsersByUserRoleData(
       last_name: user.last_name || undefined,
       user_role: user.user_role || undefined,
       address: user.address || undefined,
-      biography: user.biography || undefined
+      biography: user.biography || undefined,
     })) as UserType[];
-
   } catch (error) {
     console.error('Failed to fetch all users:', error);
     throw error;
@@ -98,7 +98,7 @@ export async function getAllUsersByUserRoleData(
 
 export async function getUserById(
   client: SupabaseClient<Database>,
-  userId: string
+  userId: string,
 ): Promise<UserType | null> {
   const { data, error } = await client
     .from(USERS_TABLE)
