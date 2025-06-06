@@ -478,6 +478,7 @@ export const sendEmailMSGToStudentAction = withSession(
       className: classData.name || '',
       nextSession: formattedDate,
       time: schedule || '',
+      tutorName: classData.tutor.first_name +" "+ classData.tutor.last_name || 'Tutor',
     };
 
     const registrationLink =
