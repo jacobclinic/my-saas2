@@ -562,7 +562,7 @@ export async function getAllClassesByStudentIdData(
 
     const { data, error } = await query;
 
-    console.log('getAllClassesByStudentIdData raw data:', data);
+    // console.log('getAllClassesByStudentIdData raw data:', data);
 
     if (error) {
       throw new Error(
@@ -620,7 +620,7 @@ export async function getAllClassesByStudentIdData(
       }),
     );
 
-    console.log('Transformed data:', transformedData);
+    // console.log('Transformed data:', transformedData);
 
     return transformedData;
   } catch (error) {

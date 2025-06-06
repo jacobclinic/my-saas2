@@ -80,25 +80,6 @@ const AdminPaymentsPanel = ({
     ];
   }, []);
 
-  useEffect(() => {
-    const fetchSummaryData = async () => {
-      try {
-        setIsLoading(true);
-        // No longer passing a period to avoid automatic invoice generation
-        const result = await getPaymentSummaryAction({ csrfToken });
-
-        if (result.success && result.summary) {
-          setPaymentSummary(result.summary);
-        }
-      } catch (error) {
-        console.error('Error fetching payment summary:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSummaryData();
-  }, [csrfToken]);
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
   };
@@ -157,45 +138,47 @@ const AdminPaymentsPanel = ({
 
   return (
     <div className="p-6 max-w-6xl">
+      {' '}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>{' '}
-        <div className="flex items-center gap-4">
-          <Select
-            value={selectedInvoiceMonth}
-            onValueChange={handleMonthSelection}
-          >
-            <SelectTrigger className="w-64">
-              <SelectValue placeholder="Select month for invoice generation" />
-            </SelectTrigger>
-            <SelectContent>
-              {invoiceMonthOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {activeTab !== 'overview' && (
+          <div className="flex items-center gap-4">
+            <Select
+              value={selectedInvoiceMonth}
+              onValueChange={handleMonthSelection}
+            >
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Select month for invoice generation" />
+              </SelectTrigger>
+              <SelectContent>
+                {invoiceMonthOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Button
-            onClick={handleGenerateInvoices}
-            disabled={isGeneratingInvoices || !selectedInvoiceMonth}
-            className="flex items-center gap-2"
-          >
-            {isGeneratingInvoices ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Generating Invoices...
-              </>
-            ) : (
-              <>
-                <RefreshCcw className="h-4 w-4" />
-                Generate Invoices
-              </>
-            )}
-          </Button>
-        </div>
+            <Button
+              onClick={handleGenerateInvoices}
+              disabled={isGeneratingInvoices || !selectedInvoiceMonth}
+              className="flex items-center gap-2"
+            >
+              {isGeneratingInvoices ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating Invoices...
+                </>
+              ) : (
+                <>
+                  <RefreshCcw className="h-4 w-4" />
+                  Generate Invoices
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
-
       {invoiceMessage && (
         <Alert
           className={`mb-4 ${invoiceMessage.type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}
@@ -216,7 +199,6 @@ const AdminPaymentsPanel = ({
           </AlertDescription>
         </Alert>
       )}
-
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>

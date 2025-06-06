@@ -10,10 +10,8 @@ import {
 } from '~/app/(app)/components/base-v2/ui/Alert';
 import { Info } from 'lucide-react';
 import AdminPaymentsPanel from '~/app/(app)/components/admin-payments/AdminPaymentsPanel';
-import { getAllStudentPayments } from '~/lib/payments/database/queries';
-import { getPaymentSummaryForPage } from './actions';
 import StudentPaymentsView from '~/app/(app)/components/student-payments/StudentPaymentsView';
-import { getAllStudentPaymentsAction } from '~/lib/payments/admin-payment-actions';
+import { getAllStudentPaymentsAction, getPaymentSummaryForPage } from '~/lib/payments/admin-payment-actions';
 
 export const metadata = {
   title: 'Payments Management',
@@ -61,11 +59,10 @@ async function PaymentsPage({
         // Fetch initial payment data for admin
         const {paymentData: paymentsData, error} = await getAllStudentPaymentsAction(selectedPeriod)
         if (error) {
-          console.error('Error fetching payments data:~~~~~~~~~~~~', error);
           throw error;
         }
         // Get payment summary statistics using our new server action
-        const summaryResult = await getPaymentSummaryForPage();
+        const summaryResult = await getPaymentSummaryForPage(selectedPeriod);
         const summary = summaryResult.success ? summaryResult.summary : null;
 
         return (
@@ -84,7 +81,7 @@ async function PaymentsPage({
               >
                 <AdminPaymentsPanel
                   initialPayments={paymentsData}
-                  initialSummary={summary || null}
+                  initialSummary={summary!}
                 />
               </Suspense>
             </PageBody>

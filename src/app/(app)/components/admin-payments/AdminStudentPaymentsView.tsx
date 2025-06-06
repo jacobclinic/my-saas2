@@ -21,13 +21,13 @@ import {
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
   approveStudentPaymentAction,
+  getPaymentsForPeriod,
   rejectStudentPaymentAction,
 } from '~/lib/payments/admin-payment-actions';
 import DataTable from '~/core/ui/DataTable';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
-import { getPaymentsForPeriod } from '../../payments/actions';
 import { toast } from 'sonner';
 
 interface AdminStudentPaymentsViewProps {
@@ -554,3 +554,5 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
 };
 
 export default AdminStudentPaymentsView;
+
+

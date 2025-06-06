@@ -1,6 +1,6 @@
 'use server';
 
-import { withAdminSession, withSession } from '~/core/generic/actions-utils';
+import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { PaymentStatus, PaymentWithDetails } from '~/lib/payments/types/admin-payments';
 import { generateMonthlyInvoices } from '../invoices/database/mutations';
@@ -8,6 +8,7 @@ import _ from 'cypress/types/lodash';
 import { isAdmin as isUserAdmin } from '../user/actions.server';
 import { getAllStudentPayments } from './database/queries';
 import { STUDENT_PAYMENTS_TABLE } from '../db-tables';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 
 export const approveStudentPaymentAction = withSession(
   async ({
@@ -313,3 +314,34 @@ export const getAllStudentPaymentsAction = withSession(
     return { paymentData, error: null };
   },
 );
+
+
+export async function getPaymentSummaryForPage(
+  selectedPeriod: string) {
+  const invoicePeriod = selectedPeriod 
+  const result = await getPaymentSummaryAction({
+    csrfToken: 'server-side',
+    invoicePeriod,
+  });
+
+  return result;
+}
+
+export async function getPaymentsForPeriod(
+  period: string,
+): Promise<{
+  success: boolean;
+  payments?: PaymentWithDetails[];
+  error?: string;
+}> {
+    const client = getSupabaseServerComponentClient();
+    
+    const { paymentData, error } = await getAllStudentPayments(client, period);
+    if (error) {
+      console.error('Error fetching payments:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, payments: paymentData };
+ 
+}
+

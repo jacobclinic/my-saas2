@@ -369,7 +369,6 @@ export const getUserRoleAction = withSession(async (userId: string) => {
 export const isAdmin = withSession(
   async (client: SupabaseClient): Promise<boolean> => {
     const userId = (await client.auth.getUser()).data.user?.id;
-    console.log('Checking if user is admin:', userId);
     if (!userId) {
       console.error('User not authenticated');
       return false;
