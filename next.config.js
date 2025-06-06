@@ -50,7 +50,7 @@ function getRemotePatterns() {
   const remotePatterns = [
     {
       protocol: 'https',
-      hostname: 'tjsqhhtjbpmswapalqsl.supabase.co',
+      hostname: process.env.NEXT_PUBLIC_SUPABASE_URL,
       pathname: '/storage/v1/object/public/**',
     },
   ];

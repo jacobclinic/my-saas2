@@ -13,10 +13,7 @@ import { getUpcomingOccurrences } from '../utils/date-utils';
 import { zoomService } from '../zoom/zoom.service';
 import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
-import {
-  getClassDataByIdwithNextSession,
-  isAdminOrCLassTutor,
-} from './database/queries';
+import { getClassDataByIdwithNextSession } from './database/queries';
 import { getAllUpcommingSessionsData } from '../sessions/database/queries';
 
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
@@ -25,6 +22,7 @@ import sendEmail from '~/core/email/send-email';
 import { sendSingleSMS } from '../notifications/sms/sms.notification.service';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentInvitationToClass } from '~/core/email/templates/emailTemplate';
+import { isAdminOrCLassTutor } from '../user/database/queries';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -50,7 +48,7 @@ export const createClassAction = withSession(
     // Create the class
     const classResult = await createClass(client, classData);
 
-    // Get tutor's email (for Zoom meeting setup)    
+    // Get tutor's email (for Zoom meeting setup)
     const { data: tutorData } = await client
       .from('users')
       .select('email')
@@ -58,7 +56,8 @@ export const createClassAction = withSession(
       .single(); // Generate initial sessions for the month and create one Zoom meeting per time slot
 
     const initialSessions = await Promise.all(
-      classData.timeSlots.map(async (timeSlot) => {        // Get end date for this year (December 31st)
+      classData.timeSlots.map(async (timeSlot) => {
+        // Get end date for this year (December 31st)
         const endDate = new Date(new Date().getFullYear(), 11, 31)
           .toISOString()
           .split('T')[0]; // Get all upcoming occurrences for year
@@ -66,7 +65,7 @@ export const createClassAction = withSession(
           timeSlot,
           classData.startDate,
           endDate,
-        );        // Take the first occurrence
+        ); // Take the first occurrence
 
         // Take the first occurrence for Zoom meeting creation
         const firstOccurrence = nextOccurrences[0];
@@ -478,7 +477,8 @@ export const sendEmailMSGToStudentAction = withSession(
       className: classData.name || '',
       nextSession: formattedDate,
       time: schedule || '',
-      tutorName: classData.tutor.first_name +" "+ classData.tutor.last_name || 'Tutor',
+      tutorName:
+        classData.tutor.first_name + ' ' + classData.tutor.last_name || 'Tutor',
     };
 
     const registrationLink =

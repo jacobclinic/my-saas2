@@ -16,7 +16,11 @@ import UserType from './types/user';
 import { withSession } from '~/core/generic/actions-utils';
 import { fetchUserRole } from './database/queries';
 import { EmailService } from '~/core/email/send-email-mailtrap';
-import { getStudentCredentialsEmailTemplate, getUserCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
+import {
+  getStudentCredentialsEmailTemplate,
+  getUserCredentialsEmailTemplate,
+} from '~/core/email/templates/emailTemplate';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export async function deleteUserAccountAction() {
   const logger = getLogger();
@@ -37,13 +41,14 @@ export async function deleteUserAccountAction() {
   redirect('/');
 }
 
-
 type CreateUserByAdminActionParams = {
   userData: Omit<UserType, 'id'>;
   csrfToken: string;
 };
 
-export const createUserByAdminAction = async (params: CreateUserByAdminActionParams) => {
+export const createUserByAdminAction = async (
+  params: CreateUserByAdminActionParams,
+) => {
   try {
     const client = getSupabaseServerActionClient({ admin: true });
     const { email, user_role, first_name, last_name } = params.userData;
@@ -57,7 +62,8 @@ export const createUserByAdminAction = async (params: CreateUserByAdminActionPar
       .eq('email', email?.toLowerCase() || '')
       .single();
 
-    if (searchError && searchError.code !== 'PGRST116') { // Ignore "not found" error
+    if (searchError && searchError.code !== 'PGRST116') {
+      // Ignore "not found" error
       throw searchError;
     }
 
@@ -67,7 +73,7 @@ export const createUserByAdminAction = async (params: CreateUserByAdminActionPar
     if (existingUser?.id) {
       // User exists, use their ID
       userId = existingUser.id;
-      
+
       // Update their details
       const { error: updateError } = await client
         .from('users')
@@ -79,7 +85,6 @@ export const createUserByAdminAction = async (params: CreateUserByAdminActionPar
         .eq('id', userId);
 
       if (updateError) throw updateError;
-
     } else {
       // User doesn't exist, create new auth user
       const { data, error: createError } = await client.auth.admin.createUser({
@@ -89,7 +94,7 @@ export const createUserByAdminAction = async (params: CreateUserByAdminActionPar
           first_name,
           last_name,
           user_role: userRole,
-          temporary_password: password
+          temporary_password: password,
         },
         email_confirm: true,
       });
@@ -105,7 +110,7 @@ export const createUserByAdminAction = async (params: CreateUserByAdminActionPar
         email: email || '',
         password,
         userRole: userRole,
-        loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`
+        loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
       });
       const emailService = EmailService.getInstance();
       await emailService.sendEmail({
@@ -134,18 +139,18 @@ export const createUserByAdminAction = async (params: CreateUserByAdminActionPar
       success: true,
       userId,
     };
-
   } catch (error) {
     console.error('Error creating user:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'An unknown error occurred.'
+      error:
+        error instanceof Error ? error.message : 'An unknown error occurred.',
     };
   }
 };
 
 // Helper function to wait
-const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Helper function to check if user exists in public table
 async function checkUserExists(client: any, userId: string) {
@@ -154,37 +159,37 @@ async function checkUserExists(client: any, userId: string) {
     .select('id')
     .eq('id', userId)
     .single();
-  
+
   return !!data;
 }
 
 // Helper function to update user with retry
 export async function updateUserWithRetry(
-  client: any, 
-  userId: string, 
-  updateData: any, 
+  client: any,
+  userId: string,
+  updateData: any,
   maxRetries = 5,
-  delay = 1000
+  delay = 1000,
 ) {
   for (let i = 0; i < maxRetries; i++) {
     // Check if user exists
     const exists = await checkUserExists(client, userId);
-    
+
     if (exists) {
       // User exists, proceed with update
       const { error } = await client
         .from('users')
         .update(updateData)
         .eq('id', userId);
-      
+
       if (!error) return { success: true };
       throw error;
     }
-    
+
     // User doesn't exist yet, wait before retrying
     await wait(delay);
   }
-  
+
   throw new Error('Failed to update user after maximum retries');
 }
 
@@ -199,7 +204,7 @@ interface CreateStudentParams {
 }
 
 interface DeleteStudentEnrollmentParams {
-  enrollmentId: string
+  enrollmentId: string;
 }
 
 export async function createStudentAction({
@@ -209,7 +214,7 @@ export async function createStudentAction({
   phone,
   classId,
   nameOfClass,
-  csrfToken
+  csrfToken,
 }: CreateStudentParams) {
   try {
     const client = getSupabaseServerActionClient({ admin: true });
@@ -221,7 +226,8 @@ export async function createStudentAction({
       .eq('email', email.toLowerCase())
       .single();
 
-    if (searchError && searchError.code !== 'PGRST116') { // Ignore "not found" error
+    if (searchError && searchError.code !== 'PGRST116') {
+      // Ignore "not found" error
       throw searchError;
     }
 
@@ -230,64 +236,57 @@ export async function createStudentAction({
     if (existingUser?.id) {
       // User exists, use their ID
       userId = existingUser.id;
-      
+
       // Update their details
-      await updateUserWithRetry(
-        client,
-        userId,
-        {
-          phone_number: phone,
-          first_name: firstName,
-          last_name: lastName,
-          user_role: 'student',
-        }
-      );
+      await updateUserWithRetry(client, userId, {
+        phone_number: phone,
+        first_name: firstName,
+        last_name: lastName,
+        user_role: 'student',
+      });
     } else {
       const password = generateSecurePassword();
 
       // User doesn't exist, Create auth user with Supabase Admin
-      const { data: authUser, error: authError } = await client.auth.admin.createUser({
-        email,
-        password,
-        user_metadata: {
-          first_name: firstName,
-          last_name: lastName,
-          phone_number: phone,
-          temporary_password: password,
-          user_role: 'student'
-        },
-        email_confirm: true,
-      });
+      const { data: authUser, error: authError } =
+        await client.auth.admin.createUser({
+          email,
+          password,
+          user_metadata: {
+            first_name: firstName,
+            last_name: lastName,
+            phone_number: phone,
+            temporary_password: password,
+            user_role: 'student',
+          },
+          email_confirm: true,
+        });
 
       if (authError) throw authError;
       userId = authUser.user.id;
 
       // Update user with retry mechanism
-      await updateUserWithRetry(
-        client,
-        userId,
-        {
-          phone_number: phone,
-          first_name: firstName,
-          last_name: lastName,
-          user_role: 'student',
-        }
-      );
+      await updateUserWithRetry(client, userId, {
+        phone_number: phone,
+        first_name: firstName,
+        last_name: lastName,
+        user_role: 'student',
+      });
 
       // Send welcome email with credentials
       const { html, text } = getStudentCredentialsEmailTemplate({
         studentName: `${firstName} ${lastName}`,
         email,
         className: nameOfClass,
-        loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`
+        loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
       });
       const emailService = EmailService.getInstance();
       await emailService.sendEmail({
-        from: process.env.EMAIL_SENDER! ,
+        from: process.env.EMAIL_SENDER!,
         to: email,
         subject: 'Welcome to Your Class - Login Credentials',
         html,
-        text
+        text,
       });
     }
 
@@ -306,7 +305,7 @@ export async function createStudentAction({
         .insert({
           student_id: userId,
           class_id: classId,
-          enrolled_date: new Date().toISOString()
+          enrolled_date: new Date().toISOString(),
         });
 
       if (enrollmentError) throw enrollmentError;
@@ -316,12 +315,12 @@ export async function createStudentAction({
     revalidatePath('/(app)/classes');
 
     return { success: true, error: null };
-
   } catch (error) {
     console.error('Error creating student:', error);
     return {
-        success: false,
-        error: error instanceof Error ? error.message : 'An unknown error occurred.' 
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'An unknown error occurred.',
     };
   }
 }
@@ -344,7 +343,7 @@ export async function deleteStudentEnrollment({
       const { error: dbError } = await client
         .from('student_class_enrollments')
         .delete()
-        .eq('id', enrollmentId)
+        .eq('id', enrollmentId);
 
       if (dbError) throw dbError;
     }
@@ -356,17 +355,32 @@ export async function deleteStudentEnrollment({
   }
 }
 
-export const getUserRoleAction = withSession(
-  async (userId : string ) => {
-    
-    const client = getSupabaseServerActionClient();
-    const data = await fetchUserRole(client, userId);
-    if (!data) {
-      console.error('Error fetching user role:');
-      return null;
-    }
-
-    return data;
+export const getUserRoleAction = withSession(async (userId: string) => {
+  const client = getSupabaseServerActionClient();
+  const data = await fetchUserRole(client, userId);
+  if (!data) {
+    console.error('Error fetching user role:');
+    return null;
   }
 
-)
+  return data;
+});
+
+export const isAdmin = withSession(
+  async (client: SupabaseClient): Promise<boolean> => {
+    const userId = (await client.auth.getUser()).data.user?.id;
+    console.log('Checking if user is admin:', userId);
+    if (!userId) {
+      console.error('User not authenticated');
+      return false;
+    }
+    const userRole = await fetchUserRole(client, userId);
+
+    if (!userRole) {
+      console.error('Error fetching user role');
+      return false;
+    }
+
+    return userRole === USER_ROLES.ADMIN;
+  },
+);

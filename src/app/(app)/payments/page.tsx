@@ -13,6 +13,7 @@ import AdminPaymentsPanel from '~/app/(app)/components/admin-payments/AdminPayme
 import { getAllStudentPayments } from '~/lib/payments/database/queries';
 import { getPaymentSummaryForPage } from './actions';
 import StudentPaymentsView from '~/app/(app)/components/student-payments/StudentPaymentsView';
+import { getAllStudentPaymentsAction } from '~/lib/payments/admin-payment-actions';
 
 export const metadata = {
   title: 'Payments Management',
@@ -58,11 +59,11 @@ async function PaymentsPage({
       // For administrators, show the full payment management interface
       try {
         // Fetch initial payment data for admin
-        const paymentsData = await getAllStudentPayments(
-          client,
-          selectedPeriod,
-        );
-
+        const {paymentData: paymentsData, error} = await getAllStudentPaymentsAction(selectedPeriod)
+        if (error) {
+          console.error('Error fetching payments data:~~~~~~~~~~~~', error);
+          throw error;
+        }
         // Get payment summary statistics using our new server action
         const summaryResult = await getPaymentSummaryForPage();
         const summary = summaryResult.success ? summaryResult.summary : null;

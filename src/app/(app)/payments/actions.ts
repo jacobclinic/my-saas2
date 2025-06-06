@@ -3,7 +3,7 @@
 import { getPaymentSummaryAction } from '~/lib/payments/admin-payment-actions';
 import { getAllStudentPayments } from '~/lib/payments/database/queries';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
-import { Payment } from '~/lib/payments/types/admin-payments';
+import { PaymentWithDetails } from '~/lib/payments/types/admin-payments';
 
 export async function getPaymentSummaryForPage(searchParams?: {
   month?: string;
@@ -18,19 +18,18 @@ export async function getPaymentSummaryForPage(searchParams?: {
 
 export async function getPaymentsForPeriod(
   period: string,
-): Promise<{ success: boolean; payments?: Payment[]; error?: string }> {
-  try {
+): Promise<{
+  success: boolean;
+  payments?: PaymentWithDetails[];
+  error?: string;
+}> {
     const client = getSupabaseServerComponentClient();
-    const payments = await getAllStudentPayments(client, period);
-    return { success: true, payments };
-  } catch (error) {
-    console.error('Error fetching payments for period:', error);
-    return {
-      success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to fetch payments. Please try again.',
-    };
-  }
+    
+    const { paymentData, error } = await getAllStudentPayments(client, period);
+    if (error) {
+      console.error('Error fetching payments:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, payments: paymentData };
+ 
 }

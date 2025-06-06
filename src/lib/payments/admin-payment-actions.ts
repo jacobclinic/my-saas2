@@ -1,9 +1,13 @@
 'use server';
 
-import { withSession } from '~/core/generic/actions-utils';
+import { withAdminSession, withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import { PaymentStatus } from '~/lib/payments/types/admin-payments';
+import { PaymentStatus, PaymentWithDetails } from '~/lib/payments/types/admin-payments';
 import { generateMonthlyInvoices } from '../invoices/database/mutations';
+import _ from 'cypress/types/lodash';
+import { isAdmin as isUserAdmin } from '../user/actions.server';
+import { getAllStudentPayments } from './database/queries';
+import { STUDENT_PAYMENTS_TABLE } from '../db-tables';
 
 export const approveStudentPaymentAction = withSession(
   async ({
@@ -174,13 +178,13 @@ export const getPaymentSummaryAction = withSession(
     invoicePeriod?: string;
   }) => {
     const client = getSupabaseServerActionClient();
+    
+    const isAdmin = await isUserAdmin(client);
+    if (!isAdmin) {
+      return { success: false, error: 'User is not an admin' };
+    }
 
     try {
-      // Generate invoices if period is provided
-      // if (invoicePeriod) {
-      //   const [year, month] = invoicePeriod.split('-').map(Number);
-      //   await generateMonthlyInvoices(client, year, month);
-      // }
 
       // Fetch all invoices with payment status
       const { data: invoices, error: invoiceError } = await client
@@ -190,7 +194,7 @@ export const getPaymentSummaryAction = withSession(
           id,
           amount,
           invoice_period,
-          payment:student_payments!fk_student_payments_invoice_id (
+          payment:${STUDENT_PAYMENTS_TABLE}!fk_student_payments_invoice_id (
             status,
             amount
           )
@@ -287,5 +291,25 @@ export const generateInvoicesAction = withSession(
         message: `Failed to generate invoices: ${error.message}`,
       };
     }
+  },
+);
+
+export const getAllStudentPaymentsAction = withSession(
+  async (
+    invoicePeriod:string
+  ): Promise<{paymentData :PaymentWithDetails[], error: any}> => {
+    const client = getSupabaseServerActionClient();
+    const adminCheck = await isUserAdmin(client);
+    if (!adminCheck) {
+      return { paymentData: [], error: 'User is not an admin' };
+    }
+
+    const {paymentData, error} = await getAllStudentPayments(client, invoicePeriod);
+
+    if (error) {
+      return { paymentData: [], error: error || 'Failed to fetch payments' };
+    }
+
+    return { paymentData, error: null };
   },
 );

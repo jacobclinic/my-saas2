@@ -9,7 +9,7 @@ import {
 } from '~/lib/payments/admin-payment-actions';
 import AdminPaymentsView from './AdminStudentPaymentsView';
 import TutorPayments from '../payments/TutorPaymentList';
-import { Payment } from '~/lib/payments/types/admin-payments';
+import { PaymentWithDetails } from '~/lib/payments/types/admin-payments';
 import AdminOverviewTab from './AdminOverviewTab';
 import { Button } from '../base-v2/ui/Button';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
@@ -33,7 +33,7 @@ interface PaymentSummary {
 }
 
 interface AdminPaymentsPanelProps {
-  initialPayments: Payment[];
+  initialPayments: PaymentWithDetails[];
   initialSummary: PaymentSummary | null;
 }
 

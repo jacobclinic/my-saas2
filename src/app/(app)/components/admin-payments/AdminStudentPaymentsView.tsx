@@ -14,7 +14,10 @@ import { Search, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PaymentDetailsDialog from './PaymentDetailsDialog';
-import { Payment, PaymentStatus } from '~/lib/payments/types/admin-payments';
+import {
+  PaymentWithDetails,
+  PaymentStatus,
+} from '~/lib/payments/types/admin-payments';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
   approveStudentPaymentAction,
@@ -28,7 +31,7 @@ import { getPaymentsForPeriod } from '../../payments/actions';
 import { toast } from 'sonner';
 
 interface AdminStudentPaymentsViewProps {
-  initialPayments: Payment[];
+  initialPayments: PaymentWithDetails[];
 }
 
 // Define a type for the table data
@@ -57,14 +60,16 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
   const urlMonth = searchParams.get('month');
   const [selectedPeriod, setSelectedPeriod] = useState(urlMonth || '2025-04');
 
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] =
+    useState<PaymentWithDetails | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const csrfToken = useCsrfToken();
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
 
   // Start with server-provided data
-  const [payments, setPayments] = useState<Payment[]>(initialPayments);
+  const [payments, setPayments] =
+    useState<PaymentWithDetails[]>(initialPayments);
 
   // Format period for display
   const formatPeriod = (period: string) => {
@@ -222,7 +227,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     handlePaginationChange,
   } = useTablePagination({ data: filteredPayments });
 
-  const handleViewDetails = (payment: Payment) => {
+  const handleViewDetails = (payment: PaymentWithDetails) => {
     setSelectedPayment(payment);
     setShowDetailsDialog(true);
   };
