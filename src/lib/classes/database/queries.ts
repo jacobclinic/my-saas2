@@ -342,6 +342,10 @@ export async function getAllClassesByTutorIdData(
           time_slots,
           starting_date,
           grade,
+          tutor:${USERS_TABLE}!tutor_id (
+            first_name,
+            last_name
+          ),
           students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id (
             id,
             student_id,
@@ -377,9 +381,8 @@ export async function getAllClassesByTutorIdData(
     if (!data) {
       return [];
     }
-
     const transformedData = await Promise.all(
-      data.map(async (classData) => {
+      data.map(async (classData: any) => {
         const { data: sessionsData } = await client
           .from(SESSIONS_TABLE)
           .select(`id, start_time`)
@@ -392,8 +395,14 @@ export async function getAllClassesByTutorIdData(
           | { day: string; startTime: string; endTime: string }[]
           | null;
 
+        // Extract the first tutor object if it's an array
+        const tutorData = Array.isArray(classData.tutor)
+          ? classData.tutor[0]
+          : classData.tutor;
+
         return {
           ...classData,
+          tutor: tutorData,
           upcomingSession: sessionsData?.[0]?.start_time || null,
           time_slots: timeSlots,
         };
@@ -417,9 +426,7 @@ export async function getAllClassesByTutorIdDataPerWeek(
   try {
     // Calculate date 7 days from now
     const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-
-    // Create base query
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7); // Create base query
     let query = client
       .from(CLASSES_TABLE)
       .select(
@@ -435,6 +442,10 @@ export async function getAllClassesByTutorIdDataPerWeek(
           time_slots,
           starting_date,
           grade,
+          tutor:${USERS_TABLE}!tutor_id (
+            first_name,
+            last_name
+          ),
           students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id (
             id,
             student_id,
@@ -486,16 +497,22 @@ export async function getAllClassesByTutorIdDataPerWeek(
       .lte('start_time', sevenDaysFromNow.toISOString()) // Less than or equal to 7 days from now
       .order('start_time', { ascending: true })
       .limit(1);
-
-    const transformedData = data?.map((classData) => {
+    const transformedData = data?.map((classData: any) => {
       const upcomingSession = sessionsData?.find(
         (session) => session.class_id === classData.id,
       );
       const timeSlots = classData?.time_slots as
         | { day: string; startTime: string; endTime: string }[]
         | null;
+
+      // Extract the first tutor object if it's an array
+      const tutorData = Array.isArray(classData.tutor)
+        ? classData.tutor[0]
+        : classData.tutor;
+
       return {
         ...classData,
+        tutor: tutorData,
         upcomingSession: upcomingSession ? upcomingSession.start_time : null,
         time_slots: timeSlots,
       };
@@ -545,10 +562,12 @@ export async function getAllClassesByStudentIdData(
 
     const { data, error } = await query;
 
-    console.log('getAllClassesByStudentIdData raw data:', data);
+    // console.log('getAllClassesByStudentIdData raw data:', data);
 
     if (error) {
-      throw new Error(`Error fetching classes: ${(error as PostgrestError).message}`);
+      throw new Error(
+        `Error fetching classes: ${(error as PostgrestError).message}`,
+      );
     }
 
     if (!data || data.length === 0) {
@@ -558,7 +577,9 @@ export async function getAllClassesByStudentIdData(
     const transformedData = await Promise.all(
       data.map(async (enrollmentData: any) => {
         const classData = enrollmentData.class || {};
-        const tutorData = Array.isArray(classData.tutor) ? classData.tutor[0] || null : classData.tutor || null;
+        const tutorData = Array.isArray(classData.tutor)
+          ? classData.tutor[0] || null
+          : classData.tutor || null;
 
         const { data: sessionsData } = await client
           .from(SESSIONS_TABLE)
@@ -599,7 +620,7 @@ export async function getAllClassesByStudentIdData(
       }),
     );
 
-    console.log('Transformed data:', transformedData);
+    // console.log('Transformed data:', transformedData);
 
     return transformedData;
   } catch (error) {
@@ -608,43 +629,4 @@ export async function getAllClassesByStudentIdData(
   }
 }
 
-export async function isAdminOrCLassTutor(
-  client: SupabaseClient<Database>,
-  userId: string,
-  classId: string,
-): Promise<boolean> {
-  // Check user role and permissions
-  const { data: userProfile, error: profileError } = await client
-    .from(USERS_TABLE)
-    .select('user_role')
-    .eq('id', userId)
-    .single();
 
-  if (profileError || !userProfile) {
-    return false;
-  }
-
-  const isAdmin = userProfile.user_role === 'admin';
-
-  // If not admin, check if user is a tutor for the class
-  let isAuthorized = isAdmin;
-  if (!isAdmin) {
-    const { data: classData, error: classError } = await client
-      .from(CLASSES_TABLE)
-      .select('tutor_id')
-      .eq('id', classId)
-      .single();
-
-    if (classError || !classData) {
-      return false;
-    }
-
-    isAuthorized = classData.tutor_id === userId;
-  }
-
-  if (!isAuthorized) {
-    return false;
-  }
-
-  return true;
-}

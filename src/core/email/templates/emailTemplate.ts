@@ -217,7 +217,7 @@ export function paymentReminderEmaiTemplate(params: {
         </div>
         <div class="footer">
           <p>This email was sent to ${studentEmail} because you are registered for classes at Comma Education.</p>
-          <p><a href="https://www.commaeducation.lk">www.commaeducation.lk</a></p>
+          <p><a href="https://www.app.commaeducation.lk">www.app.commaeducation.lk</a></p>
         </div>
       </div>
     </body>
@@ -269,7 +269,7 @@ export function paymentReminderEmaiTemplate(params: {
 
         ---
         This email was sent to ${studentEmail} because you are registered for classes at Comma Education.
-        www.commaeducation.lk
+        www.app.commaeducation.lk
 `;
 
   return { html, text };
@@ -473,7 +473,7 @@ export function getStudentNotifyAfterEmailTemplate(params: {
         </div>
         <div class="footer">
           <p>This email was sent to ${studentEmail} because you are registered for classes at Comma Education.</p>
-          <p><a href="https://www.commaeducation.lk">www.commaeducation.lk</a></p>
+          <p><a href="https://www.app.commaeducation.lk">www.app.commaeducation.lk</a></p>
         </div>
       </div>
     </body>
@@ -514,7 +514,7 @@ export function getStudentNotifyAfterEmailTemplate(params: {
 
         ---
         This email was sent to ${studentEmail} because you are registered for classes at Comma Education.
-        www.commaeducation.lk
+        www.app.commaeducation.lk
         `;
 
   return { html, text };
@@ -628,7 +628,7 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
         </div>
         <div class="footer">
           <p>This email was sent to ${studentEmail} because you are registered for classes at Comma Education.</p>
-          <p><a href="https://www.commaeducation.lk">www.commaeducation.lk</a></p>
+          <p><a href="https://www.app.commaeducation.lk">www.app.commaeducation.lk</a></p>
         </div>
       </div>
     </body>
@@ -667,7 +667,7 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
 
         ---
         This email was sent to ${studentEmail} because you are registered for classes at Comma Education.
-        www.commaeducation.lk
+        www.app.commaeducation.lk
 `;
   return { html, text };
 }
@@ -780,7 +780,7 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
         </div>
         <div class="footer">
           <p>This email was sent to ${studentEmail} because you are registered for classes at Comma Education.</p>
-          <p><a href="https://www.commaeducation.lk">www.commaeducation.lk</a></p>
+          <p><a href="https://www.app.commaeducation.lk">www.app.commaeducation.lk</a></p>
         </div>
       </div>
     </body>
@@ -819,7 +819,7 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
 
         ---
         This email was sent to ${studentEmail} because you are registered for classes at Comma Education.
-        www.commaeducation.lk
+        www.app.commaeducation.lk
 `;
   return { html, text };
 }

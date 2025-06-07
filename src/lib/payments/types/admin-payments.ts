@@ -7,7 +7,7 @@ export enum PaymentStatus {
   NOT_PAID = 'not_paid', // New status for invoices without payments
 }
 
-export interface Payment {
+export interface PaymentWithDetails {
   id: string;
   studentId: string;
   studentName: string;
@@ -27,15 +27,15 @@ export interface Payment {
 export interface PaymentDetailsDialogProps {
   open: boolean;
   onClose: () => void;
-  payment: Payment;
+  payment: PaymentWithDetails;
   onApprove: (paymentId: string) => void;
   onReject: (paymentId: string, reason: string) => void;
 }
 
 // Props for the payment card component
 export interface PaymentCardProps {
-  payment: Payment;
-  onView: (payment: Payment) => void;
+  payment: PaymentWithDetails;
+  onView: (payment: PaymentWithDetails) => void;
   onApprove?: (paymentId: string) => void;
   onReject?: (paymentId: string) => void;
 }
@@ -44,8 +44,8 @@ export interface PaymentCardProps {
 export interface PaymentActionResponse {
   success: boolean;
   error?: string;
-  payment?: Payment;
-  payments?: Payment[];
+  payment?: PaymentWithDetails;
+  payments?: PaymentWithDetails[];
 }
 
 export interface PaymentSummary {

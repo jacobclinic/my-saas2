@@ -74,6 +74,11 @@ const TutorClasses = ({
           grade: classData?.grade || 'N/A',
           registrationLink: '',
           nextClass: formattedDate,
+          tutor: {
+            id: classData?.tutor_id || '',
+            firstName: classData?.tutor?.first_name || 'Unknown',
+            lastName: classData?.tutor?.last_name || 'Unknown',
+          },
           classRawData: classData,
         };
       });

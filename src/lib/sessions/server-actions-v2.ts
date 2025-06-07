@@ -12,7 +12,7 @@ import { getSessionDataById } from './database/queries';
 import { updateAttendanceMarked, updateSession } from './database/mutations';
 import { updateZoomSessionAction } from './server-actions-v2-legacy';
 import { fetchMeetingParticipants } from '../zoom/zoom-other.service';
-import { isAdminOrCLassTutor } from '../classes/database/queries';
+import { isAdminOrCLassTutor } from '../user/database/queries';
 
 const supabase = getSupabaseServerActionClient();
 

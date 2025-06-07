@@ -11,20 +11,15 @@ import {
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
 import {
-  Plus,
   Users,
   Copy,
   Check,
-  Edit2,
   CalendarDays,
-  ChevronRight,
   Calendar,
-  Building,
   BookOpen,
   UserPlus,
   Edit,
 } from 'lucide-react';
-import { cn } from '../../lib/utils';
 import {
   ClassCardProps,
   EditClassData,
@@ -55,6 +50,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
       className: classData.name || '',
       nextSession: classData.nextClass || classData.schedule || '',
       time: classData.schedule || '',
+      tutorName:
+        classData.tutor?.firstName + ' ' + classData.tutor?.lastName || '',
     };
 
     const registrationLink =

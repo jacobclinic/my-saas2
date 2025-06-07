@@ -123,6 +123,7 @@ const ClassesAdmin = ({
       className: cls.name || '',
       nextSession: nextSession || '',
       time: clsSchedule || '',
+      tutorName: cls.tutorName || '',
     };
 
     const registrationLink =

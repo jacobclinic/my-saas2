@@ -39,7 +39,8 @@ const configuration = {
   production,
   environment: process.env.NEXT_PUBLIC_ENVIRONMENT,
   features: {
-    // Disabled theme switcher to prevent changing from light to dark mode
+    // Disabled theme switcher to prevent changing from light to dark mode, 
+    //change back to true after the ui is correctly implemented for the theme changes
     enableThemeSwitcher: false, // was: true
     enableAccountDeletion:
       process.env.NEXT_PUBLIC_ENABLE_ACCOUNT_DELETION === 'true',

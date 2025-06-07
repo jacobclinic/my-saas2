@@ -14,21 +14,26 @@ import { Search, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PaymentDetailsDialog from './PaymentDetailsDialog';
-import { Payment, PaymentStatus } from '~/lib/payments/types/admin-payments';
+import {
+  PaymentWithDetails,
+  PaymentStatus,
+} from '~/lib/payments/types/admin-payments';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
   approveStudentPaymentAction,
+  getPaymentsForPeriod,
   rejectStudentPaymentAction,
 } from '~/lib/payments/admin-payment-actions';
 import DataTable from '~/core/ui/DataTable';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
-import { getPaymentsForPeriod } from '../../payments/actions';
 import { toast } from 'sonner';
 
 interface AdminStudentPaymentsViewProps {
-  initialPayments: Payment[];
+  initialPayments: PaymentWithDetails[];
+  selectedPeriod?: string;
+  onPeriodChange?: (period: string) => void;
 }
 
 // Define a type for the table data
@@ -46,25 +51,28 @@ interface PaymentTableData {
 
 const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
   initialPayments,
+  selectedPeriod: parentSelectedPeriod,
+  onPeriodChange,
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFilter, setSearchFilter] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-
-  // Initialize selectedPeriod from URL search params or default to current month
+  const [selectedStatus, setSelectedStatus] = useState('all');  // Use parent's selected period or fallback to URL/current month
   const urlMonth = searchParams.get('month');
-  const [selectedPeriod, setSelectedPeriod] = useState(urlMonth || '2025-04');
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+  const selectedPeriod = parentSelectedPeriod || urlMonth || currentMonth;
 
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] =
+    useState<PaymentWithDetails | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const csrfToken = useCsrfToken();
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
 
   // Start with server-provided data
-  const [payments, setPayments] = useState<Payment[]>(initialPayments);
+  const [payments, setPayments] =
+    useState<PaymentWithDetails[]>(initialPayments);
 
   // Format period for display
   const formatPeriod = (period: string) => {
@@ -123,38 +131,47 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Handle period change - update URL and refresh data
+  };  // Handle period change - use parent handler if available, otherwise update URL independently
   const handlePeriodChange = (value: string) => {
-    // Update local state immediately
-    setSelectedPeriod(value);
+    if (onPeriodChange) {
+      // Parent is managing period changes
+      onPeriodChange(value);
+    } else {
+      // Component is managing its own period changes
+      // Update URL with new month parameter
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('month', value);
 
-    // Update URL with new month parameter
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('month', value);
+      // Use router.replace with shallow routing to avoid full page reload
+      router.replace(`/payments?${params.toString()}`, { scroll: false });
 
-    // Use router.replace with shallow routing to avoid full page reload
-    router.replace(`/payments?${params.toString()}`, { scroll: false });
-
-    // Fetch new data for the selected period
-    fetchPaymentsForPeriod(value);
+      // Fetch new data for the selected period
+      fetchPaymentsForPeriod(value);
+    }
   };
 
-  // Refetch data when URL parameters change (handles browser back/forward buttons)
+  // Sync payments data when initialPayments change (from parent)
   useEffect(() => {
-    if (searchParams.has('month')) {
-      const month = searchParams.get('month');
-      if (month && month !== selectedPeriod) {
-        setSelectedPeriod(month);
-        fetchPaymentsForPeriod(month);
+    setPayments(initialPayments);
+  }, [initialPayments]);
+  // Only fetch data independently if no parent is managing the period and we have no initial data
+  useEffect(() => {
+    // Only fetch if:
+    // 1. No parent is managing the period (onPeriodChange is null/undefined)
+    // 2. We have no initial payments
+    // 3. URL has a month parameter that differs from current selection
+    if (!onPeriodChange && initialPayments.length === 0) {
+      if (searchParams.has('month')) {
+        const month = searchParams.get('month');
+        if (month && month !== selectedPeriod) {
+          fetchPaymentsForPeriod(month);
+        }
+      } else {
+        // Fetch current month data if no month in URL
+        fetchPaymentsForPeriod(selectedPeriod);
       }
-    } else {
-      const month = new Date().toISOString().slice(0, 7); // YYYY-MM format
-      setSelectedPeriod(month);
-      fetchPaymentsForPeriod(month);
     }
-  }, [searchParams]);
+  }, [searchParams, onPeriodChange, initialPayments.length, selectedPeriod]);
 
   // Define filter options for search
   const filterOptions = [
@@ -222,7 +239,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     handlePaginationChange,
   } = useTablePagination({ data: filteredPayments });
 
-  const handleViewDetails = (payment: Payment) => {
+  const handleViewDetails = (payment: PaymentWithDetails) => {
     setSelectedPayment(payment);
     setShowDetailsDialog(true);
   };

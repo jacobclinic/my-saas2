@@ -45,7 +45,7 @@ async function ClassesPage() {
   // const userRole = userData?.user_role || "student";
 
   let classesData: any[] = [];
-  let studentClassesData: any[] = [];
+  // let studentClassesData: any[] = [];
   let tutorId;
 
   if (userRole === 'tutor') {

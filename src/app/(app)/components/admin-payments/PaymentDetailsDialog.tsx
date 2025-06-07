@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useState } from 'react';
@@ -23,7 +21,10 @@ import { format } from 'date-fns';
 import BaseDialog from '../base-v2/BaseDialog';
 import { Card, CardContent } from '../base-v2/ui/Card';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
-import { Payment, PaymentStatus } from '~/lib/payments/types/admin-payments';
+import {
+  PaymentWithDetails,
+  PaymentStatus,
+} from '~/lib/payments/types/admin-payments';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { uploadPaymentSlipAction } from '~/lib/student-payments/server-actions';
 import { getFileBuffer } from '~/lib/utils/upload-material-utils';
@@ -33,7 +34,7 @@ import { toast } from 'sonner';
 interface PaymentDetailsDialogProps {
   open: boolean;
   onClose: () => void;
-  payment: Payment;
+  payment: PaymentWithDetails;
   onApprove: (paymentId: string) => void;
   onReject: (paymentId: string, reason: string) => void;
   onPaymentUpload?: (paymentId: string, url: string) => void; // Add callback for payment upload
