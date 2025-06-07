@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base-v2/ui/Tabs';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
@@ -44,6 +44,9 @@ interface AdminPaymentsPanelProps {
 const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Ref to track programmatic period changes to prevent double loading
+  const isProgrammaticChange = useRef(false);
 
   // Get current period from URL or default to current month
   const urlMonth = searchParams.get('month');
@@ -148,15 +151,20 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
     } finally {
       setLoadingTutorInvoices(false);
     }
-  };
-
-  // Handle URL parameter changes (e.g., when month is changed in child components)
+  }; // Handle URL parameter changes (only when navigating back/forward or external URL changes)
   useEffect(() => {
     const urlMonth = searchParams.get('month');
+
+    // Skip if this is a programmatic change we initiated
+    if (isProgrammaticChange.current) {
+      isProgrammaticChange.current = false;
+      return;
+    }
+
     if (urlMonth && urlMonth !== selectedPeriod) {
       setSelectedPeriod(urlMonth);
 
-      // Reload data for the new period if tabs are already loaded
+      // Reload data for the new period if tabs are already loaded (for back/forward navigation)
       if (studentPaymentsLoaded) {
         loadStudentPaymentsForPeriod(urlMonth);
       }
@@ -169,11 +177,12 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
     selectedPeriod,
     studentPaymentsLoaded,
     tutorInvoicesLoaded,
-  ]);
-
-  // Handle period change from child components
+  ]); // Handle period change from child components
   const handlePeriodChange = (period: string) => {
-    // Update the selectedPeriod state
+    // Mark this as a programmatic change to prevent double loading
+    isProgrammaticChange.current = true;
+
+    // Update the selectedPeriod state first
     setSelectedPeriod(period);
 
     // Update URL with new month parameter
