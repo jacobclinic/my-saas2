@@ -23,6 +23,7 @@ import { sendSingleSMS } from '../notifications/sms/sms.notification.service';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentInvitationToClass } from '~/core/email/templates/emailTemplate';
 import { isAdminOrCLassTutor } from '../user/database/queries';
+import { createInvoiceForNewClass } from '../invoices/database/mutations';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -103,13 +104,26 @@ export const createClassAction = withSession(
         return sessions;
       }),
     );
-
+    
     // Insert all initial sessions into the database
     const { error: sessionError } = await client
       .from(SESSIONS_TABLE)
       .insert(initialSessions.flat());
 
     if (sessionError) throw sessionError;
+
+    // Create an invoice for the newly created class
+    if (classResult?.id) {
+      const invoiceId = await createInvoiceForNewClass(client, classResult.id);
+      if (!invoiceId) {
+        console.error(
+          'Failed to create invoice for new class:',
+          classResult.id,
+        );
+        // Continue with class creation even if invoice creation fails
+        // The invoice can be generated later with the monthly job
+      }
+    }
 
     // Revalidate paths
     revalidatePath('/classes');
