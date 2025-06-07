@@ -11,7 +11,10 @@ import {
 import { Info } from 'lucide-react';
 import AdminPaymentsPanel from '~/app/(app)/components/admin-payments/AdminPaymentsPanel';
 import StudentPaymentsView from '~/app/(app)/components/student-payments/StudentPaymentsView';
-import { getAllStudentPaymentsAction, getPaymentSummaryForPage } from '~/lib/payments/admin-payment-actions';
+import {
+  getAllStudentPaymentsAction,
+  getPaymentSummaryForPage,
+} from '~/lib/payments/admin-payment-actions';
 
 export const metadata = {
   title: 'Payments Management',
@@ -57,10 +60,12 @@ async function PaymentsPage({
       // For administrators, show the full payment management interface
       try {
         // Fetch initial payment data for admin
-        const {paymentData: paymentsData, error} = await getAllStudentPaymentsAction(selectedPeriod)
+        const { paymentData: paymentsData, error } =
+          await getAllStudentPaymentsAction(selectedPeriod);
         if (error) {
           throw error;
         }
+
         // Get payment summary statistics using our new server action
         const summaryResult = await getPaymentSummaryForPage(selectedPeriod);
         const summary = summaryResult.success ? summaryResult.summary : null;

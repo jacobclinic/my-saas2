@@ -7,10 +7,12 @@ import {
   getPaymentSummaryAction,
   generateInvoicesAction,
   generateAllInvoicesAction,
+  getTutorInvoicesForPeriod,
 } from '~/lib/payments/admin-payment-actions';
 import AdminPaymentsView from './AdminStudentPaymentsView';
-import TutorPayments from '../payments/TutorPaymentList';
+import AdminTutorPaymentsView from './AdminTutorPaymentsView';
 import { PaymentWithDetails } from '~/lib/payments/types/admin-payments';
+import { TutorInvoice } from '~/lib/invoices/types/types';
 import AdminOverviewTab from './AdminOverviewTab';
 import { Button } from '../base-v2/ui/Button';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
@@ -46,6 +48,9 @@ const AdminPaymentsPanel = ({
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(
     initialSummary,
   );
+  const [tutorInvoices, setTutorInvoices] = useState<TutorInvoice[]>([]);
+  const [tutorInvoicesLoaded, setTutorInvoicesLoaded] = useState(false);
+  const [loadingTutorInvoices, setLoadingTutorInvoices] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingInvoices, setIsGeneratingInvoices] = useState(false);
   const [invoiceMessage, setInvoiceMessage] = useState<{
@@ -80,9 +85,31 @@ const AdminPaymentsPanel = ({
       },
     ];
   }, []);
-
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+
+    // Load tutor invoices when tutor-payments tab is selected for the first time
+    if (tab === 'tutor-payments' && !tutorInvoicesLoaded) {
+      loadTutorInvoicesForCurrentMonth();
+    }
+  };
+
+  const loadTutorInvoicesForCurrentMonth = async () => {
+    setLoadingTutorInvoices(true);
+    try {
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+      const result = await getTutorInvoicesForPeriod(currentMonth);
+      if (result.success && result.invoices) {
+        setTutorInvoices(result.invoices);
+        setTutorInvoicesLoaded(true);
+      } else {
+        console.error('Failed to load tutor invoices:', result.error);
+      }
+    } catch (error) {
+      console.error('Error loading tutor invoices:', error);
+    } finally {
+      setLoadingTutorInvoices(false);
+    }
   };
 
   const handleMonthSelection = (value: string) => {
@@ -105,7 +132,7 @@ const AdminPaymentsPanel = ({
       setInvoiceMessage(null);
 
       const result = await generateAllInvoicesAction({
-        invoicePeriod: selectedInvoiceMonth
+        invoicePeriod: selectedInvoiceMonth,
       });
 
       if (result.success) {
@@ -115,7 +142,9 @@ const AdminPaymentsPanel = ({
         });
 
         // Refresh data after generating invoices
-        const summaryResult = await getPaymentSummaryAction({ invoicePeriod: selectedInvoiceMonth });
+        const summaryResult = await getPaymentSummaryAction({
+          invoicePeriod: selectedInvoiceMonth,
+        });
         if (summaryResult.success && summaryResult.summary) {
           setPaymentSummary(summaryResult.summary);
         }
@@ -205,7 +234,6 @@ const AdminPaymentsPanel = ({
           <TabsTrigger value="student-payments">Student Payments</TabsTrigger>
           <TabsTrigger value="tutor-payments">Tutor Payments</TabsTrigger>
         </TabsList>
-
         {/* Overview Tab */}
         <TabsContent value="overview">
           <AdminOverviewTab
@@ -214,13 +242,25 @@ const AdminPaymentsPanel = ({
             onTabChange={handleTabChange}
           />
         </TabsContent>
-
         <TabsContent value="student-payments">
           <AdminPaymentsView initialPayments={initialPayments} />
-        </TabsContent>
-
+        </TabsContent>{' '}
         <TabsContent value="tutor-payments">
-          <TutorPayments />
+          {loadingTutorInvoices ? (
+            <div className="py-8 text-center">
+              <div
+                className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                role="status"
+              >
+                <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+                  Loading...
+                </span>
+              </div>
+              <p className="mt-2 text-gray-600">Loading tutor invoices...</p>
+            </div>
+          ) : (
+            <AdminTutorPaymentsView initialInvoices={tutorInvoices} />
+          )}
         </TabsContent>
       </Tabs>
     </div>

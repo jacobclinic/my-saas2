@@ -13,8 +13,10 @@ import {
 import _ from 'cypress/types/lodash';
 import { isAdmin as isUserAdmin } from '../user/actions.server';
 import { getAllStudentPayments } from './database/queries';
-import { INVOICES_TABLE, STUDENT_PAYMENTS_TABLE } from '../db-tables';
+import { INVOICES_TABLE, STUDENT_PAYMENTS_TABLE, TUTOR_INVOICES_TABLE } from '../db-tables';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+import { getAllTutorInvoices } from '../invoices/database/queries';
+import { TutorInvoice } from '../invoices/types/types';
 
 export const approveStudentPaymentAction = withSession(
   async ({
@@ -177,11 +179,7 @@ export const rejectStudentPaymentAction = withSession(
 // Other actions unchanged...
 
 export const getPaymentSummaryAction = withSession(
-  async ({
-    invoicePeriod,
-  }: {
-    invoicePeriod: string;
-  }) => {
+  async ({ invoicePeriod }: { invoicePeriod: string }) => {
     const client = getSupabaseServerActionClient();
 
     const isAdmin = await isUserAdmin(client);
@@ -299,12 +297,7 @@ export const generateInvoicesAction = withSession(
 );
 
 export const generateTutorInvoicesAction = withSession(
-  async ({
-    invoicePeriod
-  }: {
-    csrfToken: string;
-    invoicePeriod: string;
-  }) => {
+  async ({ invoicePeriod }: { csrfToken: string; invoicePeriod: string }) => {
     const client = getSupabaseServerActionClient();
 
     const isAdmin = await isUserAdmin(client);
@@ -341,13 +334,9 @@ export const generateTutorInvoicesAction = withSession(
 );
 
 export const generateAllInvoicesAction = withSession(
-  async ({
-    invoicePeriod,
-  }: {
-    invoicePeriod: string;
-  }) => {
+  async ({ invoicePeriod }: { invoicePeriod: string }) => {
     const client = getSupabaseServerActionClient();
-    
+
     const isAdmin = await isUserAdmin(client);
     if (!isAdmin) {
       return { success: false, error: 'User is not an admin' };
@@ -385,7 +374,6 @@ export const generateAllInvoicesAction = withSession(
     }
   },
 );
-
 
 export const getAllStudentPaymentsAction = withSession(
   async (
@@ -541,6 +529,125 @@ export const getPaymentSummaryForPage = withSession(
       return { success: true, summary };
     } catch (error: any) {
       console.error('Error fetching payment summary for page:', error);
+      return { success: false, error: error.message };
+    }
+  },
+);
+
+export const getAllTutorInvoicesAction = withSession(
+  async (
+    invoicePeriod?: string,
+  ): Promise<{
+    success: boolean;
+    invoices?: TutorInvoice[];
+    error?: string;
+  }> => {
+    const client = getSupabaseServerActionClient();
+    const adminCheck = await isUserAdmin(client);
+
+    if (!adminCheck) {
+      return {
+        success: false,
+        error: 'User is not an admin',
+      };
+    }
+
+    try {
+      const invoices = await getAllTutorInvoices(client, invoicePeriod);
+      return {
+        success: true,
+        invoices,
+      };
+    } catch (error: any) {
+      console.error('Error fetching tutor invoices:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch tutor invoices',
+      };
+    }
+  },
+);
+
+export const getTutorInvoicesForPeriod = withSession(
+  async (
+    invoicePeriod: string,
+  ): Promise<{
+    success: boolean;
+    invoices?: TutorInvoice[];
+    error?: string;
+  }> => {
+    const client = getSupabaseServerActionClient();
+    const adminCheck = await isUserAdmin(client);
+
+    if (!adminCheck) {
+      return {
+        success: false,
+        error: 'User is not an admin',
+      };
+    }
+
+    try {
+      const invoices = await getAllTutorInvoices(client, invoicePeriod);
+      return {
+        success: true,
+        invoices,
+      };
+    } catch (error: any) {
+      console.error('Error fetching tutor invoices for period:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch tutor invoices',
+      };
+    }
+  },
+);
+
+// Actions for updating tutor invoice status
+export const markTutorInvoiceAsPaidAction = withSession(
+  async ({ invoiceId }: { invoiceId: string }) => {
+    const client = getSupabaseServerActionClient();
+    const adminCheck = await isUserAdmin(client);
+
+    if (!adminCheck) {
+      return { success: false, error: 'User is not an admin' };
+    }
+
+    try {
+      const { error } = await client
+        .from(TUTOR_INVOICES_TABLE)
+        .update({ status: 'paid' })
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error marking tutor invoice as paid:', error);
+      return { success: false, error: error.message };
+    }
+  },
+);
+
+export const markTutorInvoiceAsIssuedAction = withSession(
+  async ({ invoiceId }: { invoiceId: string }) => {
+    const client = getSupabaseServerActionClient();
+    const adminCheck = await isUserAdmin(client);
+
+    if (!adminCheck) {
+      return { success: false, error: 'User is not an admin' };
+    }
+
+    try {
+      const { error } = await client
+        .from(TUTOR_INVOICES_TABLE)
+        .update({ status: 'issued' })
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error marking tutor invoice as issued:', error);
       return { success: false, error: error.message };
     }
   },

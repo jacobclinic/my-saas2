@@ -18,7 +18,6 @@ import { getAllUpcommingSessionsData } from '../sessions/database/queries';
 
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
 import { format as dateFnsFormat } from 'date-fns';
-import sendEmail from '~/core/email/send-email';
 import { sendSingleSMS } from '../notifications/sms/sms.notification.service';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentInvitationToClass } from '~/core/email/templates/emailTemplate';
@@ -104,7 +103,7 @@ export const createClassAction = withSession(
         return sessions;
       }),
     );
-    
+
     // Insert all initial sessions into the database
     const { error: sessionError } = await client
       .from(SESSIONS_TABLE)
