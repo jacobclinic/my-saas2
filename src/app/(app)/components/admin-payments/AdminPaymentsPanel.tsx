@@ -6,6 +6,7 @@ import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
   getPaymentSummaryAction,
   generateInvoicesAction,
+  generateAllInvoicesAction,
 } from '~/lib/payments/admin-payment-actions';
 import AdminPaymentsView from './AdminStudentPaymentsView';
 import TutorPayments from '../payments/TutorPaymentList';
@@ -103,9 +104,8 @@ const AdminPaymentsPanel = ({
       setIsGeneratingInvoices(true);
       setInvoiceMessage(null);
 
-      const result = await generateInvoicesAction({
-        csrfToken,
-        invoicePeriod: selectedInvoiceMonth,
+      const result = await generateAllInvoicesAction({
+        invoicePeriod: selectedInvoiceMonth
       });
 
       if (result.success) {
@@ -115,7 +115,7 @@ const AdminPaymentsPanel = ({
         });
 
         // Refresh data after generating invoices
-        const summaryResult = await getPaymentSummaryAction({ csrfToken });
+        const summaryResult = await getPaymentSummaryAction({ invoicePeriod: selectedInvoiceMonth });
         if (summaryResult.success && summaryResult.summary) {
           setPaymentSummary(summaryResult.summary);
         }

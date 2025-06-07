@@ -20,3 +20,4 @@ export const STUDENT_SESSION_ATTENDANCE_TABLE = `student_session_attendance`;
 export const STUDENT_PAYMENTS_TABLE = `student_payments`;
 export const TUTOR_PAYMENTS_TABLE = `tutor_payments`;
 export const INVOICES_TABLE = `invoices`;
+export const TUTOR_INVOICES_TABLE = `tutor_invoices`;

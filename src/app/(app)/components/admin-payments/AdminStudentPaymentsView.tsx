@@ -554,5 +554,3 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
 };
 
 export default AdminStudentPaymentsView;
-
-

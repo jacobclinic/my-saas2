@@ -2,12 +2,18 @@
 
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import { PaymentStatus, PaymentWithDetails } from '~/lib/payments/types/admin-payments';
-import { generateMonthlyInvoices } from '../invoices/database/mutations';
+import {
+  PaymentStatus,
+  PaymentWithDetails,
+} from '~/lib/payments/types/admin-payments';
+import {
+  generateMonthlyInvoicesStudents,
+  generateMonthlyInvoicesTutor,
+} from '../invoices/database/mutations';
 import _ from 'cypress/types/lodash';
 import { isAdmin as isUserAdmin } from '../user/actions.server';
 import { getAllStudentPayments } from './database/queries';
-import { STUDENT_PAYMENTS_TABLE } from '../db-tables';
+import { INVOICES_TABLE, STUDENT_PAYMENTS_TABLE } from '../db-tables';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 
 export const approveStudentPaymentAction = withSession(
@@ -172,24 +178,21 @@ export const rejectStudentPaymentAction = withSession(
 
 export const getPaymentSummaryAction = withSession(
   async ({
-    csrfToken,
     invoicePeriod,
   }: {
-    csrfToken: string;
-    invoicePeriod?: string;
+    invoicePeriod: string;
   }) => {
     const client = getSupabaseServerActionClient();
-    
+
     const isAdmin = await isUserAdmin(client);
     if (!isAdmin) {
       return { success: false, error: 'User is not an admin' };
     }
 
     try {
-
       // Fetch all invoices with payment status
       const { data: invoices, error: invoiceError } = await client
-        .from('invoices')
+        .from(INVOICES_TABLE)
         .select(
           `
           id,
@@ -201,7 +204,7 @@ export const getPaymentSummaryAction = withSession(
           )
         `,
         )
-        .eq('invoice_period', invoicePeriod ?? '');
+        .eq('invoice_period', invoicePeriod);
 
       if (invoiceError) throw invoiceError;
 
@@ -274,7 +277,7 @@ export const generateInvoicesAction = withSession(
       const startTime = performance.now();
 
       // Generate the invoices
-      await generateMonthlyInvoices(client, year, month);
+      await generateMonthlyInvoicesStudents(client, year, month);
 
       // Calculate how long it took
       const endTime = performance.now();
@@ -295,53 +298,250 @@ export const generateInvoicesAction = withSession(
   },
 );
 
+export const generateTutorInvoicesAction = withSession(
+  async ({
+    invoicePeriod
+  }: {
+    csrfToken: string;
+    invoicePeriod: string;
+  }) => {
+    const client = getSupabaseServerActionClient();
+
+    const isAdmin = await isUserAdmin(client);
+    if (!isAdmin) {
+      return { success: false, error: 'User is not an admin' };
+    }
+
+    try {
+      const [year, month] = invoicePeriod.split('-').map(Number);
+
+      // Start timing the operation
+      const startTime = performance.now();
+
+      // Generate the tutor invoices
+      await generateMonthlyInvoicesTutor(client, year, month);
+
+      // Calculate how long it took
+      const endTime = performance.now();
+      const executionTime = Math.round((endTime - startTime) / 1000);
+
+      return {
+        success: true,
+        message: `Tutor invoices successfully generated for ${invoicePeriod}`,
+        executionTime,
+      };
+    } catch (error: any) {
+      console.error('Error generating tutor invoices:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to generate tutor invoices',
+      };
+    }
+  },
+);
+
+export const generateAllInvoicesAction = withSession(
+  async ({
+    invoicePeriod,
+  }: {
+    invoicePeriod: string;
+  }) => {
+    const client = getSupabaseServerActionClient();
+    
+    const isAdmin = await isUserAdmin(client);
+    if (!isAdmin) {
+      return { success: false, error: 'User is not an admin' };
+    }
+
+    try {
+      const [year, month] = invoicePeriod.split('-').map(Number);
+
+      // Start timing the operation
+      const startTime = performance.now();
+
+      // Generate both student and tutor invoices
+      await Promise.all([
+        generateMonthlyInvoicesStudents(client, year, month),
+        generateMonthlyInvoicesTutor(client, year, month),
+      ]);
+      // await generateMonthlyInvoicesStudents(client, year, month);
+      // await generateMonthlyInvoicesTutor(client, year, month);
+
+      // Calculate how long it took
+      const endTime = performance.now();
+      const executionTime = Math.round((endTime - startTime) / 1000);
+
+      return {
+        success: true,
+        message: `All invoices successfully generated for ${invoicePeriod}`,
+        executionTime,
+      };
+    } catch (error: any) {
+      console.error('Error generating all invoices:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to generate invoices',
+      };
+    }
+  },
+);
+
+
 export const getAllStudentPaymentsAction = withSession(
   async (
-    invoicePeriod:string
-  ): Promise<{paymentData :PaymentWithDetails[], error: any}> => {
+    invoicePeriod: string,
+  ): Promise<{ paymentData: PaymentWithDetails[]; error: any }> => {
     const client = getSupabaseServerActionClient();
     const adminCheck = await isUserAdmin(client);
     if (!adminCheck) {
       return { paymentData: [], error: 'User is not an admin' };
     }
 
-    const {paymentData, error} = await getAllStudentPayments(client, invoicePeriod);
+    const { paymentData, error } = await getAllStudentPayments(
+      client,
+      invoicePeriod,
+    );
 
-    if (error) {
-      return { paymentData: [], error: error || 'Failed to fetch payments' };
-    }
-
-    return { paymentData, error: null };
+    return { paymentData, error };
   },
 );
 
+export const getPaymentsForPeriod = withSession(
+  async (
+    invoicePeriod: string,
+  ): Promise<{
+    success: boolean;
+    payments?: PaymentWithDetails[];
+    error?: string;
+  }> => {
+    const client = getSupabaseServerActionClient();
+    const adminCheck = await isUserAdmin(client);
 
-export async function getPaymentSummaryForPage(
-  selectedPeriod: string) {
-  const invoicePeriod = selectedPeriod 
-  const result = await getPaymentSummaryAction({
-    csrfToken: 'server-side',
-    invoicePeriod,
-  });
+    if (!adminCheck) {
+      return {
+        success: false,
+        error: 'User is not an admin',
+      };
+    }
 
-  return result;
-}
+    try {
+      const { paymentData, error } = await getAllStudentPayments(
+        client,
+        invoicePeriod,
+      );
 
-export async function getPaymentsForPeriod(
-  period: string,
-): Promise<{
-  success: boolean;
-  payments?: PaymentWithDetails[];
-  error?: string;
-}> {
-    const client = getSupabaseServerComponentClient();
-    
-    const { paymentData, error } = await getAllStudentPayments(client, period);
-    if (error) {
-      console.error('Error fetching payments:', error);
+      if (error) {
+        return {
+          success: false,
+          error: error.message || 'Failed to fetch payments',
+        };
+      }
+
+      return {
+        success: true,
+        payments: paymentData,
+      };
+    } catch (error: any) {
+      console.error('Error fetching payments for period:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch payments',
+      };
+    }
+  },
+);
+
+export const getPaymentSummaryForPage = withSession(
+  async (
+    invoicePeriod: string,
+  ): Promise<{
+    success: boolean;
+    summary?: {
+      total: number;
+      pending: number;
+      pendingVerification: number;
+      verified: number;
+      rejected: number;
+      notPaid: number;
+      totalVerifiedAmount: number;
+      totalAmount: number;
+    };
+    error?: string;
+  }> => {
+    const client = getSupabaseServerActionClient();
+
+    const isAdmin = await isUserAdmin(client);
+    if (!isAdmin) {
+      return { success: false, error: 'User is not an admin' };
+    }
+
+    try {
+      // Fetch all invoices with payment status
+      const { data: invoices, error: invoiceError } = await client
+        .from('invoices')
+        .select(
+          `
+          id,
+          amount,
+          invoice_period,
+          payment:${STUDENT_PAYMENTS_TABLE}!fk_student_payments_invoice_id (
+            status,
+            amount
+          )
+        `,
+        )
+        .eq('invoice_period', invoicePeriod);
+
+      if (invoiceError) throw invoiceError;
+
+      // Initialize summary
+      const summary = {
+        total: 0,
+        pending: 0,
+        pendingVerification: 0,
+        verified: 0,
+        rejected: 0,
+        notPaid: 0,
+        totalVerifiedAmount: 0,
+        totalAmount: 0,
+      };
+
+      // Aggregate data
+      for (const invoice of invoices) {
+        const payment = Array.isArray(invoice.payment)
+          ? invoice.payment[0]
+          : invoice.payment;
+        const invoiceAmount = invoice.amount || 0;
+        summary.total += 1;
+        summary.totalAmount += invoiceAmount;
+
+        if (!payment || !payment.status) {
+          summary.notPaid += 1;
+        } else {
+          switch (payment.status) {
+            case PaymentStatus.PENDING:
+              summary.pending += 1;
+              break;
+            case PaymentStatus.PENDING_VERIFICATION:
+              summary.pendingVerification += 1;
+              break;
+            case PaymentStatus.VERIFIED:
+              summary.verified += 1;
+              summary.totalVerifiedAmount += invoiceAmount;
+              break;
+            case PaymentStatus.REJECTED:
+              summary.rejected += 1;
+              break;
+            default:
+              summary.notPaid += 1;
+          }
+        }
+      }
+
+      return { success: true, summary };
+    } catch (error: any) {
+      console.error('Error fetching payment summary for page:', error);
       return { success: false, error: error.message };
     }
-    return { success: true, payments: paymentData };
- 
-}
-
+  },
+);

@@ -1,7 +1,14 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import {
+  CLASSES_TABLE,
+  INVOICES_TABLE,
+  STUDENT_CLASS_ENROLLMENTS_TABLE,
+  TUTOR_INVOICES_TABLE,
+} from '~/lib/db-tables';
 import { checkUpcomingSessionAvailabilityForClass } from '~/lib/sessions/database/queries';
+import { Enrollment } from '../types/types';
 
-export async function generateMonthlyInvoices(
+export async function generateMonthlyInvoicesStudents(
   client: SupabaseClient,
   year: number,
   month: number,
@@ -14,12 +21,12 @@ export async function generateMonthlyInvoices(
 
     // Get all student-class enrollments
     const { data: enrollments, error: enrollError } = await client
-      .from('student_class_enrollments')
+      .from(STUDENT_CLASS_ENROLLMENTS_TABLE)
       .select(
         `
         student_id,
         class_id,
-        class:classes!class_id (
+        class:${CLASSES_TABLE}!class_id (
           fee,
           name
         )
@@ -113,7 +120,7 @@ export async function createInvoiceForNewStudent(
 
     // Get class details to determine the fee
     const { data: classData, error: classError } = await client
-      .from('classes')
+      .from(CLASSES_TABLE)
       .select('fee, name')
       .eq('id', classId)
       .single();
@@ -125,7 +132,7 @@ export async function createInvoiceForNewStudent(
 
     // Check if an invoice already exists for this student-class-period combination
     const { data: existingInvoice } = await client
-      .from('invoices')
+      .from(INVOICES_TABLE)
       .select('id')
       .eq('student_id', studentId)
       .eq('class_id', classId)
@@ -142,7 +149,7 @@ export async function createInvoiceForNewStudent(
 
     // Create the invoice
     const { data: invoice, error: insertError } = await client
-      .from('invoices')
+      .from(INVOICES_TABLE)
       .insert({
         student_id: studentId,
         class_id: classId,
@@ -168,5 +175,132 @@ export async function createInvoiceForNewStudent(
   } catch (error) {
     console.error('Failed to create invoice:', error);
     return null;
+  }
+}
+
+/**
+ * Generates monthly invoices for tutors based on paid student invoices
+ * @param client Supabase client instance
+ * @param year The year for which to generate invoices
+ * @param month The month for which to generate invoices
+ * @returns Promise<void>
+ */
+export async function generateMonthlyInvoicesTutor(
+  client: SupabaseClient,
+  year: number,
+  month: number,
+): Promise<void> {
+  try {
+    // Format month as 'YYYY-MM'
+    const invoicePeriod = `${year}-${month.toString().padStart(2, '0')}`;
+
+    // Get all tutors with their classes
+    const { data: tutorClasses, error: tutorClassesError } = await client
+      .from(CLASSES_TABLE)
+      .select(
+        `
+        id,
+        fee,
+        tutor_id,
+        name
+      `,
+      )
+      .eq('status', 'active');
+
+    if (tutorClassesError) {
+      throw new Error(
+        `Error fetching tutor classes: ${tutorClassesError.message}`,
+      );
+    }
+
+    if (!tutorClasses || tutorClasses.length === 0) {
+      console.log('No active classes found');
+      return;
+    }
+
+    // Group classes by tutor
+    const classesByTutor = tutorClasses.reduce(
+      (acc, classData) => {
+        if (!acc[classData.tutor_id]) {
+          acc[classData.tutor_id] = [];
+        }
+        acc[classData.tutor_id].push(classData);
+        return acc;
+      },
+      {} as Record<string, typeof tutorClasses>,
+    );
+
+    const tutorInvoicesToInsert = [];
+
+    // Process each tutor
+    for (const [tutorId, classes] of Object.entries(classesByTutor)) {
+      for (const classData of classes) {
+        // Check if tutor invoice already exists for this class and period
+        const { data: existingTutorInvoice } = await client
+          .from(TUTOR_INVOICES_TABLE)
+          .select('id')
+          .eq('tutor_id', tutorId)
+          .eq('class_id', classData.id)
+          .eq('pyament_period', invoicePeriod)
+          .single();
+
+        if (existingTutorInvoice) {
+          continue;
+        } // Get all paid student invoices for this class in the given period
+        const { data: paidStudentInvoices, error: paidInvoicesError } =
+          await client
+            .from(INVOICES_TABLE)
+            .select('amount')
+            .eq('class_id', classData.id)
+            .eq('invoice_period', invoicePeriod)
+            .eq('status', 'paid');
+
+        if (paidInvoicesError) {
+          console.error(
+            `Error fetching paid invoices for class ${classData.id}:`,
+            paidInvoicesError,
+          );
+          continue;
+        }
+
+        // Calculate tutor payment: number of paid invoices × class fee
+        const numberOfPaidInvoices = paidStudentInvoices?.length || 0;
+        const classFee = classData.fee || 0;
+        const tutorPayment = numberOfPaidInvoices * classFee;
+
+        // Create invoice number in the format: TUTOR-INV-YYYY-MM-tutorId-classId
+        const invoiceNo = `TUTOR-INV-${year}-${month.toString().padStart(2, '0')}-${tutorId.substring(0, 6)}-${classData.id.substring(0, 6)}`;
+
+        // Always create tutor invoice for active classes, even if amount is 0
+        tutorInvoicesToInsert.push({
+          tutor_id: tutorId,
+          class_id: classData.id,
+          invoice_no: invoiceNo,
+          pyament_period: invoicePeriod,
+          amount: tutorPayment,
+          status: 'issued',
+        });
+      }
+    }
+
+    // Bulk insert new tutor invoices
+    if (tutorInvoicesToInsert.length > 0) {
+      const { error: insertError } = await client
+        .from(TUTOR_INVOICES_TABLE)
+        .insert(tutorInvoicesToInsert);
+
+      if (insertError) {
+        throw new Error(
+          `Error inserting tutor invoices: ${insertError.message}`,
+        );
+      }
+    } else {
+      console.log(
+        `No active classes found to generate tutor invoices for ${invoicePeriod}`,
+      );
+    }
+  } catch (error) {
+    console.error('Failed to generate tutor invoices:', error);
+    throw error;
   }
 }
