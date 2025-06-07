@@ -19,6 +19,8 @@ import { toast } from 'sonner';
 
 interface AdminTutorPaymentsViewProps {
   initialInvoices: TutorInvoice[];
+  selectedPeriod?: string;
+  onPeriodChange?: (period: string) => void;
 }
 
 // Define a type for the table data
@@ -36,15 +38,17 @@ interface TutorInvoiceTableData {
 
 const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
   initialInvoices,
+  selectedPeriod: parentSelectedPeriod,
+  onPeriodChange,
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFilter, setSearchFilter] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  // Initialize selectedPeriod from URL search params or default to current month
-  const urlMonth = searchParams.get('month');  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-  const [selectedPeriod, setSelectedPeriod] = useState(urlMonth || currentMonth);
+  const [selectedStatus, setSelectedStatus] = useState('all'); // Use parent's selected period or fallback to URL/current month
+  const urlMonth = searchParams.get('month');
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+  const selectedPeriod = parentSelectedPeriod || urlMonth || currentMonth;
 
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
@@ -110,40 +114,47 @@ const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Handle period change - update URL and refresh data
+  }; // Handle period change - use parent handler if available, otherwise update URL independently
   const handlePeriodChange = (value: string) => {
-    // Update local state immediately
-    setSelectedPeriod(value);
-
-    // Update URL with new month parameter
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('month', value);
-
-    // Use router.replace with shallow routing to avoid full page reload
-    router.replace(`/payments?${params.toString()}`, { scroll: false });
-
-    // Fetch new data for the selected period
-    fetchInvoicesForPeriod(value);
-  };
-  // Refetch data when URL parameters change (handles browser back/forward buttons)
-  useEffect(() => {
-    if (searchParams.has('month')) {
-      const month = searchParams.get('month');
-      if (month && month !== selectedPeriod) {
-        setSelectedPeriod(month);
-        fetchInvoicesForPeriod(month);
-      }
+    if (onPeriodChange) {
+      // Parent is managing period changes
+      onPeriodChange(value);
     } else {
-      // If no initial invoices and no month in URL, fetch current month data
-      if (initialInvoices.length === 0) {
-        const month = new Date().toISOString().slice(0, 7); // YYYY-MM format
-        setSelectedPeriod(month);
-        fetchInvoicesForPeriod(month);
+      // Component is managing its own period changes
+      // Update URL with new month parameter
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('month', value);
+
+      // Use router.replace with shallow routing to avoid full page reload
+      router.replace(`/payments?${params.toString()}`, { scroll: false });
+
+      // Fetch new data for the selected period
+      fetchInvoicesForPeriod(value);
+    }
+  };
+
+  // Sync invoices data when initialInvoices change (from parent)
+  useEffect(() => {
+    setInvoices(initialInvoices);
+  }, [initialInvoices]);
+  // Only fetch data independently if no parent is managing the period and we have no initial data
+  useEffect(() => {
+    // Only fetch if:
+    // 1. No parent is managing the period (onPeriodChange is null/undefined)
+    // 2. We have no initial invoices
+    // 3. URL has a month parameter that differs from current selection
+    if (!onPeriodChange && initialInvoices.length === 0) {
+      if (searchParams.has('month')) {
+        const month = searchParams.get('month');
+        if (month && month !== selectedPeriod) {
+          fetchInvoicesForPeriod(month);
+        }
+      } else {
+        // Fetch current month data if no month in URL
+        fetchInvoicesForPeriod(selectedPeriod);
       }
     }
-  }, [searchParams, initialInvoices.length]);
+  }, [searchParams, onPeriodChange, initialInvoices.length, selectedPeriod]);
 
   // Define filter options for search
   const filterOptions = [

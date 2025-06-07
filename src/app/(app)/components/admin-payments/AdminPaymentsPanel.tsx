@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base-v2/ui/Tabs';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
@@ -8,8 +9,9 @@ import {
   generateInvoicesAction,
   generateAllInvoicesAction,
   getTutorInvoicesForPeriod,
+  getAllStudentPaymentsAction,
 } from '~/lib/payments/admin-payment-actions';
-import AdminPaymentsView from './AdminStudentPaymentsView';
+import AdminStudentPaymentsView from './AdminStudentPaymentsView';
 import AdminTutorPaymentsView from './AdminTutorPaymentsView';
 import { PaymentWithDetails } from '~/lib/payments/types/admin-payments';
 import { TutorInvoice } from '~/lib/invoices/types/types';
@@ -36,18 +38,33 @@ interface PaymentSummary {
 }
 
 interface AdminPaymentsPanelProps {
-  initialPayments: PaymentWithDetails[];
   initialSummary: PaymentSummary | null;
 }
 
-const AdminPaymentsPanel = ({
-  initialPayments,
-  initialSummary,
-}: AdminPaymentsPanelProps) => {
+const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get current period from URL or default to current month
+  const urlMonth = searchParams.get('month');
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+  const [selectedPeriod, setSelectedPeriod] = useState(
+    urlMonth || currentMonth,
+  );
+
   const [activeTab, setActiveTab] = useState('overview');
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(
     initialSummary,
   );
+
+  // Student payments state
+  const [studentPayments, setStudentPayments] = useState<PaymentWithDetails[]>(
+    [],
+  );
+  const [studentPaymentsLoaded, setStudentPaymentsLoaded] = useState(false);
+  const [loadingStudentPayments, setLoadingStudentPayments] = useState(false);
+
+  // Tutor invoices state
   const [tutorInvoices, setTutorInvoices] = useState<TutorInvoice[]>([]);
   const [tutorInvoicesLoaded, setTutorInvoicesLoaded] = useState(false);
   const [loadingTutorInvoices, setLoadingTutorInvoices] = useState(false);
@@ -88,17 +105,38 @@ const AdminPaymentsPanel = ({
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
 
+    // Load student payments when student-payments tab is selected for the first time
+    if (tab === 'student-payments' && !studentPaymentsLoaded) {
+      loadStudentPaymentsForPeriod(selectedPeriod);
+    }
+
     // Load tutor invoices when tutor-payments tab is selected for the first time
     if (tab === 'tutor-payments' && !tutorInvoicesLoaded) {
-      loadTutorInvoicesForCurrentMonth();
+      loadTutorInvoicesForPeriod(selectedPeriod);
     }
   };
 
-  const loadTutorInvoicesForCurrentMonth = async () => {
+  const loadStudentPaymentsForPeriod = async (period: string) => {
+    setLoadingStudentPayments(true);
+    try {
+      const result = await getAllStudentPaymentsAction(period);
+      if (result.paymentData && !result.error) {
+        setStudentPayments(result.paymentData);
+        setStudentPaymentsLoaded(true);
+      } else {
+        console.error('Failed to load student payments:', result.error);
+      }
+    } catch (error) {
+      console.error('Error loading student payments:', error);
+    } finally {
+      setLoadingStudentPayments(false);
+    }
+  };
+
+  const loadTutorInvoicesForPeriod = async (period: string) => {
     setLoadingTutorInvoices(true);
     try {
-      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-      const result = await getTutorInvoicesForPeriod(currentMonth);
+      const result = await getTutorInvoicesForPeriod(period);
       if (result.success && result.invoices) {
         setTutorInvoices(result.invoices);
         setTutorInvoicesLoaded(true);
@@ -109,6 +147,46 @@ const AdminPaymentsPanel = ({
       console.error('Error loading tutor invoices:', error);
     } finally {
       setLoadingTutorInvoices(false);
+    }
+  };
+
+  // Handle URL parameter changes (e.g., when month is changed in child components)
+  useEffect(() => {
+    const urlMonth = searchParams.get('month');
+    if (urlMonth && urlMonth !== selectedPeriod) {
+      setSelectedPeriod(urlMonth);
+
+      // Reload data for the new period if tabs are already loaded
+      if (studentPaymentsLoaded) {
+        loadStudentPaymentsForPeriod(urlMonth);
+      }
+      if (tutorInvoicesLoaded) {
+        loadTutorInvoicesForPeriod(urlMonth);
+      }
+    }
+  }, [
+    searchParams,
+    selectedPeriod,
+    studentPaymentsLoaded,
+    tutorInvoicesLoaded,
+  ]);
+
+  // Handle period change from child components
+  const handlePeriodChange = (period: string) => {
+    // Update the selectedPeriod state
+    setSelectedPeriod(period);
+
+    // Update URL with new month parameter
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('month', period);
+    router.replace(`/payments?${params.toString()}`, { scroll: false });
+
+    // Reload data for the new period if tabs are already loaded
+    if (studentPaymentsLoaded) {
+      loadStudentPaymentsForPeriod(period);
+    }
+    if (tutorInvoicesLoaded) {
+      loadTutorInvoicesForPeriod(period);
     }
   };
 
@@ -241,9 +319,27 @@ const AdminPaymentsPanel = ({
             isLoading={isLoading}
             onTabChange={handleTabChange}
           />
-        </TabsContent>
+        </TabsContent>{' '}
         <TabsContent value="student-payments">
-          <AdminPaymentsView initialPayments={initialPayments} />
+          {loadingStudentPayments ? (
+            <div className="py-8 text-center">
+              <div
+                className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                role="status"
+              >
+                <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+                  Loading...
+                </span>
+              </div>
+              <p className="mt-2 text-gray-600">Loading student payments...</p>
+            </div>
+          ) : (
+            <AdminStudentPaymentsView
+              initialPayments={studentPayments}
+              selectedPeriod={selectedPeriod}
+              onPeriodChange={handlePeriodChange}
+            />
+          )}
         </TabsContent>{' '}
         <TabsContent value="tutor-payments">
           {loadingTutorInvoices ? (
@@ -259,7 +355,11 @@ const AdminPaymentsPanel = ({
               <p className="mt-2 text-gray-600">Loading tutor invoices...</p>
             </div>
           ) : (
-            <AdminTutorPaymentsView initialInvoices={tutorInvoices} />
+            <AdminTutorPaymentsView
+              initialInvoices={tutorInvoices}
+              selectedPeriod={selectedPeriod}
+              onPeriodChange={handlePeriodChange}
+            />
           )}
         </TabsContent>
       </Tabs>
