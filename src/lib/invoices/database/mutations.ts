@@ -241,7 +241,7 @@ export async function generateMonthlyInvoicesTutor(
           .select('id')
           .eq('tutor_id', tutorId)
           .eq('class_id', classData.id)
-          .eq('pyament_period', invoicePeriod)
+          .eq('payment_period', invoicePeriod)
           .single();
 
         if (existingTutorInvoice) {
@@ -276,7 +276,7 @@ export async function generateMonthlyInvoicesTutor(
           tutor_id: tutorId,
           class_id: classData.id,
           invoice_no: invoiceNo,
-          pyament_period: invoicePeriod,
+          payment_period: invoicePeriod,
           amount: tutorPayment,
           status: 'issued',
         });

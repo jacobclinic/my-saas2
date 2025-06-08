@@ -530,7 +530,7 @@ export type Database = {
           created_at: string;
           id: string;
           invoice_no: string;
-          pyament_period: string;
+          payment_period: string;
           status: string | null;
           tutor_id: string;
         };
@@ -540,7 +540,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           invoice_no: string;
-          pyament_period: string;
+          payment_period: string;
           status?: string | null;
           tutor_id: string;
         };
@@ -550,7 +550,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           invoice_no?: string;
-          pyament_period?: string;
+          payment_period?: string;
           status?: string | null;
           tutor_id?: string;
         };

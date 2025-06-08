@@ -194,7 +194,7 @@ export async function getAllTutorInvoices(
           tutor_id,
           class_id,
           invoice_no,
-          pyament_period,
+          payment_period,
           amount,
           status,
           created_at,
@@ -216,7 +216,7 @@ export async function getAllTutorInvoices(
 
     // Filter by invoice period if provided
     if (invoicePeriod) {
-      query = query.eq('pyament_period', invoicePeriod);
+      query = query.eq('payment_period', invoicePeriod);
     }
 
     const { data, error } = await query;
@@ -250,7 +250,7 @@ export async function getAllTutorInvoices(
         class_subject: classData?.subject || null,
         class_fee: classData?.fee || 0,
         invoice_no: invoice.invoice_no || null,
-        payment_period: invoice.pyament_period,
+        payment_period: invoice.payment_period,
         amount: invoice.amount || 0,
         status: invoice.status,
         created_at: invoice.created_at,
@@ -283,7 +283,7 @@ export async function getTutorInvoicesByTutorId(
           tutor_id,
           class_id,
           invoice_no,
-          pyament_period,
+          payment_period,
           amount,
           status,
           created_at,
@@ -300,7 +300,7 @@ export async function getTutorInvoicesByTutorId(
 
     // Filter by invoice period if provided
     if (invoicePeriod) {
-      query = query.eq('pyament_period', invoicePeriod);
+      query = query.eq('payment_period', invoicePeriod);
     }
 
     const { data, error } = await query;
@@ -329,7 +329,7 @@ export async function getTutorInvoicesByTutorId(
         class_subject: classData?.subject || null,
         class_fee: classData?.fee || 0,
         invoice_no: invoice.invoice_no || null,
-        payment_period: invoice.pyament_period,
+        payment_period: invoice.payment_period,
         amount: invoice.amount || 0,
         status: invoice.status,
         created_at: invoice.created_at,
@@ -355,7 +355,7 @@ export async function getTutorInvoiceSummary(
     const { data, error } = await client
       .from(TUTOR_INVOICES_TABLE)
       .select('amount, status')
-      .eq('pyament_period', invoicePeriod);
+      .eq('payment_period', invoicePeriod);
 
     if (error) {
       throw new Error(`Error fetching tutor invoice summary: ${error.message}`);
