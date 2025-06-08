@@ -1,18 +1,15 @@
-/**
- * Utility functions for handling month selection and formatting
- * Used by both TutorPaymentList and AdminTutorPaymentsView components
- */
+//  Utility functions for handling month selection and formatting
+//  Used by both TutorPaymentList and AdminTutorPaymentsView components
 
 export interface MonthOption {
   label: string;
   value: string;
 }
 
-/**
- * Generates month options for tutor payment filtering
- * Returns next month + current month + last 9 months (11 total months)
- * Format: "YYYY-MM" for value, "Month YYYY" for label
- */
+// Generates month options for tutor payment filtering
+// Returns next month + current month + last 9 months (11 total months)
+// Format: "YYYY-MM" for value, "Month YYYY" for label
+
 export function generateMonthOptions(): MonthOption[] {
   const options: MonthOption[] = [];
   const currentDate = new Date();
@@ -48,18 +45,12 @@ export function generateMonthOptions(): MonthOption[] {
   return options;
 }
 
-/**
- * Formats a period string (YYYY-MM) to readable format (Month YYYY)
- */
 export function formatPeriod(period: string): string {
   const [year, month] = period.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
   return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
-/**
- * Gets the current month in YYYY-MM format
- */
 export function getCurrentMonthPeriod(): string {
   const now = new Date();
   return `${now.getFullYear()}-${(now.getMonth() + 1)
@@ -67,9 +58,6 @@ export function getCurrentMonthPeriod(): string {
     .padStart(2, '0')}`;
 }
 
-/**
- * Gets the previous month in YYYY-MM format
- */
 export function getPreviousMonthPeriod(): string {
   const now = new Date();
   const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1);
@@ -78,19 +66,18 @@ export function getPreviousMonthPeriod(): string {
     .padStart(2, '0')}`;
 }
 
-/**
- * Converts a period string (YYYY-MM) to just the month name
- */
+
+// Converts a period string (YYYY-MM) to just the month name
+
 export function periodToMonthName(period: string): string {
   const [year, month] = period.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
   return date.toLocaleDateString('en-US', { month: 'long' });
 }
 
-/**
- * Converts a month name to the appropriate year's period (YYYY-MM)
- * Uses smart logic to determine the correct year based on available months
- */
+// Converts a month name to the appropriate year's period (YYYY-MM)
+// Uses smart logic to determine the correct year based on available months
+
 export function monthNameToPeriod(monthName: string): string {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();

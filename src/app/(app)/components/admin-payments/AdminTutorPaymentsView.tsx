@@ -11,10 +11,7 @@ import {
   getTutorInvoicesForPeriod,
   markTutorInvoiceAsPaidAction,
 } from '~/lib/payments/admin-payment-actions';
-import {
-  generateMonthOptions,
-  formatPeriod,
-} from '~/lib/payments/utils/month-utils';
+import { generateMonthOptions, formatPeriod } from '~/lib/utils/month-utils';
 import DataTable from '~/core/ui/DataTable';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import SearchBar from '../base-v2/ui/SearchBar';

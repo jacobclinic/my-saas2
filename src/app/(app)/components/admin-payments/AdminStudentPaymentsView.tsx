@@ -22,10 +22,7 @@ import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
 import { toast } from 'sonner';
-import {
-  generateMonthOptions,
-  formatPeriod,
-} from '~/lib/payments/utils/month-utils';
+import { generateMonthOptions, formatPeriod } from '~/lib/utils/month-utils';
 
 interface AdminStudentPaymentsViewProps {
   initialPayments: PaymentWithDetails[];

@@ -41,7 +41,7 @@ import {
   getPreviousMonthPeriod,
   periodToMonthName,
   monthNameToPeriod,
-} from '~/lib/payments/utils/month-utils';
+} from '~/lib/utils/month-utils';
 import {
   TutorPaymentData,
   TutorPaymentStats,
