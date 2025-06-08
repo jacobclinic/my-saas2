@@ -39,18 +39,27 @@ const StudentPaymentsView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [periodFilter, setPeriodFilter] = useState('all');
+
+  // Get current month as default
+  const getCurrentMonth = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    return `${year}-${month}`;
+  };
+
+  const [periodFilter, setPeriodFilter] = useState(() => getCurrentMonth());
+  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]); // Store all invoices for dropdown
   const csrfToken = useCsrfToken();
   const user = useUser();
-
-  const fetchInvoices = async () => {
+  const fetchInvoices = async (month?: string) => {
     if (!user?.data?.id) return;
 
     setLoading(true);
     try {
       const result = await getStudentInvoicesAction({
         studentId: user.data.id,
-        csrfToken,
+        month,
       });
 
       if (result.success && result.invoices) {
@@ -64,9 +73,47 @@ const StudentPaymentsView: React.FC = () => {
     }
   };
 
+  // Fetch all invoices for the dropdown (without month filter)
+  const fetchAllInvoicesForDropdown = async () => {
+    if (!user?.data?.id) return;
+
+    try {
+      const result = await getStudentInvoicesAction({
+        studentId: user.data.id,
+        // No month parameter to get all invoices
+      });
+
+      if (result.success && result.invoices) {
+        setAllInvoices(result.invoices);
+      }
+    } catch (error) {
+      console.error('Error fetching all invoices for dropdown:', error);
+    }
+  };
   useEffect(() => {
-    fetchInvoices();
+    // Load invoices for current month on initial load
+    fetchInvoices(getCurrentMonth());
+    // Also load all invoices for dropdown
+    fetchAllInvoicesForDropdown();
   }, [user?.data?.id, csrfToken]);
+
+  // Handle period filter changes with lazy loading
+  useEffect(() => {
+    const loadInvoicesForPeriod = async () => {
+      if (periodFilter === 'all') {
+        // If "all" is selected, load all invoices
+        await fetchInvoices();
+      } else {
+        // Load specific month
+        await fetchInvoices(periodFilter);
+      }
+    };
+
+    // Only trigger if periodFilter has been explicitly changed by user
+    if (periodFilter !== getCurrentMonth() || periodFilter === 'all') {
+      loadInvoicesForPeriod();
+    }
+  }, [periodFilter]);
 
   useEffect(() => {
     let filtered = invoices;
@@ -94,19 +141,15 @@ const StudentPaymentsView: React.FC = () => {
       );
     }
 
-    // Filter by period
-    if (periodFilter !== 'all') {
-      filtered = filtered.filter((invoice) => invoice.month === periodFilter);
-    }
+    // Note: Period filtering is now handled at the data fetch level
+    // so we don't need to filter here by period
 
     setFilteredInvoices(filtered);
-  }, [invoices, searchTerm, statusFilter, periodFilter]);
-
-
+  }, [invoices, searchTerm, statusFilter]);
 
   const getUniqueMonths = () => {
     const months = Array.from(
-      new Set(invoices.map((invoice) => invoice.month)),
+      new Set(allInvoices.map((invoice) => invoice.month)),
     );
     return months
       .map((month) => {
@@ -123,7 +166,6 @@ const StudentPaymentsView: React.FC = () => {
       .sort((a, b) => b.value.localeCompare(a.value));
   };
 
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -137,7 +179,6 @@ const StudentPaymentsView: React.FC = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6">
         <div className="flex flex-wrap gap-4 items-center">
@@ -195,14 +236,14 @@ const StudentPaymentsView: React.FC = () => {
               {invoices.length === 0
                 ? "You don't have any invoices yet."
                 : 'No invoices match your current filters.'}
-            </p>
+            </p>{' '}
             {invoices.length > 0 && (
               <Button
                 variant="outline"
                 onClick={() => {
                   setSearchTerm('');
                   setStatusFilter('all');
-                  setPeriodFilter('all');
+                  setPeriodFilter(getCurrentMonth());
                 }}
               >
                 Clear filters
@@ -211,10 +252,7 @@ const StudentPaymentsView: React.FC = () => {
           </div>
         ) : (
           filteredInvoices.map((invoice) => (
-            <StudentInvoiceCard
-              key={invoice.id}
-              invoice={invoice}
-            />
+            <StudentInvoiceCard key={invoice.id} invoice={invoice} />
           ))
         )}
       </div>

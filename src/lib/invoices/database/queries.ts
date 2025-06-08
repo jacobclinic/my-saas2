@@ -102,9 +102,10 @@ export async function getMonthlyInvoices(
 export async function getStudentInvoices(
   client: SupabaseClient,
   studentId: string,
+  month?: string,
 ): Promise<Invoice[]> {
   try {
-    const { data, error } = await client
+    let query = client
       .from(INVOICES_TABLE)
       .select(
         `
@@ -127,8 +128,16 @@ export async function getStudentInvoices(
           )
         `,
       )
-      .eq('student_id', studentId)
-      .order('invoice_date', { ascending: false });
+      .eq('student_id', studentId);
+
+    // Filter by month if provided
+    if (month) {
+      query = query.eq('invoice_period', month);
+    }
+
+    const { data, error } = await query.order('invoice_date', {
+      ascending: false,
+    });
 
     if (error) {
       throw new Error(`Error fetching student invoices: ${error.message}`);
