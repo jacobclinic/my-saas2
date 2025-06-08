@@ -3,14 +3,7 @@
 import React, { useState, useTransition, useMemo, useEffect } from 'react';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../base-v2/ui/Select';
-import { Search, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PaymentDetailsDialog from './PaymentDetailsDialog';
@@ -29,6 +22,10 @@ import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
 import { toast } from 'sonner';
+import {
+  generateMonthOptions,
+  formatPeriod,
+} from '~/lib/payments/utils/month-utils';
 
 interface AdminStudentPaymentsViewProps {
   initialPayments: PaymentWithDetails[];
@@ -58,7 +55,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFilter, setSearchFilter] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');  // Use parent's selected period or fallback to URL/current month
+  const [selectedStatus, setSelectedStatus] = useState('all'); // Use parent's selected period or fallback to URL/current month
   const urlMonth = searchParams.get('month');
   const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
   const selectedPeriod = parentSelectedPeriod || urlMonth || currentMonth;
@@ -69,51 +66,12 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
   const csrfToken = useCsrfToken();
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
-
   // Start with server-provided data
   const [payments, setPayments] =
     useState<PaymentWithDetails[]>(initialPayments);
 
-  // Format period for display
-  const formatPeriod = (period: string) => {
-    const [year, month] = period.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return format(date, 'MMMM yyyy');
-  };
-  // Generate period options (last 10 months and next upcoming month)
-  const periodOptions = useMemo(() => {
-    const options = [];
-    const currentDate = new Date();
-
-    // Add next month first
-    const nextMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + 1,
-    );
-    const nextPeriod = `${nextMonth.getFullYear()}-${(nextMonth.getMonth() + 1)
-      .toString()
-      .padStart(2, '0')}`;
-    options.push({
-      label: formatPeriod(nextPeriod),
-      value: nextPeriod,
-    });
-
-    // Add current month and last 9 months (total 10 months)
-    for (let i = 0; i < 10; i++) {
-      const date = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() - i,
-      );
-      const period = `${date.getFullYear()}-${(date.getMonth() + 1)
-        .toString()
-        .padStart(2, '0')}`;
-      options.push({
-        label: formatPeriod(period),
-        value: period,
-      });
-    }
-    return options;
-  }, []);
+  // Generate period options using utility function
+  const periodOptions = useMemo(() => generateMonthOptions(), []);
 
   // Function to fetch data for the selected period
   const fetchPaymentsForPeriod = async (period: string) => {
@@ -131,7 +89,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };  // Handle period change - use parent handler if available, otherwise update URL independently
+  }; // Handle period change - use parent handler if available, otherwise update URL independently
   const handlePeriodChange = (value: string) => {
     if (onPeriodChange) {
       // Parent is managing period changes

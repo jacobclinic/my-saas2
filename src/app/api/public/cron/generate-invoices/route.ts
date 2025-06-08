@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     await Promise.all([
       generateMonthlyInvoicesStudents(supabase, currentYear, nextMonth),
       generateMonthlyInvoicesTutor(supabase, currentYear, nextMonth),
-    ])
+    ]);
 
     return new Response('Invoices generated successfully', { status: 200 });
   } catch (error) {

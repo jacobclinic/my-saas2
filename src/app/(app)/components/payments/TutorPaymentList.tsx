@@ -42,7 +42,10 @@ import {
   periodToMonthName,
   monthNameToPeriod,
 } from '~/lib/payments/utils/month-utils';
-import { TutorPaymentData, TutorPaymentStats } from '~/lib/payments/types/tutor-payments';
+import {
+  TutorPaymentData,
+  TutorPaymentStats,
+} from '~/lib/payments/types/tutor-payments';
 
 export default function Payments() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -426,9 +429,6 @@ export default function Payments() {
                 ))}
               </SelectContent>
             </Select>
-            {isFilterLoading && (
-              <Loader2 className="h-4 w-4 animate-spin text-neutral-500" />
-            )}
           </div>
           <div className="flex items-center gap-2 min-w-[100px]">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -444,103 +444,108 @@ export default function Payments() {
           </div>
         </div>
       </div>{' '}
-      <div className="bg-white p-6 rounded-lg border border-neutral-200">
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Class</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Students</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isFilterLoading ? (
+      {/* Payments Table */}
+      {isFilterLoading ? (
+        <div className="py-8 text-center">
+          <div
+            className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+            role="status"
+          >
+            <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+              Loading...
+            </span>
+          </div>
+          <p className="mt-2 text-gray-600">Loading month data...</p>
+        </div>
+      ) : (
+        <div className="bg-white p-6 rounded-lg border border-neutral-200">
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center py-12 text-neutral-600"
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Loading month data...</span>
-                    </div>
-                  </TableCell>
+                  <TableHead>Class</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Students</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : filteredPayments.length > 0 ? (
-                filteredPayments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-medium">
-                      {payment.className}
-                    </TableCell>
-                    <TableCell>{payment.date}</TableCell>
-                    <TableCell>{payment.students}</TableCell>
-                    <TableCell>Rs. {payment.amount.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          payment.status === 'paid'
-                            ? 'bg-success-light text-success-dark'
-                            : 'bg-warning-light text-warning-dark'
-                        }
-                      >
-                        {payment.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
+              </TableHeader>{' '}
+              <TableBody>
+                {filteredPayments.length > 0 ? (
+                  filteredPayments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell className="font-medium">
+                        {payment.className}
+                      </TableCell>
+                      <TableCell>{payment.date}</TableCell>
+                      <TableCell>{payment.students}</TableCell>
+                      <TableCell>
+                        Rs. {payment.amount.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            payment.status === 'paid'
+                              ? 'bg-success-light text-success-dark'
+                              : 'bg-warning-light text-warning-dark'
+                          }
+                        >
+                          {payment.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-primary-blue-200 text-primary-blue-700 hover:bg-primary-blue-50"
+                          onClick={() =>
+                            setSelectedInvoice({
+                              id: payment.id,
+                              classTitle: payment.className,
+                              date: payment.date,
+                              amount: payment.amount,
+                              students: payment.students,
+                            })
+                          }
+                        >
+                          <Eye size={16} className="mr-2" />
+                          View Invoice
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-8 text-neutral-600"
+                    >
+                      <p>No payments found matching your filters.</p>
                       <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-primary-blue-200 text-primary-blue-700 hover:bg-primary-blue-50"
-                        onClick={() =>
-                          setSelectedInvoice({
-                            id: payment.id,
-                            classTitle: payment.className,
-                            date: payment.date,
-                            amount: payment.amount,
-                            students: payment.students,
-                          })
-                        }
+                        variant="link"
+                        className="mt-2 text-primary-blue-600"
+                        onClick={() => {
+                          setSearchTerm('');
+                          setMonthFilter(
+                            new Date().toLocaleDateString('en-US', {
+                              month: 'long',
+                            }),
+                          );
+                          setStatusFilter('All');
+                        }}
                       >
-                        <Eye size={16} className="mr-2" />
-                        View Invoice
+                        Clear all filters
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center py-8 text-neutral-600"
-                  >
-                    <p>No payments found matching your filters.</p>
-                    <Button
-                      variant="link"
-                      className="mt-2 text-primary-blue-600"
-                      onClick={() => {
-                        setSearchTerm('');
-                        setMonthFilter(
-                          new Date().toLocaleDateString('en-US', {
-                            month: 'long',
-                          }),
-                        );
-                        setStatusFilter('All');
-                      }}
-                    >
-                      Clear all filters
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </div>
+      )}
       {selectedInvoice && (
         <InvoiceView
           open={!!selectedInvoice}
