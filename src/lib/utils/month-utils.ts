@@ -120,15 +120,13 @@ export function monthNameToPeriod(monthName: string): string {
     year = currentYear;
   }
 
-  // Special case: if we're looking for months that would be in the previous year
-  // (e.g., looking for December when current month is June)
-  if (monthIndex > currentMonth + 1) {
-    // This month is too far in the future, likely meant to be previous year
-    const monthsInFuture = monthIndex - currentMonth;
-    if (monthsInFuture > 6) {
-      // More than 6 months in future, likely previous year
-      year = currentYear - 1;
-    }
+  // Special case: determine if the month belongs to the previous year
+  const inputDate = new Date(currentYear, monthIndex);
+  const currentDate = new Date(currentYear, currentMonth);
+  if (inputDate < currentDate && monthIndex > currentMonth) {
+    // If the input month is before the current date but falls after the current month,
+    // it likely belongs to the previous year
+    year = currentYear - 1;
   }
 
   return `${year}-${(monthIndex + 1).toString().padStart(2, '0')}`;
