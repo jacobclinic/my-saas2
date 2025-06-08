@@ -18,7 +18,7 @@ export default function Payments() {
   const payments = [
     {
       id: '1',
-      classTitle: 'Physics 2026 A/L Group 2',
+      className: 'Physics 2026 A/L Group 2',
       date: 'May 10, 2025',
       amount: 15000,
       students: 3,
@@ -26,7 +26,7 @@ export default function Payments() {
     },
     {
       id: '2',
-      classTitle: 'Physics 2027 A/L Group 1',
+      className: 'Physics 2027 A/L Group 1',
       date: 'May 09, 2025',
       amount: 0,
       students: 0,
@@ -34,7 +34,7 @@ export default function Payments() {
     },
     {
       id: '3',
-      classTitle: 'Physics 2026 A/L Group 1',
+      className: 'Physics 2026 A/L Group 1',
       date: 'May 08, 2025',
       amount: 0,
       students: 0,
@@ -43,7 +43,7 @@ export default function Payments() {
   ];
 
   const filteredPayments = payments.filter(p => {
-    if (searchTerm && !p.classTitle.toLowerCase().includes(searchTerm.toLowerCase())) {
+    if (searchTerm && !p.className.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     if (monthFilter !== 'All' && !p.date.includes(monthFilter)) {
@@ -60,8 +60,6 @@ export default function Payments() {
   // Mock statistics data
   const stats = {
     monthlyEarnings: 15000,
-    previousMonth: 12000,
-    monthlyGrowth: 25,
     activeStudents: 3,
     averagePerStudent: 5000,
     pendingPayments: 2
@@ -82,7 +80,7 @@ export default function Payments() {
               <TrendingUp className="h-6 w-6 text-primary-blue-600" />
             </div>
           </div>
-          <div className="mt-4 flex items-center">
+          {/* <div className="mt-4 flex items-center">
             {stats.monthlyGrowth > 0 ? (
               <Badge className="bg-success-light text-success-dark">
                 <ArrowUpRight size={14} className="mr-1" />
@@ -95,7 +93,7 @@ export default function Payments() {
               </Badge>
             )}
             <span className="text-sm text-neutral-500 ml-2">vs last month</span>
-          </div>
+          </div> */}
         </div>
 
         <div className="bg-white p-6 rounded-lg border border-neutral-200">
@@ -193,7 +191,7 @@ export default function Payments() {
             <TableBody>
               {filteredPayments.map((payment) => (
                 <TableRow key={payment.id}>
-                  <TableCell className="font-medium">{payment.classTitle}</TableCell>
+                  <TableCell className="font-medium">{payment.className}</TableCell>
                   <TableCell>{payment.date}</TableCell>
                   <TableCell>{payment.students}</TableCell>
                   <TableCell>Rs. {payment.amount.toLocaleString()}</TableCell>

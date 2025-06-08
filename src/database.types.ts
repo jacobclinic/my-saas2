@@ -523,6 +523,54 @@ export type Database = {
           },
         ];
       };
+      tutor_invoices: {
+        Row: {
+          amount: number;
+          class_id: string;
+          created_at: string;
+          id: string;
+          invoice_no: string;
+          payment_period: string;
+          status: string | null;
+          tutor_id: string;
+        };
+        Insert: {
+          amount?: number;
+          class_id: string;
+          created_at?: string;
+          id?: string;
+          invoice_no: string;
+          payment_period: string;
+          status?: string | null;
+          tutor_id: string;
+        };
+        Update: {
+          amount?: number;
+          class_id?: string;
+          created_at?: string;
+          id?: string;
+          invoice_no?: string;
+          payment_period?: string;
+          status?: string | null;
+          tutor_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'tutor_invoices_class_id_fkey';
+            columns: ['class_id'];
+            isOneToOne: false;
+            referencedRelation: 'classes';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'tutor_invoices_tutor_id_fkey';
+            columns: ['tutor_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       users: {
         Row: {
           address: string | null;

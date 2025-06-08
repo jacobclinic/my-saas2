@@ -33,3 +33,37 @@ interface Enrollment {
   class_id: string;
   class: ClassData;
 }
+
+interface TutorInvoice {
+  id: string;
+  tutor_id: string;
+  tutor_name: string;
+  tutor_email: string;
+  class_id: string;
+  class_name: string;
+  class_subject: string | null;
+  class_fee: number;
+  invoice_no: string | null;
+  payment_period: string;
+  amount: number;
+  status: string | null;
+  created_at: string;
+}
+
+interface TutorInvoiceSummary {
+  totalAmount: number;
+  issuedAmount: number;
+  paidAmount: number;
+  totalInvoices: number;
+  issuedCount: number;
+  paidCount: number;
+}
+
+export type {
+  Invoice,
+  UpdatePaymentInput,
+  ClassData,
+  Enrollment,
+  TutorInvoice,
+  TutorInvoiceSummary,
+};

@@ -47,13 +47,24 @@ module.exports = composedConfig;
 
 function getRemotePatterns() {
   // add here the remote patterns for your images
-  const remotePatterns = [
-    {
-      protocol: 'https',
-      hostname: 'tjsqhhtjbpmswapalqsl.supabase.co',
-      pathname: '/storage/v1/object/public/**',
-    },
-  ];
+  const remotePatterns = [];
+
+  // Extract hostname from Supabase URL
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    try {
+      const url = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL);
+      remotePatterns.push({
+        protocol: 'https',
+        hostname: url.hostname,
+        pathname: '/storage/v1/object/public/**',
+      });
+    } catch (error) {
+      console.warn(
+        'Invalid NEXT_PUBLIC_SUPABASE_URL:',
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+      );
+    }
+  }
 
   return IS_PRODUCTION
     ? remotePatterns

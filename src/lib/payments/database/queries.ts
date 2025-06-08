@@ -4,10 +4,11 @@ import {
   CLASSES_TABLE,
   USERS_TABLE,
   STUDENT_PAYMENTS_TABLE,
+  INVOICES_TABLE,
 } from '~/lib/db-tables';
 import { withSession } from '~/core/generic/actions-utils';
 import {
-  Payment,
+  PaymentWithDetails,
   PaymentStatus,
   PaymentSummary,
 } from '~/lib/payments/types/admin-payments';
@@ -79,17 +80,10 @@ type Client = SupabaseClient<Database>;
 export async function getAllStudentPayments(
   client: SupabaseClient,
   invoicePeriod?: string,
-): Promise<Payment[]> {
+): Promise<{ paymentData: PaymentWithDetails[]; error: any }> {
   try {
-    // Generate invoices if a specific period is provided
-    // if (invoicePeriod) {
-    //   const [year, month] = invoicePeriod.split('-').map(Number);
-    //   await generateMonthlyInvoices(client, year, month);
-    // }
-
-    // Fetch invoices with optional payments
     const query = client
-      .from('invoices')
+      .from(INVOICES_TABLE)
       .select(
         `
         id,
@@ -100,23 +94,23 @@ export async function getAllStudentPayments(
         amount,
         invoice_date,
         status,
-        student:users!student_id (
+        student:${USERS_TABLE}!student_id (
           id,
           first_name,
           last_name,
           email
         ),
-        class:classes!class_id (
+        class:${CLASSES_TABLE}!class_id (
           id,
           name,
           tutor_id,
-          tutor:users!tutor_id (
+          tutor:${USERS_TABLE}!tutor_id (
             id,
             first_name,
             last_name
           )
         ),
-        payment:student_payments!fk_student_payments_invoice_id (
+        payment:${STUDENT_PAYMENTS_TABLE}!fk_student_payments_invoice_id (
           id,
           status,
           payment_proof_url,
@@ -134,7 +128,10 @@ export async function getAllStudentPayments(
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching student payments:', error);
+      return { paymentData: [], error: error.message };
+    }
 
     // Transform data for frontend
     const formattedPayments = data.map((item) => {
@@ -190,10 +187,10 @@ export async function getAllStudentPayments(
       };
     });
 
-    return formattedPayments;
+    return { paymentData: formattedPayments, error: null };
   } catch (error) {
     console.error('Error fetching student payments:', error);
-    throw new Error('Failed to fetch student payments. Please try again.');
+    return { paymentData: [], error: error };
   }
 }
 
@@ -205,7 +202,7 @@ export async function getAllStudentPayments(
 export async function getStudentPaymentById(
   client: Client,
   paymentId: string,
-): Promise<Payment | null> {
+): Promise<PaymentWithDetails | null> {
   try {
     const { data, error } = await client
       .from(STUDENT_PAYMENTS_TABLE)

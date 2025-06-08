@@ -35,12 +35,11 @@ export default async function RegisterPage({ params }: { params: { token: string
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">{classData.className}</h3>
-                <p className="text-gray-600">{'ClassData topic'}</p>
               </div>
 
               <div className="flex items-center text-gray-600">
                 <User className="w-4 h-4 mr-2 flex-shrink-0" />
-                {"Tutor's Name"}
+                {classData.tutorName}
               </div>
 
               <div className="flex items-center text-gray-600">

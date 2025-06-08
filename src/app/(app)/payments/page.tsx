@@ -10,9 +10,8 @@ import {
 } from '~/app/(app)/components/base-v2/ui/Alert';
 import { Info } from 'lucide-react';
 import AdminPaymentsPanel from '~/app/(app)/components/admin-payments/AdminPaymentsPanel';
-import { getAllStudentPayments } from '~/lib/payments/database/queries';
-import { getPaymentSummaryForPage } from './actions';
 import StudentPaymentsView from '~/app/(app)/components/student-payments/StudentPaymentsView';
+import { getPaymentSummaryForPage } from '~/lib/payments/admin-payment-actions';
 
 export const metadata = {
   title: 'Payments Management',
@@ -51,40 +50,29 @@ async function PaymentsPage({
     }
 
     const userRole = userData?.user_role || 'unknown';
-    const selectedPeriod = searchParams.month || currentMonth; // Default to January 2025
-
-    // Render appropriate component based on user role
+    const selectedPeriod = searchParams.month || currentMonth; // Default to January 2025    // Render appropriate component based on user role
     if (userRole === 'admin') {
       // For administrators, show the full payment management interface
       try {
-        // Fetch initial payment data for admin
-        const paymentsData = await getAllStudentPayments(
-          client,
-          selectedPeriod,
-        );
-
         // Get payment summary statistics using our new server action
-        const summaryResult = await getPaymentSummaryForPage();
+        const summaryResult = await getPaymentSummaryForPage(selectedPeriod);
         const summary = summaryResult.success ? summaryResult.summary : null;
 
         return (
           <>
             <AppHeader
-              title="Student Payments"
-              description="Manage and verify student payments for all classes"
+              title="Admin Payments Dashboard"
+              description="Manage and verify payments for all students and tutors"
             />
             <PageBody>
               <Suspense
                 fallback={
                   <div className="flex justify-center py-8">
-                    Loading payments data...
+                    Loading payments dashboard...
                   </div>
                 }
               >
-                <AdminPaymentsPanel
-                  initialPayments={paymentsData}
-                  initialSummary={summary || null}
-                />
+                <AdminPaymentsPanel initialSummary={summary!} />
               </Suspense>
             </PageBody>
           </>

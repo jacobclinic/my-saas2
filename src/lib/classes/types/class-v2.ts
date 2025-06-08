@@ -31,6 +31,10 @@ export interface ClassType {
   tutor_id: string;
   fee: number | null;
   status: string | null;
+  tutor?: {
+    first_name: string | null;
+    last_name: string | null;
+  }
   time_slots:
     | {
         day: string;
@@ -105,6 +109,11 @@ export interface ClassListData {
   description?: string;
   timeSlots?: { day: string; time: string }[];
   classRawData?: ClassType;
+  tutor?:{
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+  }
 }
 
 export interface ClassData {
