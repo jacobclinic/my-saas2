@@ -11,6 +11,10 @@ import {
   getTutorInvoicesForPeriod,
   markTutorInvoiceAsPaidAction,
 } from '~/lib/payments/admin-payment-actions';
+import {
+  generateMonthOptions,
+  formatPeriod,
+} from '~/lib/payments/utils/month-utils';
 import DataTable from '~/core/ui/DataTable';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import SearchBar from '../base-v2/ui/SearchBar';
@@ -52,51 +56,11 @@ const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
 
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
-
   // Start with server-provided data
   const [invoices, setInvoices] = useState<TutorInvoice[]>(initialInvoices);
 
-  // Format period for display
-  const formatPeriod = (period: string) => {
-    const [year, month] = period.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return format(date, 'MMMM yyyy');
-  };
-
-  // Generate period options (last 10 months and next upcoming month)
-  const periodOptions = useMemo(() => {
-    const options = [];
-    const currentDate = new Date();
-
-    // Add next month first
-    const nextMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + 1,
-    );
-    const nextPeriod = `${nextMonth.getFullYear()}-${(nextMonth.getMonth() + 1)
-      .toString()
-      .padStart(2, '0')}`;
-    options.push({
-      label: formatPeriod(nextPeriod),
-      value: nextPeriod,
-    });
-
-    // Add current month and last 9 months (total 10 months)
-    for (let i = 0; i < 10; i++) {
-      const date = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() - i,
-      );
-      const period = `${date.getFullYear()}-${(date.getMonth() + 1)
-        .toString()
-        .padStart(2, '0')}`;
-      options.push({
-        label: formatPeriod(period),
-        value: period,
-      });
-    }
-    return options;
-  }, []);
+  // Generate period options using the reusable utility
+  const periodOptions = useMemo(() => generateMonthOptions(), []);
 
   // Function to fetch data for the selected period
   const fetchInvoicesForPeriod = async (period: string) => {
