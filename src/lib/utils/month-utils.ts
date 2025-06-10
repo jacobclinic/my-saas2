@@ -66,7 +66,6 @@ export function getPreviousMonthPeriod(): string {
     .padStart(2, '0')}`;
 }
 
-
 // Converts a period string (YYYY-MM) to just the month name
 
 export function periodToMonthName(period: string): string {
@@ -79,9 +78,9 @@ export function periodToMonthName(period: string): string {
 // Uses smart logic to determine the correct year based on available months
 
 export function monthNameToPeriod(monthName: string): string {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth(); // 0-indexed (June = 5)
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-indexed (June = 5)
 
   // Find the month number for the given month name
   const monthNames = [
@@ -104,28 +103,36 @@ export function monthNameToPeriod(monthName: string): string {
     throw new Error(`Invalid month name: ${monthName}`);
   }
 
-  // Smart year determination based on the month selection strategy:
-  // - Next month: currentYear
-  // - Current month and last 9 months: currentYear for recent months, currentYear-1 for older months
+  // Smart year determination based on the available month range:
+  // Available months: next month + current month + last 9 months
+  // This means we have 11 months total spanning potentially 2 years
   let year = currentYear;
 
-  if (monthIndex === currentMonth + 1) {
-    // Next month case (July when current is June)
+  if (monthIndex === (currentMonth + 1) % 12) {
+    // Next month case
     year = currentYear;
   } else if (monthIndex <= currentMonth) {
-    // Current month or past months in the same year
+    // Current month or past months that fit in current year
     year = currentYear;
   } else {
-    // Future months beyond next month should be rare, but default to current year
-    year = currentYear;
+    // Future months beyond next month must be from previous year
+    // This handles cases like: current=June, input=August -> August 2024 (previous year)
+    year = currentYear - 1;
   }
 
-  // Special case: determine if the month belongs to the previous year
-  const inputDate = new Date(currentYear, monthIndex);
-  const currentDate = new Date(currentYear, currentMonth);
-  if (inputDate < currentDate && monthIndex > currentMonth) {
-    // If the input month is before the current date but falls after the current month,
-    // it likely belongs to the previous year
+  // Special handling for months that span across years
+  // Calculate how many months back this month would be
+  let monthsBack = 0;
+  if (monthIndex <= currentMonth) {
+    monthsBack = currentMonth - monthIndex;
+  } else {
+    // Month is after current month, so it must be from previous year
+    monthsBack = currentMonth + (12 - monthIndex);
+  }
+
+  // If this month is more than 9 months back, it's not in our available range
+  // but we'll still calculate it correctly for the previous year
+  if (monthsBack > 9 && monthIndex > currentMonth) {
     year = currentYear - 1;
   }
 
