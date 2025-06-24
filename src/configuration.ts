@@ -1,5 +1,6 @@
 import type { Provider } from '@supabase/gotrue-js/src/lib/types';
 import { StripeCheckoutDisplayMode } from '~/lib/stripe/types';
+import { ZoomUserType } from './lib/zoom/types/zoom.types';
 
 const production = process.env.NODE_ENV === 'production';
 
@@ -136,6 +137,12 @@ const configuration = {
   },
   email: {
     fromAddress: process.env.EMAIL_SENDER,
+  },
+  zoom: {
+    licenseTypes: {
+      basic: ZoomUserType.Basic,
+      pro: ZoomUserType.Pro,
+    }
   }
 };
 

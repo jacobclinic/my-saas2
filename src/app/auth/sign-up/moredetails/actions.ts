@@ -8,6 +8,7 @@ import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { USERS_TABLE } from '~/lib/db-tables';
 import { getUserById } from '~/lib/user/database/queries';
 import UserType from '~/lib/user/types/user';
+import { zoomService } from '~/lib/zoom/zoom.service';
 
 const userDetailsSchema = z.object({
   displayName: z.string().min(2, 'Display name is required'),
@@ -45,10 +46,12 @@ export async function ensureUserRecord(
       console.error('Error creating user record:', error);
       throw error;
     }
-  }
 
+  }
   return { success: true };
 }
+
+
 
 export async function updateUserDetailsAction(formData: FormData) {
   try {
@@ -96,11 +99,23 @@ export async function updateUserDetailsAction(formData: FormData) {
       throw error;
     }
 
+    if (user && user.user_metadata && user.user_metadata.user_role && user.user_metadata.user_role === 'tutor') {
+      const zoomRes = await zoomService.createUser({
+        email: user.email!,
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+        displayName: validatedData.displayName,
+      });
+      console.log("Zoom user created", zoomRes);
+    }
+
+
     // Revalidate paths
     revalidatePath('/');
 
     // Redirect to dashboard
     return redirect('/dashboard');
+
   } catch (error) {
     console.error('Error updating user details:', error);
     return {
@@ -142,12 +157,12 @@ export async function getUserByIdAction(
   userId: string,
 ): Promise<UserType> {
 
-    const client = getSupabaseServerActionClient();
+  const client = getSupabaseServerActionClient();
 
-    const data= await getUserById(client, userId);
+  const data = await getUserById(client, userId);
 
-    if (!data) {
-      throw new Error('User not found');
-    }
-    return data;
+  if (!data) {
+    throw new Error('User not found');
+  }
+  return data;
 }

@@ -126,3 +126,29 @@ export interface Attendance {
 export interface AttendanceWithSessionId extends Attendance {
   sessionId: string;
 }
+
+
+export enum ZoomUserType {
+  Basic = 1,  // Basic user
+  Pro = 2,     // Pro user
+  UnassignedWithoutMeetings = 4 
+}
+export interface CreateZoomUserParams {
+  email: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+}
+
+export interface CreateZoomUserResponse {
+  email: string;
+  first_name: string;
+  id: string;
+  last_name: string;
+  type: ZoomUserType; // 1 = Basic, 2 = Pro, etc.
+}
+
+export enum ZoomCreateUserActionType {
+  create = 'create',
+  custCreate = 'custCreate',
+}

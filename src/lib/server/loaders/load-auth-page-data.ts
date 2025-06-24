@@ -31,7 +31,7 @@ const loadAuthPageData = cache(async () => {
     console.log(
       `User is logged in and does not require multi-factor authentication. Redirecting to home page.`,
     );
-
+    
     redirect(configuration.paths.appHome);
   }
 

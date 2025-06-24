@@ -1,5 +1,9 @@
+import configuration from '~/configuration';
 import {
   CreateZoomMeetingRequest,
+  CreateZoomUserParams,
+  CreateZoomUserResponse,
+  ZoomCreateUserActionType,
   ZoomMeetingResponse,
   ZoomTokenResponse,
 } from './types/zoom.types';
@@ -10,6 +14,9 @@ class ZoomService {
   private zoomAccountId: string;
   private baseUrl: string = 'https://api.zoom.us/v2';
   private tokenUrl: string = 'https://zoom.us/oauth/token';
+  private contentTypeJson = {
+    'Content-Type': 'application/json',
+  }
 
   constructor() {
     this.zoomClientId = process.env.ZOOM_CLIENT_ID || '';
@@ -34,7 +41,7 @@ class ZoomService {
           grant_type: 'account_credentials',
           account_id: this.zoomAccountId,
           // Add scope request for meeting update permissions
-          scope: 'meeting:write meeting:update meeting:read',
+          scope: 'meeting:write meeting:update meeting:read user:write user:write:admin',
         }),
       });
 
@@ -102,7 +109,7 @@ class ZoomService {
 
       if (!response.ok) {
         const responseText = await response.text();
-        
+
         let errorMessage = response.statusText;
         if (responseText) {
           try {
@@ -112,17 +119,17 @@ class ZoomService {
             errorMessage = responseText || errorMessage;
           }
         }
-        
+
         throw new Error(`Failed to create Zoom meeting: ${errorMessage}`);
       }
 
       // Safely handle the response
       const responseText = await response.text();
-      
+
       if (!responseText || responseText.trim() === '') {
         throw new Error('Zoom API returned an empty response when creating meeting');
       }
-      
+
       try {
         return JSON.parse(responseText) as ZoomMeetingResponse;
       } catch (parseError) {
@@ -158,7 +165,7 @@ class ZoomService {
       if (!response.ok) {
         // First check if there's content in the response
         const responseText = await response.text();
-        
+
         let errorMessage = response.statusText;
         if (responseText) {
           try {
@@ -170,18 +177,18 @@ class ZoomService {
             errorMessage = responseText || errorMessage;
           }
         }
-        
+
         throw new Error(`Failed to update Zoom meeting: ${errorMessage}`);
       }
-      
+
       // Safely parse the response to handle empty responses
       const responseText = await response.text();
-      
+
       if (!responseText || responseText.trim() === '') {
         // Some APIs return empty responses on success for PATCH operations
         return { id: meetingId } as ZoomMeetingResponse;
       }
-      
+
       try {
         return JSON.parse(responseText) as ZoomMeetingResponse;
       } catch (parseError) {
@@ -228,7 +235,7 @@ class ZoomService {
 
       // Safely handle the response
       const responseText = await response.text();
-      
+
       if (!responseText || responseText.trim() === '') {
         throw new Error(
           `Zoom API returned an empty response for meeting ${meetingId}`,
@@ -398,7 +405,7 @@ class ZoomService {
 
       if (!response.ok) {
         const responseText = await response.text();
-
+        console.log('Error - Register Student', responseText);
         let errorMessage = response.statusText;
         if (responseText) {
           try {
@@ -462,6 +469,70 @@ class ZoomService {
         registrants: [{ id: registrantId }],
       }),
     });
+  }
+
+  public async createUser(payload: CreateZoomUserParams) : Promise<CreateZoomUserResponse> {
+    try {
+      const access_token = await this.getAccessToken();
+      const userExistsRes = await this.checkIfUseExists(payload.email, access_token!);
+
+      if (userExistsRes) {
+        throw new Error('User already exists');
+      }
+
+      // TODO: Change the action type from create to custCreate once the ISV account is ready.
+      const createUserPayload = {
+        action: ZoomCreateUserActionType.create,
+        "user_info": {
+          email: payload.email,
+          first_name: payload.firstName,
+          last_name: payload.lastName,
+          display_name: payload.displayName,
+          type: configuration.zoom.licenseTypes.basic,
+          "feature": {
+            "zoom_phone": false
+          }
+        }
+      }
+
+      const response = await fetch(`${this.baseUrl}/users`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          ...this.contentTypeJson,
+        },
+        body: JSON.stringify(createUserPayload),
+      });
+
+      if (response.status !== 201) {
+        throw new Error('Failed to create user');
+      }
+
+      return await response.json();
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+
+
+  }
+
+  public async checkIfUseExists(userEmail: string, accessToken: string) {
+    try {
+      const response = await fetch(`${this.baseUrl}/users/${userEmail}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          ...this.contentTypeJson,
+        },
+      });
+      const status = response.status;
+      return status !== 404;
+    } catch (error: any) {
+      console.error('Error checking if user exists:', error);
+      throw error;
+    }
+
   }
 }
 

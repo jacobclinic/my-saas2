@@ -51,10 +51,13 @@ const EmailPasswordSignUpContainer: React.FCC<{
         const data = await signUpMutation.trigger(params);
         const userId = data?.user?.id;
         const email = data?.user?.email || params.email;
-
+        console.log("Signup successful", data);
+        
         // If successful signup, ensure user record exists in database
         if (userId && email) {
           try {
+            console.log("Creating user record (ensureUserRecord)", userId, email, params.userRole);
+            
             await ensureUserRecord(userId, email, params.userRole);
           } catch (error) {
             console.error('Failed to create user record:', error);

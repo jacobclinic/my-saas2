@@ -35,8 +35,10 @@ async function MoreDetailsPage() {
     userData?.phone_number.trim() !== '';
 
   if (hasRequiredDetails) {
+    console.log("user data",userData);
+    
     console.log('User already has required details, redirecting to dashboard');
-    redirect('/dashboard');
+    // redirect('/dashboard');
   }
 
   return (
