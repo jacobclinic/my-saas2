@@ -16,21 +16,32 @@ export const config = {
 };
 
 export async function middleware(request: NextRequest) {
+  const startTime = Date.now();
+  console.log('Middleware called for path:', request.nextUrl.pathname);
   if (request.nextUrl.pathname.startsWith('/api/public')) {
     return NextResponse.next();
   }
   const response = NextResponse.next();
+  console.log('Starting CSRF middleware for:', request.nextUrl.pathname);
   const csrfResponse = await withCsrfMiddleware(request, response);
+  console.log('CSRF middleware completed in', Date.now() - startTime, 'ms for:', request.nextUrl.pathname);
+  console.log('Starting session middleware for:', request.nextUrl.pathname);
   const sessionResponse = await sessionMiddleware(request, csrfResponse);
 
   // return await adminMiddleware(request, sessionResponse);
-  return await roleBasedMiddleware(request, sessionResponse);
+  const finalResponse = await roleBasedMiddleware(request, sessionResponse);
+  console.log('Role-based middleware completed in', Date.now() - startTime, 'ms for:', request.nextUrl.pathname);
+  console.log('Total middleware processing time:', Date.now() - startTime, 'ms for:', request.nextUrl.pathname);
+  return finalResponse;
 }
 
 async function sessionMiddleware(req: NextRequest, res: NextResponse) {
   const supabase = createMiddlewareClient(req, res);
-
+  console.log('Starting session retrieval for:', req.nextUrl.pathname);
+  const startTime = Date.now();
   await supabase.auth.getSession();
+  const endTime = Date.now();
+  console.log('Session retrieval took:', endTime - startTime, 'ms for:', req.nextUrl.pathname);
   // const user = await supabase.auth.getSession();
   // console.log('-----1------User:', user);
 
