@@ -37,34 +37,30 @@ const EmailPasswordSignUpForm: React.FCC<{
   const passwordControl = register('password', {
     required: true,
     minLength: {
-      value: 6,
+      value: 8,
       message: 'Please provide a password with at least 6 characters',
     },
     validate: (value) => {
-      // Additional password complexity for tutors
-      if (userRole === 'tutor') {
-        const hasLowercase = /[a-z]/.test(value);
-        const hasUppercase = /[A-Z]/.test(value);
-        const hasDigit = /\d/.test(value);
-        const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(
-          value,
-        );
 
-        if (!hasLowercase) {
-          return 'Password must contain at least one lowercase letter';
-        }
+      const hasLowercase = /[a-z]/.test(value);
+      const hasUppercase = /[A-Z]/.test(value);
+      const hasDigit = /\d/.test(value);
+      const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value);
 
-        if (!hasUppercase) {
-          return 'Password must contain at least one uppercase letter';
-        }
+      if (!hasLowercase) {
+        return 'Password must contain at least one lowercase letter';
+      }
 
-        if (!hasDigit) {
-          return 'Password must contain at least one digit';
-        }
+      if (!hasUppercase) {
+        return 'Password must contain at least one uppercase letter';
+      }
 
-        if (!hasSpecialChar) {
-          return 'Password must contain at least one special character';
-        }
+      if (!hasDigit) {
+        return 'Password must contain at least one digit';
+      }
+
+      if (!hasSpecialChar) {
+        return 'Password must contain at least one special character';
       }
 
       return true;
@@ -76,7 +72,7 @@ const EmailPasswordSignUpForm: React.FCC<{
   const repeatPasswordControl = register('repeatPassword', {
     required: true,
     minLength: {
-      value: 6,
+      value: 8,
       message: 'Please provide a password with at least 6 characters',
     },
     validate: (value) => {
@@ -95,7 +91,9 @@ const EmailPasswordSignUpForm: React.FCC<{
         <button
           type="button"
           className={`w-1/2 p-2 ${
-            userRole === 'student' ? 'text-white bg-gradient-to-br from-primary-700 to-primary-800' : 'bg-gray-100'
+            userRole === 'student'
+              ? 'text-white bg-gradient-to-br from-primary-700 to-primary-800'
+              : 'bg-gray-100'
           }`}
           onClick={() => setUserRole('student')}
         >
@@ -104,7 +102,9 @@ const EmailPasswordSignUpForm: React.FCC<{
         <button
           type="button"
           className={`w-1/2 p-2 ${
-            userRole === 'tutor' ? 'text-white bg-gradient-to-br from-primary-700 to-primary-800' : 'bg-gray-100'
+            userRole === 'tutor'
+              ? 'text-white bg-gradient-to-br from-primary-700 to-primary-800'
+              : 'bg-gray-100'
           }`}
           onClick={() => setUserRole('tutor')}
         >
@@ -118,7 +118,7 @@ const EmailPasswordSignUpForm: React.FCC<{
       >
         <div className={'flex-col space-y-4'}>
           <TextField>
-            <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
+            <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
               Email
               <TextField.Input
                 {...emailControl}
@@ -127,7 +127,7 @@ const EmailPasswordSignUpForm: React.FCC<{
                 type="email"
                 placeholder={'your@email.com'}
                 autoComplete="new-email"
-                className='text-sm sm:text-base'
+                className="text-sm sm:text-base"
               />
             </TextField.Label>
 
@@ -135,7 +135,7 @@ const EmailPasswordSignUpForm: React.FCC<{
           </TextField>
 
           <TextField>
-            <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
+            <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
               Password
               <TextField.Input
                 {...passwordControl}
@@ -144,12 +144,10 @@ const EmailPasswordSignUpForm: React.FCC<{
                 type="password"
                 placeholder={''}
                 autoComplete="new-password"
-                className='text-sm sm:text-base'
+                className="text-sm sm:text-base"
               />
               <TextField.Hint>
-                {userRole === 'student'
-                  ? "Ensure it's at least 6 characters"
-                  : '6+ characters includes lowercase, uppercase, digit, special character'}
+                6+ characters that includes lowercase, uppercase, digit, special character
               </TextField.Hint>
               <TextField.Error
                 data-cy="password-error"
@@ -159,7 +157,7 @@ const EmailPasswordSignUpForm: React.FCC<{
           </TextField>
 
           <TextField>
-            <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
+            <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
               Repeat Password
               <TextField.Input
                 {...repeatPasswordControl}
@@ -168,7 +166,7 @@ const EmailPasswordSignUpForm: React.FCC<{
                 type="password"
                 placeholder={''}
                 autoComplete="new-password"
-                className='text-sm sm:text-base'
+                className="text-sm sm:text-base"
               />
               <TextField.Hint>Type your password again</TextField.Hint>
               <TextField.Error
@@ -181,7 +179,9 @@ const EmailPasswordSignUpForm: React.FCC<{
           <div>
             <Button
               data-cy={'auth-submit-button'}
-              className={'w-full btn bg-secondary-600 text-white hover:bg-secondary-500 focus:ring-secondary-500/50 bg-gradient-to-br from-secondary-500 to-secondary-600'}
+              className={
+                'w-full btn bg-secondary-600 text-white hover:bg-secondary-500 focus:ring-secondary-500/50 bg-gradient-to-br from-secondary-500 to-secondary-600'
+              }
               type="submit"
               loading={loading}
             >
