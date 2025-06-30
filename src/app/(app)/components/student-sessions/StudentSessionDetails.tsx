@@ -75,6 +75,7 @@ const StudentSessionDetails = ({
   useEffect(() => {
     if (sessionData) {
       const formattedPastSession = formatSessionData(sessionData);
+      console.log('Formatted Past Session:', formattedPastSession);
       setFormattedSessionData(formattedPastSession);
     }
 
@@ -323,6 +324,7 @@ const StudentSessionDetails = ({
                           <Button
                             variant="ghost"
                             size="sm"
+                            disabled={!material.url}
                             onClick={() =>
                               window.open(material.url || '', '_blank')
                             }
