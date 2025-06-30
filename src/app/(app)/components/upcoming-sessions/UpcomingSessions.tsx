@@ -150,10 +150,6 @@ const UpcomingSessions = ({
       {' '}
       {/* Header & Search */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Upcoming Classes</h1>
-          <TimezoneIndicator />
-        </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">

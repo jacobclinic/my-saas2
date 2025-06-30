@@ -19,6 +19,7 @@ export const GRADES = [
   'Grade 7',
   'Grade 6',
   'Grade 5',
+  'Not applicable'
 ];
 
 export const SUBJECTS = [
