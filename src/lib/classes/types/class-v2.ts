@@ -10,6 +10,7 @@ interface StudentData {
   last_name?: string | null;
   email?: string | null;
   phone_number?: string | null;
+  address: string | null;
   status?: string | null;
 }
 export interface ClassListStudent {

@@ -224,7 +224,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
             variant="outline"
             size="sm"
             className="border-primary-blue-200 text-primary-blue-700 hover:bg-primary-blue-50 group-hover:bg-primary-blue-50"
-            onClick={() => setShowStudentsDialog(true)}
+            onClick={() => {
+              setShowStudentsDialog(true);
+            }}
           >
             View Students
           </Button>
@@ -236,6 +238,14 @@ const ClassCard: React.FC<ClassCardProps> = ({
         onClose={() => setShowStudentsDialog(false)}
         classDataName={classData?.name}
         studentData={classData?.classRawData?.students || []}
+        classInfo={{
+          tutorName: classData?.tutor
+            ? `${classData.tutor.firstName} ${classData.tutor.lastName}`
+            : undefined,
+          subject: classData?.classRawData?.subject || undefined,
+          grade: classData?.classRawData?.grade || undefined,
+          schedule: classData?.schedule || undefined,
+        }}
       />
       <EditClassDialog
         open={showEditDialog}
