@@ -355,7 +355,8 @@ export async function getAllClassesByTutorIdData(
               last_name,
               email,
               phone_number,
-              status
+              status,
+              address
             )
           )
         `,
@@ -408,9 +409,7 @@ export async function getAllClassesByTutorIdData(
         };
       }),
     );
-
-    console.log(transformedData);
-
+    // console.log('getAllClassesByTutorIdData - transformedData:', transformedData[0].students[0].student);
     return transformedData;
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
@@ -628,5 +627,3 @@ export async function getAllClassesByStudentIdData(
     throw error;
   }
 }
-
-
