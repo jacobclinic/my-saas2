@@ -24,37 +24,39 @@ function validatePassword(password: string): true {
   const hasUpperCase = /[A-Z]/.test(password);
   const hasDigit = /\d/.test(password);
   const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-  
+
   const missingRequirements: string[] = [];
-  
+
   if (password.length < minLength) {
     missingRequirements.push(`At least ${minLength} characters`);
   }
-  
+
   if (!hasLowerCase) {
     missingRequirements.push('At least one lowercase letter (a-z)');
   }
-  
+
   if (!hasUpperCase) {
     missingRequirements.push('At least one uppercase letter (A-Z)');
   }
-  
+
   if (!hasDigit) {
     missingRequirements.push('At least one digit (0-9)');
   }
-  
+
   if (!hasSpecialChar) {
-    missingRequirements.push('At least one special character (!@#$%^&*()_+-=[]{}|;\':",./<>?)');
+    missingRequirements.push(
+      'At least one special character (!@#$%^&*()_+-=[]{}|;\':",./<>?)',
+    );
   }
-  
+
   if (missingRequirements.length > 0) {
     const error: PasswordValidationError = {
       message: 'Password does not meet security requirements',
-      requirements: missingRequirements
+      requirements: missingRequirements,
     };
     throw `Password must meet the following requirements:\n• ${missingRequirements.join('\n• ')}`;
   }
-  
+
   return true;
 }
 
@@ -69,14 +71,14 @@ function useSignUpWithEmailAndPassword() {
     key,
     (_, { arg: credentials }: { arg: Credentials }) => {
       console.log('onSignupRequested-params', credentials);
-      
+
       // Validate password before attempting signup
       try {
         validatePassword(credentials.password);
       } catch (validationError) {
         return Promise.reject(validationError);
       }
-      
+
       const emailRedirectTo = [
         window.location.origin,
         configuration.paths.authCallback,

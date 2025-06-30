@@ -147,7 +147,7 @@ const EmailPasswordSignUpForm: React.FCC<{
                 className="text-sm sm:text-base"
               />
               <TextField.Hint>
-                6+ characters that includes lowercase, uppercase, digit, special character
+                8+ characters that includes lowercase, uppercase, digit, special character
               </TextField.Hint>
               <TextField.Error
                 data-cy="password-error"
