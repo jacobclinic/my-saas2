@@ -103,7 +103,7 @@ async function sendNotifySessionEmails(
         await emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: task.to,
-          subject: `Your ${task.class_name} Class Recording Is Now Available`,
+          subject: ` Recording for ${task.class_name} Class is Now Available`,
           html: html,
           text: text,
         });
@@ -121,7 +121,7 @@ async function sendNotifySessionEmails(
         await emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: task.to,
-          subject: `Upcoming Class Notification`,
+          subject: ` Starting Soon: Your ${task.class_name} Class!`,
           html: html,
           text: text,
         });
@@ -228,6 +228,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
           class_name: session.class?.name ?? 'Unnamed Class',
           start_time: new Date(session.start_time!).toLocaleString(),
           fee: session.class.fee,
+          classId: session.class.id,
           paymentUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}?type=upcoming&sessionId=${session.session_id}&className=${session.class.name}&sessionDate=${DATE}&sessionTime=${TIME}&sessionSubject=${session.class.subject}&sessionTitle=${session.title}`)}`,
         })) || []
       );
@@ -250,15 +251,12 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
         studentEmail: task.to,
         classFee: task.fee,
         paymentUrl: task.paymentUrl,
+        classId: task.classId,
       });
       await emailService.sendEmail({
         from: process.env.EMAIL_SENDER!,
         to: task.to,
-        subject: `Payment Reminder for class ${task.class_name} for ${new Date(
-          task.start_time,
-        ).toLocaleString('en-US', {
-          month: 'long',
-        })}`,
+        subject: `Payment Reminder for ${task.class_name} class. Due in 2 days`,
         html: html,
         text: text,
       });

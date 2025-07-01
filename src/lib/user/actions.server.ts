@@ -17,7 +17,7 @@ import { withSession } from '~/core/generic/actions-utils';
 import { fetchUserRole } from './database/queries';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 import {
-  getStudentCredentialsEmailTemplate,
+  getStudentRegistrationEmailTemplate,
   getUserCredentialsEmailTemplate,
 } from '~/core/email/templates/emailTemplate';
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -274,17 +274,18 @@ export async function createStudentAction({
       });
 
       // Send welcome email with credentials
-      const { html, text } = getStudentCredentialsEmailTemplate({
+      const { html, text } = getStudentRegistrationEmailTemplate({
         studentName: `${firstName} ${lastName}`,
         email,
         className: nameOfClass,
+        classId: classId,
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
       });
       const emailService = EmailService.getInstance();
       await emailService.sendEmail({
         from: process.env.EMAIL_SENDER!,
         to: email,
-        subject: 'Welcome to Your Class - Login Credentials',
+        subject: ` Welcome to ${nameOfClass}! Access Your Student Portal`,
         html,
         text,
       });
