@@ -36,9 +36,59 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
     phone: '',
   });
 
+  const [errors, setErrors] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+  });
+
+  // Email validation regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Validation function
+  const validateField = (name: string, value: string) => {
+    let error = '';
+
+    switch (name) {
+      case 'firstName':
+      case 'lastName':
+        if (value.length < 3) {
+          error = `${name === 'firstName' ? 'First name' : 'Last name'} must be at least 3 characters`;
+        }
+        break;
+      case 'email':
+        if (!emailRegex.test(value)) {
+          error = 'Please enter a valid email address';
+        }
+        break;
+      case 'phone':
+        if (value.length < 10) {
+          error = 'Phone number must be at least 10 characters';
+        }
+        break;
+    }
+
+    return error;
+  };
+
+  const handleInputChange = (name: string, value: string) => {
+    setNewStudent({ ...newStudent, [name]: value });
+
+    // Validate the field and update errors
+    const error = validateField(name, value);
+    setErrors({ ...errors, [name]: error });
+  };
+
   const handleClose = () => {
     onClose();
     setNewStudent({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+    });
+    setErrors({
       firstName: '',
       lastName: '',
       email: '',
@@ -65,7 +115,8 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
       } else {
         toast({
           title: 'Error',
-          description: 'Student invitation failed. Invalid email or phone number',
+          description:
+            'Student invitation failed. Invalid email or phone number',
           variant: 'destructive',
         });
         onClose();
@@ -81,10 +132,11 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
   };
 
   const isValid =
-    newStudent.firstName &&
-    newStudent.lastName &&
-    newStudent.email &&
-    newStudent.phone;
+    newStudent.firstName.length >= 3 &&
+    newStudent.lastName.length >= 3 &&
+    emailRegex.test(newStudent.email) &&
+    newStudent.phone.length >= 10 &&
+    Object.values(errors).every((error) => error === '');
 
   return (
     <BaseDialog
@@ -108,11 +160,12 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
               <Input
                 placeholder="Enter first name"
                 value={newStudent.firstName}
-                onChange={(e) =>
-                  setNewStudent({ ...newStudent, firstName: e.target.value })
-                }
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
                 icon={<User className="h-4 w-4 text-gray-500" />}
               />
+              {errors.firstName && (
+                <p className="text-sm text-red-500 mt-1">{errors.firstName}</p>
+              )}
             </div>
 
             <div>
@@ -120,11 +173,12 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
               <Input
                 placeholder="Enter last name"
                 value={newStudent.lastName}
-                onChange={(e) =>
-                  setNewStudent({ ...newStudent, lastName: e.target.value })
-                }
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
                 icon={<User className="h-4 w-4 text-gray-500" />}
               />
+              {errors.lastName && (
+                <p className="text-sm text-red-500 mt-1">{errors.lastName}</p>
+              )}
             </div>
           </div>
 
@@ -134,11 +188,12 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
               type="email"
               placeholder="Enter student's email"
               value={newStudent.email}
-              onChange={(e) =>
-                setNewStudent({ ...newStudent, email: e.target.value })
-              }
+              onChange={(e) => handleInputChange('email', e.target.value)}
               icon={<Mail className="h-4 w-4 text-gray-500" />}
             />
+            {errors.email && (
+              <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+            )}
           </div>
 
           <div>
@@ -146,11 +201,12 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
             <Input
               placeholder="Enter phone number"
               value={newStudent.phone}
-              onChange={(e) =>
-                setNewStudent({ ...newStudent, phone: e.target.value })
-              }
+              onChange={(e) => handleInputChange('phone', e.target.value)}
               icon={<Phone className="h-4 w-4 text-gray-500" />}
             />
+            {errors.phone && (
+              <p className="text-sm text-red-500 mt-1">{errors.phone}</p>
+            )}
           </div>
         </div>
 
