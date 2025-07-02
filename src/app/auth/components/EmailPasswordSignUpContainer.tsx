@@ -41,21 +41,37 @@ const EmailPasswordSignUpContainer: React.FCC<{
   }, [callOnErrorCallback]);
 
   const onSignupRequested = useCallback(
-    async (params: { email: string; password: string; userRole: string }) => {
+    async (params: {
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+      userRole: string;
+    }) => {
       // console.log('onSignupRequested-params', params);
       if (loading) {
         return;
       }
 
       try {
-        const data = await signUpMutation.trigger(params);
+        const data = await signUpMutation.trigger({
+          email: params.email,
+          password: params.password,
+          userRole: params.userRole,
+        });
         const userId = data?.user?.id;
         const email = data?.user?.email || params.email;
 
-        // If successful signup, ensure user record exists in database
+        // If successful signup, ensure user record exists in database with name fields
         if (userId && email) {
           try {
-            await ensureUserRecord(userId, email, params.userRole);
+            await ensureUserRecord(
+              userId,
+              email,
+              params.userRole,
+              params.firstName,
+              params.lastName,
+            );
           } catch (error) {
             console.error('Failed to create user record:', error);
           }

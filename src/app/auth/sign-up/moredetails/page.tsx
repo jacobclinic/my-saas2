@@ -29,14 +29,12 @@ async function MoreDetailsPage({
 
   const userData = await getUserByIdAction(session.user.id);
 
-  // Only redirect if we have valid non-empty values for all required fields
+  // Only redirect if we have valid non-empty values for phone and address (names are now filled during signup)
   const hasRequiredDetails =
-    userData?.first_name &&
-    userData?.last_name &&
     userData?.phone_number &&
-    userData?.first_name.trim() !== '' &&
-    userData?.last_name.trim() !== '' &&
-    userData?.phone_number.trim() !== '';
+    userData?.address &&
+    userData?.phone_number.trim() !== '' &&
+    userData?.address.trim() !== '';
 
   if (hasRequiredDetails) {
     console.log('User already has required details, redirecting to dashboard');

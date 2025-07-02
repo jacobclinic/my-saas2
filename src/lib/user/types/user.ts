@@ -5,12 +5,13 @@ interface UserType {
   biography?: string | null;
   email?: string;
   phone_number?: string | null;
+  address?: string | null;
   status?: string | null;
   bank_details?: any | null;
   user_role?: string | null;
   first_name?: string | null;
   last_name?: string | null;
-  created_at?: string
+  created_at?: string;
 }
 
 export default UserType;

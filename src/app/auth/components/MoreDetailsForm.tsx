@@ -26,38 +26,10 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<{
     displayName?: string;
-    names?: string;
     phoneNumber?: string;
     address?: string;
   }>({});
   const client = useSupabase();
-
-  // Handler to prevent numbers in name fields
-  const handleNameInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const key = e.key;
-    // Allow arrow keys, delete, backspace, tab, etc.
-    if (
-      key === 'ArrowLeft' ||
-      key === 'ArrowRight' ||
-      key === 'Backspace' ||
-      key === 'Delete' ||
-      key === 'Tab' ||
-      key === ' ' ||
-      key === '-'
-    ) {
-      return;
-    }
-
-    // Block any digit keys
-    if (/^\d$/.test(key)) {
-      e.preventDefault();
-    }
-
-    // block any simbols
-    if (/[^a-zA-Z\s]/.test(key)) {
-      e.preventDefault();
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -66,8 +38,6 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
     const form = e.currentTarget;
     const formData = new FormData(form);
     const displayName = formData.get('displayName') as string;
-    const firstName = formData.get('firstName') as string;
-    const lastName = formData.get('lastName') as string;
     const phoneNumber = formData.get('phoneNumber') as string;
     const address = formData.get('address') as string;
 
@@ -78,33 +48,12 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
 
     const errors: {
       displayName?: string;
-      names?: string;
-      firstName?: string;
-      lastName?: string;
       phoneNumber?: string;
       address?: string;
     } = {};
 
     if (!displayName || displayName.trim().length < 3) {
       errors.displayName = 'Display name must be at least 3 characters';
-    }
-
-    if (!firstName || firstName.trim().length < 3) {
-      errors.firstName = 'First name must be at least 3 characters';
-    }
-
-    // Check if firstName contains numbers
-    if (/\d/.test(firstName)) {
-      errors.firstName = 'First name cannot contain numbers';
-    }
-
-    if (!lastName || lastName.trim().length < 3) {
-      errors.lastName = 'Last name must be at least 3 characters';
-    }
-
-    // Check if lastName contains numbers
-    if (/\d/.test(lastName)) {
-      errors.lastName = 'Last name cannot contain numbers';
     }
 
     if (!phoneNumber || phoneNumber.trim().length < 10) {
@@ -119,11 +68,6 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
 
     if (!address || address.trim().length < 5) {
       errors.address = 'address must be at least 5 characters';
-    }
-
-    // Set any combined errors for names for backwards compatibility
-    if (errors.firstName || errors.lastName) {
-      errors.names = errors.firstName || errors.lastName;
     }
 
     setFormErrors(errors);
@@ -232,46 +176,6 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                   />
                 </TextField.Label>
               </TextField>
-              {formErrors.names && (
-                <p className="text-red-500 text-sm">{formErrors.names}</p>
-              )}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <TextField>
-                  <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
-                    First Name
-                    {formErrors.names && (
-                      <p className="text-red-500 text-sm">{formErrors.names}</p>
-                    )}
-                    <TextField.Input
-                      name="firstName"
-                      required
-                      minLength={2}
-                      placeholder="Your first name"
-                      onKeyDown={handleNameInput}
-                      pattern="^[^0-9]+$"
-                      title="First name cannot contain numbers"
-                    />
-                  </TextField.Label>
-                </TextField>
-
-                <TextField>
-                  <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
-                    Last Name
-                    {formErrors.names && (
-                      <p className="text-red-500 text-sm">{formErrors.names}</p>
-                    )}
-                    <TextField.Input
-                      name="lastName"
-                      required
-                      minLength={2}
-                      placeholder="Your last name"
-                      onKeyDown={handleNameInput}
-                      pattern="^[^0-9]+$"
-                      title="Last name cannot contain numbers"
-                    />
-                  </TextField.Label>
-                </TextField>
-              </div>
 
               <TextField>
                 <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">

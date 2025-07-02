@@ -61,9 +61,12 @@ const StudentRegistrationForm = ({
   const signUpMutation = useSignUpWithEmailAndPasswordMutation();
 
   // Real-time validation function
-  const validateField = (fieldName: keyof RegistrationFormData, value: string) => {
+  const validateField = (
+    fieldName: keyof RegistrationFormData,
+    value: string,
+  ) => {
     const newErrors = { ...errors };
-    
+
     switch (fieldName) {
       case 'firstName':
         if (!value.trim()) {
@@ -74,7 +77,7 @@ const StudentRegistrationForm = ({
           delete newErrors.firstName;
         }
         break;
-        
+
       case 'lastName':
         if (!value.trim()) {
           newErrors.lastName = 'Last name is required';
@@ -84,7 +87,7 @@ const StudentRegistrationForm = ({
           delete newErrors.lastName;
         }
         break;
-        
+
       case 'email':
         if (!value.trim()) {
           newErrors.email = 'Email is required';
@@ -94,11 +97,15 @@ const StudentRegistrationForm = ({
           delete newErrors.email;
         }
         break;
-        
+
       case 'phone':
         if (!value.trim()) {
           newErrors.phone = 'Phone number is required';
-        } else if (!/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(value.trim())) {
+        } else if (
+          !/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(
+            value.trim(),
+          )
+        ) {
           newErrors.phone = 'Please enter a valid phone number';
         } else if (value.trim().length < 10) {
           newErrors.phone = 'Phone number must be at least 10 digits';
@@ -106,25 +113,28 @@ const StudentRegistrationForm = ({
           delete newErrors.phone;
         }
         break;
-        
+
       case 'password':
         if (!value.trim()) {
           newErrors.password = 'Password is required';
         } else if (value.length < 8) {
           newErrors.password = 'Password must be at least 8 characters';
         } else if (!/(?=.*[a-z])/.test(value)) {
-          newErrors.password = 'Password must contain at least one lowercase letter';
+          newErrors.password =
+            'Password must contain at least one lowercase letter';
         } else if (!/(?=.*[A-Z])/.test(value)) {
-          newErrors.password = 'Password must contain at least one uppercase letter';
+          newErrors.password =
+            'Password must contain at least one uppercase letter';
         } else if (!/(?=.*\d)/.test(value)) {
           newErrors.password = 'Password must contain at least one digit';
         } else if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value)) {
-          newErrors.password = 'Password must contain at least one special character';
+          newErrors.password =
+            'Password must contain at least one special character';
         } else {
           delete newErrors.password;
         }
         break;
-        
+
       case 'address':
         if (!value.trim()) {
           newErrors.address = 'Address is required';
@@ -133,15 +143,18 @@ const StudentRegistrationForm = ({
         }
         break;
     }
-    
+
     setErrors(newErrors);
   };
 
   // Handle field changes with validation
-  const handleFieldChange = (fieldName: keyof RegistrationFormData, value: string) => {
+  const handleFieldChange = (
+    fieldName: keyof RegistrationFormData,
+    value: string,
+  ) => {
     // Apply input restrictions
     let filteredValue = value;
-    
+
     if (fieldName === 'firstName' || fieldName === 'lastName') {
       // Only allow letters and spaces for names
       filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
@@ -149,12 +162,12 @@ const StudentRegistrationForm = ({
       // Only allow digits, spaces, dashes, parentheses, and plus sign for phone
       filteredValue = value.replace(/[^0-9+\-()\s.]/g, '');
     }
-    
+
     setFormData({ ...formData, [fieldName]: filteredValue });
-    
+
     // Mark field as touched
     setFieldTouched({ ...fieldTouched, [fieldName]: true });
-    
+
     // Validate field if it has been touched
     if (fieldTouched[fieldName] || filteredValue.length > 0) {
       validateField(fieldName, filteredValue);
@@ -163,24 +176,29 @@ const StudentRegistrationForm = ({
 
   const validateForm = () => {
     const newErrors: Partial<RegistrationFormData> = {};
-    
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+
+    if (!formData.firstName.trim())
+      newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       newErrors.email = 'Please enter a valid email address';
     }
-    
+
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
-    } else if (!/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(formData.phone.trim())) {
+    } else if (
+      !/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(
+        formData.phone.trim(),
+      )
+    ) {
       newErrors.phone = 'Please enter a valid phone number';
-    }else if(formData.phone.trim().length < 10) {
+    } else if (formData.phone.trim().length < 10) {
       newErrors.phone = 'Please enter a valid phone number';
     }
-    
+
     if (!formData.password.trim()) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
@@ -199,24 +217,31 @@ const StudentRegistrationForm = ({
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0 && !passwordError && confirmPassword.trim() !== '';
+    return (
+      Object.keys(newErrors).length === 0 &&
+      !passwordError &&
+      confirmPassword.trim() !== ''
+    );
   };
 
   // Check if form is valid for enabling/disabling the submit button
   const isFormValid = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/;
-    
+    const phoneRegex =
+      /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/;
+
     // Password complexity validation
     const isPasswordComplex = (password: string) => {
-      return password.length >= 8 &&
-             /(?=.*[a-z])/.test(password) &&  // lowercase
-             /(?=.*[A-Z])/.test(password) &&  // uppercase
-             /(?=.*\d)/.test(password) &&     // digit
-             /(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(password); // special character
+      return (
+        password.length >= 8 &&
+        /(?=.*[a-z])/.test(password) && // lowercase
+        /(?=.*[A-Z])/.test(password) && // uppercase
+        /(?=.*\d)/.test(password) && // digit
+        /(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(password)
+      ); // special character
     };
-    
-    const isBasicInfoValid = 
+
+    const isBasicInfoValid =
       formData.firstName.trim() !== '' &&
       formData.lastName.trim() !== '' &&
       formData.email.trim() !== '' &&
@@ -227,12 +252,12 @@ const StudentRegistrationForm = ({
       formData.address.trim() !== '' &&
       formData.password.trim() !== '' &&
       isPasswordComplex(formData.password);
-    
-    const isPasswordValid = 
+
+    const isPasswordValid =
       confirmPassword.trim() !== '' &&
       formData.password === confirmPassword &&
       !passwordError;
-    
+
     return isBasicInfoValid && isPasswordValid;
   };
 
@@ -305,7 +330,7 @@ const StudentRegistrationForm = ({
 
     // Mark password field as touched
     setFieldTouched({ ...fieldTouched, password: true });
-    
+
     // Validate password field
     validateField('password', newPassword);
 
@@ -350,13 +375,15 @@ const StudentRegistrationForm = ({
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information */}
             <div className="space-y-4">
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">First Name</label>
                   <Input
                     placeholder="Enter first name"
                     value={formData.firstName}
-                    onChange={(e) => handleFieldChange('firstName', e.target.value)}
+                    onChange={(e) =>
+                      handleFieldChange('firstName', e.target.value)
+                    }
                     onBlur={() => {
                       setFieldTouched({ ...fieldTouched, firstName: true });
                       validateField('firstName', formData.firstName);
@@ -375,7 +402,9 @@ const StudentRegistrationForm = ({
                   <Input
                     placeholder="Enter last name"
                     value={formData.lastName}
-                    onChange={(e) => handleFieldChange('lastName', e.target.value)}
+                    onChange={(e) =>
+                      handleFieldChange('lastName', e.target.value)
+                    }
                     onBlur={() => {
                       setFieldTouched({ ...fieldTouched, lastName: true });
                       validateField('lastName', formData.lastName);
@@ -407,7 +436,7 @@ const StudentRegistrationForm = ({
                   <p className="text-red-500 text-sm mt-1">{errors.email}</p>
                 )}
               </div>
-              
+
               <div>
                 <label className="text-sm font-medium">Phone Number</label>
                 <Input
@@ -443,7 +472,6 @@ const StudentRegistrationForm = ({
                 )}
               </div>
 
-              
               <div>
                 <label className="text-sm font-medium">Password</label>
                 <Input
@@ -458,7 +486,8 @@ const StudentRegistrationForm = ({
                 )}
                 {!errors.password && (
                   <p className="text-gray-500 text-xs mt-1">
-                    Password must contain at least 8 characters, including uppercase, lowercase, digit, and special character
+                    Password must contain at least 8 characters, including
+                    uppercase, lowercase, digit, and special character
                   </p>
                 )}
 
@@ -478,14 +507,16 @@ const StudentRegistrationForm = ({
               </div>
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               variant={'darkBlue'}
               disabled={!isFormValid() || signUpMutation.isMutating}
               className={`${!isFormValid() ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <div className="flex items-center justify-center gap-2">
-                {signUpMutation.isMutating ? 'Registering...' : 'Complete Registration'}
+                {signUpMutation.isMutating
+                  ? 'Registering...'
+                  : 'Complete Registration'}
                 {/* lets add right arrow icon */}
                 <ArrowRight className="h-4 w-4 text-white" />
               </div>

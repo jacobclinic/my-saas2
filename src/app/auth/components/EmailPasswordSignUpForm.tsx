@@ -10,6 +10,8 @@ const EmailPasswordSignUpForm: React.FCC<{
     email: string;
     password: string;
     repeatPassword: string;
+    firstName: string;
+    lastName: string;
     userRole: 'student' | 'tutor';
   }) => unknown;
   loading: boolean;
@@ -19,6 +21,8 @@ const EmailPasswordSignUpForm: React.FCC<{
       email: '',
       password: '',
       repeatPassword: '',
+      firstName: '',
+      lastName: '',
     },
     mode: 'onChange',
   });
@@ -26,6 +30,32 @@ const EmailPasswordSignUpForm: React.FCC<{
   const [userRole, setUserRole] = useState<'student' | 'tutor'>('student'); // Default userRole
 
   const emailControl = register('email', { required: true });
+  const firstNameControl = register('firstName', { 
+    required: true,
+    minLength: {
+      value: 2,
+      message: 'First name must be at least 2 characters',
+    },
+    validate: (value) => {
+      if (/\d/.test(value)) {
+        return 'First name cannot contain numbers';
+      }
+      return true;
+    },
+  });
+  const lastNameControl = register('lastName', { 
+    required: true,
+    minLength: {
+      value: 2,
+      message: 'Last name must be at least 2 characters',
+    },
+    validate: (value) => {
+      if (/\d/.test(value)) {
+        return 'Last name cannot contain numbers';
+      }
+      return true;
+    },
+  });
   const errors = formState.errors;
 
   // Re-validate password when user role changes
@@ -69,11 +99,38 @@ const EmailPasswordSignUpForm: React.FCC<{
 
   const passwordValue = watch(`password`);
 
+  // Handler to prevent numbers in name fields
+  const handleNameInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const key = e.key;
+    // Allow arrow keys, delete, backspace, tab, etc.
+    if (
+      key === 'ArrowLeft' ||
+      key === 'ArrowRight' ||
+      key === 'Backspace' ||
+      key === 'Delete' ||
+      key === 'Tab' ||
+      key === ' ' ||
+      key === '-'
+    ) {
+      return;
+    }
+
+    // Block any digit keys
+    if (/^\d$/.test(key)) {
+      e.preventDefault();
+    }
+
+    // block any symbols
+    if (/[^a-zA-Z\s]/.test(key)) {
+      e.preventDefault();
+    }
+  };
+
   const repeatPasswordControl = register('repeatPassword', {
     required: true,
     minLength: {
       value: 8,
-      message: 'Please provide a password with at least 6 characters',
+      message: 'Please provide a password with at least 8 characters',
     },
     validate: (value) => {
       if (value !== passwordValue) {
@@ -117,6 +174,48 @@ const EmailPasswordSignUpForm: React.FCC<{
         autoComplete="off"
       >
         <div className={'flex-col space-y-4'}>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <TextField>
+              <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
+                First Name
+                <TextField.Input
+                  {...firstNameControl}
+                  data-cy={'first-name-input'}
+                  required
+                  type="text"
+                  placeholder={'John'}
+                  autoComplete="given-name"
+                  className="text-sm sm:text-base"
+                  onKeyDown={handleNameInput}
+                  pattern="^[^0-9]+$"
+                  title="First name cannot contain numbers"
+                />
+              </TextField.Label>
+
+              <TextField.Error error={errors.firstName?.message} />
+            </TextField>
+
+            <TextField>
+              <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
+                Last Name
+                <TextField.Input
+                  {...lastNameControl}
+                  data-cy={'last-name-input'}
+                  required
+                  type="text"
+                  placeholder={'Doe'}
+                  autoComplete="family-name"
+                  className="text-sm sm:text-base"
+                  onKeyDown={handleNameInput}
+                  pattern="^[^0-9]+$"
+                  title="Last name cannot contain numbers"
+                />
+              </TextField.Label>
+
+              <TextField.Error error={errors.lastName?.message} />
+            </TextField>
+          </div>
+
           <TextField>
             <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
               Email
