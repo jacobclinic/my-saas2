@@ -6,6 +6,7 @@ import {
   getAllUpcomingSessionsWithin24_25Hrs,
   getSessions2_1HrsAfterSession,
   getUpcomingSessionsWithUnpaidStudentsBetween2_3Days,
+  getTutorsForSessionsWithin1Hr,
 } from '../quieries';
 import { stat } from 'fs';
 
@@ -352,5 +353,77 @@ export async function sendSingleSMS(
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+/**
+ * Sends reminder SMS to tutors within 1 hour before their sessions
+ * @param client Supabase client instance
+ */
+export async function notifyTutorsWithin1HourSMS(
+  client: SupabaseClient,
+): Promise<void> {
+  try {
+    const tutorSessions: TutorNotificationClass[] =
+      await getTutorsForSessionsWithin1Hr(client);
+
+    if (tutorSessions.length === 0) {
+      console.log('No upcoming sessions found for tutor 1-hour notifications');
+      return;
+    }
+
+    console.log(
+      `Found ${tutorSessions.length} sessions for tutor notifications within 1 hour`,
+    );
+
+    // Process each tutor session individually
+    for (const tutorSession of tutorSessions) {
+      // Skip if tutor has no phone number
+      if (!tutorSession.tutor_phone_number) {
+        console.log(
+          `No phone number found for tutor of class: ${tutorSession.class_name}`,
+        );
+        continue;
+      }
+
+      // Parse the session start time for proper date formatting
+      const sessionDate = new Date(tutorSession.next_session_time);
+      // Format time for India timezone (IST)
+      const localTime = Intl.DateTimeFormat('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata',
+      }).format(sessionDate);
+
+      // todo - update the link to the tutor session
+      const message = `Hi ${tutorSession.tutor_name || 'Tutor'}, your ${tutorSession.class_name} class is starting at ${localTime} today! Link to join: ${process.env.NEXT_PUBLIC_SITE_URL}/upcoming-sessions 
+- Comma Education`;
+
+      const smsRequest: SingleSMSRequest = {
+        phoneNumber: tutorSession.tutor_phone_number,
+        message,
+      };
+
+      console.log(
+        `Sending 1-hour reminder SMS to tutor for class: ${tutorSession.class_name}, Phone: ${tutorSession.tutor_phone_number}`,
+      );
+
+      const result = await sendSingleSMS(smsRequest);
+
+      if (result.success) {
+        console.log(
+          `Tutor 1-hour reminder sent successfully for class ${tutorSession.class_name}. Message ID: ${result.messageId}`,
+        );
+      } else {
+        console.error(
+          `Failed to send tutor 1-hour reminder for class ${tutorSession.class_name}: ${result.error}`,
+        );
+      }
+
+      // Add a small delay between SMS sends to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  } catch (error) {
+    console.error('Error in notifyTutorsWithin1HourSMS:', error);
   }
 }
