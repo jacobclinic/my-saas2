@@ -95,18 +95,6 @@ const AddLessonDetailsDialog: React.FC<Props> = ({
               rows={4}
             />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="homework" className="flex items-center gap-2">
-              <BookMarked size={16} className="text-primary-blue-600" />
-              Homework/Assignment
-            </Label>
-            <Textarea
-              id="homework"
-              placeholder="Describe the homework or assignment for students"
-              className="min-h-[100px]"
-            />
-          </div>
         </div>
       </div>
     </BaseDialog>
