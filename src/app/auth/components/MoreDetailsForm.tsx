@@ -15,9 +15,13 @@ import {
 
 interface MoreDetailsFormProps {
   user: User;
+  returnUrl?: string;
 }
 
-const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
+const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
+  user,
+  returnUrl,
+}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<{
@@ -65,6 +69,12 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
     const firstName = formData.get('firstName') as string;
     const lastName = formData.get('lastName') as string;
     const phoneNumber = formData.get('phoneNumber') as string;
+    const address = formData.get('address') as string;
+
+    // Add returnUrl to form data if provided
+    if (returnUrl) {
+      formData.append('returnUrl', returnUrl);
+    }
 
     const errors: {
       displayName?: string;
@@ -72,6 +82,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
       firstName?: string;
       lastName?: string;
       phoneNumber?: string;
+      address?: string;
     } = {};
 
     if (!displayName || displayName.trim().length < 3) {
@@ -104,6 +115,10 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
       )
     ) {
       errors.phoneNumber = 'Please enter a valid phone number';
+    }
+
+    if (!address || address.trim().length < 5) {
+      errors.address = 'address must be at least 5 characters';
     }
 
     // Set any combined errors for names for backwards compatibility
@@ -201,7 +216,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
 
             <div className="space-y-2">
               <TextField>
-                <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
+                <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
                   Display Name
                   {formErrors.displayName && (
                     <p className="text-red-500 text-sm">
@@ -222,7 +237,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
               )}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <TextField>
-                  <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
+                  <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
                     First Name
                     {formErrors.names && (
                       <p className="text-red-500 text-sm">{formErrors.names}</p>
@@ -240,7 +255,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                 </TextField>
 
                 <TextField>
-                  <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
+                  <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
                     Last Name
                     {formErrors.names && (
                       <p className="text-red-500 text-sm">{formErrors.names}</p>
@@ -259,7 +274,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
               </div>
 
               <TextField>
-                <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
+                <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
                   Phone Number
                   {formErrors.phoneNumber && (
                     <p className="text-red-500 text-sm">
@@ -276,14 +291,15 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
               </TextField>
 
               <TextField>
-                <TextField.Label className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
+                <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
                   Address
                   {formErrors.address && (
                     <p className="text-red-500 text-sm">{formErrors.address}</p>
                   )}
                   <TextField.Input
                     name="address"
-                    placeholder="Your address (optional)"
+                    required
+                    placeholder="Your address"
                   />
                 </TextField.Label>
               </TextField>
@@ -292,7 +308,9 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({ user }) => {
                 <Button
                   type="submit"
                   loading={isSubmitting}
-                  className={'w-full btn bg-secondary-600 text-white hover:bg-secondary-500 focus:ring-secondary-500/50 bg-gradient-to-br from-secondary-500 to-secondary-600'}
+                  className={
+                    'w-full btn bg-secondary-600 text-white hover:bg-secondary-500 focus:ring-secondary-500/50 bg-gradient-to-br from-secondary-500 to-secondary-600'
+                  }
                 >
                   Complete Profile & Continue
                 </Button>

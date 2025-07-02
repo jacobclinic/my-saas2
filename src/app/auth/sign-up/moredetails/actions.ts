@@ -58,6 +58,7 @@ export async function updateUserDetailsAction(formData: FormData) {
     const lastName = formData.get('lastName') as string;
     const phoneNumber = formData.get('phoneNumber') as string;
     const address = formData.get('address') as string;
+    const returnUrl = formData.get('returnUrl') as string;
 
     // Validate form data
     const validatedData = userDetailsSchema.parse({
@@ -99,8 +100,8 @@ export async function updateUserDetailsAction(formData: FormData) {
     // Revalidate paths
     revalidatePath('/');
 
-    // Redirect to dashboard
-    return redirect('/dashboard');
+    // Redirect to the appropriate destination
+    return redirect(returnUrl || '/dashboard');
   } catch (error) {
     console.error('Error updating user details:', error);
     return {
@@ -138,16 +139,13 @@ export async function updateProfilePhotoAction(
   }
 }
 
-export async function getUserByIdAction(
-  userId: string,
-): Promise<UserType> {
+export async function getUserByIdAction(userId: string): Promise<UserType> {
+  const client = getSupabaseServerActionClient();
 
-    const client = getSupabaseServerActionClient();
+  const data = await getUserById(client, userId);
 
-    const data= await getUserById(client, userId);
-
-    if (!data) {
-      throw new Error('User not found');
-    }
-    return data;
+  if (!data) {
+    throw new Error('User not found');
+  }
+  return data;
 }

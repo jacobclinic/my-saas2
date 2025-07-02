@@ -4,12 +4,14 @@ import { redirect } from 'next/navigation';
 import getLogger from '~/core/logger';
 import configuration from '~/configuration';
 import getSupabaseRouteHandlerClient from '~/core/supabase/route-handler-client';
+import { getUserById } from '~/lib/user/database/queries';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const logger = getLogger();
 
   const authCode = requestUrl.searchParams.get('code');
+  const returnUrl = requestUrl.searchParams.get('returnUrl');
 
   if (authCode) {
     const client = getSupabaseRouteHandlerClient();
@@ -22,6 +24,48 @@ export async function GET(request: NextRequest) {
         return onError({
           error: error.message,
         });
+      }
+
+      // After successful authentication, check if user needs to complete profile
+      const {
+        data: { user },
+      } = await client.auth.getUser();
+
+      if (user) {
+        try {
+          const userData = await getUserById(client, user.id);
+
+          // Check if user has completed their profile
+          const hasRequiredDetails =
+            userData?.first_name &&
+            userData?.last_name &&
+            userData?.phone_number &&
+            userData.first_name.trim() !== '' &&
+            userData.last_name.trim() !== '' &&
+            userData.phone_number.trim() !== '';
+
+          if (!hasRequiredDetails) {
+            // Redirect to complete profile page
+            const moreDetailsUrl = new URL(
+              '/auth/sign-up/moredetails',
+              configuration.site.siteUrl,
+            );
+            if (returnUrl) {
+              moreDetailsUrl.searchParams.set('returnUrl', returnUrl);
+            }
+            return redirect(moreDetailsUrl.toString());
+          }
+        } catch (userError) {
+          // If user data doesn't exist, they need to complete profile
+          const moreDetailsUrl = new URL(
+            '/auth/sign-up/moredetails',
+            configuration.site.siteUrl,
+          );
+          if (returnUrl) {
+            moreDetailsUrl.searchParams.set('returnUrl', returnUrl);
+          }
+          return redirect(moreDetailsUrl.toString());
+        }
       }
     } catch (error) {
       logger.error(
@@ -39,7 +83,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return redirect(configuration.paths.appHome);
+  // If user has completed profile, redirect to the intended destination
+  return redirect(returnUrl || configuration.paths.appHome);
 }
 
 function onError({ error }: { error: string }) {
