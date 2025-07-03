@@ -96,7 +96,7 @@ const TutorDBClient = ({
             <div className="flex items-center space-x-2">
               <Calendar className="h-5 w-5 text-blue-600" />
               <div className="text-sm font-medium text-blue-900">
-                {tutorStat.nextSession?.start_time ? new Date(tutorStat.nextSession.start_time).toLocaleDateString() : 'No upcoming class'}
+                {tutorStat.nextSession?.start_time ? formatToLocalTime(tutorStat.nextSession.start_time, 'MMM d, yyyy') : 'No upcoming class'}
               </div>
             </div>
             <div className="flex items-center space-x-2 mt-2">

@@ -26,7 +26,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'credentialless',  //            value: 'require-corp',
+            value: 'credentialless', // Changed from 'require-corp' to allow Supabase storage images
           },
           {
             key: 'Cross-Origin-Opener-Policy',
