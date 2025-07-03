@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {
-  UpcomingSessionTableData,
-} from '~/lib/sessions/types/upcoming-sessions';
+import { UpcomingSessionTableData } from '~/lib/sessions/types/upcoming-sessions';
 import UpcommingSessionClassCard from '../../upcoming-sessions/UpcommingSessionCard';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { formatToLocalTime } from '~/lib/utils/timezone-utils';
@@ -23,19 +21,19 @@ const UpcomingClassesSection = ({
         // Use consistent timezone-aware formatting to prevent hydration mismatches
         const formattedDate = formatToLocalTime(
           session?.start_time || '',
-          'EEEE, MMMM d, yyyy' // "Monday, January 3, 2025"
+          'EEEE, MMMM d, yyyy', // "Monday, January 3, 2025"
         );
 
         const startTime = formatToLocalTime(
           session?.start_time || '',
-          'h:mm a' // "2:30 PM"
+          'h:mm a', // "2:30 PM"
         );
-        
+
         const endTime = formatToLocalTime(
           session?.end_time || '',
-          'h:mm a' // "3:30 PM"
+          'h:mm a', // "3:30 PM"
         );
-        
+
         const formattedTime = `${startTime} - ${endTime}`;
 
         return {

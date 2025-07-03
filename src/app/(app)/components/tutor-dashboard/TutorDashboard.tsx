@@ -48,19 +48,19 @@ const TutorDashboard = ({
       // Use consistent timezone-aware formatting to prevent hydration mismatches
       const formattedDate = formatToLocalTime(
         session?.start_time || '',
-        'EEEE, MMMM d, yyyy' // "Monday, January 3, 2025"
+        'EEEE, MMMM d, yyyy', // "Monday, January 3, 2025"
       );
-      
+
       const startTime = formatToLocalTime(
         session?.start_time || '',
-        'h:mm a' // "2:30 PM"
+        'h:mm a', // "2:30 PM"
       );
-      
+
       const endTime = formatToLocalTime(
         session?.end_time || '',
-        'h:mm a' // "3:30 PM"
+        'h:mm a', // "3:30 PM"
       );
-      
+
       const formattedTime = `${startTime} - ${endTime}`;
       const formattedData: UpcomingSessionTableData = {
         id: session.id,
@@ -126,7 +126,6 @@ const TutorDashboard = ({
       setActiveClassTableData(formattedData);
     }
   }, [activeClassesData]);
-
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8">

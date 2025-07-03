@@ -13,11 +13,14 @@ import {
   CardDescription,
 } from '../base-v2/ui/Card';
 import { TutorDashboardData } from '~/lib/tutorStats/types/types';
-import { convertToLocalTime, formatToLocalTime } from '~/lib/utils/timezone-utils';
+import {
+  convertToLocalTime,
+  formatToLocalTime,
+} from '~/lib/utils/timezone-utils';
 
 const TutorDBClient = ({
   upcomingSessionDataPerWeek,
-  tutorStat
+  tutorStat,
 }: {
   upcomingSessionDataPerWeek: UpcomingSession[];
   tutorStat: TutorDashboardData;
@@ -47,7 +50,9 @@ const TutorDBClient = ({
     setCurrentPage(pageNumber);
   };
 
-  const nextClassTimeLocal = formatToLocalTime(tutorStat.nextSession?.start_time ?? null)
+  const nextClassTimeLocal = formatToLocalTime(
+    tutorStat.nextSession?.start_time ?? null,
+  );
 
   return (
     <div className="space-y-8">
@@ -63,7 +68,9 @@ const TutorDBClient = ({
           <CardContent>
             <div className="flex items-center">
               <Users className="h-8 w-8 text-primary-blue-600 mr-3" />
-              <div className="text-3xl font-bold text-primary-blue-900">{tutorStat.totalStudents}</div>
+              <div className="text-3xl font-bold text-primary-blue-900">
+                {tutorStat.totalStudents}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -96,12 +103,19 @@ const TutorDBClient = ({
             <div className="flex items-center space-x-2">
               <Calendar className="h-5 w-5 text-blue-600" />
               <div className="text-sm font-medium text-blue-900">
-                {tutorStat.nextSession?.start_time ? formatToLocalTime(tutorStat.nextSession.start_time, 'MMM d, yyyy') : 'No upcoming class'}
+                {tutorStat.nextSession?.start_time
+                  ? formatToLocalTime(
+                      tutorStat.nextSession.start_time,
+                      'MMM d, yyyy',
+                    )
+                  : 'No upcoming class'}
               </div>
             </div>
             <div className="flex items-center space-x-2 mt-2">
               <Clock className="h-5 w-5 text-blue-600" />
-              <div className="text-sm font-medium text-blue-900">{nextClassTimeLocal}</div>
+              <div className="text-sm font-medium text-blue-900">
+                {nextClassTimeLocal}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -114,7 +128,9 @@ const TutorDBClient = ({
             <CardDescription>Current month</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-900">Rs. {tutorStat.monthlyEarnings}</div>
+            <div className="text-3xl font-bold text-green-900">
+              Rs. {tutorStat.monthlyEarnings}
+            </div>
           </CardContent>
         </Card>
       </div>
