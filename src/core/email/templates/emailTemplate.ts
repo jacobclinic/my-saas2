@@ -99,6 +99,7 @@ export function getStudentInvitationToClass(params: {
   return { html, text };
 }
 
+//updated
 export function paymentReminderEmaiTemplate(params: {
   studentName: string;
   className: string;
@@ -107,6 +108,7 @@ export function paymentReminderEmaiTemplate(params: {
   studentEmail: string;
   classFee: number | null;
   paymentUrl: string;
+  classId: string;
 }) {
   const {
     studentName,
@@ -116,266 +118,452 @@ export function paymentReminderEmaiTemplate(params: {
     studentEmail,
     classFee,
     paymentUrl,
+    classId,
   } = params;
+
   const html = `
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
-        }
-        .container {
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
-        }
-        .header {
-          background-color: #f8f9fa;
-          padding: 20px;
-          text-align: center;
-          border-radius: 5px;
-        }
-        .content {
-          padding: 20px 0;
-        }
-        .details {
-          background-color: #f8f9fa;
-          padding: 15px;
-          margin: 20px 0;
-          border-radius: 5px;
-        }
-        .bank-details {
-          background-color: #f8f9fa;
-          padding: 15px;
-          margin: 20px 0;
-          border-radius: 5px;
-        }
-        .button {
-          display: inline-block;
-          padding: 10px 20px;
-          background-color: #007bff;
-          color: white;
-          text-decoration: none;
-          border-radius: 5px;
-        }
-        .footer {
-          font-size: 0.9em;
-          color: #666;
-          margin-top: 20px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h2>Payment Reminder for ${sessionMonth}</h2>
-        </div>
-        <div class="content">
-          <p>Dear ${studentName},</p>
-          <p>This is a friendly reminder that your monthly payment for <strong>${className}</strong> is due in 3 days.</p>
-
-          <div class="details">
-            <h3>Payment Details</h3>
-            <p><strong>Class:</strong> ${className}</p>
-            <p><strong>Month:</strong> ${sessionMonth}</p>
-            <p><strong>Amount:</strong> Rs. ${classFee}</p>
-            <p><strong>Due Date:</strong> Before the first Day of class</p>
-            <p><strong>Next Class Date:</strong> ${sessionDate}</p>
-          </div>
-
-          <h3>Submit Your Payment</h3>
-          <p>Click the button below to access your payment page where you can:</p>
-          <ul>
-            <li>View payment details</li>
-            <li>Upload your bank transfer receipt</li>
-            <li>Check payment history</li>
-          </ul>
-          <p style="text-align: center; margin: 30px 0;">
-            <a href="${paymentUrl}" class="button">Make Payment</a>
-          </p>
-          <p>If the button doesn't work, copy this link: <a href="${paymentUrl}">${paymentUrl}</a></p>
-          <p>You'll need to sign in with your Comma Education account if you haven't already.</p>
-
-          <div class="bank-details">
-            <h3>Bank Transfer Details</h3>
-            <p><strong>Bank:</strong> Commercial Bank</p>
-            <p><strong>Account Name:</strong> Comma Education</p>
-            <p><strong>Account Number:</strong> 1234567890</p>
-            <p><strong>Branch:</strong> Colombo</p>
-            <p>Please include your <strong>Name</strong> in the transfer reference.</p>
-          </div>
-
-          <h3>Need Help?</h3>
-          <p>If you have any questions about your payment:</p>
-          <ul>
-            <li>WhatsApp us at +94716751777</li>
-            <li>Email us at <a href="mailto:payments@commaeducation.com">payments@commaeducation.com</a></li>
-          </ul>
-        </div>
-        <div class="footer">
-          <p>This email was sent to ${studentEmail} because you are registered for classes at Comma Education.</p>
-          <p><a href="https://www.app.commaeducation.lk">www.app.commaeducation.lk</a></p>
-        </div>
-      </div>
-    </body>
-  </html>
-`;
+    <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Payment reminder - Comma Education</title>
+        <style>
+          /* Base styles */
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.5;
+            color: #333333;
+            background-color: #f8f8f8;
+          }
+          
+          /* Container styles */
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+          }
+          
+          /* Header styles */
+          .header {
+            background: linear-gradient(135deg, #1A365D 0%, #264B77 100%);
+            padding: 20px;
+            text-align: center;
+          }
+          
+          .logo {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+          }
+          
+          /* Content styles */
+          .content {
+            padding: 30px;
+          }
+          
+          h1 {
+            color: #1A365D;
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 16px;
+          }
+          
+          p {
+            margin-bottom: 16px;
+            color: #4a4a4a;
+          }
+          
+          /* Button styles */
+          .button-container {
+            text-align: center;
+            margin: 30px 0;
+          }
+          
+          .button {
+            display: inline-block;
+            background-color: #E05D14;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s ease;
+          }
+          
+          .button:hover {
+            background-color: #C24700;
+          }
+          
+          /* Highlight box */
+          .highlight-box {
+            background-color: #f1f6fc;
+            border-left: 4px solid #1A365D;
+            padding: 15px;
+            margin-bottom: 20px;
+          }
+          
+          /* Footer styles */
+          .footer {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            color: #666666;
+            font-size: 14px;
+            border-top: 3px solid #E05D14;
+          }
+          
+          .social-links {
+            margin-top: 15px;
+          }
+          
+          .social-link {
+            display: inline-block;
+            margin: 0 8px;
+            color: #1A365D;
+            text-decoration: none;
+          }
+          
+          /* Responsive styles */
+          @media only screen and (max-width: 480px) {
+            .content {
+              padding: 20px;
+            }
+            
+            .button {
+              display: block;
+              text-align: center;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+          <tr>
+            <td align="center" style="background-color: #f8f8f8; padding: 20px 0;">
+              <table border="0" cellpadding="0" cellspacing="0" width="600" class="container">
+                <!-- Header -->
+                <tr>
+                  <td align="center" class="header">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td align="center">
+                          <h1 class="logo">Comma Education</h1>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Content -->
+                <tr>
+                  <td class="content">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td>
+                          <h1>Payment Reminder for ${sessionMonth} ${className} class</h1>
+                          <p>Hi ${studentName},</p>
+                          <p>This is a friendly reminder that the payment for your ${className} class is due in 2 days, on ${sessionDate}.</p>
+                          
+                          <div class="highlight-box">
+                            <p style="margin-top: 0;">To ensure your continued access to the class and materials, please complete your payment and submit your receipt through the link below:</p>
+                          </div>
+                          
+                          <div class="button-container">
+                            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Access Class</a>
+                          </div>
+                          
+                          <p>If you've already made the payment, please disregard this email or ensure you have uploaded your receipt.</p>
+                          <p>For any questions or assistance regarding your payment, please don't hesitate to contact our support team.</p>
+                          <p>Best regards,<br>The Team at Comma Education</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td class="footer">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td align="center">
+                          <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
+                          <p>Your trusted partner in online education.</p>
+                          <div class="social-links">
+                            <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
+                            <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                            <a href="#" class="social-link">Unsubscribe</a>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `;
 
   const text = `
-        Payment Reminder for ${sessionMonth}
+        Hi ${studentName},
 
-        Dear ${studentName},
+        This is a friendly reminder that the payment for your ${className} class is due in 2 days, on ${sessionDate}.
 
-        This is a friendly reminder that your monthly payment for ${className} is due in 3 days.
 
-        Payment Details
-        ---------------
-        Class: ${className}
-        Month: ${sessionMonth}
-        Amount: Rs. ${classFee}
-        Due Date: Before the first day of class
-        Next Class Date: ${sessionDate}
-
-        Submit Your Payment
-        ------------------
-        Click here to access your payment page where you can:
-        - View payment details
-        - Upload your bank transfer receipt
-        - Check payment history
-
-        Payment Link: ${paymentUrl}
-
-        If the link doesn't work, copy and paste it into your browser: ${paymentUrl}
+        To ensure your continued access to the class and materials, please complete your payment and submit your receipt through the link below:
+        
+        Payment Url: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
 
         You'll need to sign in with your Comma Education account if you haven't already.
 
-        Bank Transfer Details
-        --------------------
-        Bank: Commercial Bank
-        Account Name: Comma Education
-        Account Number: 1234567890
-        Branch: Colombo
+        If you've already made the payment, please disregard this email or ensure you have uploaded your receipt.
 
-        Please include your Name in the transfer reference.
+        For any questions or assistance regarding your payment, please don't hesitate to contact our support team.
 
-        Need Help?
-        ---------
-        If you have any questions about your payment:
-        - WhatsApp us at +94716751777
-        - Email us at payments@commaeducation.com
+        Thank you,
+        The Comma Education Team
 
-        ---
-        This email was sent to ${studentEmail} because you are registered for classes at Comma Education.
-        www.app.commaeducation.lk
 `;
 
   return { html, text };
 }
 
 // lib/email/templates/student-credentials.ts
-export function getStudentCredentialsEmailTemplate(params: {
+
+//updated
+export function getStudentRegistrationEmailTemplate(params: {
   studentName: string;
   email: string;
   className: string;
+  classId: string;
   loginUrl: string;
 }) {
-  const { studentName, email, className, loginUrl } = params;
+  const { studentName, email, className, loginUrl, classId } = params;
 
   const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-            }
-            .container {
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            .header {
-              background-color: #f8f9fa;
-              padding: 20px;
-              text-align: center;
-              border-radius: 5px;
-            }
+    <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Payment reminder - Comma Education</title>
+        <style>
+          /* Base styles */
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.5;
+            color: #333333;
+            background-color: #f8f8f8;
+          }
+          
+          /* Container styles */
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+          }
+          
+          /* Header styles */
+          .header {
+            background: linear-gradient(135deg, #1A365D 0%, #264B77 100%);
+            padding: 20px;
+            text-align: center;
+          }
+          
+          .logo {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+          }
+          
+          /* Content styles */
+          .content {
+            padding: 30px;
+          }
+          
+          h1 {
+            color: #1A365D;
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 16px;
+          }
+          
+          p {
+            margin-bottom: 16px;
+            color: #4a4a4a;
+          }
+          
+          /* Button styles */
+          .button-container {
+            text-align: center;
+            margin: 30px 0;
+          }
+          
+          .button {
+            display: inline-block;
+            background-color: #E05D14;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s ease;
+          }
+          
+          .button:hover {
+            background-color: #C24700;
+          }
+          
+          /* Highlight box */
+          .highlight-box {
+            background-color: #f1f6fc;
+            border-left: 4px solid #1A365D;
+            padding: 15px;
+            margin-bottom: 20px;
+          }
+          
+          /* Footer styles */
+          .footer {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            color: #666666;
+            font-size: 14px;
+            border-top: 3px solid #E05D14;
+          }
+          
+          .social-links {
+            margin-top: 15px;
+          }
+          
+          .social-link {
+            display: inline-block;
+            margin: 0 8px;
+            color: #1A365D;
+            text-decoration: none;
+          }
+          
+          /* Responsive styles */
+          @media only screen and (max-width: 480px) {
             .content {
-              padding: 20px 0;
+              padding: 20px;
             }
-            .credentials {
-              background-color: #f8f9fa;
-              padding: 15px;
-              margin: 20px 0;
-              border-radius: 5px;
-            }
+            
             .button {
-              display: inline-block;
-              padding: 10px 20px;
-              background-color: #007bff;
-              color: white;
-              text-decoration: none;
-              border-radius: 5px;
+              display: block;
+              text-align: center;
             }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h2>Welcome to Your Class!</h2>
-            </div>
-            <div class="content">
-              <p>Hello ${studentName},</p>
-              <p>You have been successfully enrolled in <strong>${className}</strong>. Here are your login credentials:</p>
-              
-              <div class="credentials">
-                <p><strong>Email:</strong> ${email}</p>
-              </div>
-  
-              <p>Please login using this eamil and password provided by you when registering to the class</p>
-              
-              <p style="text-align: center; margin: 30px 0;">
-                <a href="${loginUrl}" style="background-color: #E84437; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                  Login to Your Account
-                </a>
-              </p>
-  
-              <p>If you have any questions or need assistance, please don't hesitate to contact your tutor.</p>
-              
-              <p>Best regards,<br>Comma Education Team</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+          }
+        </style>
+      </head>
+      <body>
+        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+          <tr>
+            <td align="center" style="background-color: #f8f8f8; padding: 20px 0;">
+              <table border="0" cellpadding="0" cellspacing="0" width="600" class="container">
+                <!-- Header -->
+                <tr>
+                  <td align="center" class="header">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td align="center">
+                          <h1 class="logo">Comma Education</h1>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Content -->
+                <tr>
+                  <td class="content">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td>
+                          <h1>Welcome to ${className}</h1>
+                          <p>Hi ${studentName},</p>
+                          <p>Welcome aboard! You're now registered for ${className} with Comma Education. We're excited to have you.</p>
+                          
+                          <div class="highlight-box">
+                            <p style="margin-top: 0;">You can access your student portal using the link below. This is where you'll find class materials, schedules, and other important information.</p>
+                          </div>
+                          
+                          <div class="button-container">
+                            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Access Class</a>
+                          </div>
+                          
+                          <p>Please log in using the email and password you provided during registration.</p>
+                          <p>If you have any questions or need help getting started, our support team is ready to assist.</p>
+                          <p>We look forward to seeing you in class!</p>
+                          <p>Best regards,<br>The Team at Comma Education</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td class="footer">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td align="center">
+                          <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
+                          <p>Your trusted partner in online education.</p>
+                          <div class="social-links">
+                            <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
+                            <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                            <a href="#" class="social-link">Unsubscribe</a>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `;
 
   const text = `
         Welcome to Your Class!
         
-        Hello ${studentName},
+        Hi ${studentName},
         
-        You have been successfully enrolled in ${className}. Here are your login credentials:
+        Welcome aboard! You're now registered for [Class Name] with Comma Education. We're excited to have you.
         
-        Email: ${email}
+        You can access your student portal using the link below. This is where you'll find class materials, schedules, and other important information.
         
-        Please login using this email and password provided by you.
+        Student Portal Link: ${loginUrl}
         
-        You can login at: ${loginUrl}
+        Please log in using the email and password you provided during registration.
+
+        If you have any questions or need help getting started, our support team is ready to assist.
         
-        If you have any questions or need assistance, please don't hesitate to contact your tutor.
-        
+        We look forward to seeing you in class!
         Best regards,
-        Your Education Team
+        The Comma Education Team
     `;
 
   return { html, text };
 }
 
+//updated
 export function getStudentNotifyAfterEmailTemplate(params: {
   studentName: string;
   className: string;
@@ -392,134 +580,218 @@ export function getStudentNotifyAfterEmailTemplate(params: {
 
   const html = `
   <!DOCTYPE html>
-  <html>
+    <html lang="en">
     <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Recording Available - Comma Education</title>
       <style>
+        /* Base styles */
         body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
+          margin: 0;
+          padding: 0;
+          font-family: 'Arial', sans-serif;
+          line-height: 1.5;
+          color: #333333;
+          background-color: #f8f8f8;
         }
+        
+        /* Container styles */
         .container {
           max-width: 600px;
           margin: 0 auto;
-          padding: 20px;
+          background-color: #ffffff;
         }
+        
+        /* Header styles */
         .header {
-          background-color: #f8f9fa;
+          background: linear-gradient(135deg, #1A365D 0%, #264B77 100%);
           padding: 20px;
           text-align: center;
-          border-radius: 5px;
         }
+        
+        .logo {
+          color: #ffffff;
+          font-size: 24px;
+          font-weight: bold;
+          margin: 0;
+        }
+        
+        /* Content styles */
         .content {
-          padding: 20px 0;
+          padding: 30px;
         }
-        .details {
-          background-color: #f8f9fa;
-          padding: 15px;
-          margin: 20px 0;
-          border-radius: 5px;
+        
+        h1 {
+          color: #1A365D;
+          font-size: 20px;
+          margin-top: 0;
+          margin-bottom: 16px;
         }
+        
+        p {
+          margin-bottom: 16px;
+          color: #4a4a4a;
+        }
+        
+        /* Button styles */
+        .button-container {
+          text-align: center;
+          margin: 30px 0;
+        }
+        
         .button {
           display: inline-block;
-          padding: 10px 20px;
-          background-color: #007bff;
-          color: white;
+          background-color: #E05D14;
+          color: #ffffff !important;
           text-decoration: none;
-          border-radius: 5px;
+          padding: 12px 24px;
+          border-radius: 4px;
+          font-weight: bold;
+          text-align: center;
+          transition: background-color 0.3s ease;
         }
+        
+        .button:hover {
+          background-color: #C24700;
+        }
+        
+        /* Highlight box */
+        .highlight-box {
+          background-color: #f1f6fc;
+          border-left: 4px solid #1A365D;
+          padding: 15px;
+          margin-bottom: 20px;
+        }
+        
+        /* Footer styles */
         .footer {
-          font-size: 0.9em;
-          color: #666;
-          margin-top: 20px;
+          background-color: #f5f5f5;
+          padding: 20px;
+          text-align: center;
+          color: #666666;
+          font-size: 14px;
+          border-top: 3px solid #E05D14;
+        }
+        
+        .social-links {
+          margin-top: 15px;
+        }
+        
+        .social-link {
+          display: inline-block;
+          margin: 0 8px;
+          color: #1A365D;
+          text-decoration: none;
+        }
+        
+        /* Responsive styles */
+        @media only screen and (max-width: 480px) {
+          .content {
+            padding: 20px;
+          }
+          
+          .button {
+            display: block;
+            text-align: center;
+          }
         }
       </style>
     </head>
     <body>
-      <div class="container">
-        <div class="header">
-          <h2>Your Class Recording Is Ready!</h2>
-        </div>
-        <div class="content">
-          <p>Dear ${studentName},</p>
-          <p>Your <strong>${className}</strong> class recording from today is now available to watch.</p>
-
-          <div class="details">
-            <h3>Class Details</h3>
-            <p><strong>Class:</strong> ${className}</p>
-            <p><strong>Date:</strong> ${date}</p>
-            ${topic ? `<p><strong>Topic:</strong> ${topic}</p>` : ''}
-          </div>
-
-          <h3>Access Your Class onslaughtContent</h3>
-          <p>Click the button below to access everything for this class:</p>
-          <ul>
-            <li>Today's class recording</li>
-            <li>Class materials and resources</li>
-            <li>Past recordings</li>
-          </ul>
-          <p style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Access Class</a>
-          </p>
-          <p>If the button doesn't work, copy this link: <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}">${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}</a></p>
-          <p>You'll need to sign in with your Comma Education account if you haven't already.</p>
-
-          <h3>Need Help?</h3>
-          <p>If you have any issues accessing your recording:</p>
-          <ul>
-            <li>WhatsApp us at +94716751777</li>
-            <li>Email us at <a href="mailto:support@commaeducation.com">support@commaeducation.com</a></li>
-          </ul>
-        </div>
-        <div class="footer">
-          <p>This email was sent to ${studentEmail} because you are registered for classes at Comma Education.</p>
-          <p><a href="https://www.app.commaeducation.lk">www.app.commaeducation.lk</a></p>
-        </div>
-      </div>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td align="center" style="background-color: #f8f8f8; padding: 20px 0;">
+            <table border="0" cellpadding="0" cellspacing="0" width="600" class="container">
+              <!-- Header -->
+              <tr>
+                <td align="center" class="header">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td align="center">
+                        <h1 class="logo">Comma Education</h1>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td class="content">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td>
+                        <h1>Your Class Recording Is Ready!</h1>
+                        <p>Hi ${studentName},</p>
+                        <p>Your <strong>${className}</strong> class recording from today is now available to watch.</p>
+                        
+                        <div class="highlight-box">
+                          <p style="margin-top: 0;">You can access all your class materials and recording using the single link below:</p>
+                        </div>
+                        
+                        <div class="button-container">
+                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Access Class</a>
+                        </div>
+                        
+                        <p>You'll need to sign in with your Comma Education account if you haven't already.</p>
+                        <p>If you have any questions or need assistance, our support team is here to help.</p>
+                        <p>See you in next class!</p>
+                        <p>Best regards,<br>The Team at Comma Education</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td class="footer">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td align="center">
+                        <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
+                        <p>Your trusted partner in online education.</p>
+                        <div class="social-links">
+                          <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
+                          <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                          <a href="#" class="social-link">Unsubscribe</a>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
     </body>
   </html>
-`;
+  `;
 
   const text = `
-        Your Class Recording Is Ready!
+        Hi ${studentName},
 
-        Dear ${studentName},
+        Hope you found today's ${className} session informative!
 
-        Your A/L Accounting class recording from today is now available to watch.
-
-        Class Details
-        ------------
-        Class: ${className}
-        Date: ${date}
-        ${topic ? `Topic: ${topic}` : ''}
-
-        Access Your Class Content
-        ------------------------
-        Click here to access everything for this class:
-        - Today's class recording
-        - Class materials and resources
-        - Past recordings
+        The recording of the class is now available. You can access it using the link below to review the material or catch up if you missed anything:
 
         Access Link: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
 
-        If the link doesn't work, copy and paste it into your browser: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
+        This link will also give you access to other class materials.
 
-        You'll need to sign in with your Comma Education account if you haven't already.
+        If you have any questions or need further assistance, please feel free to reach out.
 
-        Need Help?
-        ---------
-        If you have any issues accessing your recording:
-        - WhatsApp us at +94716751777
-        - Email us at support@commaeducation.com
-
-        ---
-        This email was sent to ${studentEmail} because you are registered for classes at Comma Education.
-        www.app.commaeducation.lk
+        Happy learning!
+        Best regards,
+        The Comma Education Team
         `;
 
   return { html, text };
 }
 
+//updated
 export function getStudentNotifyBeforeEmailTemplate(params: {
   studentName: string;
   className: string;
@@ -545,133 +817,220 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
 
   const html = `
   <!DOCTYPE html>
-  <html>
+    <html lang="en">
     <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Class Reminder - Comma Education</title>
       <style>
+        /* Base styles */
         body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
+          margin: 0;
+          padding: 0;
+          font-family: 'Arial', sans-serif;
+          line-height: 1.5;
+          color: #333333;
+          background-color: #f8f8f8;
         }
+        
+        /* Container styles */
         .container {
           max-width: 600px;
           margin: 0 auto;
-          padding: 20px;
+          background-color: #ffffff;
         }
+        
+        /* Header styles */
         .header {
-          background-color: #f8f9fa;
+          background: linear-gradient(135deg, #1A365D 0%, #264B77 100%);
           padding: 20px;
           text-align: center;
-          border-radius: 5px;
         }
+        
+        .logo {
+          color: #ffffff;
+          font-size: 24px;
+          font-weight: bold;
+          margin: 0;
+        }
+        
+        /* Content styles */
         .content {
-          padding: 20px 0;
+          padding: 30px;
         }
-        .details {
-          background-color: #f8f9fa;
-          padding: 15px;
-          margin: 20px 0;
-          border-radius: 5px;
+        
+        h1 {
+          color: #1A365D;
+          font-size: 20px;
+          margin-top: 0;
+          margin-bottom: 16px;
         }
+        
+        p {
+          margin-bottom: 16px;
+          color: #4a4a4a;
+        }
+        
+        /* Button styles */
+        .button-container {
+          text-align: center;
+          margin: 30px 0;
+        }
+        
         .button {
           display: inline-block;
-          padding: 10px 20px;
-          background-color: #007bff;
-          color: white;
+          background-color: #E05D14;
+          color: #ffffff !important;
           text-decoration: none;
-          border-radius: 5px;
+          padding: 12px 24px;
+          border-radius: 4px;
+          font-weight: bold;
+          text-align: center;
+          transition: background-color 0.3s ease;
         }
+        
+        .button:hover {
+          background-color: #C24700;
+        }
+        
+        /* Highlight box */
+        .highlight-box {
+          background-color: #f1f6fc;
+          border-left: 4px solid #1A365D;
+          padding: 15px;
+          margin-bottom: 20px;
+        }
+        
+        /* Footer styles */
         .footer {
-          font-size: 0.9em;
-          color: #666;
-          margin-top: 20px;
+          background-color: #f5f5f5;
+          padding: 20px;
+          text-align: center;
+          color: #666666;
+          font-size: 14px;
+          border-top: 3px solid #E05D14;
+        }
+        
+        .social-links {
+          margin-top: 15px;
+        }
+        
+        .social-link {
+          display: inline-block;
+          margin: 0 8px;
+          color: #1A365D;
+          text-decoration: none;
+        }
+        
+        /* Responsive styles */
+        @media only screen and (max-width: 480px) {
+          .content {
+            padding: 20px;
+          }
+          
+          .button {
+            display: block;
+            text-align: center;
+          }
         }
       </style>
     </head>
     <body>
-      <div class="container">
-        <div class="header">
-          <h2>Your Class Is Tomorrow!</h2>
-        </div>
-        <div class="content">
-          <p>Dear ${studentName},</p>
-          <p>This is a friendly reminder that your <strong>${className}</strong> class is scheduled for tomorrow.</p>
-
-          <div class="details">
-            <h3>Class Details</h3>
-            <p><strong>Class:</strong> ${className}</p>
-            <p><strong>Date:</strong> ${date}</p>
-            <p><strong>Time:</strong> ${sessionTime}</p>
-            ${topic ? `<p><strong>Topic:</strong> ${topic}</p>` : ''}
-
-          </div>
-
-          <h3>Your Class Access Link</h3>
-          <p>Click the button below to access everything for this class:</p>
-          <ul>
-            <li>Join link for tomorrow's class</li>
-            <li>Class materials and resources</li>
-            <li>Recording (available after class)</li>
-          </ul>
-          <p style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" style="background-color: #E84437; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Access Class</a>
-          </p>
-          <p>If the button doesn't work, copy this link: <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}">${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}</a></p>
-          <p>You'll need to sign in with your Comma Education account if you haven't already.</p>
-
-          <h3>Need Help?</h3>
-          <p>If you have any issues accessing your class:</p>
-          <ul>
-            <li>WhatsApp us at +94716751777</li>
-            <li>Email us at <a href="mailto:support@commaeducation.com">support@commaeducation.com</a></li>
-          </ul>
-        </div>
-        <div class="footer">
-          <p>This email was sent to ${studentEmail} because you are registered for classes at Comma Education.</p>
-          <p><a href="https://www.app.commaeducation.lk">www.app.commaeducation.lk</a></p>
-        </div>
-      </div>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td align="center" style="background-color: #f8f8f8; padding: 20px 0;">
+            <table border="0" cellpadding="0" cellspacing="0" width="600" class="container">
+              <!-- Header -->
+              <tr>
+                <td align="center" class="header">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td align="center">
+                        <h1 class="logo">Comma Education</h1>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td class="content">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td>
+                        <h1>Reminder: Your ${className} Class is Tomorrow!</h1>
+                        <p>Hi ${studentName},</p>
+                        <p>This is a friendly reminder that your class, <strong>${className}</strong>, is scheduled for tomorrow, <strong>${date}</strong>, at <strong>${sessionTime}/strong>.</p>
+                        
+                        <div class="highlight-box">
+                          <p style="margin-top: 0;">You can join the class and access all your class materials using the single link below:</p>
+                        </div>
+                        
+                        <div class="button-container">
+                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Join Your Class</a>
+                        </div>
+                        
+                        <p>We recommend joining a few minutes early to ensure everything is working smoothly.</p>
+                        <p>If you have any questions or need assistance, our support team is here to help.</p>
+                        <p>See you in class!</p>
+                        <p>Best regards,<br>The Team at Comma Education</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td class="footer">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td align="center">
+                        <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
+                        <p>Your trusted partner in online education.</p>
+                        <div class="social-links">
+                          <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
+                          <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                          <a href="#" class="social-link">Unsubscribe</a>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
     </body>
   </html>
-`;
+  `;
   const text = `
-        Your Class Is Tomorrow!
+      Your Class Is Tomorrow!
 
-        Dear ${studentName},
+      Hi ${studentName},
 
-        This is a friendly reminder that your ${className} class is scheduled for tomorrow.
+      This is a friendly reminder that your ${className} class is scheduled for tomorrow, ${date} at ${sessionTime}.
 
-        Class Details
-        ------------
-        Class: ${className}
-        Date: ${date}
-        Time: ${sessionTime}
-        ${topic ? `Topic: ${topic}` : ''}
+      You can join the class and access all your class materials using the single link below:
 
-        Your Class Access Link
-        ---------------------
-        Click here to access everything for this class:
-        - Join link for tomorrow's class
-        - Class materials and resources
-        - Recording (available after class)
+      Access Link: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
 
-        Access Link: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
+      We recommend joining a few minutes early to ensure everything is working smoothly.
 
-        You'll need to sign in with your Comma Education account if you haven't already.
+      You'll need to sign in with your Comma Education account if you haven't already.
 
-        Need Help?
-        ---------
-        If you have any issues accessing your class:
-        - WhatsApp us at +94716751777
-        - Email us at support@commaeducation.com
+      If you have any questions or need assistance, our support team is here to help.
+      See you in class!
+      Best regards,
+      The Team at Comma Education
 
-        ---
-        This email was sent to ${studentEmail} because you are registered for classes at Comma Education.
-        www.app.commaeducation.lk
 `;
   return { html, text };
 }
 
+//updated
 export function getStudentNotifyBefore1HrEmailTemplate(params: {
   studentName: string;
   className: string;
@@ -697,129 +1056,207 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
 
   const html = `
   <!DOCTYPE html>
-  <html>
+    <html lang="en">
     <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Class Reminder - Comma Education</title>
       <style>
+        /* Base styles */
         body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
+          margin: 0;
+          padding: 0;
+          font-family: 'Arial', sans-serif;
+          line-height: 1.5;
+          color: #333333;
+          background-color: #f8f8f8;
         }
+        
+        /* Container styles */
         .container {
           max-width: 600px;
           margin: 0 auto;
-          padding: 20px;
+          background-color: #ffffff;
         }
+        
+        /* Header styles */
         .header {
-          background-color: #f8f9fa;
+          background: linear-gradient(135deg, #1A365D 0%, #264B77 100%);
           padding: 20px;
           text-align: center;
-          border-radius: 5px;
         }
+        
+        .logo {
+          color: #ffffff;
+          font-size: 24px;
+          font-weight: bold;
+          margin: 0;
+        }
+        
+        /* Content styles */
         .content {
-          padding: 20px 0;
+          padding: 30px;
         }
-        .details {
-          background-color: #f8f9fa;
-          padding: 15px;
-          margin: 20px 0;
-          border-radius: 5px;
+        
+        h1 {
+          color: #1A365D;
+          font-size: 20px;
+          margin-top: 0;
+          margin-bottom: 16px;
         }
+        
+        p {
+          margin-bottom: 16px;
+          color: #4a4a4a;
+        }
+        
+        /* Button styles */
+        .button-container {
+          text-align: center;
+          margin: 30px 0;
+        }
+        
         .button {
           display: inline-block;
-          padding: 10px 20px;
-          background-color: #007bff;
-          color: white;
+          background-color: #E05D14;
+          color: #ffffff !important;
           text-decoration: none;
-          border-radius: 5px;
+          padding: 12px 24px;
+          border-radius: 4px;
+          font-weight: bold;
+          text-align: center;
+          transition: background-color 0.3s ease;
         }
+        
+        .button:hover {
+          background-color: #C24700;
+        }
+        
+        /* Highlight box */
+        .highlight-box {
+          background-color: #f1f6fc;
+          border-left: 4px solid #1A365D;
+          padding: 15px;
+          margin-bottom: 20px;
+        }
+        
+        /* Footer styles */
         .footer {
-          font-size: 0.9em;
-          color: #666;
-          margin-top: 20px;
+          background-color: #f5f5f5;
+          padding: 20px;
+          text-align: center;
+          color: #666666;
+          font-size: 14px;
+          border-top: 3px solid #E05D14;
+        }
+        
+        .social-links {
+          margin-top: 15px;
+        }
+        
+        .social-link {
+          display: inline-block;
+          margin: 0 8px;
+          color: #1A365D;
+          text-decoration: none;
+        }
+        
+        /* Responsive styles */
+        @media only screen and (max-width: 480px) {
+          .content {
+            padding: 20px;
+          }
+          
+          .button {
+            display: block;
+            text-align: center;
+          }
         }
       </style>
     </head>
     <body>
-      <div class="container">
-        <div class="header">
-          <h2>Your Class Is Today!</h2>
-        </div>
-        <div class="content">
-          <p>Dear ${studentName},</p>
-          <p>This is a friendly reminder that your <strong>${className}</strong> class is scheduled for tomorrow.</p>
-
-          <div class="details">
-            <h3>Class Details</h3>
-            <p><strong>Class:</strong> ${className}</p>
-            <p><strong>Date:</strong> Today</p>
-            <p><strong>Time:</strong> ${sessionTime}</p>
-            ${topic ? `<p><strong>Topic:</strong> ${topic}</p>` : ''}
-
-          </div>
-
-          <h3>Your Class Access Link</h3>
-          <p>Click the button below to access everything for this class:</p>
-          <ul>
-            <li>Join link for today's class</li>
-            <li>Class materials and resources</li>
-            <li>Recording (available after class)</li>
-          </ul>
-          <p style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" style="background-color: #E84437; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Access Class</a>
-          </p>
-          <p>If the button doesn't work, copy this link: <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}">${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}</a></p>
-          <p>You'll need to sign in with your Comma Education account if you haven't already.</p>
-
-          <h3>Need Help?</h3>
-          <p>If you have any issues accessing your class:</p>
-          <ul>
-            <li>WhatsApp us at +94716751777</li>
-            <li>Email us at <a href="mailto:support@commaeducation.com">support@commaeducation.com</a></li>
-          </ul>
-        </div>
-        <div class="footer">
-          <p>This email was sent to ${studentEmail} because you are registered for classes at Comma Education.</p>
-          <p><a href="https://www.app.commaeducation.lk">www.app.commaeducation.lk</a></p>
-        </div>
-      </div>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td align="center" style="background-color: #f8f8f8; padding: 20px 0;">
+            <table border="0" cellpadding="0" cellspacing="0" width="600" class="container">
+              <!-- Header -->
+              <tr>
+                <td align="center" class="header">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td align="center">
+                        <h1 class="logo">Comma Education</h1>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td class="content">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td>
+                        <h1>Starting Soon: Your ${className} Class!</h1>
+                        <p>Hi ${studentName},</p>
+                        <p>Just a quick heads-up – your ${className} class is starting within 1 hour!</p>
+                        
+                        <div class="highlight-box">
+                          <p style="margin-top: 0;">Click the following button to join: </p>
+                        </div>
+                        
+                        <div class="button-container">
+                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Join Your Class</a>
+                        </div>
+                        
+                        <p>We recommend joining a few minutes early to ensure everything is working smoothly.</p>
+                        <p>If you have any questions or need assistance, our support team is here to help.</p>
+                        <p>See you shortly in class!</p>
+                        <p>Best regards,<br>The Team at Comma Education</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td class="footer">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td align="center">
+                        <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
+                        <p>Your trusted partner in online education.</p>
+                        <div class="social-links">
+                          <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
+                          <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                          <a href="#" class="social-link">Unsubscribe</a>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
     </body>
   </html>
-`;
+  `;
+
   const text = `
-        Your Class Is Tomorrow!
+        Hi ${studentName},
 
-        Dear ${studentName},
+        Just a quick heads-up – your [Class Name] class is starting within 1 hour!
 
-        This is a friendly reminder that your ${className} class is scheduled for tomorrow.
+        Click here to join: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
 
-        Class Details
-        ------------
-        Class: ${className}
-        Date: ${date}
-        Time: ${sessionTime}
-        ${topic ? `Topic: ${topic}` : ''}
+        See you shortly!
+        Best regards,
+        The Comma Education Team
 
-        Your Class Access Link
-        ---------------------
-        Click here to access everything for this class:
-        - Join link for tomorrow's class
-        - Class materials and resources
-        - Recording (available after class)
-
-        Access Link: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
-
-        You'll need to sign in with your Comma Education account if you haven't already.
-
-        Need Help?
-        ---------
-        If you have any issues accessing your class:
-        - WhatsApp us at +94716751777
-        - Email us at support@commaeducation.com
-
-        ---
-        This email was sent to ${studentEmail} because you are registered for classes at Comma Education.
-        www.app.commaeducation.lk
 `;
   return { html, text };
 }

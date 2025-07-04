@@ -47,8 +47,22 @@ export function generateMonthOptions(): MonthOption[] {
 
 export function formatPeriod(period: string): string {
   const [year, month] = period.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+  const monthName = monthNames[parseInt(month) - 1];
+  return `${monthName} ${year}`;
 }
 
 export function getCurrentMonthPeriod(): string {
