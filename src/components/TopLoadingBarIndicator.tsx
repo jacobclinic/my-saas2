@@ -28,8 +28,7 @@ function TopLoadingBarIndicator() {
       height={4}
       waitingTime={0}
       shadow
-      className={'bg-primary'}
-      color={''}
+      color={`#1A3796`}
       ref={ref}
     />
   );
