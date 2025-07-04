@@ -13,6 +13,7 @@ import { updateAttendanceMarked, updateSession } from './database/mutations';
 import { updateZoomSessionAction } from './server-actions-v2-legacy';
 import { fetchMeetingParticipants } from '../zoom/zoom-other.service';
 import { isAdminOrCLassTutor } from '../user/database/queries';
+import { SessionUpdateOption } from '../enums';
 
 const supabase = getSupabaseServerActionClient();
 
@@ -26,6 +27,7 @@ type UpdateSessionParams = {
     endTime: string;
     meetingUrl: string | null;
   }>;
+  updateOption: SessionUpdateOption;
   csrfToken: string;
 };
 

@@ -23,6 +23,8 @@ import {
   getUserTimezone,
 } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../TimezoneIndicator';
+import SessionEditConfirmationDialog from './SessionEditConfirmationDialog';
+import { SessionUpdateOption } from '~/lib/enums';
 
 interface Material {
   id: string;
@@ -58,6 +60,7 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
 
   const [editedSession, setEditedSession] = useState<EditSessionData>({
     title: '',
@@ -169,6 +172,10 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 
   const handleSubmit = () => {
     // console.log('--------------sessionId--------', sessionId);
+    console.log("Handling submit everthing", sessionId);
+    setShowConfirmationDialog(true);
+    onClose();
+
     if (sessionId) {
       startTransition(async () => {
         // Combine date and times before sending to the server
@@ -185,11 +192,10 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
           endTime: combinedEndTime,
         };
 
-        // console.log('--------------updatedSession--------', updatedSession);
-
         const result = await updateSessionAction({
           sessionId,
           sessionData: updatedSession,
+          updateOption: SessionUpdateOption.ALL_OCCURRENCES,
           csrfToken,
         });
 
@@ -216,105 +222,89 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 
   const isValid = sessionDate && sessionStartTime && sessionEndTime;
 
-  // // Original convertToIST function - keeping for reference but not using
-  // const convertToIST = (utcTimeString: string) => {
-  //   // Parse the UTC time
-  //   const utcDate = new Date(utcTimeString);
 
-  //   // Add 5 hours and 30 minutes
-  //   const istTime = new Date(utcDate.getTime() + 5.5 * 60 * 60 * 1000);
-
-  //   // Format the date to desired string
-  //   const year = istTime.getUTCFullYear();
-  //   const month = String(istTime.getUTCMonth() + 1).padStart(2, '0');
-  //   const day = String(istTime.getUTCDate()).padStart(2, '0');
-  //   const hours = String(istTime.getUTCHours()).padStart(2, '0');
-  //   const minutes = String(istTime.getUTCMinutes()).padStart(2, '0');
-  //   const seconds = String(istTime.getUTCSeconds()).padStart(2, '0');
-
-  //   const istFormatedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}+5:30`;
-  //   // Get local ISO string
-  //   const localISOString = new Date(istFormatedTime).toLocaleDateString();
-
-  //   // Return the formatted string for datetime-local input
-  //   return localISOString.slice(0, 16);
-  // };
+  const handleRecurringSessionEdit = (updateOption: 'all' | 'next') => {
+    console.log("Handling recurring session edit", updateOption);
+  }
 
   return (
-    <BaseDialog
-      open={open}
-      onClose={onClose}
-      title="Edit Session"
-      description="Update your session details"
-      maxWidth="xl"
-      onConfirm={handleSubmit}
-      confirmButtonText="Save Changes"
-      loading={loading}
-      confirmButtonVariant={isValid ? 'default' : 'secondary'}
-      confirmButtonDisabled={!hasChanged || !isValid}
-    >
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm font-medium">Session Title</label>
+    <>
+      <SessionEditConfirmationDialog open={showConfirmationDialog} onConfirm={handleRecurringSessionEdit  } onClose={() => setShowConfirmationDialog(false)} />
+      <BaseDialog
+        open={open}
+        onClose={onClose}
+        title="Edit Session"
+        description="Update your session details"
+        maxWidth="xl"
+        onConfirm={handleSubmit}
+        confirmButtonText="Save Changes"
+        loading={loading}
+        confirmButtonVariant={isValid ? 'default' : 'secondary'}
+        confirmButtonDisabled={!hasChanged || !isValid}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">Session Title</label>
+            <Input
+              placeholder="Enter session title"
+              value={editedSession.title}
+              onChange={(e) =>
+                setEditedSession({ ...editedSession, title: e.target.value })
+              }
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Description</label>
+            <Textarea
+              placeholder="Describe what will be covered in this session..."
+              value={editedSession.description}
+              onChange={(e) =>
+                setEditedSession({
+                  ...editedSession,
+                  description: e.target.value,
+                })
+              }
+              className="h-24"
+            />
+          </div>{' '}
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-medium">Session Date</label>
+            <TimezoneIndicator showIcon={false} className="text-xs" />
+          </div>
           <Input
-            placeholder="Enter session title"
-            value={editedSession.title}
-            onChange={(e) =>
-              setEditedSession({ ...editedSession, title: e.target.value })
-            }
+            type="date"
+            value={sessionDate}
+            onChange={(e) => setSessionDate(e.target.value)}
           />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Description</label>
-          <Textarea
-            placeholder="Describe what will be covered in this session..."
-            value={editedSession.description}
-            onChange={(e) =>
-              setEditedSession({
-                ...editedSession,
-                description: e.target.value,
-              })
-            }
-            className="h-24"
-          />
-        </div>{' '}
-        <div className="flex justify-between items-center">
-          <label className="text-sm font-medium">Session Date</label>
-          <TimezoneIndicator showIcon={false} className="text-xs" />
-        </div>
-        <Input
-          type="date"
-          value={sessionDate}
-          onChange={(e) => setSessionDate(e.target.value)}
-        />
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium">Start Time</label>
-            <Input
-              type="time"
-              value={sessionStartTime}
-              onChange={(e) => setSessionStartTime(e.target.value)}
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium">Start Time</label>
+              <Input
+                type="time"
+                value={sessionStartTime}
+                onChange={(e) => setSessionStartTime(e.target.value)}
+              />
+            </div>
 
-          <div>
-            <label className="text-sm font-medium">End Time</label>
-            <Input
-              type="time"
-              value={sessionEndTime}
-              onChange={(e) => setSessionEndTime(e.target.value)}
-            />
+            <div>
+              <label className="text-sm font-medium">End Time</label>
+              <Input
+                type="time"
+                value={sessionEndTime}
+                onChange={(e) => setSessionEndTime(e.target.value)}
+              />
+            </div>
           </div>
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-700">
+              Changes to the session details will affect all enrolled students.
+              Make sure to notify them of any changes.
+            </AlertDescription>
+          </Alert>
         </div>
-        <Alert className="bg-yellow-50 border-yellow-200">
-          <AlertTriangle className="h-4 w-4 text-yellow-600" />
-          <AlertDescription className="text-yellow-700">
-            Changes to the session details will affect all enrolled students.
-            Make sure to notify them of any changes.
-          </AlertDescription>
-        </Alert>
-      </div>
-    </BaseDialog>
+      </BaseDialog>
+    </>
   );
 };
 

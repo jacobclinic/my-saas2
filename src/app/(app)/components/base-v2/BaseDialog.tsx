@@ -47,7 +47,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   onDeleteClass,
   deleteClassText = 'Delete Class',
   deleteClassBtnDisabled,
-  confirmButtonDisabled
+  confirmButtonDisabled,
 }) => {
   const maxWidthClasses = {
     sm: 'max-w-sm',
