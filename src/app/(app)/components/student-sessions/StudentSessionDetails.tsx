@@ -316,9 +316,6 @@ const StudentSessionDetails = ({
                               <p className="text-sm font-medium text-gray-900">
                                 {material.name}
                               </p>
-                              <p className="text-xs text-gray-500">
-                                {'material.type'} · {material.file_size}
-                              </p>
                             </div>
                           </div>
                           <Button
