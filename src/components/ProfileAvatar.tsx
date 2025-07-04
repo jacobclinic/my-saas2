@@ -18,7 +18,14 @@ const ProfileAvatar: React.FCC<ProfileAvatarProps> = (props) => {
 
     return (
       <Avatar className={avatarClassName}>
-        <AvatarImage src={photoUrl ?? ''} />
+        <AvatarImage
+          src={photoUrl ?? ''}
+          alt="Profile avatar"
+          onError={(e) => {
+            // If image fails to load, hide it to show fallback
+            e.currentTarget.style.display = 'none';
+          }}
+        />
         <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>
     );

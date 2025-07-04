@@ -572,3 +572,88 @@ export async function getAllUpcomingSessionsWithin1_2Hrs(
     throw error;
   }
 }
+export async function getTutorsForSessionsWithin1Hr(
+  client: SupabaseClient<Database>,
+): Promise<TutorNotificationClass[] | []> {
+  try {
+    // Calculate the timestamp for 1 hour from now in UTC
+    const now = new Date();
+    const currentTime = new Date(now.getTime());
+    const next1Hours = new Date(now.getTime() + 1 * 60 * 60 * 1000);
+
+    // console.log(
+    //   `Looking for tutor sessions within 1 hour between ${currentTime.toISOString()} and ${next1Hours.toISOString()}`,
+    // );
+
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          start_time,
+          class_id,
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            tutor_id,
+            tutor:${USERS_TABLE}!tutor_id (
+              id,
+              first_name,
+              last_name,
+              phone_number
+            )
+          )
+        `,
+        { count: 'exact' },
+      )
+      .gte('start_time', currentTime.toISOString())
+      .lte('start_time', next1Hours.toISOString())
+      .order('start_time', { ascending: true });
+
+    if (error) {
+      throw new Error(
+        `Error fetching tutor sessions within 1 hour: ${error.message}`,
+      );
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    const transformedData: TutorNotificationClass[] = data
+      .map((sessionData) => {
+        if (!sessionData?.class) {
+          return null;
+        }
+
+        const classData = Array.isArray(sessionData.class)
+          ? sessionData.class[0]
+          : sessionData.class;
+
+        if (!classData?.tutor) {
+          return null;
+        }
+
+        const tutorData = Array.isArray(classData.tutor)
+          ? classData.tutor[0]
+          : classData.tutor;
+
+        return {
+          session_id: sessionData.id,
+          class_id: classData.id,
+          class_name: classData.name,
+          next_session_time: sessionData.start_time,
+          tutor_name: tutorData?.first_name
+            ? `${tutorData.first_name}${tutorData.last_name ? ` ${tutorData.last_name}` : ''}`
+            : null,
+          tutor_phone_number: tutorData?.phone_number || null,
+        } as TutorNotificationClass;
+      })
+      .filter((item): item is TutorNotificationClass => item !== null);
+
+    return transformedData;
+  } catch (error) {
+    console.error('Failed to fetch tutor sessions within 1 hour:', error);
+    throw error;
+  }
+}

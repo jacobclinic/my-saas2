@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {
-  UpcomingSessionTableData,
-} from '~/lib/sessions/types/upcoming-sessions';
+import { UpcomingSessionTableData } from '~/lib/sessions/types/upcoming-sessions';
 import UpcommingSessionClassCard from '../../upcoming-sessions/UpcommingSessionCard';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { formatToLocalTime } from '~/lib/utils/timezone-utils';
 
 const UpcomingClassesSection = ({
   upcomingSessionDataPerWeek,
@@ -19,26 +18,23 @@ const UpcomingClassesSection = ({
   useEffect(() => {
     if (upcomingSessionDataPerWeek && upcomingSessionDataPerWeek.length > 0) {
       const formattedData = upcomingSessionDataPerWeek.map((session) => {
-        const formattedDate = new Date(
+        // Use consistent timezone-aware formatting to prevent hydration mismatches
+        const formattedDate = formatToLocalTime(
           session?.start_time || '',
-        ).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
+          'EEEE, MMMM d, yyyy', // "Monday, January 3, 2025"
+        );
 
-        const formattedTime = `${new Date(
+        const startTime = formatToLocalTime(
           session?.start_time || '',
-        ).toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: 'numeric',
-          hour12: true,
-        })} - ${new Date(session?.end_time || '').toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: 'numeric',
-          hour12: true,
-        })}`;
+          'h:mm a', // "2:30 PM"
+        );
+
+        const endTime = formatToLocalTime(
+          session?.end_time || '',
+          'h:mm a', // "3:30 PM"
+        );
+
+        const formattedTime = `${startTime} - ${endTime}`;
 
         return {
           id: session.id,

@@ -397,7 +397,8 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
           materials: sessionData.materials || [],
         }}
         loading={editSessionLoading}
-      />      <AddLessonDetailsDialog
+      />      
+      <AddLessonDetailsDialog
         open={showLessonDetailsDialog}
         onClose={() => {
           // Reset to the last saved state, not the original session data

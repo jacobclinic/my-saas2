@@ -16,9 +16,11 @@ import EmailOtpContainer from '~/app/auth/components/EmailOtpContainer';
 function SignUpMethodsContainer() {
   const router = useRouter();
 
+  // Remove the immediate redirect - let individual components handle their own flow
   const onSignUp = useCallback(() => {
-    router.replace(configuration.paths.appHome);
-  }, [router]);
+    // This will be handled by individual auth components
+    // EmailPasswordSignUpContainer already handles redirect to moredetails
+  }, []);
 
   return (
     <>

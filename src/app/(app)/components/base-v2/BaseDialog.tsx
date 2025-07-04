@@ -15,7 +15,7 @@ export interface BaseDialogProps {
   closeButtonText?: string;
   onConfirm?: () => void;
   confirmButtonText?: string | React.ReactNode;
-  confirmButtonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  confirmButtonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'primary';
   contentClassName?: string;
   description?: React.ReactNode;
   loading?: boolean;

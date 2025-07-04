@@ -18,6 +18,7 @@ import {
   UploadedMaterial,
 } from '~/lib/sessions/types/upcoming-sessions';
 import UpcommingSessionClassCard from '../upcoming-sessions/UpcommingSessionCard';
+import { formatToLocalTime } from '~/lib/utils/timezone-utils';
 import ClassCard from '../classes/ClassCard';
 import {
   ClassListData,
@@ -44,16 +45,23 @@ const TutorDashboard = ({
   useEffect(() => {
     if (nextSessionData && nextSessionData.length > 0) {
       const session = nextSessionData[0];
-      const formattedDate = new Date(
+      // Use consistent timezone-aware formatting to prevent hydration mismatches
+      const formattedDate = formatToLocalTime(
         session?.start_time || '',
-      ).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-      const formattedTime = `${new Date(session?.start_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })} - 
-        ${new Date(session?.end_time || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
+        'EEEE, MMMM d, yyyy', // "Monday, January 3, 2025"
+      );
+
+      const startTime = formatToLocalTime(
+        session?.start_time || '',
+        'h:mm a', // "2:30 PM"
+      );
+
+      const endTime = formatToLocalTime(
+        session?.end_time || '',
+        'h:mm a', // "3:30 PM"
+      );
+
+      const formattedTime = `${startTime} - ${endTime}`;
       const formattedData: UpcomingSessionTableData = {
         id: session.id,
         name: `${session?.class?.name}`,
@@ -118,8 +126,6 @@ const TutorDashboard = ({
       setActiveClassTableData(formattedData);
     }
   }, [activeClassesData]);
-
-  // console.log('nextSessionData and activeClassesData:', nextSessionData, activeClassesData);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8">

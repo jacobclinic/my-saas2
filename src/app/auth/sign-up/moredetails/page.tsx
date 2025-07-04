@@ -11,7 +11,11 @@ export const metadata: Metadata = {
   description: 'Provide additional information to complete your profile.',
 };
 
-async function MoreDetailsPage() {
+async function MoreDetailsPage({
+  searchParams,
+}: {
+  searchParams: { returnUrl?: string };
+}) {
   // Get the current user
   const client = getSupabaseServerComponentClient();
   const {
@@ -25,24 +29,22 @@ async function MoreDetailsPage() {
 
   const userData = await getUserByIdAction(session.user.id);
 
-  // Only redirect if we have valid non-empty values for all required fields
+  // Only redirect if we have valid non-empty values for phone and address (names are now filled during signup)
   const hasRequiredDetails =
-    userData?.first_name &&
-    userData?.last_name &&
     userData?.phone_number &&
-    userData?.first_name.trim() !== '' &&
-    userData?.last_name.trim() !== '' &&
-    userData?.phone_number.trim() !== '';
+    userData?.address &&
+    userData?.phone_number.trim() !== '' &&
+    userData?.address.trim() !== '';
 
   if (hasRequiredDetails) {
     console.log('User already has required details, redirecting to dashboard');
-    redirect('/dashboard');
+    redirect(searchParams.returnUrl || '/dashboard');
   }
 
   return (
     <div className="flex w-full max-w-lg flex-col items-center space-y-4 rounded-xl border-transparent bg-white px-2 py-6 dark:bg-background dark:shadow-[0_0_1200px_0] dark:shadow-primary/30 md:w-8/12 md:border md:px-8 md:py-8 md:shadow-xl dark:md:border-dark-800 lg:px-6">
-        <LogoImage className='mb-4'/>
-        <MoreDetailsForm user={session.user} />
+      <LogoImage className="mb-4" />
+      <MoreDetailsForm user={session.user} returnUrl={searchParams.returnUrl} />
     </div>
   );
 }

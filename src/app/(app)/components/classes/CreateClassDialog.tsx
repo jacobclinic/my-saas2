@@ -181,7 +181,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       onConfirm={handleSubmit}
       confirmButtonText="Create Class"
       loading={isPending}
-      confirmButtonVariant={isValid ? 'default' : 'secondary'}
+      confirmButtonVariant={isValid ? 'primary' : 'secondary'}
       confirmButtonDisabled={!allFilled}
     >
       <div className="space-y-4">
