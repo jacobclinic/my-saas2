@@ -136,16 +136,16 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
   return (
     <div className="flex flex-col items-center h-[100%] overflow-hidden">
       <div className="flex flex-col items-center w-full mx-auto overflow-y-auto md:overflow-y-hidden">
-        <div className="w-full flex-1 flex flex-col justify-center">
-          <form onSubmit={handleSubmit} className="space-y-2 px-1">
+        <div className="w-full flex-1 flex flex-col justify-center max-w-sm mx-auto">
+          <form onSubmit={handleSubmit} className="space-y-2 px-4 w-full">
             <div className="flex flex-col items-center justify-center pt-4">
-              <div className="w-full">
+              <div className="w-full min-w-[320px]">
                 <ImageUploader
                   value={photoUrl}
                   onValueChange={uploadProfilePhoto}
                 >
-                  <div className="flex flex-col items-center">
-                    <span className="text-sm font-medium text-primary">
+                  <div className="flex flex-col items-center w-full">
+                    <span className="text-sm font-medium text-primary text-center">
                       {photoUrl
                         ? 'Change Profile Picture'
                         : 'Upload Profile Picture'}

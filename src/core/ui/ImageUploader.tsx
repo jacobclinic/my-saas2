@@ -56,29 +56,33 @@ function ImageUploader(
 
   if (!image) {
     return (
-      <FallbackImage descriptionSection={props.children}>
-        <Input />
-      </FallbackImage>
+      <div className="w-full min-w-0">
+        <FallbackImage descriptionSection={props.children}>
+          <Input />
+        </FallbackImage>
+      </div>
     );
   }
 
   return (
-    <div className={'flex space-x-4 items-center'}>
-      <label className={'w-20 h-20 relative animate-in fade-in zoom-in-50'}>
-        <Image
-          fill
-          className={'w-20 h-20 rounded-full'}
-          src={image as string}
-          alt={''}
-        />
+    <div className="w-full min-w-0">
+      <div className={'flex space-x-4 items-center justify-center'}>
+        <label className={'w-20 h-20 relative animate-in fade-in zoom-in-50'}>
+          <Image
+            fill
+            className={'w-20 h-20 rounded-full object-cover'}
+            src={image as string}
+            alt={''}
+          />
 
-        <Input />
-      </label>
+          <Input />
+        </label>
 
-      <div>
-        <Button onClick={onClear} size={'small'} variant={'ghost'}>
-          Remove Image
-        </Button>
+        <div>
+          <Button onClick={onClear} size={'small'} variant={'ghost'}>
+            Remove Image
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -92,18 +96,20 @@ function FallbackImage(
   }>,
 ) {
   return (
-    <div className={'flex space-x-4 items-center'}>
+    <div className={'flex space-x-4 items-center justify-center w-full'}>
       <label
         className={
           'w-20 h-20 relative flex flex-col justify-center rounded-full border border-border cursor-pointer hover:border-primary animate-in fade-in zoom-in-50'
         }
       >
-        <PhotoIcon className={'h-8 text-primary'} />
+        <PhotoIcon className={'h-8 text-primary mx-auto'} />
 
         {props.children}
       </label>
 
-      {props.descriptionSection}
+      <div className="flex flex-col items-start">
+        {props.descriptionSection}
+      </div>
     </div>
   );
 }
