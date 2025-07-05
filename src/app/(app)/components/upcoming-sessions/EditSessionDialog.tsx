@@ -171,11 +171,19 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   };
 
   const handleSubmit = () => {
-    // console.log('--------------sessionId--------', sessionId);
-    console.log("Handling submit everthing", sessionId);
     setShowConfirmationDialog(true);
-    onClose();
+    // onClose();
+  };
 
+  const isValid = sessionDate && sessionStartTime && sessionEndTime;
+
+  const handleRecurringSessionEdit = (updateOption: SessionUpdateOption) => {
+    updateSession(updateOption);
+  }
+
+  const updateSession = async (updateOption: SessionUpdateOption) => {
+    console.log("Session start time and end time", sessionStartTime, sessionEndTime);
+    
     if (sessionId) {
       startTransition(async () => {
         // Combine date and times before sending to the server
@@ -192,10 +200,13 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
           endTime: combinedEndTime,
         };
 
+        console.log("Updating session with id ", sessionId, " with update option", updateOption);
+        console.log("Updating session with data --------->>> ", updatedSession);
+
         const result = await updateSessionAction({
           sessionId,
           sessionData: updatedSession,
-          updateOption: SessionUpdateOption.ALL_OCCURRENCES,
+          updateOption: updateOption,
           csrfToken,
         });
 
@@ -218,18 +229,11 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         }
       });
     }
-  };
-
-  const isValid = sessionDate && sessionStartTime && sessionEndTime;
-
-
-  const handleRecurringSessionEdit = (updateOption: 'all' | 'next') => {
-    console.log("Handling recurring session edit", updateOption);
   }
 
   return (
     <>
-      <SessionEditConfirmationDialog open={showConfirmationDialog} onConfirm={handleRecurringSessionEdit  } onClose={() => setShowConfirmationDialog(false)} />
+      <SessionEditConfirmationDialog open={showConfirmationDialog} onConfirm={handleRecurringSessionEdit} onClose={() => setShowConfirmationDialog(false)} />
       <BaseDialog
         open={open}
         onClose={onClose}

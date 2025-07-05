@@ -43,6 +43,7 @@ import {
 } from '../base-v2/ui/tooltip';
 import { convertTimeRangeToISO } from '~/lib/utils/date-utils';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
+import { SessionUpdateOption } from '~/lib/enums';
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
@@ -92,8 +93,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
     }, 2000);
   };
 
-  console.log('lessonDetails:', sessionData.time);
-
   const joinMeetingAsTutor = useCallback(async () => {
     startTransition(async () => {
       const result = await joinMeetingAsHost({
@@ -106,6 +105,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       }
     });
   }, [sessionData]);
+  
   const saveLessonDetails = async () => {
     // Save lesson details logic here
     try {
@@ -114,6 +114,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionId: sessionData.id,
         sessionData: lessonDetails,
         csrfToken,
+        updateOption: SessionUpdateOption.ALL_OCCURRENCES,
       });
       
       if (result.success) {

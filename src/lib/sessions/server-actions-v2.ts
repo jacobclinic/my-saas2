@@ -9,11 +9,14 @@ import {
   uploadMaterialToStorage,
 } from '../utils/upload-material-utils';
 import { getSessionDataById } from './database/queries';
-import { updateAttendanceMarked, updateSession } from './database/mutations';
+import { updateAllOccurrences, updateAttendanceMarked, updateSession } from './database/mutations';
 import { updateZoomSessionAction } from './server-actions-v2-legacy';
 import { fetchMeetingParticipants } from '../zoom/zoom-other.service';
 import { isAdminOrCLassTutor } from '../user/database/queries';
 import { SessionUpdateOption } from '../enums';
+import { getUpcomingOccurrences } from '../utils/date-utils';
+import { getClassDataByClassId, getClassDataById } from '../classes/database/queries';
+import { TimeSlot } from '../classes/types/class-v2';
 
 const supabase = getSupabaseServerActionClient();
 
@@ -36,6 +39,8 @@ export const updateSessionAction = withSession(
     const { sessionId, sessionData } = params;
     const client = getSupabaseServerActionClient();
 
+    console.log("Updating session with update params", params);
+
     try {
       // Get existing session details
       const session = await getSessionDataById(client, sessionId);
@@ -47,10 +52,10 @@ export const updateSessionAction = withSession(
         (sessionData.startTime || sessionData.endTime) &&
         ((sessionData.startTime &&
           new Date(session.start_time || '').getTime() !==
-            new Date(sessionData.startTime).getTime()) ||
+          new Date(sessionData.startTime).getTime()) ||
           (sessionData.endTime &&
             new Date(session.end_time || '').getTime() !==
-              new Date(sessionData.endTime).getTime()));
+            new Date(sessionData.endTime).getTime()));
 
       // Build update object with only provided fields
       const updateData: Record<string, any> = {
@@ -67,7 +72,25 @@ export const updateSessionAction = withSession(
         updateData.end_time = sessionData.endTime;
 
       // Update session with the changed fields
-      const updatedSession = await updateSession(client, sessionId, updateData);
+      let updatedSession: any;
+
+      console.log("Updating session with update data --------->>> ", updateData);
+
+
+      if (params.updateOption === SessionUpdateOption.ALL_OCCURRENCES) {
+        // TODO: Delete all current occurrences of the session
+        // TODO: Create new occurrences of the session
+
+        const endDate = new Date(new Date().getFullYear(), 11, 31)
+          .toISOString()
+          .split('T')[0];
+
+          
+
+        updatedSession = await updateAllOccurrences(client, session.class_id!, updateData);
+      } else {
+        updatedSession = await updateSession(client, sessionId, updateData);
+      }
 
       if (!updatedSession)
         throw new Error('Failed to update session in database');
