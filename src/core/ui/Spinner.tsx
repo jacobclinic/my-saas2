@@ -3,6 +3,7 @@ import classNames from 'clsx';
 function Spinner(
   props: React.PropsWithChildren<{
     className?: string;
+    style?: React.CSSProperties;
   }>,
 ) {
   return (
@@ -13,6 +14,7 @@ function Spinner(
           `h-8 w-8 animate-spin fill-white dark:fill-primary text-primary dark:text-primary/30`,
           props.className,
         )}
+        style={props.style}
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

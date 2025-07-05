@@ -4,6 +4,7 @@ import classNames from 'clsx';
 import LogoImage from '~/core/ui/Logo/LogoImage';
 import If from '~/core/ui/If';
 import Spinner from '~/core/ui/Spinner';
+import Image from 'next/image';
 
 export default function LoadingOverlay({
   children,
@@ -27,12 +28,19 @@ export default function LoadingOverlay({
       )}
     >
       <If condition={displayLogo}>
-        <div className={'my-2'}>
-          <LogoImage />
+        <div className="flex w-full flex-col items-center pb-8">
+          {' '}
+          <Image
+            src="/assets/images/comaaas.png"
+            alt="Logo"
+            width={120}
+            height={120}
+            className="w-[120px] sm:w-[140px]"
+          />
         </div>
       </If>
 
-      <Spinner className={'h-12 w-12 text-primary'} />
+      <Spinner className={'h-12 w-12'} style={{ color: '#1A3796' }} />
 
       <div>{children}</div>
     </div>
