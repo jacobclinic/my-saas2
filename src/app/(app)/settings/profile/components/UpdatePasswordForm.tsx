@@ -111,7 +111,7 @@ const UpdatePasswordForm: React.FCC<{ user: User }> = ({ user }) => {
     if (updateUserMutation.data) {
       reset();
     }
-  }, [reset, updateUserMutation]);
+  }, [reset, updateUserMutation.data]);
 
   const { isMutating, data } = updateUserMutation;
 
