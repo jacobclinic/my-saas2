@@ -65,7 +65,7 @@ export async function generateMonthlyInvoicesStudents(
         invoicesToInsert.push({
           student_id,
           class_id,
-          invoice_no: `INV-${year}-${month.toString().padStart(2, '0')}-${student_id}-${class_id}`,
+          invoice_no: `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${student_id.substring(0, 4)}${class_id.substring(0, 4)}`,
           invoice_period: invoicePeriod,
           amount: classData.fee ?? 0,
           invoice_date: invoiceDate,
@@ -144,8 +144,8 @@ export async function createInvoiceForNewStudent(
       return existingInvoice.id;
     }
 
-    // Create invoice number in the format: INV-YYYY-MM-studentId-classId
-    const invoiceNo = `INV-${year}-${month.toString().padStart(2, '0')}-${studentId.substring(0, 6)}-${classId.substring(0, 6)}`;
+    // Create invoice number with exactly 12 characters: YY + MM + 4 chars from studentId + 4 chars from classId
+    const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${studentId.substring(0, 4)}${classId.substring(0, 4)}`;
 
     // Create the invoice
     const { data: invoice, error: insertError } = await client
@@ -268,8 +268,8 @@ export async function generateMonthlyInvoicesTutor(
         const classFee = classData.fee || 0;
         const tutorPayment = numberOfPaidInvoices * classFee;
 
-        // Create invoice number in the format: TUTOR-INV-YYYY-MM-tutorId-classId
-        const invoiceNo = `TUTOR-INV-${year}-${month.toString().padStart(2, '0')}-${tutorId.substring(0, 6)}-${classData.id.substring(0, 6)}`;
+        // Create invoice number with exactly 12 characters: YY + MM + 4 chars from tutorId + 4 chars from classId
+        const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${tutorId.substring(0, 4)}${classData.id.substring(0, 4)}`;
 
         // Always create tutor invoice for active classes, even if amount is 0
         tutorInvoicesToInsert.push({
@@ -351,8 +351,8 @@ export async function createInvoiceForNewClass(
       return existingInvoice.id;
     }
 
-    // Create invoice number in the format: CLASS-INV-YYYY-MM-classId
-    const invoiceNo = `CLASS-INV-${year}-${month.toString().padStart(2, '0')}-${classId.substring(0, 8)}`;
+    // Create invoice number with exactly 12 characters: YY + MM + 8 chars from classId
+    const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${classId.substring(0, 8)}`;
 
     // Create the invoice with amount 0 initially (no students enrolled yet)
     const { data: invoice, error: insertError } = await client
@@ -375,9 +375,7 @@ export async function createInvoiceForNewClass(
       return null;
     }
 
-    console.log(
-      `Class invoice created successfully for class ${classId}`,
-    );
+    console.log(`Class invoice created successfully for class ${classId}`);
     return invoice.id;
   } catch (error) {
     console.error('Failed to create class invoice:', error);
