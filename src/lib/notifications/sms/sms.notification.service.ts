@@ -9,7 +9,6 @@ import {
   getTutorsForSessionsWithin1Hr,
 } from '../quieries';
 import { stat } from 'fs';
-import getLogger from '~/core/logger';
 
 // Define interfaces for type safety
 interface SMSRequest {
@@ -37,8 +36,6 @@ interface APIConfig {
 // smsService.ts
 // SMS sending functions
 
-const logger = getLogger();
-
 const smsConfig: APIConfig = {
   id: process.env.TEXTIT_ID!,
   password: process.env.TEXTIT_PASSWORD!,
@@ -48,12 +45,6 @@ async function sendBulkSMS(request: SMSRequest): Promise<APIResponse> {
   try {
     const numbers = request.phoneNumbers.join(',');
     const encodedMessage = encodeURIComponent(request.message);
-
-    logger.info('📱 Attempting to send bulk SMS', {
-      phoneNumbers: request.phoneNumbers,
-      messagePreview: request.message.substring(0, 100) + '...',
-      numberCount: request.phoneNumbers.length
-    });
 
     const baseUrl = smsConfig.baseUrl || 'https://www.textit.biz';
     const url = new URL(`${baseUrl}/sendmsg/`);
@@ -74,20 +65,11 @@ async function sendBulkSMS(request: SMSRequest): Promise<APIResponse> {
     const textResponse = await response.text();
 
     if (textResponse.startsWith('OK:')) {
-      logger.info('✅ Bulk SMS sent successfully', {
-        phoneNumbers: request.phoneNumbers,
-        messageId: textResponse.split(':')[1],
-        response: textResponse
-      });
       return {
         success: true,
         messageId: textResponse.split(':')[1],
       };
     } else {
-      logger.error('❌ Bulk SMS failed', {
-        phoneNumbers: request.phoneNumbers,
-        error: textResponse
-      });
       return {
         success: false,
         error: textResponse,
@@ -114,26 +96,9 @@ export async function remindPayments2DaysPriorSMS(
       await getUpcomingSessionsWithUnpaidStudentsBetween2_3Days(client);
 
     if (sessions.length === 0) {
-      logger.info('📱 No sessions with unpaid students found for SMS reminders');
-      console.log('📱 No sessions with unpaid students found for SMS reminders');
+      console.log('No sessions with unpaid students found for reminders');
       return;
     }
-
-    logger.info(`📱 Starting payment reminder SMS batch`, {
-      totalSessions: sessions.length,
-      sessionsData: sessions.map(s => ({
-        sessionId: s.session_id,
-        className: s.class.name,
-        unpaidStudentCount: s.class.unpaid_students?.length || 0
-      }))
-    });
-    console.log(`📱 Starting payment reminder SMS for ${sessions.length} sessions`);
-    
-    let totalSMSAttempts = 0;
-    let successfulSMSCount = 0;
-    let failedSMSCount = 0;
-    const successfulNumbers: string[] = [];
-    const failedNumbers: string[] = [];
 
     for (const session of sessions) {
       const phoneNumbers = session.class.unpaid_students
@@ -141,23 +106,11 @@ export async function remindPayments2DaysPriorSMS(
         .filter((phone): phone is string => phone !== null);
 
       if (phoneNumbers.length === 0) {
-        logger.info(`📱 No unpaid students with phone numbers for session`, {
-          sessionId: session.session_id,
-          className: session.class.name
-        });
         console.log(
-          `📱 No unpaid students with phone numbers found for session ${session.session_id}`,
+          `No unpaid students found for session ${session.session_id}`,
         );
         continue;
       }
-
-      logger.info(`📱 Processing payment reminder SMS`, {
-        sessionId: session.session_id,
-        className: session.class.name,
-        phoneNumbers,
-        recipientCount: phoneNumbers.length
-      });
-      console.log(`📱 Processing payment reminder SMS for session ${session.session_id}, class: ${session.class.name}, recipients: ${phoneNumbers.length}`);
 
       const message = `Friendly reminder: Payment for ${session.class.name} is due on (2 days). Submit receipt here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id} 
       \n- Comma Education`;
@@ -167,58 +120,21 @@ export async function remindPayments2DaysPriorSMS(
         message,
       };
 
-      totalSMSAttempts++;
-      
+      console.log('sms request payment', smsRequest);
       const result = await sendBulkSMS(smsRequest);
 
       if (result.success) {
-        successfulSMSCount++;
-        successfulNumbers.push(...phoneNumbers);
-        logger.info(`✅ Payment reminder SMS sent successfully`, {
-          sessionId: session.session_id,
-          className: session.class.name,
-          phoneNumbers,
-          messageId: result.messageId
-        });
         console.log(
-          `✅ Payment reminder SMS sent to ${phoneNumbers.length} students for session ${session.session_id}. Message ID: ${result.messageId}`,
+          `Payment reminders sent to ${phoneNumbers.length} students for session ${session.session_id}. Message ID: ${result.messageId}`,
         );
       } else {
-        failedSMSCount++;
-        failedNumbers.push(...phoneNumbers);
-        logger.error(`❌ Payment reminder SMS failed`, {
-          sessionId: session.session_id,
-          className: session.class.name,
-          phoneNumbers,
-          error: result.error
-        });
         console.error(
-          `❌ Failed to send payment reminder SMS for session ${session.session_id}: ${result.error}`,
+          `Failed to send payment reminders for session ${session.session_id}: ${result.error}`,
         );
       }
     }
-
-    // Final summary
-    logger.info(`📱 Payment reminder SMS batch completed`, {
-      totalSessions: sessions.length,
-      totalSMSAttempts,
-      successfulSMSCount,
-      failedSMSCount,
-      successfulNumbers,
-      failedNumbers
-    });
-    console.log(`📱 Payment Reminder SMS Summary:`);
-    console.log(`✅ Successfully sent: ${successfulSMSCount} SMS batches to ${successfulNumbers.length} numbers`);
-    console.log(`❌ Failed to send: ${failedSMSCount} SMS batches to ${failedNumbers.length} numbers`);
-    console.log(`✅ Successful phone numbers:`, successfulNumbers);
-    if (failedNumbers.length > 0) {
-      console.log(`❌ Failed phone numbers:`, failedNumbers);
-    }
   } catch (error) {
-    logger.error('❌ Error in remindPayments2DaysPriorSMS', {
-      error: error instanceof Error ? error.message : String(error)
-    });
-    console.error('❌ Error in remindPayments2DaysPriorSMS:', error);
+    console.error('Error in remindPayments3DaysPrior:', error);
   }
 }
 
@@ -502,11 +418,6 @@ export async function sendSingleSMS(
   try {
     const encodedMessage = encodeURIComponent(request.message);
 
-    logger.info('📱 Attempting to send single SMS', {
-      phoneNumber: request.phoneNumber,
-      messagePreview: request.message.substring(0, 100) + '...'
-    });
-
     const baseUrl = smsConfig.baseUrl || 'https://www.textit.biz';
     const url = new URL(`${baseUrl}/sendmsg/`);
     const params = new URLSearchParams({
@@ -526,31 +437,18 @@ export async function sendSingleSMS(
     const textResponse = await response.text();
 
     if (textResponse.startsWith('OK:')) {
-      logger.info('✅ Single SMS sent successfully', {
-        phoneNumber: request.phoneNumber,
-        messageId: textResponse.split(':')[1],
-        response: textResponse
-      });
       return {
         success: true,
         messageId: textResponse.split(':')[1],
       };
     } else {
-      logger.error('❌ Single SMS failed', {
-        phoneNumber: request.phoneNumber,
-        error: textResponse
-      });
       return {
         success: false,
         error: textResponse,
       };
     }
   } catch (error) {
-    logger.error('❌ Error sending single SMS', {
-      phoneNumber: request.phoneNumber,
-      error: error instanceof Error ? error.message : String(error)
-    });
-    console.error('Error sending single SMS:', error);
+    console.error('Error sending bulk SMS:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
