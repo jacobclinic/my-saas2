@@ -15,8 +15,8 @@ export async function getAllUpcomingSessionsWithin24_25Hrs(
     // Calculate the timestamp for 24-25 hours from now in UTC
     const now = new Date();
     // Add 24 hours for notifications
-    const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const next25Hours = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+    const next24Hours = new Date(now.getTime() + 1 * 60 * 60 * 1000);
+    const next25Hours = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
     // Log the window for debugging
     console.log(
