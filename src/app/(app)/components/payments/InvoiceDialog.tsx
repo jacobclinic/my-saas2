@@ -79,8 +79,8 @@ export function InvoiceView({ open, onOpenChange, invoice }: InvoiceViewProps) {
           <div className="flex justify-between items-start">
             <div>
               <h3 className="font-semibold text-lg">Comma Education</h3>
-              <p className="text-sm text-neutral-600">123 Education Street</p>
-              <p className="text-sm text-neutral-600">Colombo, Sri Lanka</p>
+              <p className="text-sm text-neutral-600">76/A Sri Hemananda Street, Bataganwila</p>
+              <p className="text-sm text-neutral-600">Galle, Sri Lanka</p>
             </div>
             <div className="text-right">
               <p className="text-sm font-medium">Invoice #{invoice.id}</p>

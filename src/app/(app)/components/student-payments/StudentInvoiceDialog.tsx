@@ -102,8 +102,8 @@ const StudentInvoiceDialog: React.FC<StudentInvoiceDialogProps> = ({
               <Receipt className="h-6 w-6 text-blue-600" />
               <h3 className="text-xl font-semibold">Comma Education</h3>
             </div>
-            <p className="text-sm text-gray-600">123 Education Street</p>
-            <p className="text-sm text-gray-600">Colombo, Sri Lanka</p>
+            <p className="text-sm text-gray-600">76/A Sri Hemananda Street, Bataganwila</p>
+            <p className="text-sm text-gray-600">Galle, Sri Lanka</p>
           </div>
           <div className="text-right">
             <p className="text-lg font-medium">

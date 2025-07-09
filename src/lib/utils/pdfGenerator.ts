@@ -164,9 +164,9 @@ export const generateInvoicePDF = (invoiceData: {
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.text('123 Education Street', 20, yPos);
+  doc.text('76/A Sri Hemananda Street, Bataganwila', 20, yPos);
   yPos += 4;
-  doc.text('Colombo, Sri Lanka', 20, yPos);
+  doc.text('Galle, Sri Lanka', 20, yPos);
   yPos += 4;
   doc.text('Phone: +94716751777', 20, yPos);
   yPos += 4;
