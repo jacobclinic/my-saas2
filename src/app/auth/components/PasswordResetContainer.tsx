@@ -30,15 +30,16 @@ function PasswordResetContainer() {
         redirectTo,
       });
     },
-    [resetPasswordMutation]
+    [resetPasswordMutation],
   );
 
   return (
     <>
       <If condition={success}>
         <Alert type={'success'}>
-          Check your Inbox! If this email is registered, a reset link has been sent to your email
-          address. If you do not see it, this account may have not been registered.
+          Check your Inbox! If this email is registered, a reset link has been
+          sent to your email address. If you do not see it, this account may
+          have not been registered.
         </Alert>
       </If>
 
@@ -71,6 +72,9 @@ function PasswordResetContainer() {
               <AuthErrorMessage error={error} />
 
               <Button
+                className={
+                  'text-sm sm:text-base py-2 sm:py-2.5 bg-primary-800 text-white hover:bg-primary-700 focus:ring-primary-600/50 bg-gradient-to-br from-primary-700 to-primary-800 w-full'
+                }
                 loading={resetPasswordMutation.isMutating}
                 type="submit"
                 block
