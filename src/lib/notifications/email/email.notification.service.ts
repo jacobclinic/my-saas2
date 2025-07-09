@@ -29,19 +29,10 @@ async function sendNotifySessionEmails(
   beforeOrAfter: 'before' | 'after' | 'before1Hour',
 ) {
   try {
-    // Log initial statistics
-    logger.info(`Starting ${beforeOrAfter} email notifications for ${data.length} sessions`);
-    console.log(`📧 Starting ${beforeOrAfter} email notifications for ${data.length} sessions`);
-    
     // Flatten all students across all sessions into a single array
     const emailTasks = data.flatMap((session) => {
-      logger.info('Processing session for email notifications', {
-        sessionId: session.id,
-        className: session.class?.name,
-        startTime: session.start_time,
-        studentCount: session.class?.students?.length || 0
-      });
-      
+      logger.info('session', session);
+      console.log('session', session);
       return (
         session.class?.students.map((student) => ({
           to: student.student.email,
@@ -50,19 +41,9 @@ async function sendNotifySessionEmails(
           first_name: student.student.first_name,
           class_name: session.class?.name ?? 'Unnamed Class',
           start_time: new Date(session.start_time).toLocaleString(),
-          sessionId: session.id,
         })) || []
       );
     });
-
-    // Log email recipients summary
-    const emailList = emailTasks.map(task => task.to);
-    logger.info(`📧 Email notification summary for ${beforeOrAfter}:`, {
-      totalEmailsToSend: emailTasks.length,
-      uniqueRecipients: new Set(emailList).size,
-      recipients: emailList
-    });
-    console.log(`📧 Email Recipients List (${beforeOrAfter}):`, emailList);
 
     // Function to send a single email
     const sendSingleEmail = async (task: (typeof emailTasks)[number]) => {
@@ -95,7 +76,7 @@ async function sendNotifySessionEmails(
           topic: task.topic,
           classId: task.class_id,
           studentEmail: task.to,
-        }); 
+        });
         console.log('sending email to', task.to);
 
         await emailService.sendEmail({
@@ -148,32 +129,19 @@ async function sendNotifySessionEmails(
     };
 
     // Process emails with a throttle (2 per second = 500ms per request)
+
     const rateLimitDelay = 500; // 500ms = 2 requests per second
-    let successCount = 0;
-    let failureCount = 0;
-    const successfulEmails: string[] = [];
-    const failedEmails: string[] = [];
 
     for (let i = 0; i < emailTasks.length; i++) {
       try {
         await sendSingleEmail(emailTasks[i]);
-        successCount++;
-        successfulEmails.push(emailTasks[i].to);
-        logger.info('✅ Email notification sent successfully', {
+        logger.info('Sending notification email to', {
           email: emailTasks[i].to,
-          sessionId: emailTasks[i].sessionId,
-          className: emailTasks[i].class_name,
-          type: beforeOrAfter
         });
       } catch (error) {
-        failureCount++;
-        failedEmails.push(emailTasks[i].to);
-        logger.error('❌ Failed to send email notification', {
+        logger.error('Failed to send email to', {
           email: emailTasks[i].to,
-          sessionId: emailTasks[i].sessionId,
-          className: emailTasks[i].class_name,
-          type: beforeOrAfter,
-          error: error instanceof Error ? error.message : String(error)
+          error,
         });
       }
       // Add delay after every email, except the last one
@@ -182,23 +150,7 @@ async function sendNotifySessionEmails(
       }
     }
 
-    // Log final summary
-    logger.info(`📧 Email notification batch completed for ${beforeOrAfter}:`, {
-      totalAttempted: emailTasks.length,
-      successful: successCount,
-      failed: failureCount,
-      successfulEmails,
-      failedEmails
-    });
-    
-    console.log(`📧 Email Notification Summary (${beforeOrAfter}):`);
-    console.log(`✅ Successfully sent: ${successCount} emails`);
-    console.log(`❌ Failed to send: ${failureCount} emails`);
-    console.log(`✅ Successful emails:`, successfulEmails);
-    if (failedEmails.length > 0) {
-      console.log(`❌ Failed emails:`, failedEmails);
-    }
-    console.log('All email notifications batch completed');
+    console.log('All email notifications sent successfully');
   } catch (error) {
     console.error('Error sending email notifications:', error);
     throw error;
@@ -261,19 +213,9 @@ export async function notifyAfterSessionsEmail(client: SupabaseClient) {
 
 async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
   try {
-    // Log initial statistics
-    logger.info(`Starting payment reminder email notifications for ${data.length} sessions`);
-    console.log(`💰 Starting payment reminder email notifications for ${data.length} sessions`);
-    
     // Flatten all students across all sessions into a single array
     const emailTasks = data.flatMap((session) => {
-      logger.info('Processing session for payment reminder emails', {
-        sessionId: session.session_id,
-        className: session.class?.name,
-        startTime: session.start_time,
-        unpaidStudentCount: session.class?.unpaid_students?.length || 0
-      });
-      
+      logger.info('session', session);
       // Split session.start_time into DATE and TIME
       const dt: Date = parseISO(session.start_time!);
       const DATE: string = format(dt, 'yyyy-MM-dd');
@@ -287,20 +229,10 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
           start_time: new Date(session.start_time!).toLocaleString(),
           fee: session.class.fee,
           classId: session.class.id,
-          sessionId: session.session_id,
           paymentUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}?type=upcoming&sessionId=${session.session_id}&className=${session.class.name}&sessionDate=${DATE}&sessionTime=${TIME}&sessionSubject=${session.class.subject}&sessionTitle=${session.title}`)}`,
         })) || []
       );
     });
-
-    // Log email recipients summary
-    const emailList = emailTasks.map(task => task.to);
-    logger.info(`💰 Payment reminder email summary:`, {
-      totalEmailsToSend: emailTasks.length,
-      uniqueRecipients: new Set(emailList).size,
-      recipients: emailList
-    });
-    console.log(`💰 Payment Reminder Email Recipients List:`, emailList);
 
     // Function to send a single email
     const sendSingleEmail = async (task: (typeof emailTasks)[number]) => {
@@ -330,30 +262,14 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
       });
     };
 
-    let successCount = 0;
-    let failureCount = 0;
-    const successfulEmails: string[] = [];
-    const failedEmails: string[] = [];
-
     for (let i = 0; i < emailTasks.length; i++) {
       try {
         await sendSingleEmail(emailTasks[i]);
-        successCount++;
-        successfulEmails.push(emailTasks[i].to);
-        logger.info('✅ Payment reminder email sent successfully', {
-          email: emailTasks[i].to,
-          sessionId: emailTasks[i].sessionId,
-          className: emailTasks[i].class_name,
-          fee: emailTasks[i].fee
-        });
+        logger.info('sending payment reminder to', emailTasks[i].to);
       } catch (error) {
-        failureCount++;
-        failedEmails.push(emailTasks[i].to);
-        logger.error('❌ Failed to send payment reminder email', {
+        logger.error('Failed to send email to', {
           email: emailTasks[i].to,
-          sessionId: emailTasks[i].sessionId,
-          className: emailTasks[i].class_name,
-          error: error instanceof Error ? error.message : String(error)
+          error,
         });
       }
       if (i < emailTasks.length - 1) {
@@ -361,23 +277,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
       }
     }
 
-    // Log final summary
-    logger.info(`💰 Payment reminder email batch completed:`, {
-      totalAttempted: emailTasks.length,
-      successful: successCount,
-      failed: failureCount,
-      successfulEmails,
-      failedEmails
-    });
-    
-    console.log(`💰 Payment Reminder Email Summary:`);
-    console.log(`✅ Successfully sent: ${successCount} emails`);
-    console.log(`❌ Failed to send: ${failureCount} emails`);
-    console.log(`✅ Successful emails:`, successfulEmails);
-    if (failedEmails.length > 0) {
-      console.log(`❌ Failed emails:`, failedEmails);
-    }
-    console.log('All payment reminder email notifications completed');
+    console.log('All email notifications sent successfully');
   } catch (error) {
     console.error('Error sending email notifications:', error);
     throw error;
