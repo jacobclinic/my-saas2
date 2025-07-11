@@ -17,6 +17,8 @@ import { createClassAction } from '~/lib/classes/server-actions-v2';
 import { useToast } from '../../lib/hooks/use-toast';
 import BaseDialog from '../base-v2/BaseDialog';
 import { NewClassData, TimeSlot } from '~/lib/classes/types/class-v2';
+import Button from '~/core/ui/Button';
+import { Plus, X } from 'lucide-react';
 
 interface CreateClassDialogProps {
   open: boolean;
@@ -65,6 +67,20 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   });
 
   const [allFilled, setAllFilled] = useState(false);
+
+  const handleAddTimeSlot = () => {
+    setNewClass(prev => ({
+      ...prev,
+      timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }]
+    }));
+  };
+
+  const handleRemoveTimeSlot = (index: number) => {
+    setNewClass(prev => ({
+      ...prev,
+      timeSlots: prev.timeSlots.filter((_, i) => i !== index)
+    }));
+  };
 
   const updateTimeSlot = (
     index: number,
@@ -286,7 +302,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
             <label className="text-sm font-medium">Class Schedule</label>
             <TimezoneIndicator />
           </div>
-          {/* <div className="flex justify-between items-center mb-2">
+          <div className="flex justify-between items-center mb-2">
             <label className="text-sm font-medium">Class Schedule</label>
             <Button
               type="button"
@@ -297,7 +313,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               <Plus className="h-4 w-4 mr-2" />
               Add Time Slot
             </Button>
-          </div> */}
+          </div>
           <div className="space-y-2 flex flex-col pb-2">
             <div className="flex self-end gap-[75px] mr-14">
               <label className="text-sm font-medium">Start Time</label>
@@ -374,7 +390,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
                   />
                 </div>
 
-                {/* {newClass.timeSlots.length > 1 && (
+                {newClass.timeSlots.length > 1 && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -384,7 +400,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
                   >
                     <X className="h-4 w-4" />
                   </Button>
-                )} */}
+                )}
               </div>
             ))}
           </div>

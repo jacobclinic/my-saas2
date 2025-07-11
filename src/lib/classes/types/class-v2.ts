@@ -35,7 +35,7 @@ export interface ClassType {
   tutor?: {
     first_name: string | null;
     last_name: string | null;
-  }
+  };
   time_slots:
     | {
         day: string;
@@ -110,11 +110,11 @@ export interface ClassListData {
   description?: string;
   timeSlots?: { day: string; time: string }[];
   classRawData?: ClassType;
-  tutor?:{
+  tutor?: {
     id: string;
     firstName: string | null;
     lastName: string | null;
-  }
+  };
 }
 
 export interface ClassData {
