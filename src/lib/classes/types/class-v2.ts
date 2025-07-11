@@ -147,6 +147,7 @@ export interface TimeSlot {
   day: string;
   startTime: string;
   endTime: string;
+  timezone?: string;
 }
 
 export interface NewClassData {
@@ -159,13 +160,7 @@ export interface NewClassData {
   monthlyFee: string;
   startDate: string;
   // endDate: string;
-  timeSlots: [
-    {
-      day: string;
-      startTime: string;
-      endTime: string;
-    },
-  ];
+  timeSlots: TimeSlot[];
   tutorId: string;
 }
 

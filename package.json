@@ -98,6 +98,7 @@
     "recharts": "^2.12.2",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-slug": "^6.0.0",
+    "rrule": "^2.8.1",
     "server-only": "^0.0.1",
     "sonner": "^1.4.3",
     "stripe": "^14.20.0",

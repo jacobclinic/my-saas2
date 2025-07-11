@@ -231,6 +231,10 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     }
   }
 
+  const checkIfSessionDateChanged = () => { 
+    
+   }
+
   return (
     <>
       <SessionEditConfirmationDialog open={showConfirmationDialog} onConfirm={handleRecurringSessionEdit} onClose={() => setShowConfirmationDialog(false)} />

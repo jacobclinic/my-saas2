@@ -36,7 +36,7 @@ const SessionEditConfirmationDialog: React.FC<SessionEditConfirmationDialogProps
                     <div className="flex items-center space-x-3">
                         <RadioGroupItem value="all" id="update-all" />
                         <div>
-                            <div className="font-medium text-gray-900">Update all occurrences</div>
+                            <div className="font-medium text-gray-900">Update all upcoming occurrences</div>
                             <div className="text-sm text-gray-500">This will update all future sessions with the same pattern</div>
                         </div>
                     </div>

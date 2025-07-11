@@ -23,6 +23,7 @@ import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentInvitationToClass } from '~/core/email/templates/emailTemplate';
 import { isAdminOrCLassTutor } from '../user/database/queries';
 import { createInvoiceForNewClass } from '../invoices/database/mutations';
+import { generateWeeklyOccurrences, RecurrenceInput } from '../utils/recurrence-utils';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -42,6 +43,8 @@ type DeleteClassParams = {
 
 export const createClassAction = withSession(
   async (params: CreateClassParams) => {
+    console.log("Create class action called", params);
+
     const { classData, csrfToken } = params;
     const client = getSupabaseServerActionClient();
 
@@ -55,59 +58,98 @@ export const createClassAction = withSession(
       .eq('id', classData.tutorId)
       .single(); // Generate initial sessions for the month and create one Zoom meeting per time slot
 
-    const initialSessions = await Promise.all(
-      classData.timeSlots.map(async (timeSlot) => {
-        // Get end date for this year (December 31st)
-        const endDate = new Date(new Date().getFullYear(), 11, 31)
-          .toISOString()
-          .split('T')[0]; // Get all upcoming occurrences for year
-        const nextOccurrences = getUpcomingOccurrences(
-          timeSlot,
-          classData.startDate,
-          endDate,
-        ); // Take the first occurrence
 
-        // Take the first occurrence for Zoom meeting creation
-        const firstOccurrence = nextOccurrences[0];
+    const recurrenceInputPayload: RecurrenceInput = {
+      startDate: classData.startDate,
+      endDate: new Date(new Date().getFullYear(), 11, 31)
+        .toISOString()
+        .split('T')[0],
+      timeSlot: classData.timeSlots[0],
+    }
+    // const occurrences = generateWeeklyOccurrences(recurrenceInputPayload);
+    const occurrences = [];
 
-        // Create a single Zoom meeting for the first occurrence
-        const zoomMeeting = await createZoomMeeting(
-          classResult?.id,
-          {
-            name: classData.name || 'Class',
-            subject: classData.subject || 'Subject',
-            description: classData.description || 'Description',
-            yearGrade: classData.yearGrade || '',
-            monthlyFee: classData.monthlyFee || '',
-            startDate: classData.startDate || '',
-            timeSlots: [timeSlot],
-            tutorId: classData.tutorId || '',
-          },
-          {
-            startTime: new Date(firstOccurrence.startTime),
-            endTime: new Date(firstOccurrence.endTime),
-          },
-        );
+    for (const slot of classData.timeSlots) {
+      recurrenceInputPayload.timeSlot = slot;
+      try {
+        const weeklyOccurences = generateWeeklyOccurrences(recurrenceInputPayload);
+        occurrences.push(...weeklyOccurences);
+      } catch (error) {
+        console.error('Error generating weekly occurrences:', error);
+        throw error;
+      }
 
-        // Map all occurrences to session objects, with only the first having a meeting_url
-        const sessions = nextOccurrences.map((occurrence, index) => ({
-          class_id: classResult?.id,
-          start_time: new Date(occurrence.startTime).toISOString(),
-          end_time: new Date(occurrence.endTime).toISOString(),
-          meeting_url: index === 0 ? zoomMeeting?.zoomMeeting.join_url : '', // Only first session gets the Zoom URL
-          zoom_meeting_id: zoomMeeting?.zoomMeeting.id,
-          status: 'scheduled',
-          created_at: new Date().toISOString(),
-        }));
+    }
 
-        return sessions;
-      }),
-    );
+    // TODO: Create a zoom meeting for the first occurrence.
+
+    // 
+
+    const sessions = occurrences.map((occurrence, index) => ({
+      class_id: classResult?.id,
+      start_time: new Date(occurrence.startTime).toISOString(),
+      end_time: new Date(occurrence.endTime).toISOString(),
+      meeting_url: '',
+      zoom_meeting_id: '',
+      status: 'scheduled',
+      created_at: new Date().toISOString(),
+    }));
+
+    // TODO: Replace the below logic with the actual logic to generate the zoom.
+
+    // const initialSessions = await Promise.all(
+    //   classData.timeSlots.map(async (timeSlot) => {
+    //     // Get end date for this year (December 31st)
+    //     const endDate = new Date(new Date().getFullYear(), 11, 31)
+    //       .toISOString()
+    //       .split('T')[0]; // Get all upcoming occurrences for year
+    //     const nextOccurrences = getUpcomingOccurrences(
+    //       timeSlot,
+    //       classData.startDate,
+    //       endDate,
+    //     ); // Take the first occurrence
+
+    //     // Take the first occurrence for Zoom meeting creation
+    //     const firstOccurrence = nextOccurrences[0];
+
+    //     // Create a single Zoom meeting for the first occurrence
+    //     const zoomMeeting = await createZoomMeeting(
+    //       classResult?.id,
+    //       {
+    //         name: classData.name || 'Class',
+    //         subject: classData.subject || 'Subject',
+    //         description: classData.description || 'Description',
+    //         yearGrade: classData.yearGrade || '',
+    //         monthlyFee: classData.monthlyFee || '',
+    //         startDate: classData.startDate || '',
+    //         timeSlots: [timeSlot],
+    //         tutorId: classData.tutorId || '',
+    //       },
+    //       {
+    //         startTime: new Date(firstOccurrence.startTime),
+    //         endTime: new Date(firstOccurrence.endTime),
+    //       },
+    //     );
+
+    //     // Map all occurrences to session objects, with only the first having a meeting_url
+    //     const sessions = nextOccurrences.map((occurrence, index) => ({
+    //       class_id: classResult?.id,
+    //       start_time: new Date(occurrence.startTime).toISOString(),
+    //       end_time: new Date(occurrence.endTime).toISOString(),
+    //       meeting_url: index === 0 ? zoomMeeting?.zoomMeeting.join_url : '', // Only first session gets the Zoom URL
+    //       zoom_meeting_id: zoomMeeting?.zoomMeeting.id,
+    //       status: 'scheduled',
+    //       created_at: new Date().toISOString(),
+    //     }));
+
+    //     return sessions;
+    //   }),
+    // );
 
     // Insert all initial sessions into the database
     const { error: sessionError } = await client
       .from(SESSIONS_TABLE)
-      .insert(initialSessions.flat());
+      .insert(sessions.flat());
 
     if (sessionError) throw sessionError;
 
@@ -137,7 +179,9 @@ export const createClassAction = withSession(
 
 export const updateClassAction = withSession(
   async (params: UpdateClassParams) => {
+
     const client = getSupabaseServerActionClient();
+    console.log("Update class action called", params);
 
     // Get the current user's session
     const {
@@ -209,7 +253,7 @@ export const updateClassAction = withSession(
             const nextOccurrences = getUpcomingOccurrences(
               timeSlot,
               classDetails.starting_date ||
-                new Date().toISOString().split('T')[0],
+              new Date().toISOString().split('T')[0],
               new Date(new Date().getFullYear(), 11, 31)
                 .toISOString()
                 .split('T')[0],
