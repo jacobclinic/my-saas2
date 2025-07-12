@@ -54,7 +54,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   };
 
   const today = getTodayInSriLankaTimezone();
-
+  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [newClass, setNewClass] = useState<NewClassData>({
     name: '',
     subject: '',
@@ -62,7 +62,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     yearGrade: '',
     monthlyFee: '',
     startDate: today, // Default to today's date in local timezone
-    timeSlots: [{ day: '', startTime: '', endTime: '' }], // Single time slot
+    timeSlots: [{ day: '', startTime: '', endTime: '', timezone: userTimezone }], // Single time slot
     tutorId,
   });
 
@@ -100,9 +100,14 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   };
 
   const handleSubmit = () => {
+    const startDate = new Date(newClass.startDate).toISOString();
+    const payload = {
+      ...newClass,
+      startDate,
+    }
     startTransition(async () => {
       const result = await createClassAction({
-        classData: newClass,
+        classData: payload,
         csrfToken,
       });
 
@@ -120,7 +125,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           yearGrade: '',
           monthlyFee: '',
           startDate: '',
-          timeSlots: [{ day: '', startTime: '', endTime: '' }], // Reset to a single time slot
+          timeSlots: [{ day: '', startTime: '', endTime: '', timezone: userTimezone }], // Reset to a single time slot
           tutorId,
         });
       } else {
@@ -168,10 +173,12 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       yearGrade: '',
       monthlyFee: '',
       startDate: '',
-      timeSlots: [{ day: '', startTime: '', endTime: '' }], // Reset to a single time slot
+      timeSlots: [{ day: '', startTime: '', endTime: '', timezone: userTimezone }], // Reset to a single time slot
       tutorId,
     });
   };
+
+
 
   return (
     <BaseDialog

@@ -98,9 +98,9 @@ export async function getClassDataByIdwithNextSession(
     )
     .eq('id', classId)
     .maybeSingle()) as {
-    data: ClassWithTutorAndEnrollmentRawData | null;
-    error: unknown;
-  };
+      data: ClassWithTutorAndEnrollmentRawData | null;
+      error: unknown;
+    };
 
   if (result.error) {
     console.error('Error fetching class data:', result.error);
@@ -604,10 +604,10 @@ export async function getAllClassesByStudentIdData(
             tutor_id: classData.tutor_id || null,
             tutor: tutorData
               ? {
-                  id: tutorData.id || null,
-                  first_name: tutorData.first_name || null,
-                  last_name: tutorData.last_name || null,
-                }
+                id: tutorData.id || null,
+                first_name: tutorData.first_name || null,
+                last_name: tutorData.last_name || null,
+              }
               : null,
             time_slots: timeSlots,
             fee: classData.fee || null,
@@ -626,4 +626,40 @@ export async function getAllClassesByStudentIdData(
     console.error('Failed to fetch classes:', error);
     throw error;
   }
+}
+
+
+export async function getClassDataByClassId(
+  client: SupabaseClient<Database>,
+  classId: string,
+): Promise<ClassType | null> {
+  try{
+   const {data, error} = await client.from(CLASSES_TABLE).select(`
+        id,
+        created_at,
+        name,
+        description,
+        subject,
+        tutor_id,
+        fee,
+        status,
+        time_slots,
+        starting_date,
+        grade,
+        end_date`).eq('id', classId).maybeSingle();
+
+    if(error){
+      console.error('Error fetching class data:', error);
+      throw new Error(
+        `Error fetching class data: ${(error as PostgrestError).message}`,
+      );
+    }
+
+    return data as ClassType | null;
+
+  }catch(error){
+    console.error('Failed to fetch class data:', error);
+    throw error;
+  }
+  
 }

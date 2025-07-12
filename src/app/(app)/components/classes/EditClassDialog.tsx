@@ -388,16 +388,6 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
             </div>
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Starting Date</label>
-            <Input
-              type="date"
-              value={formatToDateInput(editedClass?.startDate)}
-              onChange={(e) =>
-                setEditedClass({ ...editedClass, startDate: e.target.value })
-              }
-            />
-          </div>
 
           <div>
             {/* <div className="flex justify-between items-center mb-2">
