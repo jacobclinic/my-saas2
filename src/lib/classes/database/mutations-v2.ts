@@ -6,6 +6,22 @@ type Client = SupabaseClient<Database>;
 import { CLASSES_TABLE, SESSIONS_TABLE } from '~/lib/db-tables';
 import { ClassType, NewClassData } from '../types/class-v2';
 
+export async function getClassById(client: Client, classId: string) {
+  try {
+    const { data: classData, error } = await client
+      .from(CLASSES_TABLE)
+      .select('*')
+      .eq('id', classId)
+      .single();
+
+    if (error) throw error;
+
+    return classData;
+  } catch (error) {
+    console.error("Error getting class by ID:", error);
+    throw new Error("Failed to get class by ID. Please try again.");
+  }
+}
 
 export async function createClass(client: Client, data: NewClassData) {
   try {
@@ -18,7 +34,12 @@ export async function createClass(client: Client, data: NewClassData) {
         grade: data.yearGrade,
         fee: parseInt(data.monthlyFee),
         starting_date: data.startDate,
-        time_slots: data.timeSlots,
+        time_slots: data.timeSlots.map((slot) => ({
+          day: slot.day,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          timezone: slot.timezone 
+        })),
         status: 'active',
         tutor_id: data.tutorId
       })
@@ -70,9 +91,9 @@ export async function deleteClass(client: Client, classId: string) {
 
     const result = await client
       .from(CLASSES_TABLE)
-      .update({status : 'canceled'})
+      .update({ status: 'canceled' })
       .eq('id', classId);
-    
+
     if (result.error) throw result.error;
 
     return classId;
@@ -109,9 +130,9 @@ export async function deleteClass(client: Client, classId: string) {
 //         fee: data.fee,
 //         time_slots: data.timeSlots?.map((slot) => ({
 //           day: slot.day,
-//           time: slot.time,    
-//           duration: slot.duration,    
-//           reccurringPattern: slot.reccurringPattern,    
+//           time: slot.time,
+//           duration: slot.duration,
+//           reccurringPattern: slot.reccurringPattern,
 //         })),
 //       })
 //       .select('id')

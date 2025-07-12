@@ -29,7 +29,6 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
   onSuccess,
   existingMaterials = []
 }) => {
-  console.log('existingMaterials', existingMaterials)
   const [isPending, startTransition] = useTransition()
   const csrfToken = useCsrfToken()
 

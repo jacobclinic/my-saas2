@@ -60,7 +60,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
-  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
 
   const [editedSession, setEditedSession] = useState<EditSessionData>({
     title: '',
@@ -170,20 +169,15 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     return combinedDateTime.toISOString();
   };
 
-  const handleSubmit = () => {
-    setShowConfirmationDialog(true);
-    // onClose();
+  const handleSubmit = async () => {
+    await updateSession();
+    onClose();
   };
 
   const isValid = sessionDate && sessionStartTime && sessionEndTime;
 
-  const handleRecurringSessionEdit = (updateOption: SessionUpdateOption) => {
-    updateSession(updateOption);
-  }
+  const updateSession = async () => {
 
-  const updateSession = async (updateOption: SessionUpdateOption) => {
-    console.log("Session start time and end time", sessionStartTime, sessionEndTime);
-    
     if (sessionId) {
       startTransition(async () => {
         // Combine date and times before sending to the server
@@ -200,13 +194,9 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
           endTime: combinedEndTime,
         };
 
-        console.log("Updating session with id ", sessionId, " with update option", updateOption);
-        console.log("Updating session with data --------->>> ", updatedSession);
-
         const result = await updateSessionAction({
           sessionId,
           sessionData: updatedSession,
-          updateOption: updateOption,
           csrfToken,
         });
 
@@ -231,13 +221,8 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     }
   }
 
-  const checkIfSessionDateChanged = () => { 
-    
-   }
-
   return (
     <>
-      <SessionEditConfirmationDialog open={showConfirmationDialog} onConfirm={handleRecurringSessionEdit} onClose={() => setShowConfirmationDialog(false)} />
       <BaseDialog
         open={open}
         onClose={onClose}

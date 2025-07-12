@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import {
   createClass,
   deleteClass,
+  getClassById,
   updateClass,
 } from '~/lib/classes/database/mutations-v2';
 import { withSession } from '~/core/generic/actions-utils';
@@ -24,6 +25,7 @@ import { getStudentInvitationToClass } from '~/core/email/templates/emailTemplat
 import { isAdminOrCLassTutor } from '../user/database/queries';
 import { createInvoiceForNewClass } from '../invoices/database/mutations';
 import { generateWeeklyOccurrences, RecurrenceInput } from '../utils/recurrence-utils';
+import { isEqual } from '../utils/lodash-utils';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -58,19 +60,18 @@ export const createClassAction = withSession(
       .eq('id', classData.tutorId)
       .single(); // Generate initial sessions for the month and create one Zoom meeting per time slot
 
-
-    const recurrenceInputPayload: RecurrenceInput = {
-      startDate: classData.startDate,
-      endDate: new Date(new Date().getFullYear(), 11, 31)
-        .toISOString()
-        .split('T')[0],
-      timeSlot: classData.timeSlots[0],
-    }
-    // const occurrences = generateWeeklyOccurrences(recurrenceInputPayload);
     const occurrences = [];
+    const yearEndDate = new Date(new Date().getFullYear(), 11, 31)
+      .toISOString()
+      .split('T')[0]
 
     for (const slot of classData.timeSlots) {
-      recurrenceInputPayload.timeSlot = slot;
+      const recurrenceInputPayload: RecurrenceInput = {
+        startDate: classData.startDate,
+        endDate: yearEndDate,
+        timeSlot: slot,
+        dayOfWeek: slot.day
+      }
       try {
         const weeklyOccurences = generateWeeklyOccurrences(recurrenceInputPayload);
         occurrences.push(...weeklyOccurences);
@@ -78,7 +79,6 @@ export const createClassAction = withSession(
         console.error('Error generating weekly occurrences:', error);
         throw error;
       }
-
     }
 
     // TODO: Create a zoom meeting for the first occurrence.
@@ -210,6 +210,7 @@ export const updateClassAction = withSession(
       };
     }
 
+    const originalClass = await getClassById(client, params.classId);
     // Update the class data
     const result = await updateClass(client, params.classId, params.classData);
 
@@ -220,9 +221,9 @@ export const updateClassAction = withSession(
       };
     }
 
-    // If time slots were updated, delete existing upcoming sessions and create new ones
-    if (params.classData.time_slots) {
-      // Delete all upcoming sessions for this class
+    // Compare to check if the original slots have been changed.
+    if (!isEqual(originalClass.time_slots, params.classData.time_slots)) {
+      // Slots have been changed and needs to generate the new occurrences.
       const currentTime = new Date().toISOString();
       const { error: deleteSessionsError } = await client
         .from(SESSIONS_TABLE)
@@ -234,76 +235,104 @@ export const updateClassAction = withSession(
         throw deleteSessionsError;
       }
 
-      // Get the updated class details to create new sessions
-      const { data: classDetails } = await client
-        .from(CLASSES_TABLE)
-        .select('*')
-        .eq('id', params.classId)
-        .single();
+      const nextOccurrences = generateAllWeeklyOccurrencesForYear({
+        startDate: new Date().toISOString().split('T')[0],
+        timeSlots: params.classData.time_slots as TimeSlot[],
+      });
 
-      if (!classDetails) {
-        throw new Error('Failed to fetch updated class data');
-      }
+      const sessions = nextOccurrences.map((occurrence, index) => ({
+        class_id: params.classId,
+        start_time: new Date(occurrence.startTime).toISOString(),
+        end_time: new Date(occurrence.endTime).toISOString(),
+        meeting_url: '',
+        zoom_meeting_id: '',
+        status: 'scheduled',
+        created_at: new Date().toISOString(),
+      }));
 
-      // Create new sessions with the updated time slots
-      const initialSessions = await Promise.all(
-        (params.classData.time_slots as unknown as TimeSlot[]).map(
-          async (timeSlot) => {
-            // Get all upcoming occurrences for the year
-            const nextOccurrences = getUpcomingOccurrences(
-              timeSlot,
-              classDetails.starting_date ||
-              new Date().toISOString().split('T')[0],
-              new Date(new Date().getFullYear(), 11, 31)
-                .toISOString()
-                .split('T')[0],
-            );
-
-            // Take the first occurrence for Zoom meeting creation
-            const firstOccurrence = nextOccurrences[0];
-
-            // Create a single Zoom meeting for the first occurrence
-            const zoomMeeting = await createZoomMeeting(
-              params.classId,
-              {
-                name: classDetails.name || 'Class',
-                subject: classDetails.subject || 'Subject',
-                description: classDetails.description || 'Description',
-                yearGrade: classDetails.grade || '',
-                monthlyFee: String(classDetails.fee) || '',
-                startDate: classDetails.starting_date || '',
-                timeSlots: [timeSlot],
-                tutorId: classDetails.tutor_id || '',
-              },
-              {
-                startTime: new Date(firstOccurrence.startTime),
-                endTime: new Date(firstOccurrence.endTime),
-              },
-            );
-
-            // Map all occurrences to session objects, with only the first having a meeting_url
-            const sessions = nextOccurrences.map((occurrence, index) => ({
-              class_id: params.classId,
-              start_time: new Date(occurrence.startTime).toISOString(),
-              end_time: new Date(occurrence.endTime).toISOString(),
-              meeting_url: index === 0 ? zoomMeeting?.zoomMeeting.join_url : '', // Only first session gets the Zoom URL
-              zoom_meeting_id: zoomMeeting?.zoomMeeting.id,
-              status: 'scheduled',
-              created_at: new Date().toISOString(),
-            }));
-
-            return sessions;
-          },
-        ),
-      );
-
-      // Insert all new sessions into the database
       const { error: sessionError } = await client
         .from(SESSIONS_TABLE)
-        .insert(initialSessions.flat());
+        .insert(sessions.flat());
 
       if (sessionError) throw sessionError;
+
     }
+
+    // If time slots were updated, delete existing upcoming sessions and create new ones
+    // if (params.classData.time_slots) {
+    //   // Delete all upcoming sessions for this class
+
+
+    //   // Get the updated class details to create new sessions
+    //   const { data: classDetails } = await client
+    //     .from(CLASSES_TABLE)
+    //     .select('*')
+    //     .eq('id', params.classId)
+    //     .single();
+
+    //   if (!classDetails) {
+    //     throw new Error('Failed to fetch updated class data');
+    //   }
+
+    //   // Create new sessions with the updated time slots
+    //   const initialSessions = await Promise.all(
+    //     (params.classData.time_slots as unknown as TimeSlot[]).map(
+    //       async (timeSlot) => {
+    //         // Get all upcoming occurrences for the year
+    //         const nextOccurrences = getUpcomingOccurrences(
+    //           timeSlot,
+    //           classDetails.starting_date ||
+    //           new Date().toISOString().split('T')[0],
+    //           new Date(new Date().getFullYear(), 11, 31)
+    //             .toISOString()
+    //             .split('T')[0],
+    //         );
+
+    //         // Take the first occurrence for Zoom meeting creation
+    //         const firstOccurrence = nextOccurrences[0];
+
+    //         // Create a single Zoom meeting for the first occurrence
+    //         const zoomMeeting = await createZoomMeeting(
+    //           params.classId,
+    //           {
+    //             name: classDetails.name || 'Class',
+    //             subject: classDetails.subject || 'Subject',
+    //             description: classDetails.description || 'Description',
+    //             yearGrade: classDetails.grade || '',
+    //             monthlyFee: String(classDetails.fee) || '',
+    //             startDate: classDetails.starting_date || '',
+    //             timeSlots: [timeSlot],
+    //             tutorId: classDetails.tutor_id || '',
+    //           },
+    //           {
+    //             startTime: new Date(firstOccurrence.startTime),
+    //             endTime: new Date(firstOccurrence.endTime),
+    //           },
+    //         );
+
+    //         // Map all occurrences to session objects, with only the first having a meeting_url
+    //         const sessions = nextOccurrences.map((occurrence, index) => ({
+    //           class_id: params.classId,
+    //           start_time: new Date(occurrence.startTime).toISOString(),
+    //           end_time: new Date(occurrence.endTime).toISOString(),
+    //           meeting_url: index === 0 ? zoomMeeting?.zoomMeeting.join_url : '', // Only first session gets the Zoom URL
+    //           zoom_meeting_id: zoomMeeting?.zoomMeeting.id,
+    //           status: 'scheduled',
+    //           created_at: new Date().toISOString(),
+    //         }));
+
+    //         return sessions;
+    //       },
+    //     ),
+    //   );
+
+    //   // Insert all new sessions into the database
+    //   const { error: sessionError } = await client
+    //     .from(SESSIONS_TABLE)
+    //     .insert(sessions.flat());
+
+    //   if (sessionError) throw sessionError;
+    // }
 
     revalidatePath('/classes');
     revalidatePath(`/classes/${result?.id}`);
@@ -574,3 +603,28 @@ export const sendEmailMSGToStudentAction = withSession(
     };
   },
 );
+
+
+function generateAllWeeklyOccurrencesForYear(classData: { startDate: string; timeSlots: TimeSlot[] }) {
+  const occurrences = [];
+  const yearEndDate = new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0];
+
+  for (const slot of classData.timeSlots) {
+    const recurrenceInputPayload: RecurrenceInput = {
+      startDate: classData.startDate,
+      endDate: yearEndDate,
+      timeSlot: slot,
+      dayOfWeek: slot.day,
+    };
+
+    try {
+      const weeklyOccurrences = generateWeeklyOccurrences(recurrenceInputPayload);
+      occurrences.push(...weeklyOccurrences);
+    } catch (error) {
+      console.error(`Error generating weekly occurrences for slot: ${JSON.stringify(slot)}`, error);
+      throw error;
+    }
+  }
+
+  return occurrences;
+}

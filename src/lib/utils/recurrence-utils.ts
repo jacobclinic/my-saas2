@@ -1,4 +1,4 @@
-import { datetime, RRule, RRuleSet, rrulestr } from 'rrule'
+import { datetime, RRule, RRuleSet, rrulestr, Weekday } from 'rrule'
 import { TimeSlot } from '../classes/types/class-v2';
 import { toZonedTime } from 'date-fns-tz';
 import { format } from 'date-fns';
@@ -7,6 +7,7 @@ export type RecurrenceInput = {
     startDate: string;
     endDate: string;
     timeSlot: TimeSlot;
+    dayOfWeek?: string;
 }
 
 type RecurrenceRecord = {
@@ -16,17 +17,43 @@ type RecurrenceRecord = {
 
 type RecurrenceOutput = RecurrenceRecord[];
 
+function getDayOfWeek(day: string): Weekday {
+    switch (day.toLowerCase()) {
+        case 'monday':
+            return RRule.MO;
+        case 'tuesday':
+            return RRule.TU;
+        case 'wednesday':
+            return RRule.WE;
+        case 'thursday':
+            return RRule.TH;
+        case 'friday':  
+            return RRule.FR;
+        case 'saturday':
+            return RRule.SA;
+        case 'sunday':
+            return RRule.SU;
+        default:
+            throw new Error('Invalid day of week');
+    }
+}
+
 export function generateWeeklyOccurrences(data: RecurrenceInput): RecurrenceOutput {
     try {
+        if (!data.timeSlot) {
+            throw new Error('Time slot is required');
+        }
+
         const userTimezone = data.timeSlot.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
         const startDate = new Date(`${data.startDate}T00:00:00`);
-
-        const timezoneOffset = startDate.getTimezoneOffset();
+        const zonedStartDate = toZonedTime(startDate, userTimezone);
+        const timezoneOffset = zonedStartDate.getTimezoneOffset();
 
         const rrule = new RRule({
             freq: RRule.WEEKLY,
-            dtstart: new Date(data.startDate),
+            byweekday: data.dayOfWeek ? [getDayOfWeek(data.dayOfWeek)] : undefined,
+            dtstart: zonedStartDate,
             until: new Date(data.endDate),
         })
 
