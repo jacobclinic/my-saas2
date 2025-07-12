@@ -113,8 +113,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       const result = await updateSessionAction({
         sessionId: sessionData.id,
         sessionData: lessonDetails,
-        csrfToken,
-        updateOption: SessionUpdateOption.ALL_OCCURRENCES,
+        csrfToken
       });
       
       if (result.success) {
@@ -330,7 +329,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                       onClick={() => setShowSessionEditDialog(true)}
                     >
                       <Edit size={16} className="mr-2" />
-                      <span>Edit Class</span>
+                      <span>Edit Session</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>

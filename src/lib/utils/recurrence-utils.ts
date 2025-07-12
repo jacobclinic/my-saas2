@@ -27,7 +27,7 @@ function getDayOfWeek(day: string): Weekday {
             return RRule.WE;
         case 'thursday':
             return RRule.TH;
-        case 'friday':  
+        case 'friday':
             return RRule.FR;
         case 'saturday':
             return RRule.SA;
@@ -46,14 +46,12 @@ export function generateWeeklyOccurrences(data: RecurrenceInput): RecurrenceOutp
 
         const userTimezone = data.timeSlot.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        const startDate = new Date(`${data.startDate}T00:00:00`);
-        const zonedStartDate = toZonedTime(startDate, userTimezone);
-        const timezoneOffset = zonedStartDate.getTimezoneOffset();
+        const [year, month, day] = data.startDate.split('-').map(Number);
 
         const rrule = new RRule({
             freq: RRule.WEEKLY,
             byweekday: data.dayOfWeek ? [getDayOfWeek(data.dayOfWeek)] : undefined,
-            dtstart: zonedStartDate,
+            dtstart: new Date(Date.UTC(year, month - 1, day)),
             until: new Date(data.endDate),
         })
 
