@@ -501,7 +501,7 @@ export function getStudentRegistrationEmailTemplate(params: {
                           </div>
                           
                           <div class="button-container">
-                            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Access Class</a>
+                            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button">Access Student Portal</a>
                           </div>
                           
                           <p>Please log in using the email and password you provided during registration.</p>
