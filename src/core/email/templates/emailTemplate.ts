@@ -722,12 +722,12 @@ export function getStudentNotifyAfterEmailTemplate(params: {
                   <table border="0" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
                       <td>
-                        <h1>Your Class Recording Is Ready!</h1>
+                        <h1>Recording for ${className} is Now Available! </h1>
                         <p>Hi ${studentName},</p>
-                        <p>Your <strong>${className}</strong> class recording from today is now available to watch.</p>
+                        <p>Hope you found today's ${className} session informative! </p>
                         
                         <div class="highlight-box">
-                          <p style="margin-top: 0;">You can access all your class materials and recording using the single link below:</p>
+                          <p style="margin-top: 0;">The recording of the class is now available. You can access it using the link below to review the material or catch up if you missed anything</p>
                         </div>
                         
                         <div class="button-container">
@@ -961,7 +961,7 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
                       <td>
                         <h1>Reminder: Your ${className} Class is Tomorrow!</h1>
                         <p>Hi ${studentName},</p>
-                        <p>This is a friendly reminder that your class, <strong>${className}</strong>, is scheduled for tomorrow, <strong>${date}</strong>, at <strong>${sessionTime}/strong>.</p>
+                        <p>This is a friendly reminder that your class, <strong>${className}</strong>, is scheduled for tomorrow, <strong>${date}</strong>, at <strong>${sessionTime}</strong>.</p>
                         
                         <div class="highlight-box">
                           <p style="margin-top: 0;">You can join the class and access all your class materials using the single link below:</p>
@@ -1359,6 +1359,106 @@ export function getUserCredentialsEmailTemplate(params: {
         Best regards,
         Your Institute Admin Team
   `;
+
+  return { html, text };
+}
+
+export function getNotifyClassUpdateTemplate(params:{
+  className: string;
+  studentName: string;
+  firstClassDate: string;
+  updatedClassDay: string;
+  updatedClassTime: string;
+}){
+
+  const { className, studentName, firstClassDate, updatedClassDay, updatedClassTime } = params;
+
+    const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+          }
+          .content {
+            padding: 20px 0;
+          }
+          .credentials {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+          }
+          .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>Important Schedule Update for Your ${className} class</h2>
+          </div>
+          <div class="content">
+            <p>Hello ${studentName},</p>
+            <p>This email is to infor you of a schedule change for your ${className} class.</p>
+
+            <p>Effective from ${firstClassDate}, all future sessions for yhis class will be held on:</p>
+            <p><strong>${updatedClassDay} at ${updatedClassTime}</strong></p>
+            
+            <p>We apologize for any inconvenience this adjustment may cause.</p>
+
+            <p>Your existing links to join the class and access the student portal will continue to work without any changes.</p>
+
+            <p>If you have any questions, please contact our support team for assistance.</p>
+            
+            <p>Thank you for your understanding.</p>
+            
+            <p>Best regards,<br>The Comma Education Team</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+    const text = `
+        Dear ${studentName},
+
+        This email is to inform you of a schedule change for your ${className} class.
+
+        Effective from ${firstClassDate}, all future sessions for this class will be held on:
+        ${updatedClassDay} at ${updatedClassTime}
+        
+        We apologize for any inconvenience this adjustment may cause.
+        
+        Your existing links to join the class and access the student portal will continue to work without any changes.
+        
+        If you have any questions, please contact our support team for assistance.
+        
+        Thank you for your understanding.
+
+        Best regards,
+        The Comma Education Team
+        `;
 
   return { html, text };
 }

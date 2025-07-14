@@ -4,6 +4,7 @@ import {
   getAllUpcomingSessionsWithin24_25Hrs,
   getSessions2_1HrsAfterSession,
   getUpcomingSessionsWithUnpaidStudentsBetween2_3Days,
+  getStudentsByClassId,
 } from '../quieries';
 
 import { format, parseISO } from 'date-fns';
@@ -14,6 +15,7 @@ import {
   getStudentNotifyBefore1HrEmailTemplate,
   getStudentNotifyBeforeEmailTemplate,
   paymentReminderEmaiTemplate,
+  getNotifyClassUpdateTemplate,
 } from '~/core/email/templates/emailTemplate';
 
 const logger = getLogger();
@@ -288,4 +290,90 @@ export async function remindPayments3DaysPrior(client: SupabaseClient) {
   const sessions =
     await getUpcomingSessionsWithUnpaidStudentsBetween2_3Days(client);
   await sendPaymentReminderEmails(sessions);
+}
+
+export async function notifyStudentsAfterClassScheduleUpdate(
+  client: SupabaseClient,
+  params: {
+    classId: string;
+    className: string;
+    updatedClassDay: string;
+    updatedStartTime: string;
+    updatedEndTime: string;
+    nextClassDate: string;
+  },
+) {
+  const {
+    classId,
+    className,
+    updatedClassDay,
+    updatedStartTime,
+    updatedEndTime,
+    nextClassDate,
+  } = params;
+
+  try {
+    // Get all students enrolled in the class
+    const students = await getStudentsByClassId(client, classId);
+
+    console.log(
+      `Found ${students.length} students to notify for class schedule update: ${className}`,
+    );
+
+    if (students.length === 0) {
+      console.log('No students found for this class');
+      return;
+    }
+
+    // Format the updated class time
+    const updatedClassTime = `${updatedStartTime} - ${updatedEndTime}`;
+
+    // Function to send a single email
+    const sendSingleEmail = async (
+      student: Awaited<ReturnType<typeof getStudentsByClassId>>[number],
+    ) => {
+      const { html, text } = getNotifyClassUpdateTemplate({
+        className: className,
+        studentName: student.student.first_name || 'Student',
+        firstClassDate: nextClassDate,
+        updatedClassDay: updatedClassDay,
+        updatedClassTime: updatedClassTime,
+      });
+
+      await emailService.sendEmail({
+        from: process.env.EMAIL_SENDER!,
+        to: student.student.email,
+        subject: `Important Schedule Update for Your ${className} Class`,
+        html: html,
+        text: text,
+      });
+    };
+
+    // Process emails with rate limiting
+    for (let i = 0; i < students.length; i++) {
+      try {
+        await sendSingleEmail(students[i]);
+        logger.info('Sending class schedule update email to', {
+          email: students[i].student.email,
+          className: className,
+        });
+      } catch (error) {
+        logger.error('Failed to send class schedule update email to', {
+          email: students[i].student.email,
+          className: className,
+          error,
+        });
+      }
+
+      // Add delay after every email, except the last one
+      if (i < students.length - 1) {
+        await delay(rateLimitDelay);
+      }
+    }
+
+    console.log('All class schedule update notifications sent successfully');
+  } catch (error) {
+    console.error('Error sending class schedule update notifications:', error);
+    throw error;
+  }
 }
