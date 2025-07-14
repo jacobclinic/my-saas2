@@ -65,7 +65,7 @@ export async function generateMonthlyInvoicesStudents(
         invoicesToInsert.push({
           student_id,
           class_id,
-          invoice_no: `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${student_id.substring(0, 4)}${class_id.substring(0, 4)}`,
+          invoice_no: `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${student_id.substring(0, 6)}${class_id.substring(0, 6)}`,
           invoice_period: invoicePeriod,
           amount: classData.fee ?? 0,
           invoice_date: invoiceDate,
@@ -144,8 +144,8 @@ export async function createInvoiceForNewStudent(
       return existingInvoice.id;
     }
 
-    // Create invoice number with exactly 12 characters: YY + MM + 4 chars from studentId + 4 chars from classId
-    const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${studentId.substring(0, 4)}${classId.substring(0, 4)}`;
+    // Create invoice number with exactly 16 characters: YY + MM + 6 chars from studentId + 6 chars from classId
+    const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${studentId.substring(0, 6)}${classId.substring(0, 6)}`;
 
     // Create the invoice
     const { data: invoice, error: insertError } = await client
@@ -269,7 +269,7 @@ export async function generateMonthlyInvoicesTutor(
         const tutorPayment = numberOfPaidInvoices * classFee;
 
         // Create invoice number with exactly 12 characters: YY + MM + 4 chars from tutorId + 4 chars from classId
-        const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${tutorId.substring(0, 4)}${classData.id.substring(0, 4)}`;
+        const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${tutorId.substring(0, 6)}${classData.id.substring(0, 6)}`;
 
         // Always create tutor invoice for active classes, even if amount is 0
         tutorInvoicesToInsert.push({
@@ -352,7 +352,7 @@ export async function createInvoiceForNewClass(
     }
 
     // Create invoice number with exactly 12 characters: YY + MM + 8 chars from classId
-    const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${classId.substring(0, 8)}`;
+    const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${classId.substring(0, 12)}`;
 
     // Create the invoice with amount 0 initially (no students enrolled yet)
     const { data: invoice, error: insertError } = await client
