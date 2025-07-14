@@ -8,7 +8,7 @@ import Modal from '~/core/ui/Modal';
 import ErrorBoundary from '~/core/ui/ErrorBoundary';
 import { useFormStatus } from 'react-dom';
 import Alert from '~/core/ui/Alert';
-import { generateStudentPDF } from '~/lib/utils/pdfGenerator';
+import { generateStudentCSV, HeaderData } from '~/lib/utils/csvGenerator';
 import { deleteStudentEnrollment } from '~/lib/user/actions.server';
 import { Download, Mail, MapPin, Phone, Search, Trash2 } from 'lucide-react';
 import { Input } from '../base-v2/ui/Input';
@@ -20,6 +20,7 @@ interface Student {
   name: string;
   email: string;
   phone_number: string;
+  address: string;
   status: string;
 }
 
@@ -28,6 +29,12 @@ interface RegisteredStudentsDialogProps {
   onClose: () => void;
   classDataName?: string | null;
   studentData: ClassListStudent[];
+  classInfo?: {
+    tutorName?: string;
+    subject?: string;
+    grade?: string;
+    schedule?: string;
+  };
 }
 
 const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
@@ -35,6 +42,7 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
   onClose,
   classDataName,
   studentData,
+  classInfo,
 }) => {
   // console.log('studentData', studentData)
   // Sample students data - in real app, this would come from props or API
@@ -46,20 +54,36 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
       if (Array.isArray(student.student)) studentTemp = student.student[0];
       else studentTemp = student.student;
     }
-    return ({
+    return {
       id: student.student_id,
       enrollmentId: student.id,
       name: `${studentTemp?.first_name} ${studentTemp?.last_name}`,
       email: studentTemp?.email || '',
       phone_number: studentTemp?.phone_number || '',
+      address: studentTemp?.address || '',
       status: studentTemp?.status || '',
-    })
+    };
   });
 
-  const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.phone_number.includes(searchTerm)
+  const filteredStudents = students.filter(
+    (student) =>
+      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.phone_number.includes(searchTerm),
   );
+
+  const handleExportCSV = () => {
+    const headerData: HeaderData = {
+      className: classDataName || 'Unknown Class',
+      tutorName: classInfo?.tutorName,
+      subject: classInfo?.subject,
+      grade: classInfo?.grade,
+      classTime: classInfo?.schedule,
+      numberOfStudents: students.length,
+      downloadDate: new Date().toISOString().split('T')[0],
+    };
+
+    generateStudentCSV(students, classDataName || '', headerData);
+  };
 
   return (
     <BaseDialog
@@ -72,7 +96,10 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
       <div className="space-y-4 py-2">
         <div className="flex items-center justify-between">
           <div className="relative flex-grow max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+              size={18}
+            />
             <Input
               placeholder="Search students..."
               className="pl-10"
@@ -81,7 +108,7 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
             />
           </div>
           <Button
-            onClick={() => generateStudentPDF(students, classDataName || "")}
+            onClick={handleExportCSV}
             className="bg-primary-blue-600 hover:bg-primary-blue-700 text-white"
           >
             <Download size={16} className="mr-2" />
@@ -100,7 +127,9 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
                     {student.name.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="font-medium text-neutral-900">{student.name}</h3>
+                    <h3 className="font-medium text-neutral-900">
+                      {student.name}
+                    </h3>
                     <div className="flex items-center gap-2 text-sm text-neutral-600">
                       <Mail size={16} className="text-neutral-400" />
                       {student.email}
@@ -113,7 +142,6 @@ const RegisteredStudentsDialog: React.FC<RegisteredStudentsDialogProps> = ({
                     <Phone size={16} className="text-neutral-400" />
                     {student.phone_number}
                   </div>
-
                 </div>
                 <RemoveStudentModal enrollmentId={student?.enrollmentId} />
               </div>
@@ -137,7 +165,12 @@ function RemoveStudentModal({ enrollmentId }: { enrollmentId: string }) {
     <Modal
       heading={`Remove student`}
       Trigger={
-        <Button data-cy={'remove-student-button'} variant={'ghost'} size={'small'} className='p-0'>
+        <Button
+          data-cy={'remove-student-button'}
+          variant={'ghost'}
+          size={'small'}
+          className="p-0"
+        >
           <Trash2 size={16} />
         </Button>
       }
@@ -152,9 +185,11 @@ function RemoveStudentModal({ enrollmentId }: { enrollmentId: string }) {
 function RemoveStudentForm({ enrollmentId }: { enrollmentId: string }) {
   return (
     <form
-      action={() => deleteStudentEnrollment({
-        enrollmentId: enrollmentId
-      })}
+      action={() =>
+        deleteStudentEnrollment({
+          enrollmentId: enrollmentId,
+        })
+      }
       className={'flex flex-col space-y-4'}
     >
       <div className={'flex flex-col space-y-6'}>

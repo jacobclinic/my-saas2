@@ -33,3 +33,22 @@ export interface InvoiceDialogProps {
   selectedInvoice: Payment | null;
   onClose: () => void;
 }
+
+interface TutorPaymentData {
+  id: string;
+  className: string;
+  date: string;
+  amount: number;
+  students: number;
+  status: 'pending' | 'paid';
+}
+
+interface TutorPaymentStats {
+  monthlyEarnings: number;
+  activeStudents: number;
+  monthlyGrowth: number;
+  averagePerStudent: number;
+  pendingPayments: number;
+}
+
+export type { TutorPaymentData, TutorPaymentStats };

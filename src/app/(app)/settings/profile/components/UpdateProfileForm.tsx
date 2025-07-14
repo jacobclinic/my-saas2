@@ -30,6 +30,10 @@ function UpdateProfileForm({
   const updateProfileMutation = useUpdateProfileMutation();
   const currentPhotoURL = session.data?.photoUrl ?? '';
   const currentDisplayName = session?.data?.displayName ?? '';
+  const currentFirstName = session?.data?.first_name ?? '';
+  const currentLastName = session?.data?.last_name ?? '';
+  const currentPhoneNumber = session?.data?.phone_number ?? '';
+  const currentAddress = session?.data?.address ?? '';
 
   const user = session.auth?.user;
   const email = user?.email ?? '';
@@ -37,14 +41,28 @@ function UpdateProfileForm({
   const { register, handleSubmit, reset } = useForm({
     defaultValues: {
       displayName: currentDisplayName,
+      firstName: currentFirstName,
+      lastName: currentLastName,
+      phoneNumber: currentPhoneNumber,
+      address: currentAddress,
       photoURL: '',
     },
   });
 
-  const onSubmit = async (displayName: string) => {
+  const onSubmit = async (data: {
+    displayName: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    address: string;
+  }) => {
     const info = {
       id: user.id,
-      displayName,
+      displayName: data.displayName,
+      first_name: data.firstName,
+      last_name: data.lastName,
+      phone_number: data.phoneNumber,
+      address: data.address,
     };
 
     const promise = updateProfileMutation.trigger(info).then(() => {
@@ -62,12 +80,40 @@ function UpdateProfileForm({
     value: currentDisplayName,
   });
 
+  const firstNameControl = register('firstName', {
+    value: currentFirstName,
+  });
+
+  const lastNameControl = register('lastName', {
+    value: currentLastName,
+  });
+
+  const phoneNumberControl = register('phoneNumber', {
+    value: currentPhoneNumber,
+  });
+
+  const addressControl = register('address', {
+    value: currentAddress,
+  });
+
   useEffect(() => {
     reset({
       displayName: currentDisplayName ?? '',
+      firstName: currentFirstName ?? '',
+      lastName: currentLastName ?? '',
+      phoneNumber: currentPhoneNumber ?? '',
+      address: currentAddress ?? '',
       photoURL: currentPhotoURL ?? '',
     });
-  }, [currentDisplayName, currentPhotoURL, reset]);
+  }, [
+    currentDisplayName,
+    currentFirstName,
+    currentLastName,
+    currentPhoneNumber,
+    currentAddress,
+    currentPhotoURL,
+    reset,
+  ]);
 
   return (
     <div className={'flex flex-col space-y-8'}>
@@ -75,12 +121,11 @@ function UpdateProfileForm({
         currentPhotoURL={currentPhotoURL}
         userId={user?.id}
         onAvatarUpdated={(photoUrl) => onUpdateProfileData({ photoUrl })}
-      />
-
+      />{' '}
       <form
         data-cy={'update-profile-form'}
-        onSubmit={handleSubmit((value) => {
-          return onSubmit(value.displayName);
+        onSubmit={handleSubmit((values) => {
+          return onSubmit(values);
         })}
         className={'flex flex-col space-y-4'}
       >
@@ -91,7 +136,56 @@ function UpdateProfileForm({
               {...displayNameControl}
               data-cy={'profile-display-name'}
               minLength={2}
-              placeholder={''}
+              placeholder={'Enter your display name'}
+            />
+          </TextField.Label>
+        </TextField>
+
+        <div className={'grid grid-cols-1 md:grid-cols-2 gap-4'}>
+          <TextField>
+            <TextField.Label>
+              First Name
+              <TextField.Input
+                {...firstNameControl}
+                data-cy={'profile-first-name'}
+                minLength={2}
+                placeholder={'Enter your first name'}
+              />
+            </TextField.Label>
+          </TextField>
+
+          <TextField>
+            <TextField.Label>
+              Last Name
+              <TextField.Input
+                {...lastNameControl}
+                data-cy={'profile-last-name'}
+                minLength={2}
+                placeholder={'Enter your last name'}
+              />
+            </TextField.Label>
+          </TextField>
+        </div>
+
+        <TextField>
+          <TextField.Label>
+            Mobile Number
+            <TextField.Input
+              {...phoneNumberControl}
+              data-cy={'profile-phone-number'}
+              type={'tel'}
+              placeholder={'Enter your mobile number'}
+            />
+          </TextField.Label>
+        </TextField>
+
+        <TextField>
+          <TextField.Label>
+            Address
+            <TextField.Input
+              {...addressControl}
+              data-cy={'profile-address'}
+              placeholder={'Enter your address'}
             />
           </TextField.Label>
         </TextField>
@@ -102,7 +196,7 @@ function UpdateProfileForm({
             <TextField.Input disabled value={email} />
           </TextField.Label>
 
-          <div>
+          {/* <div>
             <Button
               type={'button'}
               variant={'ghost'}
@@ -111,7 +205,7 @@ function UpdateProfileForm({
             >
               <span className={'text-xs font-normal'}>Update Email</span>
             </Button>
-          </div>
+          </div> */}
         </TextField>
 
         <div>

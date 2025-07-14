@@ -4,12 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
-import { getStudentCredentialsEmailTemplate } from '~/core/email/templates/student-credentials';
 import { USERS_TABLE } from '~/lib/db-tables';
 import sendEmail from '~/core/email/send-email';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { EmailService } from '~/core/email/send-email-mailtrap';
+import { getStudentRegistrationEmailTemplate } from '~/core/email/templates/emailTemplate';
 
 const registrationSchema = z.object({
   email: z.string().email(),
@@ -107,28 +107,28 @@ export async function registerStudentViaLoginAction(
         .eq('id', userId)
         .single();
 
-      const { html, text } = getStudentCredentialsEmailTemplate({
+      const { html, text } = getStudentRegistrationEmailTemplate({
         studentName: `${userDetails?.first_name} ${userDetails?.last_name}`,
         email: validated.email,
         className: formData.className,
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
+        classId: validated.classId,
       });
       const emailService = EmailService.getInstance();
       await Promise.all([
         // Send welcome email
         emailService.sendEmail({
-          from: process.env.EMAIL_SENDER! ,
+          from: process.env.EMAIL_SENDER!,
           to: validated.email,
-          subject: 'Welcome to Your Class - Login Credentials',
+          subject: `Welcome to ${formData.className}! Access Your Student Portal`,
           html,
           text,
         }),
         // send welcome sms
         sendSingleSMS({
           phoneNumber: userDetails?.phone_number!,
-          message: `Welcome to ${formData.className}! Your registration is confirmed. Login to your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
-                \nUsername: Your email
-                \nUse the entered Password you used
+          message: `Welcome to ${formData.className}! Access your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
+                \nLogin with your registration email/password.
                 \n-Comma Education`,
         }),
       ]);

@@ -8,10 +8,6 @@ const links = [
     path: '/settings/profile',
     label: `Profile`,
   },
-  {
-    path: '/settings/subscription',
-    label: 'Subscription',
-  },
 ];
 
 async function SettingsLayout({ children }: React.PropsWithChildren) {

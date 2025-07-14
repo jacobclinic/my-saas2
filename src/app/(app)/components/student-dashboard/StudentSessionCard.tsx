@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback} from 'react';
 import { Card, CardContent } from '../base-v2/ui/Card';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
@@ -8,11 +8,8 @@ import {
   Video,
   Clock,
   Calendar,
-  File,
   DollarSign,
-  Camera,
   Download,
-  BookOpen,
   Book,
   User,
   ExternalLink,
@@ -20,14 +17,6 @@ import {
 } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
-import Link from 'next/link';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../base-v2/ui/Dialog';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -49,7 +38,6 @@ const StudentSessionCard = ({
   setShowPaymentDialog,
   joinMeetingAsStudent,
 }: StudentSessionCardProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
 
   const handleDownloadMaterials = async () => {
@@ -83,8 +71,6 @@ const StudentSessionCard = ({
       console.error('Error downloading materials:', error);
       // You might want to add error handling UI here
     }
-
-    setIsDialogOpen(false);
   };
 
   const getRecordingUrl = useCallback(
@@ -117,7 +103,7 @@ const StudentSessionCard = ({
             ) : (
               <p className="text-sm text-gray-500 italic mt-1">Lesson details will be updated soon</p>
             )}
-            <Badge variant="blue" className="mt-2">{"Subject Name"}</Badge>
+            <Badge variant="blue" className="mt-2">{sessionData.sessionRawData?.class?.subject}</Badge>
 
             <div className="mt-4 space-y-2">
               <div className="flex items-center text-sm text-gray-600">
@@ -130,7 +116,7 @@ const StudentSessionCard = ({
               </div>
               <div className="flex items-center text-sm text-gray-600">
                 <User size={16} className="mr-2" />
-                <span>{"Tutor Name"}</span>
+                <span>{sessionData.sessionRawData?.class?.tutor?.first_name+ ' '+ sessionData.sessionRawData?.class?.tutor?.last_name}</span>
               </div>
             </div>
 
@@ -149,28 +135,6 @@ const StudentSessionCard = ({
         </div>
       </CardContent>
       <CardContent className="p-4 space-y-4">
-        {/* {sessionData?.materials && sessionData.materials?.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium">Class Materials</h4>
-            <div className="space-y-2">
-              {sessionData?.materials?.map((material) => (
-                <div
-                  key={material.id}
-                  className="flex items-center justify-between bg-gray-50 p-2 rounded"
-                >
-                  <div className="flex items-center">
-                    <File className="h-4 w-4 text-blue-600 mr-2" />
-                    <span className="text-sm">{material.name}</span>
-                  </div>
-                  <span className="text-sm text-gray-600">
-                    {material.file_size}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )} */}
-
         <div className="flex flex-wrap gap-2">
           {type === 'upcoming' ? (
             <>
@@ -199,41 +163,6 @@ const StudentSessionCard = ({
                   Try The Payment Again
                 </Button>
               ) : (
-                // <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                //   <DialogTrigger asChild>
-                //     <Button className="w-full" disabled={isPending}>
-                //       View Class
-                //     </Button>
-                //   </DialogTrigger>
-                //   <DialogContent>
-                //     <DialogHeader>
-                //       <DialogTitle>{sessionData.name}</DialogTitle>
-                //     </DialogHeader>
-                //     <div className="flex flex-col gap-4 py-4">
-                //       <Button
-                //         onClick={() => {
-                //           joinMeetingAsStudent(sessionData);
-                //           setIsDialogOpen(false);
-                //         }}
-                //         disabled={isPending}
-                //       >
-                //         <Video className="h-4 w-4 mr-2" />
-                //         Join Class
-                //       </Button>
-                //       <Button
-                //         variant="outline"
-                //         onClick={handleDownloadMaterials}
-                //         disabled={
-                //           !sessionData?.materials ||
-                //           sessionData.materials.length === 0
-                //         }
-                //       >
-                //         <Download className="h-4 w-4 mr-2" />
-                //         Download Class Materials
-                //       </Button>
-                //     </div>
-                //   </DialogContent>
-                // </Dialog>
                 <div className='flex items-center gap-2'>
                   <Button 
                     variant={"primary"}

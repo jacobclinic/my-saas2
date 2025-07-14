@@ -15,14 +15,14 @@ const links = {
     path: BASE_PATH,
     label: 'General',
   },
-  Authentication: {
-    path: [BASE_PATH, `authentication`].join('/'),
-    label: 'Authentication',
-  },
-  Email: {
-    path: [BASE_PATH, `email`].join('/'),
-    label: 'Email',
-  },
+  // Authentication: {
+  //   path: [BASE_PATH, `authentication`].join('/'),
+  //   label: 'Authentication',
+  // },
+  // Email: {
+  //   path: [BASE_PATH, `email`].join('/'),
+  //   label: 'Email',
+  // },
   Password: {
     path: [BASE_PATH, `password`].join('/'),
     label: 'Password',
@@ -44,7 +44,7 @@ const ProfileSettingsTabs: React.FC = () => {
             link={links.General}
           />
 
-          <NavigationItem
+          {/* <NavigationItem
             className={itemClassName}
             link={links.Authentication}
           />
@@ -53,7 +53,7 @@ const ProfileSettingsTabs: React.FC = () => {
             className={itemClassName}
             disabled={!canEditPassword}
             link={links.Email}
-          />
+          /> */}
 
           <NavigationItem
             className={itemClassName}

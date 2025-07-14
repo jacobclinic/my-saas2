@@ -5,6 +5,7 @@ import HttpStatusCode from '~/core/generic/http-status-code.enum';
 import configuration from '~/configuration';
 import createMiddlewareClient from '~/core/supabase/middleware-client';
 import GlobalRole from '~/core/session/types/global-role';
+import { getUserById } from '~/lib/user/database/queries';
 
 const CSRF_SECRET_COOKIE = 'csrfSecret';
 const NEXT_ACTION_HEADER = 'next-action';
@@ -16,21 +17,32 @@ export const config = {
 };
 
 export async function middleware(request: NextRequest) {
+  const startTime = Date.now();
+  console.log('Middleware called for path:', request.nextUrl.pathname);
   if (request.nextUrl.pathname.startsWith('/api/public')) {
     return NextResponse.next();
   }
   const response = NextResponse.next();
+  console.log('Starting CSRF middleware for:', request.nextUrl.pathname);
   const csrfResponse = await withCsrfMiddleware(request, response);
+  console.log('CSRF middleware completed in', Date.now() - startTime, 'ms for:', request.nextUrl.pathname);
+  console.log('Starting session middleware for:', request.nextUrl.pathname);
   const sessionResponse = await sessionMiddleware(request, csrfResponse);
 
   // return await adminMiddleware(request, sessionResponse);
-  return await roleBasedMiddleware(request, sessionResponse);
+  const finalResponse = await roleBasedMiddleware(request, sessionResponse);
+  console.log('Role-based middleware completed in', Date.now() - startTime, 'ms for:', request.nextUrl.pathname);
+  console.log('Total middleware processing time:', Date.now() - startTime, 'ms for:', request.nextUrl.pathname);
+  return finalResponse;
 }
 
 async function sessionMiddleware(req: NextRequest, res: NextResponse) {
   const supabase = createMiddlewareClient(req, res);
-
+  console.log('Starting session retrieval for:', req.nextUrl.pathname);
+  const startTime = Date.now();
   await supabase.auth.getSession();
+  const endTime = Date.now();
+  console.log('Session retrieval took:', endTime - startTime, 'ms for:', req.nextUrl.pathname);
   // const user = await supabase.auth.getSession();
   // console.log('-----1------User:', user);
 
@@ -101,16 +113,23 @@ async function adminMiddleware(request: NextRequest, response: NextResponse) {
   return response;
 }
 
-async function roleBasedMiddleware(request: NextRequest, response: NextResponse) {
+async function roleBasedMiddleware(
+  request: NextRequest,
+  response: NextResponse,
+) {
   const pathname = request.nextUrl.pathname;
-  const isInAppPath = pathname.startsWith('/admin') || pathname.startsWith('/tutor') || pathname.startsWith('/student');
+  const isInAppPath =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/tutor') ||
+    pathname.startsWith('/student');
+  const isMoreDetailsPath = pathname.startsWith('/auth/sign-up/moredetails');
 
-   // Store the current URL in headers for server components
-   const requestHeaders = new Headers(request.headers);
-   requestHeaders.set('x-request-url', request.url);
-   response.headers.set('x-request-url', request.url);
+  // Store the current URL in headers for server components
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-request-url', request.url);
+  response.headers.set('x-request-url', request.url);
 
-    if (!isInAppPath) {
+  if (!isInAppPath && !isMoreDetailsPath) {
     return NextResponse.next({
       request: {
         headers: requestHeaders,
@@ -122,14 +141,25 @@ async function roleBasedMiddleware(request: NextRequest, response: NextResponse)
   const { data: user, error } = await supabase.auth.getUser();
   console.log('-----role----------User:', user);
 
-  // If the user is not authenticated, redirect to sign-in
+  // If the user is not authenticated, redirect to sign-in (except for moredetails page)
   if (error || !user?.user) {
-    const signInUrl = new URL(configuration.paths.signIn, configuration.site.siteUrl);
-    
+    if (isMoreDetailsPath) {
+      // For moredetails page, redirect to sign-in if not authenticated
+      return NextResponse.redirect(
+        new URL(configuration.paths.signIn, configuration.site.siteUrl),
+      );
+    }
+
+    const signInUrl = new URL(
+      configuration.paths.signIn,
+      configuration.site.siteUrl,
+    );
+
     // Preserve the redirect URL if it exists, otherwise use current path
-    const redirectUrl = request.nextUrl.searchParams.get('redirectUrl') || 
-                       `${pathname}${request.nextUrl.search}`;
-    
+    const redirectUrl =
+      request.nextUrl.searchParams.get('redirectUrl') ||
+      `${pathname}${request.nextUrl.search}`;
+
     if (redirectUrl) {
       signInUrl.searchParams.set('redirectUrl', redirectUrl);
     }
@@ -140,11 +170,74 @@ async function roleBasedMiddleware(request: NextRequest, response: NextResponse)
   const userId = user.user?.id;
 
   if (!userId) {
-    return NextResponse.redirect(configuration.paths.signIn);
+    return NextResponse.redirect(
+      new URL(configuration.paths.signIn, configuration.site.siteUrl),
+    );
   }
 
-  const userRole = user.user?.user_metadata['role'] || user.user?.user_metadata['userRole'] || user.user?.user_metadata['user_role'] || 'admin';
-  console.log('-----role----------User Role:', userRole, pathname, pathname.startsWith('/tutors') );
+  // Allow access to moredetails page for authenticated users
+  if (isMoreDetailsPath) {
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
+  // For protected app paths, check if user needs to complete profile
+  if (isInAppPath) {
+    try {
+      const userData = await getUserById(
+        createMiddlewareClient(request, response),
+        userId,
+      );
+
+      // Check if user has completed their profile
+      const hasRequiredDetails =
+        userData?.first_name &&
+        userData?.last_name &&
+        userData?.phone_number &&
+        userData.first_name.trim() !== '' &&
+        userData.last_name.trim() !== '' &&
+        userData.phone_number.trim() !== '';
+
+      if (!hasRequiredDetails) {
+        // Redirect to complete profile page with current path as return URL
+        const moreDetailsUrl = new URL(
+          '/auth/sign-up/moredetails',
+          configuration.site.siteUrl,
+        );
+        moreDetailsUrl.searchParams.set(
+          'returnUrl',
+          `${pathname}${request.nextUrl.search}`,
+        );
+        return NextResponse.redirect(moreDetailsUrl);
+      }
+    } catch (userError) {
+      // If user data doesn't exist, they need to complete profile
+      const moreDetailsUrl = new URL(
+        '/auth/sign-up/moredetails',
+        configuration.site.siteUrl,
+      );
+      moreDetailsUrl.searchParams.set(
+        'returnUrl',
+        `${pathname}${request.nextUrl.search}`,
+      );
+      return NextResponse.redirect(moreDetailsUrl);
+    }
+  }
+
+  const userRole =
+    user.user?.user_metadata['role'] ||
+    user.user?.user_metadata['userRole'] ||
+    user.user?.user_metadata['user_role'] ||
+    'admin';
+  console.log(
+    '-----role----------User Role:',
+    userRole,
+    pathname,
+    pathname.startsWith('/tutors'),
+  );
 
   // Restrict access based on user userRole
   if (pathname.startsWith('/admin') && userRole !== 'admin') {
@@ -155,7 +248,11 @@ async function roleBasedMiddleware(request: NextRequest, response: NextResponse)
     return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
   }
 
-  if (pathname.startsWith('/students') && userRole !== 'tutor' && userRole !== 'admin') {
+  if (
+    pathname.startsWith('/students') &&
+    userRole !== 'tutor' &&
+    userRole !== 'admin'
+  ) {
     return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
   }
 

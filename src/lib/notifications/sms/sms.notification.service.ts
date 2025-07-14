@@ -2,9 +2,11 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import {
+  getAllUpcomingSessionsWithin1_2Hrs,
   getAllUpcomingSessionsWithin24_25Hrs,
   getSessions2_1HrsAfterSession,
-  getUpcomingSessionsWithUnpaidStudentsBetween3_4Days,
+  getUpcomingSessionsWithUnpaidStudentsBetween2_3Days,
+  getTutorsForSessionsWithin1Hr,
 } from '../quieries';
 import { stat } from 'fs';
 
@@ -86,12 +88,12 @@ async function sendBulkSMS(request: SMSRequest): Promise<APIResponse> {
  * Sends payment reminder SMS 3 days prior to unpaid students
  * @param client Supabase client instance
  */
-export async function remindPayments3DaysPrior(
+export async function remindPayments2DaysPriorSMS(
   client: SupabaseClient,
 ): Promise<void> {
   try {
     const sessions: SessionWithUnpaidStudents[] =
-      await getUpcomingSessionsWithUnpaidStudentsBetween3_4Days(client);
+      await getUpcomingSessionsWithUnpaidStudentsBetween2_3Days(client);
 
     if (sessions.length === 0) {
       console.log('No sessions with unpaid students found for reminders');
@@ -110,11 +112,8 @@ export async function remindPayments3DaysPrior(
         continue;
       }
 
-      const message = `PAYMENT REMINDER: Your fees of Rs.${session.class.fee} for the class ${session.class.name} due on ${session.start_time!.split('T')[0].slice(0, 10)}. Upload your receipt here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}
-                        \nBank: Commercial Bank
-                        \nAcc: 1234567890
-                        \nName: Comma Education
-                        \n-Comma Education`;
+      const message = `Friendly reminder: Payment for ${session.class.name} is due on (2 days). Submit receipt here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id} 
+      \n- Comma Education`;
 
       const smsRequest: SMSRequest = {
         phoneNumbers,
@@ -146,7 +145,7 @@ export async function remindPayments3DaysPrior(
  */
 async function sendNotificationSms(
   session: NotificationClass,
-  status: 'before' | 'after',
+  status: 'before' | 'after' | 'before1Hour',
 ): Promise<void> {
   try {
     const phoneNumbers = session.class.students
@@ -154,9 +153,11 @@ async function sendNotificationSms(
       .filter((phone): phone is string => phone !== null);
 
     if (phoneNumbers.length === 0) {
-      console.log(`No students found for session ${session.id}`);
+      console.log(`📱 No students with phone numbers found for session ${session.id}`);
       return;
     }
+
+    console.log(`📱 Processing ${status} SMS notification for session ${session.id}, class: ${session.class.name}, recipients: ${phoneNumbers.length}`);
 
     let message: string;
     // Parse the session start time for proper date formatting
@@ -176,9 +177,11 @@ async function sendNotificationSms(
     }).format(sessionDate);
 
     if (status === 'before') {
-      message = `REMINDER: Your ${session.class.name} class is tomorrow ${localDate} at ${localTime}. \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}?type=upcoming \n-Comma Education`;
+      message = `REMINDER: Your ${session.class.name} class is tomorrow ${localDate} at ${localTime}. \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
+    } else if (status === 'after') {
+      message = `The recording for your ${session.class.name} class is ready! Access it and all class materials here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
     } else {
-      message = `Your ${session.class.name} recording from today is now available. Access it and all class materials here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
+      message = `Your ${session.class.name} class is starting at ${localTime} today! \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
     }
 
     const smsRequest: SMSRequest = {
@@ -186,21 +189,30 @@ async function sendNotificationSms(
       message,
     };
 
-    console.log('sms request', smsRequest);
+    console.log('📱 SMS request details:', {
+      sessionId: session.id,
+      className: session.class.name,
+      status,
+      phoneNumbers,
+      message: message.substring(0, 100) + '...'
+    });
+    
     const result = await sendBulkSMS(smsRequest);
 
     if (result.success) {
       console.log(
-        `${status === 'before' ? 'Pre-session' : 'Post-session'} notifications sent to ${phoneNumbers.length} students for session ${session.id}. Message ID: ${result.messageId}`,
+        `✅ ${status === 'before' ? 'Pre-session' : status === 'after' ? 'Post-session' : '1-hour'} SMS notifications sent to ${phoneNumbers.length} students for session ${session.id}. Message ID: ${result.messageId}`,
       );
+      console.log(`✅ Successful phone numbers:`, phoneNumbers);
     } else {
       console.error(
-        `Failed to send ${status} notifications for session ${session.id}: ${result.error}`,
+        `❌ Failed to send ${status} SMS notifications for session ${session.id}: ${result.error}`,
       );
+      console.log(`❌ Failed phone numbers:`, phoneNumbers);
     }
   } catch (error) {
     console.error(
-      `Error in sendNotificationSms for session ${session.id}:`,
+      `❌ Error in sendNotificationSms for session ${session.id}:`,
       error,
     );
   }
@@ -218,24 +230,53 @@ export async function notifyAfterSessionSMS(
       await getSessions2_1HrsAfterSession(client);
 
     if (sessions.length === 0) {
-      console.log('No sessions found for post-session notifications');
+      console.log('📱 No sessions found for post-session SMS notifications');
       return;
     }
 
     console.log(
-      `Found ${sessions.length} sessions for post-session notifications`,
+      `📱 Found ${sessions.length} sessions for post-session SMS notifications`,
     );
+
+    let successCount = 0;
+    let failureCount = 0;
+    const allSuccessfulNumbers: string[] = [];
+    const allFailedNumbers: string[] = [];
 
     // Process each session individually
     for (const session of sessions) {
       // Log session details for debugging
       console.log(
-        `Processing after-session notification for: ${session.id}, class: ${session.class.name}, time: ${session.end_time}`,
+        `📱 Processing after-session SMS notification for: ${session.id}, class: ${session.class.name}, time: ${session.end_time}`,
       );
-      await sendNotificationSms(session, 'after');
+      
+      const phoneNumbers = session.class.students
+        .map((student) => student.student.phone_number)
+        .filter((phone): phone is string => phone !== null);
+
+      if (phoneNumbers.length > 0) {
+        try {
+          await sendNotificationSms(session, 'after');
+          successCount++;
+          allSuccessfulNumbers.push(...phoneNumbers);
+        } catch (error) {
+          failureCount++;
+          allFailedNumbers.push(...phoneNumbers);
+          console.error(`❌ Failed to process after-session SMS for session ${session.id}:`, error);
+        }
+      }
+    }
+
+    // Final summary
+    console.log(`📱 After-Session SMS Summary:`);
+    console.log(`✅ Successfully processed: ${successCount} sessions`);
+    console.log(`❌ Failed to process: ${failureCount} sessions`);
+    console.log(`✅ Total successful phone numbers: ${allSuccessfulNumbers.length}`, allSuccessfulNumbers);
+    if (allFailedNumbers.length > 0) {
+      console.log(`❌ Total failed phone numbers: ${allFailedNumbers.length}`, allFailedNumbers);
     }
   } catch (error) {
-    console.error('Error in notifyAfterClass:', error);
+    console.error('❌ Error in notifyAfterSessionSMS:', error);
   }
 }
 
@@ -252,28 +293,122 @@ export async function notifyUpcomingSessionsSMS(
 
     if (sessions.length === 0) {
       console.log(
-        'No upcoming sessions found for pre-session SMS notifications',
+        '📱 No upcoming sessions found for pre-session SMS notifications (24-25 hours)',
       );
       return;
     }
 
     console.log(
-      `Found ${sessions.length} upcoming sessions for SMS notifications in the 24-25 hour window`,
-    ); // Log details of each session for debugging
+      `📱 Found ${sessions.length} upcoming sessions for SMS notifications in the 24-25 hour window`,
+    ); 
+    
+    let successCount = 0;
+    let failureCount = 0;
+    const allSuccessfulNumbers: string[] = [];
+    const allFailedNumbers: string[] = [];
+    
+    // Log details of each session for debugging
     sessions.forEach((session, index) => {
       // Use standard date formatting for logging
       const sessionTime = new Date(session.start_time);
       console.log(
-        `Upcoming Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, Start Time (UTC): ${sessionTime.toISOString()}`,
+        `📱 Upcoming Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, Start Time (UTC): ${sessionTime.toISOString()}`,
       );
     });
 
     // Process each session individually
     for (const session of sessions) {
-      await sendNotificationSms(session, 'before');
+      const phoneNumbers = session.class.students
+        .map((student) => student.student.phone_number)
+        .filter((phone): phone is string => phone !== null);
+
+      if (phoneNumbers.length > 0) {
+        try {
+          await sendNotificationSms(session, 'before');
+          successCount++;
+          allSuccessfulNumbers.push(...phoneNumbers);
+        } catch (error) {
+          failureCount++;
+          allFailedNumbers.push(...phoneNumbers);
+          console.error(`❌ Failed to process 24-hour SMS for session ${session.id}:`, error);
+        }
+      }
+    }
+
+    // Final summary
+    console.log(`📱 24-Hour SMS Notification Summary:`);
+    console.log(`✅ Successfully processed: ${successCount} sessions`);
+    console.log(`❌ Failed to process: ${failureCount} sessions`);
+    console.log(`✅ Total successful phone numbers: ${allSuccessfulNumbers.length}`, allSuccessfulNumbers);
+    if (allFailedNumbers.length > 0) {
+      console.log(`❌ Total failed phone numbers: ${allFailedNumbers.length}`, allFailedNumbers);
     }
   } catch (error) {
-    console.error('Error in notifyUpcomingSessionsBefore24Hrs:', error);
+    console.error('❌ Error in notifyUpcomingSessionsSMS:', error);
+  }
+}
+
+export async function notifyUpcomingSessionsBefore1HourSMS(
+  client: SupabaseClient,
+): Promise<void> {
+  try {
+    const sessions: NotificationClass[] =
+      await getAllUpcomingSessionsWithin1_2Hrs(client);
+
+    if (sessions.length === 0) {
+      console.log(
+        '📱 No upcoming sessions found for pre-session SMS notifications (1-2 hours)',
+      );
+      return;
+    }
+
+    console.log(
+      `📱 Found ${sessions.length} upcoming sessions for SMS notifications in the 1-2 hour window`,
+    ); 
+    
+    let successCount = 0;
+    let failureCount = 0;
+    const allSuccessfulNumbers: string[] = [];
+    const allFailedNumbers: string[] = [];
+    
+    // Log details of each session for debugging
+    sessions.forEach((session, index) => {
+      // Use standard date formatting for logging
+      const sessionTime = new Date(session.start_time);
+      console.log(
+        `📱 Upcoming Session ${index + 1}: ID: ${session.id}, Class: ${session.class.name}, Start Time (UTC): ${sessionTime.toISOString()}`,
+      );
+    });
+
+    // Process each session individually
+    for (const session of sessions) {
+      const phoneNumbers = session.class.students
+        .map((student) => student.student.phone_number)
+        .filter((phone): phone is string => phone !== null);
+
+      if (phoneNumbers.length > 0) {
+        try {
+          await sendNotificationSms(session, 'before1Hour');
+          successCount++;
+          allSuccessfulNumbers.push(...phoneNumbers);
+        } catch (error) {
+          failureCount++;
+          allFailedNumbers.push(...phoneNumbers);
+          console.error(`❌ Failed to process 1-hour SMS for session ${session.id}:`, error);
+        }
+      }
+    }
+
+    // Final summary
+    console.log(`📱 1-Hour SMS Notification Summary:`);
+    console.log(`✅ Successfully processed: ${successCount} sessions`);
+    console.log(`❌ Failed to process: ${failureCount} sessions`);
+    console.log(`✅ Total successful phone numbers: ${allSuccessfulNumbers.length}`, allSuccessfulNumbers);
+    if (allFailedNumbers.length > 0) {
+      console.log(`❌ Total failed phone numbers: ${allFailedNumbers.length}`, allFailedNumbers);
+    }
+  } catch (error) {
+    console.error('❌ Error in notifyUpcomingSessionsBefore1HourSMS:', error);
   }
 }
 
@@ -318,5 +453,95 @@ export async function sendSingleSMS(
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+/**
+ * Sends reminder SMS to tutors within 1 hour before their sessions
+ * @param client Supabase client instance
+ */
+export async function notifyTutorsWithin1HourSMS(
+  client: SupabaseClient,
+): Promise<void> {
+  try {
+    const tutorSessions: TutorNotificationClass[] =
+      await getTutorsForSessionsWithin1Hr(client);
+
+    if (tutorSessions.length === 0) {
+      console.log('📱 No upcoming sessions found for tutor 1-hour SMS notifications');
+      return;
+    }
+
+    console.log(
+      `📱 Found ${tutorSessions.length} sessions for tutor SMS notifications within 1 hour`,
+    );
+
+    let successCount = 0;
+    let failureCount = 0;
+    const successfulNumbers: string[] = [];
+    const failedNumbers: string[] = [];
+
+    // Process each tutor session individually
+    for (const tutorSession of tutorSessions) {
+      // Skip if tutor has no phone number
+      if (!tutorSession.tutor_phone_number) {
+        console.log(
+          `📱 No phone number found for tutor of class: ${tutorSession.class_name}`,
+        );
+        continue;
+      }
+
+      // Parse the session start time for proper date formatting
+      const sessionDate = new Date(tutorSession.next_session_time);
+      // Format time for India timezone (IST)
+      const localTime = Intl.DateTimeFormat('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata',
+      }).format(sessionDate);
+
+      // todo - update the link to the tutor session
+      const message = `Hi ${tutorSession.tutor_name || 'Tutor'}, your ${tutorSession.class_name} class is starting at ${localTime} today! Link to join: ${process.env.NEXT_PUBLIC_SITE_URL}/upcoming-sessions 
+- Comma Education`;
+
+      const smsRequest: SingleSMSRequest = {
+        phoneNumber: tutorSession.tutor_phone_number,
+        message,
+      };
+
+      console.log(
+        `📱 Sending 1-hour reminder SMS to tutor for class: ${tutorSession.class_name}, Phone: ${tutorSession.tutor_phone_number}, Tutor: ${tutorSession.tutor_name}`,
+      );
+
+      const result = await sendSingleSMS(smsRequest);
+
+      if (result.success) {
+        successCount++;
+        successfulNumbers.push(tutorSession.tutor_phone_number);
+        console.log(
+          `✅ Tutor 1-hour reminder SMS sent successfully for class ${tutorSession.class_name}. Message ID: ${result.messageId}`,
+        );
+      } else {
+        failureCount++;
+        failedNumbers.push(tutorSession.tutor_phone_number);
+        console.error(
+          `❌ Failed to send tutor 1-hour reminder SMS for class ${tutorSession.class_name}: ${result.error}`,
+        );
+      }
+
+      // Add a small delay between SMS sends to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    // Final summary
+    console.log(`📱 Tutor 1-Hour SMS Notification Summary:`);
+    console.log(`✅ Successfully sent: ${successCount} SMS messages`);
+    console.log(`❌ Failed to send: ${failureCount} SMS messages`);
+    console.log(`✅ Successful tutor phone numbers:`, successfulNumbers);
+    if (failedNumbers.length > 0) {
+      console.log(`❌ Failed tutor phone numbers:`, failedNumbers);
+    }
+  } catch (error) {
+    console.error('❌ Error in notifyTutorsWithin1HourSMS:', error);
   }
 }

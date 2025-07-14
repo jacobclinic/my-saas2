@@ -21,6 +21,7 @@ interface Props {
   setLessonDetails: (arg: LessonDetails) => void;
   onConfirm: () => void;
   loading: boolean;
+  originalLessonDetails?: LessonDetails;
 }
 
 const AddLessonDetailsDialog: React.FC<Props> = ({
@@ -29,8 +30,19 @@ const AddLessonDetailsDialog: React.FC<Props> = ({
   lessonDetails,
   setLessonDetails,
   onConfirm,
-  loading
+  loading,
+  originalLessonDetails
 }) => {
+
+  // Check if there are any changes from the original state
+  const hasChanges = () => {
+    if (!originalLessonDetails) return true; // Allow saving if no original state
+    
+    return (
+      lessonDetails.title !== (originalLessonDetails.title || '') ||
+      lessonDetails.description !== (originalLessonDetails.description || '')
+    );
+  };
 
   return (
     <BaseDialog
@@ -40,7 +52,8 @@ const AddLessonDetailsDialog: React.FC<Props> = ({
       maxWidth="xl"
       onConfirm={onConfirm}
       confirmButtonText="Save Changes"
-      confirmButtonVariant={'default'}
+      confirmButtonVariant={hasChanges() ? 'default' : 'secondary'}
+      confirmButtonDisabled={!hasChanges()}
       loading={loading}
     >
       <div className="">
@@ -80,18 +93,6 @@ const AddLessonDetailsDialog: React.FC<Props> = ({
               placeholder="Enter the lesson description..."
               className="w-full"
               rows={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="homework" className="flex items-center gap-2">
-              <BookMarked size={16} className="text-primary-blue-600" />
-              Homework/Assignment
-            </Label>
-            <Textarea
-              id="homework"
-              placeholder="Describe the homework or assignment for students"
-              className="min-h-[100px]"
             />
           </div>
         </div>

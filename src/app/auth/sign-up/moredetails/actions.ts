@@ -11,8 +11,6 @@ import UserType from '~/lib/user/types/user';
 
 const userDetailsSchema = z.object({
   displayName: z.string().min(2, 'Display name is required'),
-  firstName: z.string().min(2, 'First name is required'),
-  lastName: z.string().min(2, 'Last name is required'),
   phoneNumber: z.string().min(5, 'Phone number is required'),
   address: z.string().optional(),
 });
@@ -21,29 +19,69 @@ export async function ensureUserRecord(
   userId: string,
   email: string,
   userRole: string = 'user',
+  firstName?: string,
+  lastName?: string,
 ) {
   const client = getSupabaseServerActionClient();
 
   // Check if user record already exists
   const { data: existingUser } = await client
     .from(USERS_TABLE)
-    .select('id')
+    .select('id, first_name, last_name')
     .eq('id', userId)
     .single();
 
-  // If user record doesn't exist, create it
   if (!existingUser) {
+    // If user record doesn't exist, create it
     console.log('Creating new user record for:', userId);
 
-    const { error } = await client.from(USERS_TABLE).insert({
+    const insertData: any = {
       id: userId,
       email: email,
       user_role: userRole,
-    });
+    };
+
+    // Add name fields if provided
+    if (firstName) {
+      insertData.first_name = firstName;
+    }
+    if (lastName) {
+      insertData.last_name = lastName;
+    }
+
+    const { error } = await client.from(USERS_TABLE).insert(insertData);
 
     if (error) {
       console.error('Error creating user record:', error);
       throw error;
+    }
+  } else {
+    // If user record exists but names are missing, update them
+    const needsUpdate =
+      (firstName && !existingUser.first_name) ||
+      (lastName && !existingUser.last_name);
+
+    if (needsUpdate) {
+      console.log('Updating user record with names for:', userId);
+
+      const updateData: any = {};
+
+      if (firstName && !existingUser.first_name) {
+        updateData.first_name = firstName;
+      }
+      if (lastName && !existingUser.last_name) {
+        updateData.last_name = lastName;
+      }
+
+      const { error } = await client
+        .from(USERS_TABLE)
+        .update(updateData)
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error updating user record with names:', error);
+        throw error;
+      }
     }
   }
 
@@ -54,16 +92,13 @@ export async function updateUserDetailsAction(formData: FormData) {
   try {
     // Get form data
     const displayName = formData.get('displayName') as string;
-    const firstName = formData.get('firstName') as string;
-    const lastName = formData.get('lastName') as string;
     const phoneNumber = formData.get('phoneNumber') as string;
     const address = formData.get('address') as string;
+    const returnUrl = formData.get('returnUrl') as string;
 
     // Validate form data
     const validatedData = userDetailsSchema.parse({
       displayName,
-      firstName,
-      lastName,
       phoneNumber,
       address,
     });
@@ -85,8 +120,6 @@ export async function updateUserDetailsAction(formData: FormData) {
       .from(USERS_TABLE)
       .update({
         display_name: validatedData.displayName,
-        first_name: validatedData.firstName,
-        last_name: validatedData.lastName,
         phone_number: validatedData.phoneNumber,
         address: validatedData.address,
       })
@@ -99,8 +132,8 @@ export async function updateUserDetailsAction(formData: FormData) {
     // Revalidate paths
     revalidatePath('/');
 
-    // Redirect to dashboard
-    return redirect('/dashboard');
+    // Redirect to the appropriate destination
+    return redirect(returnUrl || '/dashboard');
   } catch (error) {
     console.error('Error updating user details:', error);
     return {
@@ -138,16 +171,13 @@ export async function updateProfilePhotoAction(
   }
 }
 
-export async function getUserByIdAction(
-  userId: string,
-): Promise<UserType> {
+export async function getUserByIdAction(userId: string): Promise<UserType> {
+  const client = getSupabaseServerActionClient();
 
-    const client = getSupabaseServerActionClient();
+  const data = await getUserById(client, userId);
 
-    const data= await getUserById(client, userId);
-
-    if (!data) {
-      throw new Error('User not found');
-    }
-    return data;
+  if (!data) {
+    throw new Error('User not found');
+  }
+  return data;
 }

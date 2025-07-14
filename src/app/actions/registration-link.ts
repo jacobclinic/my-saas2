@@ -8,6 +8,7 @@ export async function generateRegistrationLinkAction(registrationData: {
   className: string;
   nextSession: string;
   time: string;
+  tutorName: string;
 }) {
   const token = generateRegistrationToken(registrationData);
   return `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration/${token}`;

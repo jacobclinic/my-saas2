@@ -31,7 +31,8 @@ export function formatToLocalTime(
     return formatInTimeZone(dateObj, timezone, formatStr);
   } catch (error) {
     console.error('Error formatting date to local time:', error);
-    return dateObj.toLocaleTimeString();
+    // Use consistent fallback format to prevent hydration mismatches
+    return dateObj.toISOString().split('T')[1].slice(0, 5); // HH:MM format
   }
 }
 
@@ -83,9 +84,12 @@ export function formatDateTimeRange(
     return { formattedDate, formattedTime };
   } catch (error) {
     console.error('Error formatting date time range:', error);
+    // Use consistent fallback formats to prevent hydration mismatches
+    const fallbackDate = startDateObj.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const fallbackTime = startDateObj.toISOString().split('T')[1].slice(0, 5); // HH:MM format
     return {
-      formattedDate: startDateObj.toLocaleDateString(),
-      formattedTime: startDateObj.toLocaleTimeString(),
+      formattedDate: fallbackDate,
+      formattedTime: fallbackTime,
     };
   }
 }

@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { generateMonthlyInvoices } from '~/lib/invoices/database/mutations';
+import {
+  generateMonthlyInvoicesStudents,
+  generateMonthlyInvoicesTutor,
+} from '~/lib/invoices/database/mutations';
 
 export async function POST(req: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,18 +19,19 @@ export async function POST(req: Request) {
     const authHeader = req.headers.get('Authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return new Response('Unauthorized', { status: 401 });
-    }
-
-    //get current year and next month
+    } //get current year and next month
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth() + 1; // Months are zero-indexed
     const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
 
-    await generateMonthlyInvoices(supabase, currentYear, nextMonth);
+    // Generate both student and tutor invoices
+    await Promise.all([
+      generateMonthlyInvoicesStudents(supabase, currentYear, nextMonth),
+      generateMonthlyInvoicesTutor(supabase, currentYear, nextMonth),
+    ]);
 
     return new Response('Invoices generated successfully', { status: 200 });
-    
   } catch (error) {
     console.error('Error in GET /api/public/generate-invoice:', error);
     return new Response('Internal Server Error', { status: 500 });

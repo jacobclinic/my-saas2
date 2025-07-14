@@ -10,6 +10,7 @@ interface StudentData {
   last_name?: string | null;
   email?: string | null;
   phone_number?: string | null;
+  address: string | null;
   status?: string | null;
 }
 export interface ClassListStudent {
@@ -31,6 +32,10 @@ export interface ClassType {
   tutor_id: string;
   fee: number | null;
   status: string | null;
+  tutor?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
   time_slots:
     | {
         day: string;
@@ -105,6 +110,11 @@ export interface ClassListData {
   description?: string;
   timeSlots?: { day: string; time: string }[];
   classRawData?: ClassType;
+  tutor?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+  };
 }
 
 export interface ClassData {
@@ -149,13 +159,11 @@ export interface NewClassData {
   monthlyFee: string;
   startDate: string;
   // endDate: string;
-  timeSlots: [
-    {
-      day: string;
-      startTime: string;
-      endTime: string;
-    },
-  ];
+  timeSlots: {
+    day: string;
+    startTime: string;
+    endTime: string;
+  }[];
   tutorId: string;
 }
 

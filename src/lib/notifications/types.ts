@@ -32,14 +32,13 @@ interface NotificationClass {
   };
 }
 
-
 interface UnpaidStudent {
   id: string;
   first_name: string | null;
   last_name: string | null;
   email: string;
   phone_number: string | null;
-};
+}
 
 interface Payment {
   id: string;
@@ -48,13 +47,13 @@ interface Payment {
   amount: number | null;
   class_id: string | null;
   student_id: string | null;
-};
+}
 
 interface notificationsEnrollment {
   id: string;
   student_id: string;
   student: UnpaidStudent | UnpaidStudent[];
-};
+}
 
 interface Class {
   id: string;
@@ -63,7 +62,7 @@ interface Class {
   fee: number | null;
   tutor_id: string;
   students: notificationsEnrollment[] | null;
-};
+}
 
 interface SessionForUnpaidStudents {
   id: string;
@@ -72,7 +71,7 @@ interface SessionForUnpaidStudents {
   title: string | null;
   description: string | null;
   class_id: string | null;
-  class: Class | null; 
+  class: Class | null;
 }
 
 // Output interface for transformed data
@@ -93,4 +92,14 @@ interface SessionWithUnpaidStudents {
       student: UnpaidStudent;
     }[];
   };
-};
+}
+
+// Interface for tutor notification data
+interface TutorNotificationClass {
+  session_id: string;
+  class_id: string;
+  class_name: string | null;
+  next_session_time: string;
+  tutor_name: string | null;
+  tutor_phone_number: string | null;
+}

@@ -1,24 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../base-v2/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '../base-v2/ui/Card';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
 import {
-  Plus,
   Users,
   Copy,
   Check,
-  Edit2,
   CalendarDays,
-  ChevronRight,
   Calendar,
-  Building,
   BookOpen,
   UserPlus,
   Edit,
 } from 'lucide-react';
-import { cn } from '../../lib/utils';
 import {
   ClassCardProps,
   EditClassData,
@@ -49,6 +50,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
       className: classData.name || '',
       nextSession: classData.nextClass || classData.schedule || '',
       time: classData.schedule || '',
+      tutorName:
+        classData.tutor?.firstName + ' ' + classData.tutor?.lastName || '',
     };
 
     const registrationLink =
@@ -108,18 +111,31 @@ const ClassCard: React.FC<ClassCardProps> = ({
                 <CardTitle className="text-lg font-semibold text-neutral-900">
                   {classData.name}
                 </CardTitle>
-                {classData.classRawData ? <Badge variant="outline" className="mt-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200">
-                  {classData.classRawData.subject}
-                </Badge> : null}
+                {classData.classRawData ? (
+                  <Badge
+                    variant="outline"
+                    className="mt-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200"
+                  >
+                    {classData.classRawData.subject}
+                  </Badge>
+                ) : null}
                 {'grade' in classData && (
-                  <Badge variant="secondary" className="mt-1 ml-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200">
-                    {classData.grade}</Badge>
+                  <Badge
+                    variant="secondary"
+                    className="mt-1 ml-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200"
+                  >
+                    {classData.grade}
+                  </Badge>
                 )}
               </div>
             </div>
-            {classData.status === 'active' && (
+            {classData.status === 'active' ? (
               <Badge variant="outline" className="bg-success text-white">
-                active
+                Active
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="bg-danger text-white">
+                Canceled
               </Badge>
             )}
           </div>
@@ -146,9 +162,14 @@ const ClassCard: React.FC<ClassCardProps> = ({
             </div>
 
             <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
-              <Users size={18} className="text-primary-blue-600 flex-shrink-0" />
+              <Users
+                size={18}
+                className="text-primary-blue-600 flex-shrink-0"
+              />
               <div>
-                <p className="text-sm font-medium text-neutral-900">{classData.students} Students</p>
+                <p className="text-sm font-medium text-neutral-900">
+                  {classData.students} Students
+                </p>
                 <p className="text-xs text-neutral-600">Enrolled</p>
               </div>
             </div>
@@ -160,6 +181,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
               size="sm"
               className="text-primary-blue-700 hover:text-primary-blue-800 hover:bg-primary-blue-50"
               onClick={() => setShowAddStudentDialog(true)}
+              disabled={classData.status === 'canceled'}
             >
               <UserPlus size={16} className="mr-2" />
               Add Student
@@ -170,6 +192,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
               size="sm"
               className={`text-primary-blue-700 hover:text-primary-blue-800 hover:bg-primary-blue-50 ${linkCopied ? 'bg-primary-blue-50' : ''}`}
               onClick={handleCopyLink}
+              disabled={classData.status === 'canceled'}
             >
               {linkCopied ? (
                 <>
@@ -179,7 +202,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
               ) : (
                 <>
                   <Copy size={16} className="mr-2" />
-                  Copy Link
+                  Registration Link
                 </>
               )}
             </Button>
@@ -192,6 +215,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
             size="sm"
             className="border-primary-blue-200 text-primary-blue-700 hover:bg-primary-blue-50 group-hover:bg-primary-blue-50"
             onClick={() => setShowEditDialog(true)}
+            disabled={classData.status === 'canceled'}
           >
             <Edit size={16} className="mr-2" />
             Edit Class
@@ -200,7 +224,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
             variant="outline"
             size="sm"
             className="border-primary-blue-200 text-primary-blue-700 hover:bg-primary-blue-50 group-hover:bg-primary-blue-50"
-            onClick={() => setShowStudentsDialog(true)}
+            onClick={() => {
+              setShowStudentsDialog(true);
+            }}
           >
             View Students
           </Button>
@@ -212,6 +238,14 @@ const ClassCard: React.FC<ClassCardProps> = ({
         onClose={() => setShowStudentsDialog(false)}
         classDataName={classData?.name}
         studentData={classData?.classRawData?.students || []}
+        classInfo={{
+          tutorName: classData?.tutor
+            ? `${classData.tutor.firstName} ${classData.tutor.lastName}`
+            : undefined,
+          subject: classData?.classRawData?.subject || undefined,
+          grade: classData?.classRawData?.grade || undefined,
+          schedule: classData?.schedule || undefined,
+        }}
       />
       <EditClassDialog
         open={showEditDialog}

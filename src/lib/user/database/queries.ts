@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '~/database.types';
-import { USERS_TABLE } from '~/lib/db-tables';
+import { CLASSES_TABLE, USERS_TABLE } from '~/lib/db-tables';
 import UserType from '../types/user';
 
 /**
@@ -18,7 +18,9 @@ export async function getUserDataById(
       displayName: display_name,
       photoUrl: photo_url,
       first_name,
-      last_name
+      last_name,
+      phone_number,
+      address
     `,
     )
     .eq('id', userId)
@@ -34,7 +36,7 @@ export async function getUserDataById(
  */
 export async function fetchUserRole(
   client: SupabaseClient,
-  userId: string
+  userId: string,
 ): Promise<string> {
   if (!userId) {
     throw new Error('User ID is required.');
@@ -58,15 +60,16 @@ export async function fetchUserRole(
 }
 
 
+
 export async function getAllUsersByUserRoleData(
   client: SupabaseClient<Database>,
-  userRole: string
+  userRole: string,
 ): Promise<UserType[] | []> {
   try {
     const { data, error } = await client
       .from(USERS_TABLE)
       .select()
-      .eq('user_role', userRole)
+      .eq('user_role', userRole);
 
     // console.log("getAllUsersData", data)
 
@@ -77,8 +80,8 @@ export async function getAllUsersByUserRoleData(
     if (!data) {
       return [];
     }
-    
-    return data.map(user => ({
+
+    return data.map((user) => ({
       ...user,
       email: user.email || undefined,
       display_name: user.display_name || undefined,
@@ -87,9 +90,8 @@ export async function getAllUsersByUserRoleData(
       last_name: user.last_name || undefined,
       user_role: user.user_role || undefined,
       address: user.address || undefined,
-      biography: user.biography || undefined
+      biography: user.biography || undefined,
     })) as UserType[];
-
   } catch (error) {
     console.error('Failed to fetch all users:', error);
     throw error;
@@ -98,7 +100,7 @@ export async function getAllUsersByUserRoleData(
 
 export async function getUserById(
   client: SupabaseClient<Database>,
-  userId: string
+  userId: string,
 ): Promise<UserType | null> {
   const { data, error } = await client
     .from(USERS_TABLE)
@@ -112,4 +114,45 @@ export async function getUserById(
   }
 
   return data as UserType;
+}
+
+export async function isAdminOrCLassTutor(
+  client: SupabaseClient<Database>,
+  userId: string,
+  classId: string,
+): Promise<boolean> {
+  // Check user role and permissions
+  const { data: userProfile, error: profileError } = await client
+    .from(USERS_TABLE)
+    .select('user_role')
+    .eq('id', userId)
+    .single();
+
+  if (profileError || !userProfile) {
+    return false;
+  }
+
+  const isAdmin = userProfile.user_role === 'admin';
+
+  // If not admin, check if user is a tutor for the class
+  let isAuthorized = isAdmin;
+  if (!isAdmin) {
+    const { data: classData, error: classError } = await client
+      .from(CLASSES_TABLE)
+      .select('tutor_id')
+      .eq('id', classId)
+      .single();
+
+    if (classError || !classData) {
+      return false;
+    }
+
+    isAuthorized = classData.tutor_id === userId;
+  }
+
+  if (!isAuthorized) {
+    return false;
+  }
+
+  return true;
 }
