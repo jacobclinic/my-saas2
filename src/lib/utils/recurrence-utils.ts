@@ -44,12 +44,15 @@ export function generateWeeklyOccurrences(data: RecurrenceInput): RecurrenceOutp
 
         const userTimezone = data.timeSlot.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        const [year, month, day] = data.startDate.split('-').map(Number);
+        const startDate = new Date(data.startDate);
+        if (isNaN(startDate.getTime())) {
+            throw new Error('Invalid startDate format');
+        }
 
         const rrule = new RRule({
             freq: RRule.WEEKLY,
             byweekday: data.dayOfWeek ? [getDayOfWeek(data.dayOfWeek)] : undefined,
-            dtstart: new Date(Date.UTC(year, month - 1, day)),
+            dtstart: startDate,
             until: new Date(data.endDate),
         })
 
