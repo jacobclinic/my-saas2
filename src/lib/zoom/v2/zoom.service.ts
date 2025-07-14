@@ -32,21 +32,35 @@ export class ZoomService {
 
     async createZoomUserMeeting(userMeeting?: ZoomCreateUserMeetingRequest) {
         try {
-            const dummyPayload = {
-                userId: "Vf2X0zRyTkCz7lAzB9qCZw",
+            const dummyPayload: ZoomCreateUserMeetingRequest = {
+                userId: "QIfQsEAxR7WRAg1lDZAvtg",
                 body: {
+                    topic: "Test Meeting",
                     agenda: "Test Meeting",
                     default_password: true,
-                    duration: 60,
+                    duration: 360,
                     password: "123456",
                     pre_schedule: false,
                     start_time: "2025-08-31T07:30:00Z",
+                    type: 2,
                 }
             }
             const zoomUserMeeting = await this.client.createUserMeeting(dummyPayload);
+            return zoomUserMeeting;
         } catch (error) {
-            logger.error('Error creating zoom user meeting:', error);
+            logger.error(error, "Failed to create the zoom meeting");
+            console.log(error, "Failed to create the zoom meeting");
             throw new Error('Failed to create zoom user meeting. Please try again.');
+        }
+    }
+
+    async getZoomUserMeetings(userId: string) {
+        try {
+            const zoomUserMeetings = await this.client.getUserMeetings(userId);
+            return zoomUserMeetings;
+        } catch (error) {
+            logger.error(error, "Failed to get the zoom user meetings");
+            console.log(error, "Failed to get the zoom user meetings");
         }
     }
 }

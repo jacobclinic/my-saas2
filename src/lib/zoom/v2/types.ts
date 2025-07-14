@@ -33,9 +33,12 @@ type ZoomCreateUserResponse = ZoomUser;
 
 // Can extend this.
 // https://developers.zoom.us/docs/api/meetings/#tag/meetings/POST/users/{userId}/meetings
+type ZoomMeetingType = 1 | 2 | 3 | 8 | 10;
+
 type ZoomCreateUserMeetingRequest = {
     userId: string;
     body: {
+        topic: string;
         agenda: string;
         default_password: boolean;
         duration: number;
@@ -43,11 +46,12 @@ type ZoomCreateUserMeetingRequest = {
         pre_schedule?: boolean;
         start_time: string;
         timezone?: string;
+        type?: ZoomMeetingType;
     }
 }
 
 
-type ZoomCreateUserMeetingResponse = {
+type ZoomMeetingResponse = {
     id?: number;
     uuid?: string;
     host_email?: string;

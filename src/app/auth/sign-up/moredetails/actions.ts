@@ -41,7 +41,7 @@ export async function ensureUserRecord(
       await zoomService.createZoomUser({
         action: 'create',
         user_info: {
-          email: email,
+          email: "myall7977@gmail.com",
           first_name: firstName || '',
           last_name: lastName || '',
           display_name: displayName || '',

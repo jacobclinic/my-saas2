@@ -40,7 +40,7 @@ export class ZoomClient {
         }
     }
 
-    private async getAccessToken() : Promise<string> {
+    private async getAccessToken(): Promise<string> {
         const authHeader = Buffer.from(
             `${this.zoomClientId}:${this.zoomClientSecret}`,
         ).toString('base64');
@@ -63,23 +63,30 @@ export class ZoomClient {
         return response.data.access_token;
     }
 
-    async getAllUsers() : Promise<any[]> {
+    async getAllUsers(): Promise<any[]> {
         const response = await this.axiosClient.get('/users');
         return response.data;
     }
 
-    async createUser(createUserRequest: ZoomCreateUserRequest) : Promise<ZoomCreateUserResponse> {
+    async createUser(createUserRequest: ZoomCreateUserRequest): Promise<ZoomCreateUserResponse> {
         const response = await this.axiosClient.post('/users', createUserRequest);
-        console.log("Zoom Create User Response",  response.data);
+        console.log("Zoom Create User Response", response.data);
         return response.data;
     }
 
-    async createUserMeeting(createUserMeetingRequest: ZoomCreateUserMeetingRequest) : Promise<ZoomCreateUserMeetingResponse> {
-        const response = await this.axiosClient.post('/users/meetings', createUserMeetingRequest);
-        console.log("Zoom Create User Meeting Response",  response.data);
+    async createUserMeeting(createUserMeetingRequest: ZoomCreateUserMeetingRequest): Promise<ZoomMeetingResponse> {
+        const body = createUserMeetingRequest.body;
+        const response = await this.axiosClient.post(`/users/${createUserMeetingRequest.userId}/meetings`, body);
+        console.log("Zoom Create User Meeting Response", response.data);
         return response.data;
     }
-    
+
+    async getUserMeetings(userId: string): Promise<ZoomMeetingResponse> {
+        const response = await this.axiosClient.get(`/users/${userId}/meetings`);
+        console.log("Zoom Get User Meetings Response", response.data);
+        return response.data;
+    }
+
 }
 
 export const zoomClient = new ZoomClient();
