@@ -17,11 +17,28 @@ import {
 
 import NAVIGATION_CONFIG from '../navigation.config';
 import useSignOut from '~/core/hooks/use-sign-out';
+import useUserRole from '~/lib/user/hooks/use-userRole';
 
 const MobileAppNavigation = () => {
+  const { data: userRole } = useUserRole();
+
+  // Helper function to check if the role has access
+  const hasAccess = (itemRoles?: string[]) => {
+    if (!itemRoles) return true; // If roles are not defined, allow access
+    if (!userRole) return false; // If role is not defined, deny access
+    return itemRoles.includes(userRole);
+  };
+
   const Links = NAVIGATION_CONFIG.items.map((item, index) => {
     if ('children' in item) {
-      return item.children.map((child) => {
+      const visibleChildren = item.children.filter((child) =>
+        hasAccess(child.userRole)
+      );
+
+      // Only render the group's children if they have visible items
+      if (visibleChildren.length === 0) return null;
+
+      return visibleChildren.map((child) => {
         return (
           <DropdownLink
             key={child.path}
@@ -37,6 +54,11 @@ const MobileAppNavigation = () => {
       return <DropdownMenuSeparator key={index} />;
     }
 
+    // Handle top-level navigation items
+    if (!hasAccess(item.userRole)) {
+      return null; // Skip rendering if the user doesn't have access
+    }
+
     return (
       <DropdownLink
         key={item.path}
@@ -45,7 +67,7 @@ const MobileAppNavigation = () => {
         label={item.label}
       />
     );
-  });
+  }).filter(Boolean); // Remove null entries
 
   return (
     <DropdownMenu>
