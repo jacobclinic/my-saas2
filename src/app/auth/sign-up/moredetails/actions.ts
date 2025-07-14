@@ -8,6 +8,8 @@ import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { USERS_TABLE } from '~/lib/db-tables';
 import { getUserById } from '~/lib/user/database/queries';
 import UserType from '~/lib/user/types/user';
+import { zoomClient } from '~/lib/zoom/v2/client';
+import { zoomService } from '~/lib/zoom/v2/zoom.service';
 
 const userDetailsSchema = z.object({
   displayName: z.string().min(2, 'Display name is required'),
@@ -30,6 +32,26 @@ export async function ensureUserRecord(
     .select('id, first_name, last_name')
     .eq('id', userId)
     .single();
+
+  // Todo : Create the new users in zoom using comma education emails.
+  // Instead using the user email, use the comma education email.
+  try {
+    if (userRole === 'tutor') {
+      const displayName = `${firstName} ${lastName}`;
+      await zoomService.createZoomUser({
+        action: 'create',
+        user_info: {
+          email: email,
+          first_name: firstName || '',
+          last_name: lastName || '',
+          display_name: displayName || '',
+          type: 1,
+        }
+      })
+    }
+  } catch (error) {
+    console.error('Error creating zoom user:', error);
+  }
 
   if (!existingUser) {
     // If user record doesn't exist, create it

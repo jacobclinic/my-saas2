@@ -1,0 +1,85 @@
+import axios, { AxiosInstance } from "axios";
+
+export class ZoomClient {
+    private axiosClient: AxiosInstance;
+    private accessToken: string | null = null;
+    private tokenExpiresAt: number = 0;
+
+    private zoomClientId: string;
+    private zoomClientSecret: string;
+    private zoomAccountId: string;
+
+    constructor() {
+        this.zoomClientId = process.env.ZOOM_CLIENT_ID || '';
+        this.zoomClientSecret = process.env.ZOOM_CLIENT_SECRET || '';
+        this.zoomAccountId = process.env.ZOOM_ACCOUNT_ID || '';
+        this.axiosClient = axios.create({
+            baseURL: 'https://api.zoom.us/v2',
+            headers: {
+                'Authorization': `Bearer ${this.accessToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        this.axiosClient.interceptors.request.use(async (config) => {
+            if (!this.accessToken || Date.now() >= this.tokenExpiresAt) {
+                await this.refreshToken();
+            }
+            config.headers.Authorization = `Bearer ${this.accessToken}`;
+            return config;
+        });
+    }
+
+    private async refreshToken() {
+        try {
+            const accessToken = await this.getAccessToken();
+            this.accessToken = accessToken;
+            this.tokenExpiresAt = Date.now() + (2 * 60 * 60 * 1000); // 2 hours
+        } catch (error) {
+            console.error('Error refreshing Zoom token:', error);
+        }
+    }
+
+    private async getAccessToken() : Promise<string> {
+        const authHeader = Buffer.from(
+            `${this.zoomClientId}:${this.zoomClientSecret}`,
+        ).toString('base64');
+
+        const response = await axios.post(
+            'https://zoom.us/oauth/token',
+            {
+                grant_type: 'account_credentials',
+                account_id: this.zoomAccountId,
+                scope: 'meeting:write meeting:update meeting:read',
+            },
+            {
+                headers: {
+                    Authorization: `Basic ${authHeader}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+            },
+        );
+
+        return response.data.access_token;
+    }
+
+    async getAllUsers() : Promise<any[]> {
+        const response = await this.axiosClient.get('/users');
+        return response.data;
+    }
+
+    async createUser(createUserRequest: ZoomCreateUserRequest) : Promise<ZoomCreateUserResponse> {
+        const response = await this.axiosClient.post('/users', createUserRequest);
+        console.log("Zoom Create User Response",  response.data);
+        return response.data;
+    }
+
+    async createUserMeeting(createUserMeetingRequest: ZoomCreateUserMeetingRequest) : Promise<ZoomCreateUserMeetingResponse> {
+        const response = await this.axiosClient.post('/users/meetings', createUserMeetingRequest);
+        console.log("Zoom Create User Meeting Response",  response.data);
+        return response.data;
+    }
+    
+}
+
+export const zoomClient = new ZoomClient();

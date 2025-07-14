@@ -571,6 +571,38 @@ export type Database = {
           },
         ];
       };
+      zoom_users: {
+        Row: {
+          created_at: string;
+          zoom_user_id: string;
+          account_type: number;
+          tutor_id: string;
+          email: string;
+        };
+        Insert: {
+          created_at: string;
+          zoom_user_id: string;
+          account_type: number;
+          tutor_id: string;
+          email: string;
+        };
+        Update: {
+          created_at?: string;
+          zoom_user_id?: string;
+          account_type?: number;
+          tutor_id?: string;
+          email?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'zoom_users_tutor_id_fkey';
+            columns: ['tutor_id'];
+            isOneToOne: true;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
       users: {
         Row: {
           address: string | null;
