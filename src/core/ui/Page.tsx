@@ -51,7 +51,7 @@ export function PageHeader({
           'w-full flex lg:flex-col items-center lg:items-stretch justify-between lg:justify-normal space-x-2 lg:space-x-0'
         }
       >
-        <div className={'flex items-center lg:hidden'}>{mobileNavigation}</div>
+        <div className={'flex items-center lg:hidden relative'}>{mobileNavigation}</div>
 
         <Heading type={3}>
           <span className={'flex items-center space-x-0.5 lg:space-x-2'}>

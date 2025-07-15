@@ -2,23 +2,22 @@
 
 import Link from 'next/link';
 
-import {
-  ArrowLeftOnRectangleIcon,
-  Bars3Icon,
-} from '@heroicons/react/24/outline';
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
 } from '~/core/ui/Dropdown';
 
 import NAVIGATION_CONFIG from '../navigation.config';
 import useSignOut from '~/core/hooks/use-sign-out';
+import { LogOut, Menu, X } from 'lucide-react';
+import { useState } from 'react';
+import { cn } from '~/app/(app)/lib/utils';
+import { usePathname } from 'next/navigation';
+import Logo from '~/core/ui/Logo';
 
 const MobileAppNavigation = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const Links = NAVIGATION_CONFIG.items.map((item, index) => {
     if ('children' in item) {
       return item.children.map((child) => {
@@ -48,18 +47,34 @@ const MobileAppNavigation = () => {
   });
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Bars3Icon className={'h-9'} />
-      </DropdownMenuTrigger>
+    <div>
+      <button
+        className="lg:hidden z-50 p-2 bg-white rounded-lg shadow-md"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
 
-      <DropdownMenuContent sideOffset={10} className={'rounded-none w-screen'}>
+      <div className={cn(
+        "p-4 fixed lg:static inset-y-0 left-0 z-40 h-screen w-64 bg-white border-r border-neutral-200 flex flex-col gap-2 transform transition-transform duration-200 ease-in-out lg:transform-none",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}>
+        <div className='flex items-center justify-between p-1'>
+          <Logo />
+          <button
+            className="p-2 bg-white rounded-lg"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+
+            <X size={24} />
+          </button>
+        </div>
+        <DropdownMenuSeparator />
         {Links}
 
-        <DropdownMenuSeparator />
         <SignOutDropdownItem />
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </div>
+    </div>
   );
 };
 
@@ -72,17 +87,23 @@ function DropdownLink(
     Icon: React.ElementType;
   }>,
 ) {
+  const pathname = usePathname();
+  const isActive = pathname === props.path;
+ 
   return (
-    <DropdownMenuItem asChild key={props.path}>
+    <div key={props.path}>
       <Link
         href={props.path}
-        className={'flex w-full items-center space-x-4 h-12'}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200 ease-in-out",
+          isActive ? "bg-primary-blue-50 text-primary-blue-800 font-medium" : "text-neutral-600 hover:bg-primary-blue-50/70 hover:text-primary-blue-700"
+        )}
       >
         <props.Icon className={'h-6'} />
 
         <span>{props.label}</span>
       </Link>
-    </DropdownMenuItem>
+    </div>
   );
 }
 
@@ -90,13 +111,13 @@ function SignOutDropdownItem() {
   const signOut = useSignOut();
 
   return (
-    <DropdownMenuItem
-      className={'flex w-full items-center space-x-4 h-12'}
+    <div
+      className={'flex w-full items-center space-x-4 h-12 mt-2'}
       onClick={signOut}
     >
-      <ArrowLeftOnRectangleIcon className={'h-6'} />
+      <LogOut size={16} />
 
       <span>Sign Out</span>
-    </DropdownMenuItem>
+    </div>
   );
 }
