@@ -158,14 +158,15 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
       open={showMaterialDialog}
       onClose={() => setShowMaterialDialog(false)}
       title="Upload Class Materials"
-      maxWidth="2xl"
-      onConfirm={handleUpload}
+      maxWidth="xl"
+      onConfirm={isValid ? handleUpload : undefined}
       confirmButtonText={getConfirmButtonText()}
       loading={isPending}
       confirmButtonVariant={isValid ? 'default' : 'secondary'}
+      showCloseButton={false}
     >
       <div className="space-y-6">
-        {/* Existing Materials */}
+        <FileUploadDropzone onFilesAdded={handleFilesAdded} />
         {existingMaterials.length > 0 ? (
           <div className="space-y-3">
             {existingMaterials
@@ -194,7 +195,6 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
               ))}
           </div>
         ) : null}
-        <FileUploadDropzone onFilesAdded={handleFilesAdded} />
 
         {uploadingFiles.length > 0 && (
           <div className="space-y-3">
@@ -212,7 +212,7 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
           </div>
         )}
 
-        <div className="space-y-2 pb-2">
+        {/* <div className="space-y-2 pb-2">
           <label className="text-sm font-medium">Description for Students</label>
           <Textarea
             placeholder="Add a description or instructions for these materials..."
@@ -220,7 +220,12 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
             onChange={(e) => setDescription(e.target.value)}
             className="h-24"
           />
-        </div>
+        </div> */}
+        {existingMaterials.length === 0 && uploadingFiles.length === 0  ? <div className="text-center pt-8 pb-2 text-neutral-500">
+          <FileText size={40} className="mx-auto mb-3 text-neutral-400" />
+          <p>No materials uploaded yet</p>
+          <p className="text-sm">Upload files to share with your students</p>
+        </div> : null}
       </div>
     </BaseDialog>
   )
