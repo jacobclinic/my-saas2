@@ -81,58 +81,6 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
         prev.map(f => ({ ...f, status: 'uploading' as const }))
       )
 
-      // // Process files one by one
-      // for (let i = 0; i < uploadingFiles.length; i++) {
-      //   const uploadingFile = uploadingFiles[i]
-      //   const file = uploadingFile.file
-
-      //   try {
-      //     // Convert file to buffer
-      //     const buffer = await getFileBuffer(file)
-
-      //     // Update progress
-      //     setUploadingFiles(prev => 
-      //       prev.map(f => f.id === uploadingFile.id 
-      //         ? { ...f, progress: 50 } 
-      //         : f
-      //       )
-      //     )
-
-      //     // Upload to server
-      //     const result = await uploadSessionMaterialsAction({
-      //       sessionId,
-      //       file: {
-      //         name: file.name,
-      //         type: file.type,
-      //         size: file.size,
-      //         buffer: Array.from(new Uint8Array(buffer))
-      //       },
-      //       description,
-      //       csrfToken
-      //     })
-
-      //     if (result.success) {
-      //       // Update file status to complete
-      //       setUploadingFiles(prev => 
-      //         prev.map(f => f.id === uploadingFile.id 
-      //           ? { ...f, status: 'complete', progress: 100 } 
-      //           : f
-      //         )
-      //       )
-      //     } else {
-      //       throw new Error('Upload failed')
-      //     }
-      //   } catch (error) {
-      //     // Update file status to error
-      //     setUploadingFiles(prev => 
-      //       prev.map(f => f.id === uploadingFile.id 
-      //         ? { ...f, status: 'error', error: 'Upload failed' } 
-      //         : f
-      //       )
-      //     )
-      //   }
-      // }
-
       let filesToUpdateInDB = [];
       // Process files one by one
       for (const uploadingFile of uploadingFiles) {
