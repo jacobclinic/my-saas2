@@ -24,6 +24,7 @@ import { generateRegistrationLinkAction } from '~/app/actions/registration-link'
 import DeleteClassDialog from '../../classes/DeleteClassDialog';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
+import AppHeader from '../../AppHeader';
 
 const ClassesAdmin = ({
   classesData,
@@ -170,9 +171,8 @@ const ClassesAdmin = ({
 
   return (
     <>
+      <AppHeader title={'Class groups'} description={''} />
       <div className="max-w-7xl p-6">
-        <h1 className="text-3xl font-bold mb-6">Class groups</h1>
-
         {/* Filters */}
         <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex flex-wrap gap-4 items-end">
           <div>

@@ -126,6 +126,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
       end: true,
       userRole: ['admin', 'tutor', 'student'],
     },
+    { divider: true },
     {
       label: 'Settings',
       collapsible: false,

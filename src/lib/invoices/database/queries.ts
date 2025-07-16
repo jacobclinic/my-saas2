@@ -206,6 +206,7 @@ export async function getAllTutorInvoices(
           payment_period,
           amount,
           status,
+          payment_url,
           created_at,
           tutor:${USERS_TABLE}!tutor_id (
             id,
@@ -262,6 +263,7 @@ export async function getAllTutorInvoices(
         payment_period: invoice.payment_period,
         amount: invoice.amount || 0,
         status: invoice.status,
+        payment_url: invoice.payment_url || null,
         created_at: invoice.created_at,
       };
     });
@@ -295,6 +297,7 @@ export async function getTutorInvoicesByTutorId(
           payment_period,
           amount,
           status,
+          payment_url,
           created_at,
           class:${CLASSES_TABLE}!class_id (
             id,
@@ -341,6 +344,7 @@ export async function getTutorInvoicesByTutorId(
         payment_period: invoice.payment_period,
         amount: invoice.amount || 0,
         status: invoice.status,
+        payment_url: invoice.payment_url || null,
         created_at: invoice.created_at,
       };
     });
