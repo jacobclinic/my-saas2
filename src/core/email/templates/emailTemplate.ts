@@ -1422,7 +1422,7 @@ export function getNotifyClassUpdateTemplate(params:{
             <p>Hello ${studentName},</p>
             <p>This email is to inform you of a schedule change for your ${className} class.</p>
 
-            <p>Effective from ${firstClassDate}, all future sessions for yhis class will be held on:</p>
+            <p>Effective from ${firstClassDate}, all future sessions for this class will be held on:</p>
             <p><strong>${updatedClassDay} at ${updatedClassTime}</strong></p>
             
             <p>We apologize for any inconvenience this adjustment may cause.</p>
