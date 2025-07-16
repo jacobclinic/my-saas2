@@ -4,6 +4,7 @@ import {
   STUDENT_PAYMENTS_TABLE,
   TUTOR_INVOICES_TABLE,
   USERS_TABLE,
+  STUDENT_CLASS_ENROLLMENTS_TABLE,
 } from '~/lib/db-tables';
 import { generateMonthlyInvoicesStudents } from './mutations';
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -217,7 +218,8 @@ export async function getAllTutorInvoices(
             id,
             name,
             subject,
-            fee
+            fee,
+            ${STUDENT_CLASS_ENROLLMENTS_TABLE}(count)
           )
         `,
       )
@@ -263,6 +265,9 @@ export async function getAllTutorInvoices(
         amount: invoice.amount || 0,
         status: invoice.status,
         created_at: invoice.created_at,
+        student_count:
+          (classData as any)?.[STUDENT_CLASS_ENROLLMENTS_TABLE]?.[0]?.count ||
+          0,
       };
     });
   } catch (error) {
@@ -300,7 +305,8 @@ export async function getTutorInvoicesByTutorId(
             id,
             name,
             subject,
-            fee
+            fee,
+            ${STUDENT_CLASS_ENROLLMENTS_TABLE}(count)
           )
         `,
       )
@@ -322,28 +328,51 @@ export async function getTutorInvoicesByTutorId(
       return [];
     }
 
-    return data.map((invoice) => {
-      // Handle possible array returns from Supabase joins
-      const classData = Array.isArray(invoice.class)
-        ? invoice.class[0]
-        : invoice.class;
+    // For each tutor invoice, get the count of students who have paid
+    const tutorInvoicesWithPaidCount = await Promise.all(
+      data.map(async (invoice) => {
+        // Get count of students who have paid for this class and period
+        const { count } = await client
+          .from(INVOICES_TABLE)
+          .select('id', { count: 'exact', head: true })
+          .eq('class_id', invoice.class_id)
+          .eq('invoice_period', invoice.payment_period)
+          .eq('status', 'paid');
 
-      return {
-        id: invoice.id,
-        tutor_id: invoice.tutor_id,
-        tutor_name: '', // Not needed for tutor view
-        tutor_email: '',
-        class_id: invoice.class_id,
-        class_name: classData?.name || 'Unknown Class',
-        class_subject: classData?.subject || null,
-        class_fee: classData?.fee || 0,
-        invoice_no: invoice.invoice_no || null,
-        payment_period: invoice.payment_period,
-        amount: invoice.amount || 0,
-        status: invoice.status,
-        created_at: invoice.created_at,
-      };
-    });
+        // Handle possible array returns from Supabase joins
+        const classData = Array.isArray(invoice.class)
+          ? invoice.class[0]
+          : invoice.class;
+
+        // Get actual enrolled student count
+        const studentEnrollments = (classData as any)?.[
+          STUDENT_CLASS_ENROLLMENTS_TABLE
+        ];
+        const actualStudentCount = Array.isArray(studentEnrollments)
+          ? studentEnrollments[0]?.count || 0
+          : studentEnrollments?.count || 0;
+
+        return {
+          id: invoice.id,
+          tutor_id: invoice.tutor_id,
+          tutor_name: '', // Not needed for tutor view
+          tutor_email: '',
+          class_id: invoice.class_id,
+          class_name: classData?.name || 'Unknown Class',
+          class_subject: classData?.subject || null,
+          class_fee: classData?.fee || 0,
+          invoice_no: invoice.invoice_no || null,
+          payment_period: invoice.payment_period,
+          amount: invoice.amount || 0,
+          status: invoice.status,
+          created_at: invoice.created_at,
+          student_count: actualStudentCount,
+          paid_student_count: count || 0,
+        };
+      }),
+    );
+
+    return tutorInvoicesWithPaidCount;
   } catch (error) {
     console.error('Failed to fetch tutor invoices:', error);
     throw error;
