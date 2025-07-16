@@ -25,8 +25,6 @@ import { isAdminOrCLassTutor } from '../user/database/queries';
 import { createInvoiceForNewClass } from '../invoices/database/mutations';
 import { notifyStudentsAfterClassScheduleUpdate } from '../notifications/email/email.notification.service';
 import { notifyStudentsAfterClassScheduleUpdateSMS } from '../notifications/sms/sms.notification.service';
-import { promise } from 'zod';
-
 type CreateClassParams = {
   classData: NewClassData;
   csrfToken: string;
