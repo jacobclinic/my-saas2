@@ -45,10 +45,10 @@ export function PageHeader({
   mobileNavigation?: React.ReactNode;
 }>) {
   return (
-    <div className={'flex items-center justify-between p-6 border-b border-neutral-200'}>
+    <div className={'flex justify-between p-6 border-b border-neutral-200 gap-1 lg:gap-2 flex-col lg:flex-row items-end lg:items-center'}>
       <div
         className={
-          'w-full flex flex-col space-x-2 lg:space-x-0'
+          'w-full flex lg:flex-col items-center lg:items-stretch justify-between lg:justify-normal space-x-2 lg:space-x-0'
         }
       >
         <div className={'flex items-center lg:hidden'}>{mobileNavigation}</div>
