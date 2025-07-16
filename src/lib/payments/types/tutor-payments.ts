@@ -41,6 +41,8 @@ interface TutorPaymentData {
   amount: number;
   students: number;
   status: 'pending' | 'paid';
+  paidStudents: number; // Number of students who have paid
+  classFee: number; // Monthly fee per student
 }
 
 interface TutorPaymentStats {
