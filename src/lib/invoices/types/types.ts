@@ -48,6 +48,7 @@ interface TutorInvoice {
   amount: number;
   status: string | null;
   created_at: string;
+  payment_url?: string | null; // Payment proof URL from database
 }
 
 interface TutorInvoiceSummary {

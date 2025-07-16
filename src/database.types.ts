@@ -531,6 +531,7 @@ export type Database = {
           id: string;
           invoice_no: string;
           payment_period: string;
+          payment_url: string | null;
           status: string | null;
           tutor_id: string;
         };
@@ -541,6 +542,7 @@ export type Database = {
           id?: string;
           invoice_no: string;
           payment_period: string;
+          payment_url?: string | null;
           status?: string | null;
           tutor_id: string;
         };
@@ -551,6 +553,7 @@ export type Database = {
           id?: string;
           invoice_no?: string;
           payment_period?: string;
+          payment_url?: string | null;
           status?: string | null;
           tutor_id?: string;
         };
@@ -618,6 +621,41 @@ export type Database = {
           user_role?: string | null;
         };
         Relationships: [];
+      };
+      zoom_users: {
+        Row: {
+          account_type: number;
+          created_at: string;
+          email: string;
+          id: number;
+          tutor_id: string | null;
+          zoom_user_id: string;
+        };
+        Insert: {
+          account_type: number;
+          created_at?: string;
+          email: string;
+          id?: number;
+          tutor_id?: string | null;
+          zoom_user_id: string;
+        };
+        Update: {
+          account_type?: number;
+          created_at?: string;
+          email?: string;
+          id?: number;
+          tutor_id?: string | null;
+          zoom_user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'zoom_users_tutor_id_fkey';
+            columns: ['tutor_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: {
