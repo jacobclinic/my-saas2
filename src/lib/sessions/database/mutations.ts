@@ -104,6 +104,34 @@ export async function updateSession(
 }
 
 /**
+ * @description Updates all occurrences of a session by class ID
+ * @param client - Supabase client instance
+ * @param classId - ID of the class to update
+ * @param data - Session data to update (can be partial)
+ */
+export async function updateAllOccurrences(
+  client: Client,
+  classId: string,
+  data: Partial<Omit<SessionType, 'id'>>,
+) {
+  try {
+    const { data: updatedSession, error } = await client
+      .from(SESSIONS_TABLE)
+      .update(data)
+      .eq('class_id', classId)
+      .select('id') // Return the session ID after the update
+      .throwOnError();
+
+    if (error) throw error;
+
+    return updatedSession;
+  } catch (error) {
+    console.error('Error updating all occurrences:', error);
+    throw new Error('Failed to update all occurrences. Please try again.');
+  }
+}
+
+/**
  * @description Deletes a session by ID
  * @param client - Supabase client instance
  * @param sessionId - ID of the session to delete
@@ -124,6 +152,7 @@ export async function deleteSession(client: Client, sessionId: string) {
     throw new Error('Failed to delete session. Please try again.');
   }
 }
+
 
 // export async function updateRecordingUrl(
 //   client: Client,

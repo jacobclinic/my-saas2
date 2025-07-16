@@ -76,7 +76,7 @@ async function sendNotifySessionEmails(
           topic: task.topic,
           classId: task.class_id,
           studentEmail: task.to,
-        }); 
+        });
         console.log('sending email to', task.to);
 
         await emailService.sendEmail({

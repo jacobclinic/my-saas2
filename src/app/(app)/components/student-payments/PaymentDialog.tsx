@@ -54,10 +54,10 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   );
 
   const bankDetails = {
-    bankName: 'Commercial Bank',
-    accountName: 'Comma Education',
-    accountNumber: '1234567890',
-    branch: 'Colombo',
+    bankName: 'Hatton National Bank',
+    accountName: 'Comma Education (PVT) LTD',
+    accountNumber: '227010004378',
+    branch: 'Karapitiya',
   };
 
   const whatsappNumber = '+94716751777';
