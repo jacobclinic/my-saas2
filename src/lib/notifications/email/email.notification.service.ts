@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import {
   getAllUpcomingSessionsWithin1_2Hrs,
   getAllUpcomingSessionsWithin24_25Hrs,
