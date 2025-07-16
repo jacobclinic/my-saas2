@@ -299,7 +299,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
         {/* Class Schedule with Timezone Indicator */}
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium">Class Schedule</label>
             <TimezoneIndicator />
           </div>
           <div className="flex justify-between items-center mb-2">

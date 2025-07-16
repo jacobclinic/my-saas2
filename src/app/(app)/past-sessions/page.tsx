@@ -9,6 +9,7 @@ import {
 import PastSessionsClient from '../components/past-sessions/PastSessionClient';
 import StudentPastSessionClient from '../components/past-sessions-student/StudentPastSessionClient';
 import PastSessionsAdmin from '../components/admin/past-session/PastSessionsAdmin';
+import TimezoneIndicator from '../components/TimezoneIndicator';
 
 export const metadata = {
   title: 'Sessions',
@@ -53,7 +54,11 @@ async function PastSessionsPage() {
 
   return (
     <>
-      <AppHeader title={'Past Classes'} description={''} />
+      <AppHeader title={'Past Classes'} description={''} >
+        <div className='lg:w-[225px]'>
+          <TimezoneIndicator />
+        </div>
+      </AppHeader>
       <PageBody>
         {userRole === 'student' ? (
           <StudentPastSessionClient
