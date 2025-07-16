@@ -68,14 +68,13 @@ const EmailPasswordSignUpForm: React.FCC<{
     required: true,
     minLength: {
       value: 8,
-      message: 'Please provide a password with at least 6 characters',
+      message: 'Please provide a password with at least 8 characters',
     },
     validate: (value) => {
 
       const hasLowercase = /[a-z]/.test(value);
       const hasUppercase = /[A-Z]/.test(value);
       const hasDigit = /\d/.test(value);
-      const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value);
 
       if (!hasLowercase) {
         return 'Password must contain at least one lowercase letter';
@@ -87,10 +86,6 @@ const EmailPasswordSignUpForm: React.FCC<{
 
       if (!hasDigit) {
         return 'Password must contain at least one digit';
-      }
-
-      if (!hasSpecialChar) {
-        return 'Password must contain at least one special character';
       }
 
       return true;
