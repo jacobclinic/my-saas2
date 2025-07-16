@@ -101,27 +101,23 @@ export const updateTutorInvoiceStatusAction = withSession(
       // Get current invoice to preserve payment proof URL if it exists
       const { data: currentInvoice, error: fetchError } = await client
         .from(TUTOR_INVOICES_TABLE)
-        .select('status')
+        .select('status, payment_url')
         .eq('id', invoiceId)
         .single();
 
       if (fetchError) throw fetchError;
 
       let newStatus = status;
+      let paymentUrl = currentInvoice?.payment_url;
 
-      // If current status contains payment proof URL and we're updating to 'paid',
-      // we need to preserve the URL format but change the status
-      if (
-        currentInvoice?.status?.startsWith('proof_uploaded:') &&
-        status === 'paid'
-      ) {
-        const url = currentInvoice.status.replace('proof_uploaded:', '');
-        newStatus = `paid:${url}` as any;
+      // If we're updating to 'paid' and a payment proof URL exists, preserve the URL
+      if (status === 'paid' && paymentUrl) {
+        newStatus = 'paid';
       }
 
       const { error } = await client
         .from(TUTOR_INVOICES_TABLE)
-        .update({ status: newStatus })
+        .update({ status: newStatus, payment_url: paymentUrl })
         .eq('id', invoiceId);
 
       if (error) throw error;
