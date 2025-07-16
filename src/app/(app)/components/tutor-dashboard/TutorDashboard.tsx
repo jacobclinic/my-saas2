@@ -128,7 +128,7 @@ const TutorDashboard = ({
   }, [activeClassesData]);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-8">
+    <div className="p-6 max-w-full mx-auto space-y-8">
       {/* Quick Actions Alert */}
       <Alert className="bg-blue-50 border-blue-200">
         <Info className="h-4 w-4 text-blue-600" />

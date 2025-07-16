@@ -345,6 +345,15 @@ const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
     invoiceNo: invoice.invoice_no || `TI-${invoice.id.slice(0, 8)}`,
   }));
 
+  const columnWidths = {
+    actions: '30px',
+    status: '30px',
+    amount: '100px',
+    period: '100px',
+    submittedDate: '120px',
+    invoiceNo: '200px',
+  };
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -407,6 +416,7 @@ const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
           pageSize={pageSize}
           pageCount={pageCount}
           onPaginationChange={handlePaginationChange}
+          columnWidths={columnWidths}
         />
       )}
 

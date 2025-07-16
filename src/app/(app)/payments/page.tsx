@@ -54,16 +54,8 @@ async function PaymentsPage({
     if (userRole === 'admin') {
       // For administrators, show the full payment management interface
       try {
-        // Get payment summary statistics using our new server action
-        const summaryResult = await getPaymentSummaryForPage(selectedPeriod);
-        const summary = summaryResult.success ? summaryResult.summary : null;
-
         return (
           <>
-            <AppHeader
-              title="Admin Payments Dashboard"
-              description="Manage and verify payments for all students and tutors"
-            />
             <PageBody>
               <Suspense
                 fallback={
@@ -72,7 +64,7 @@ async function PaymentsPage({
                   </div>
                 }
               >
-                <AdminPaymentsPanel initialSummary={summary!} />
+                <AdminPaymentsPanel/>
               </Suspense>
             </PageBody>
           </>

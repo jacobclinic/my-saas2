@@ -1,7 +1,6 @@
 'use client';
 
 import { Fragment, useEffect, useState } from 'react';
-
 import {
   getCoreRowModel,
   useReactTable,
@@ -49,6 +48,7 @@ interface ReactTableProps<T extends object> {
   tableProps?: React.ComponentProps<typeof Table> & {
     [attr: `data-${string}`]: string;
   };
+  columnWidths?: { [key: string]: number | string };
 }
 
 function DataTable<T extends object>({
@@ -60,6 +60,7 @@ function DataTable<T extends object>({
   pageCount,
   onPaginationChange,
   tableProps,
+  columnWidths = {},
 }: ReactTableProps<T>) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: pageIndex ?? 0,
@@ -71,9 +72,25 @@ function DataTable<T extends object>({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
 
+  // Derive columnId for width mapping: prefer id, then accessorKey (string), else fallback
+  const columnsWithWidths = columns.map((column) => {
+    let columnId = column.id;
+    if (!columnId && 'accessorKey' in column && typeof column.accessorKey === 'string') {
+      columnId = column.accessorKey;
+    }
+    // Only set size if columnWidths has a value for this columnId
+    if (columnId && columnWidths[columnId] !== undefined) {
+      return {
+        ...column,
+        size: columnWidths[columnId],
+      } as ColumnDef<T>;
+    }
+    return column;
+  });
+
   const table = useReactTable({
     data,
-    columns,
+    columns: columnsWithWidths,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     onSortingChange: setSorting,
@@ -109,7 +126,10 @@ function DataTable<T extends object>({
                 <TableHead
                   colSpan={header.colSpan}
                   style={{
-                    width: header.column.getSize(),
+                    width:
+                      (header.column.id && columnWidths[header.column.id] !== undefined)
+                        ? columnWidths[header.column.id]
+                        : header.column.getSize() || 'auto',
                   }}
                   key={header.id}
                 >
@@ -137,7 +157,10 @@ function DataTable<T extends object>({
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     style={{
-                      width: cell.column.getSize(),
+                      width:
+                        (cell.column.id && columnWidths[cell.column.id] !== undefined)
+                          ? columnWidths[cell.column.id]
+                          : cell.column.getSize() || 'auto',
                     }}
                     key={cell.id}
                   >
