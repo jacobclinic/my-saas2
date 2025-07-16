@@ -437,7 +437,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     amount: '100px',
     period: '100px',
     submittedDate: '120px',
-    invoiceNo: '250px',
+    invoiceNo: '200px',
   };
 
   return (
