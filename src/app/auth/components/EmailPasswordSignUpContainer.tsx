@@ -50,80 +50,64 @@ const EmailPasswordSignUpContainer: React.FCC<{
       phoneNumber: string;
       address: string;
     }) => {
-      console.log('🔵 SignUp container - onSignupRequested called with params:', params);
-      
       if (loading) {
-        console.log('❌ SignUp already in progress, skipping...');
         return;
       }
 
       try {
-        console.log('🔵 Triggering signup mutation...');
         const data = await signUpMutation.trigger({
           email: params.email,
           password: params.password,
           userRole: params.userRole,
         });
-        
-        console.log('✅ Signup mutation successful, data:', data);
-        
+
         const userId = data?.user?.id;
         const email = data?.user?.email || params.email;
 
-        console.log('🔵 Extracted userId:', userId, 'email:', email);
-
-        // If successful signup, ensure user record exists in database with name fields
+        // If successful signup, ensure user record exists in database with only basic info
         if (userId && email) {
           try {
-            console.log('🔵 Attempting to upsert user details...');
             await upsertUserDetails({
               id: userId,
               first_name: params.firstName,
               last_name: params.lastName,
-              phone_number: params.phoneNumber,
-              address: params.address,
             });
-            console.log('✅ User details upserted successfully');
           } catch (error) {
-            console.error('❌ Failed to create user record:', error);
+            console.error('Failed to create user record:', error);
           }
         }
 
         // If the user is required to confirm their email, we display a message
         if (requireEmailConfirmation) {
-          console.log('🔵 Email confirmation required, showing alert');
           setShowVerifyEmailAlert(true);
 
           if (onSubmit) {
             onSubmit(userId);
           }
         } else {
-          console.log('🔵 No email confirmation required, proceeding with sign-in');
-          // Here we redirect the user to the moredetails page to collect additional information
+          // Here we redirect the user to the onboarding page to complete their profile
           redirecting.current = true;
 
           // First sign in the user to create a valid session
           try {
-            console.log('🔵 Attempting to sign in user after signup...');
             await signInMutation.trigger({
               email: params.email,
               password: params.password,
             });
-            console.log('✅ Sign-in after signup successful');
+
+            // Redirect to onboarding page
+            router.push(configuration.paths.onboarding);
 
             // If onSignUp callback is provided, call it first
             if (onSignUp) {
-              console.log('🔵 Calling onSignUp callback');
               onSignUp();
             }
           } catch (signInError) {
-            console.error('❌ Sign-in after signup failed:', signInError);
             // If sign-in fails, redirect to sign-in page
             router.push(configuration.paths.signIn);
           }
         }
       } catch (error) {
-        console.error('❌ Signup process failed:', error);
         if (onError) {
           onError(error);
         }

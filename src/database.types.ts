@@ -579,45 +579,60 @@ export type Database = {
           address: string | null;
           bank_details: Json | null;
           biography: string | null;
+          birthday: string | null;
+          class_size: string | null;
           created_at: string;
           display_name: string | null;
+          education_level: string | null;
           email: string | null;
           first_name: string | null;
           id: string;
+          identity_url: string | null;
           last_name: string | null;
           phone_number: string | null;
           photo_url: string | null;
           status: string | null;
+          subjects_teach: string[] | null;
           user_role: string | null;
         };
         Insert: {
           address?: string | null;
           bank_details?: Json | null;
           biography?: string | null;
+          birthday?: string | null;
+          class_size?: string | null;
           created_at?: string;
           display_name?: string | null;
+          education_level?: string | null;
           email?: string | null;
           first_name?: string | null;
           id: string;
+          identity_url?: string | null;
           last_name?: string | null;
           phone_number?: string | null;
           photo_url?: string | null;
           status?: string | null;
+          subjects_teach?: string[] | null;
           user_role?: string | null;
         };
         Update: {
           address?: string | null;
           bank_details?: Json | null;
           biography?: string | null;
+          birthday?: string | null;
+          class_size?: string | null;
           created_at?: string;
           display_name?: string | null;
+          education_level?: string | null;
           email?: string | null;
           first_name?: string | null;
           id?: string;
+          identity_url?: string | null;
           last_name?: string | null;
           phone_number?: string | null;
           photo_url?: string | null;
           status?: string | null;
+          subjects_teach?: string[] | null;
           user_role?: string | null;
         };
         Relationships: [];
@@ -680,7 +695,6 @@ export type Database = {
     };
   };
 };
-
 type DefaultSchema = Database[Extract<keyof Database, 'public'>];
 
 export type Tables<

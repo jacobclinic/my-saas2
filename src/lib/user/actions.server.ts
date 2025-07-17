@@ -7,6 +7,7 @@ import getLogger from '~/core/logger';
 
 import requireSession from '~/lib/user/require-session';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
+import configuration from '~/configuration';
 import { revalidatePath } from 'next/cache';
 import { USER_ROLES } from '../constants';
 import { generateSecurePassword } from '../utility-functions';
@@ -14,7 +15,7 @@ import UserType from './types/user';
 import { withSession } from '~/core/generic/actions-utils';
 import { fetchUserRole } from './database/queries';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { getStudentRegistrationEmailTemplate } from '~/core/email/templates/emailTemplate';
+import { getUserCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 
 export async function deleteUserAccountAction() {
@@ -100,13 +101,21 @@ export const createUserByAdminAction = async (
 
     // Send welcome email with credentials
     try {
-      const { sendUserCredentialsEmail } = await import('./email-utils');
-      await sendUserCredentialsEmail({
-        firstName: first_name || '',
-        lastName: last_name || '',
+      const { html, text } = getUserCredentialsEmailTemplate({
+        userName: `${first_name || ''} ${last_name || ''}`,
         email: email || '',
         password,
         userRole: userRole,
+        loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
+      });
+      
+      const emailService = EmailService.getInstance();
+      await emailService.sendEmail({
+        from: configuration.email.fromAddress || 'noreply@yourinstitute.com',
+        to: email || '',
+        subject: `Welcome to Your ${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Account`,
+        html,
+        text,
       });
     } catch (emailError) {
       console.error('Failed to send email:', emailError);
@@ -262,6 +271,9 @@ export async function createStudentAction({
       });
 
       // Send welcome email with credentials
+      const { EmailService } = await import('~/core/email/send-email-mailtrap');
+      const { getStudentRegistrationEmailTemplate } = await import('~/core/email/templates/emailTemplate');
+      
       const { html, text } = getStudentRegistrationEmailTemplate({
         studentName: `${firstName} ${lastName}`,
         email,

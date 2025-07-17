@@ -7,8 +7,8 @@ interface UpsertUserProps {
   id: string;
   first_name: string;
   last_name: string;
-  address: string;
-  phone_number: string;
+  address?: string;
+  phone_number?: string;
 }
 
 export async function upsertUserDetails({
@@ -23,8 +23,8 @@ export async function upsertUserDetails({
     id,
     first_name,
     last_name,
-    address,
-    phone_number,
+    address: address || null,
+    phone_number: phone_number || null,
     displayName: `${first_name} ${last_name}`,
     photoUrl: null,
   });

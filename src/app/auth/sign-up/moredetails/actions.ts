@@ -15,6 +15,13 @@ const userDetailsSchema = z.object({
   address: z.string().optional(),
 });
 
+const onboardingSchema = z.object({
+  dob: z.string().min(1, 'Date of birth is required'),
+  education: z.string().min(1, 'Education level is required'),
+  subjects: z.string().min(3, 'Subjects are required'),
+  classSize: z.string().min(1, 'Class size is required'),
+});
+
 export async function ensureUserRecord(
   userId: string,
   email: string,
@@ -180,4 +187,127 @@ export async function getUserByIdAction(userId: string): Promise<UserType> {
     throw new Error('User not found');
   }
   return data;
+}
+
+export async function updateOnboardingDetailsAction(formData: FormData) {
+  try {
+    // Get form data
+    const dob = formData.get('dob') as string;
+    const education = formData.get('education') as string;
+    const subjects = formData.get('subjects') as string;
+    const classSize = formData.get('classSize') as string;
+    const documentFile = formData.get('document') as File | null;
+    const returnUrl = formData.get('returnUrl') as string;
+
+    // Validate form data
+    const validatedData = onboardingSchema.parse({
+      dob,
+      education,
+      subjects,
+      classSize,
+    });
+
+    // Get Supabase client
+    const client = getSupabaseServerActionClient();
+
+    // Get current user
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    let identityUrl = null;
+
+    // Handle document upload if provided
+    if (documentFile && documentFile.size > 0) {
+      console.log('Document file provided:', {
+        name: documentFile.name,
+        size: documentFile.size,
+        type: documentFile.type
+      });
+      
+      try {
+        const bytes = await documentFile.arrayBuffer();
+        const bucket = client.storage.from('identity-proof');
+        const extension = documentFile.name.split('.').pop();
+        const fileName = `${user.id}.${extension}`;
+
+        console.log('Uploading document to bucket with filename:', fileName);
+
+        // Check if bucket exists and is accessible
+        const { data: buckets, error: bucketListError } = await client.storage.listBuckets();
+        console.log('Available buckets:', buckets?.map(b => b.name));
+        if (bucketListError) {
+          console.error('Error listing buckets:', bucketListError);
+        }
+
+        const result = await bucket.upload(fileName, bytes, {
+          upsert: true,
+        });
+
+        if (result.error) {
+          console.error('Storage upload error:', result.error);
+          throw new Error(`Upload failed: ${result.error.message}`);
+        }
+
+        console.log('Upload successful:', result.data);
+
+        const {
+          data: { publicUrl },
+        } = bucket.getPublicUrl(fileName);
+
+        identityUrl = publicUrl;
+        console.log('Generated public URL:', identityUrl);
+      } catch (uploadError) {
+        console.error('Error uploading identity document:', uploadError);
+        throw new Error(`Failed to upload identity document: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);
+      }
+    } else {
+      console.log('No document file provided or file size is 0');
+      throw new Error('Identity verification document is required');
+    }
+
+    // Update user profile in Supabase database with all onboarding fields
+    const subjectsArray = validatedData.subjects
+      .split(/[,\s]+/) // Split by commas and/or spaces
+      .map(subject => subject.trim()) // Trim whitespace
+      .filter(subject => subject.length > 0); // Remove empty strings
+
+    const updateData = {
+      birthday: validatedData.dob,
+      education_level: validatedData.education,
+      subjects_teach: subjectsArray, // Store as properly split array
+      class_size: validatedData.classSize,
+      identity_url: identityUrl,
+    };
+
+    console.log('Updating user with data:', updateData);
+
+    const { error } = await client
+      .from(USERS_TABLE)
+      .update(updateData)
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Database update error:', error);
+      throw error;
+    }
+
+    console.log('User profile updated successfully');
+
+    // Revalidate paths
+    revalidatePath('/');
+
+    // Redirect to the appropriate destination
+    return redirect(returnUrl || '/dashboard');
+  } catch (error) {
+    console.error('Error updating onboarding details:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An error occurred',
+    };
+  }
 }
