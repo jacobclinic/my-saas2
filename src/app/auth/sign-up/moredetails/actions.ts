@@ -226,26 +226,16 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
 
     // Handle document upload if provided
     if (documentFile && documentFile.size > 0) {
-      console.log('Document file provided:', {
-        name: documentFile.name,
-        size: documentFile.size,
-        type: documentFile.type,
-      });
 
       const bytes = await documentFile.arrayBuffer();
       const bucket = client.storage.from('identity-proof');
       const extension = documentFile.name.split('.').pop();
       const fileName = `${user.id}.${extension}`;
 
-      console.log('Uploading document to bucket with filename:', fileName);
-
       // Check if bucket exists and is accessible
       const { data: buckets, error: bucketListError } =
         await client.storage.listBuckets();
-      console.log(
-        'Available buckets:',
-        buckets?.map((b) => b.name),
-      );
+  
       if (bucketListError) {
         console.error('Error listing buckets:', bucketListError);
       }
@@ -259,14 +249,11 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
         throw new Error(`Upload failed: ${result.error.message}`);
       }
 
-      console.log('Upload successful:', result.data);
-
       const {
         data: { publicUrl },
       } = bucket.getPublicUrl(fileName);
 
       identityUrl = publicUrl;
-      console.log('Generated public URL:', identityUrl);
     } else {
       console.log('No document file provided or file size is 0');
       throw new Error('Identity verification document is required');
@@ -286,7 +273,6 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
       identity_url: identityUrl,
     };
 
-    console.log('Updating user with data:', updateData);
 
     const { error } = await client
       .from(USERS_TABLE)
@@ -297,8 +283,6 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
       console.error('Database update error:', error);
       throw error;
     }
-
-    console.log('User profile updated successfully');
 
     // Revalidate paths
     revalidatePath('/');

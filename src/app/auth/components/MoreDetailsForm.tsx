@@ -104,7 +104,12 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
       // Add document file to form data if present
       if (documentFile) {
         formData.append('document', documentFile);
+      } else {
+        console.log('No document file in React state');
       }
+      
+      // Also check what's in the form input
+      const fileInput = document.getElementById('document-upload') as HTMLInputElement;
 
       await updateOnboardingDetailsAction(formData);
 
@@ -210,6 +215,8 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                     required
                     type="date"
                     className="w-full"
+                    min={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate()).toISOString().split('T')[0]}
+                    max={new Date(new Date().getFullYear() - 13, new Date().getMonth(), new Date().getDate()).toISOString().split('T')[0]}
                   />
                 </TextField.Label>
               </TextField>
@@ -305,16 +312,20 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                   </p>
                   <div
                     className={`w-full border-2 border-dashed rounded-lg p-6 text-center transition-colors h-32 flex flex-col items-center justify-center ${
-                      documentFile
+                      formErrors.document
+                        ? 'border-red-300 bg-red-50'
+                        : documentFile
                         ? 'border-green-300 bg-green-50'
                         : 'border-gray-300 bg-gray-50 hover:border-gray-400'
                     }`}
                     onDragOver={(e) => {
                       e.preventDefault();
-                      e.currentTarget.classList.add(
-                        'border-blue-400',
-                        'bg-blue-50',
-                      );
+                      if (!formErrors.document) {
+                        e.currentTarget.classList.add(
+                          'border-blue-400',
+                          'bg-blue-50',
+                        );
+                      }
                     }}
                     onDragLeave={(e) => {
                       e.preventDefault();
@@ -331,19 +342,95 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                       );
                       const files = e.dataTransfer.files;
                       if (files.length > 0) {
-                        setDocumentFile(files[0]);
+                        const file = files[0];
+                        
+                        // Validate file type
+                        const allowedTypes = [
+                          'application/pdf',
+                          'image/jpeg',
+                          'image/jpg',
+                          'image/png',
+                        ];
+                        
+                        if (!allowedTypes.includes(file.type)) {
+                          setFormErrors(prev => ({
+                            ...prev,
+                            document: 'Document must be PDF, JPG, JPEG, or PNG'
+                          }));
+                          return;
+                        }
+                        
+                        // Validate file size (10MB limit)
+                        if (file.size > 10 * 1024 * 1024) {
+                          setFormErrors(prev => ({
+                            ...prev,
+                            document: 'File size must be less than 10MB'
+                          }));
+                          return;
+                        }
+                        
+                        // Clear any previous errors and set the file
+                        setFormErrors(prev => ({
+                          ...prev,
+                          document: undefined
+                        }));
+                        setDocumentFile(file);
+                        
+                        // Also update the hidden input so FormData can access it
+                        const fileInput = document.getElementById('document-upload') as HTMLInputElement;
+                        if (fileInput) {
+                          // Create a new FileList with the dropped file
+                          const dataTransfer = new DataTransfer();
+                          dataTransfer.items.add(file);
+                          fileInput.files = dataTransfer.files;
+                          console.log('File added to input via drag and drop:', file.name, file.size);
+                        }
                       }
                     }}
                   >
                     <input
                       type="file"
                       name="document"
-                      required
                       accept=".pdf,.jpg,.jpeg,.png"
                       className="hidden"
                       id="document-upload"
                       onChange={(e) => {
-                        setDocumentFile(e.target.files?.[0] || null);
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Validate file type
+                          const allowedTypes = [
+                            'application/pdf',
+                            'image/jpeg',
+                            'image/jpg',
+                            'image/png',
+                          ];
+                          
+                          if (!allowedTypes.includes(file.type)) {
+                            setFormErrors(prev => ({
+                              ...prev,
+                              document: 'Document must be PDF, JPG, JPEG, or PNG'
+                            }));
+                            e.target.value = ''; // Clear the input
+                            return;
+                          }
+                          
+                          // Validate file size (10MB limit)
+                          if (file.size > 10 * 1024 * 1024) {
+                            setFormErrors(prev => ({
+                              ...prev,
+                              document: 'File size must be less than 10MB'
+                            }));
+                            e.target.value = ''; // Clear the input
+                            return;
+                          }
+                          
+                          // Clear any previous errors and set the file
+                          setFormErrors(prev => ({
+                            ...prev,
+                            document: undefined
+                          }));
+                          setDocumentFile(file);
+                        }
                       }}
                     />
                     <label
@@ -351,51 +438,92 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                       className="cursor-pointer flex flex-col items-center justify-center w-full h-full"
                     >
                       {documentFile ? (
-                        <>
-                          <svg
-                            className="w-8 h-8 text-green-500 mb-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          <p className="text-sm text-green-700 font-medium">
+                        <div className="w-full">
+                          <div className="flex items-center justify-center mb-2">
+                            <svg
+                              className="w-8 h-8 text-green-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          </div>
+                          <p className="text-sm text-green-700 font-medium mb-1">
                             {documentFile.name}
                           </p>
-                          <p className="text-xs text-green-600">
+                          <p className="text-xs text-green-600 mb-2">
                             Click to change file
                           </p>
-                        </>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDocumentFile(null);
+                              const fileInput = document.getElementById('document-upload') as HTMLInputElement;
+                              if (fileInput) fileInput.value = '';
+                            }}
+                            className="text-xs text-red-600 hover:text-red-800 underline"
+                          >
+                            Remove file
+                          </button>
+                        </div>
                       ) : (
                         <>
-                          <svg
-                            className="w-8 h-8 text-gray-400 mb-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                            />
-                          </svg>
-                          <p className="text-sm text-gray-600 font-medium">
-                            Upload your document
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Drag and drop or click to browse
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            PDF, JPG, JPEG, PNG (Max 10MB)
-                          </p>
+                          {formErrors.document ? (
+                            <>
+                              <svg
+                                className="w-8 h-8 text-red-400 mb-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                />
+                              </svg>
+                              <p className="text-sm text-red-600 font-medium">
+                                Upload failed
+                              </p>
+                              <p className="text-xs text-red-500">
+                                Click to try again
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                className="w-8 h-8 text-gray-400 mb-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                />
+                              </svg>
+                              <p className="text-sm text-gray-600 font-medium">
+                                Upload your document
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Drag and drop or click to browse
+                              </p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                PDF, JPG, JPEG, PNG (Max 10MB)
+                              </p>
+                            </>
+                          )}
                         </>
                       )}
                     </label>

@@ -59,15 +59,6 @@ const loadAuthPageData = cache(async () => {
           return {};
         }
 
-        console.log('User data retrieved:', {
-          birthday: !!userData.birthday,
-          class_size: !!userData.class_size,
-          education_level: !!userData.education_level,
-          subjects_teach: !!userData.subjects_teach,
-          identity_url: !!userData.identity_url,
-          is_approved: userData.is_approved,
-        });
-
         // Check if tutor has completed required onboarding fields
         const hasRequiredDetails =
           userData.birthday &&
