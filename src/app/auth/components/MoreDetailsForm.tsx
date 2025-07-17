@@ -107,9 +107,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
       } else {
         console.log('No document file in React state');
       }
-      
+
       // Also check what's in the form input
-      const fileInput = document.getElementById('document-upload') as HTMLInputElement;
+      const fileInput = document.getElementById(
+        'document-upload',
+      ) as HTMLInputElement;
 
       await updateOnboardingDetailsAction(formData);
 
@@ -215,8 +217,24 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                     required
                     type="date"
                     className="w-full"
-                    min={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate()).toISOString().split('T')[0]}
-                    max={new Date(new Date().getFullYear() - 13, new Date().getMonth(), new Date().getDate()).toISOString().split('T')[0]}
+                    min={
+                      new Date(
+                        new Date().getFullYear() - 100,
+                        new Date().getMonth(),
+                        new Date().getDate(),
+                      )
+                        .toISOString()
+                        .split('T')[0]
+                    }
+                    max={
+                      new Date(
+                        new Date().getFullYear() - 13,
+                        new Date().getMonth(),
+                        new Date().getDate(),
+                      )
+                        .toISOString()
+                        .split('T')[0]
+                    }
                   />
                 </TextField.Label>
               </TextField>
@@ -315,8 +333,8 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                       formErrors.document
                         ? 'border-red-300 bg-red-50'
                         : documentFile
-                        ? 'border-green-300 bg-green-50'
-                        : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+                          ? 'border-green-300 bg-green-50'
+                          : 'border-gray-300 bg-gray-50 hover:border-gray-400'
                     }`}
                     onDragOver={(e) => {
                       e.preventDefault();
@@ -343,7 +361,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                       const files = e.dataTransfer.files;
                       if (files.length > 0) {
                         const file = files[0];
-                        
+
                         // Validate file type
                         const allowedTypes = [
                           'application/pdf',
@@ -351,39 +369,45 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                           'image/jpg',
                           'image/png',
                         ];
-                        
+
                         if (!allowedTypes.includes(file.type)) {
-                          setFormErrors(prev => ({
+                          setFormErrors((prev) => ({
                             ...prev,
-                            document: 'Document must be PDF, JPG, JPEG, or PNG'
+                            document: 'Document must be PDF, JPG, JPEG, or PNG',
                           }));
                           return;
                         }
-                        
+
                         // Validate file size (10MB limit)
                         if (file.size > 10 * 1024 * 1024) {
-                          setFormErrors(prev => ({
+                          setFormErrors((prev) => ({
                             ...prev,
-                            document: 'File size must be less than 10MB'
+                            document: 'File size must be less than 10MB',
                           }));
                           return;
                         }
-                        
+
                         // Clear any previous errors and set the file
-                        setFormErrors(prev => ({
+                        setFormErrors((prev) => ({
                           ...prev,
-                          document: undefined
+                          document: undefined,
                         }));
                         setDocumentFile(file);
-                        
+
                         // Also update the hidden input so FormData can access it
-                        const fileInput = document.getElementById('document-upload') as HTMLInputElement;
+                        const fileInput = document.getElementById(
+                          'document-upload',
+                        ) as HTMLInputElement;
                         if (fileInput) {
                           // Create a new FileList with the dropped file
                           const dataTransfer = new DataTransfer();
                           dataTransfer.items.add(file);
                           fileInput.files = dataTransfer.files;
-                          console.log('File added to input via drag and drop:', file.name, file.size);
+                          console.log(
+                            'File added to input via drag and drop:',
+                            file.name,
+                            file.size,
+                          );
                         }
                       }
                     }}
@@ -404,30 +428,31 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                             'image/jpg',
                             'image/png',
                           ];
-                          
+
                           if (!allowedTypes.includes(file.type)) {
-                            setFormErrors(prev => ({
+                            setFormErrors((prev) => ({
                               ...prev,
-                              document: 'Document must be PDF, JPG, JPEG, or PNG'
+                              document:
+                                'Document must be PDF, JPG, JPEG, or PNG',
                             }));
                             e.target.value = ''; // Clear the input
                             return;
                           }
-                          
+
                           // Validate file size (10MB limit)
                           if (file.size > 10 * 1024 * 1024) {
-                            setFormErrors(prev => ({
+                            setFormErrors((prev) => ({
                               ...prev,
-                              document: 'File size must be less than 10MB'
+                              document: 'File size must be less than 10MB',
                             }));
                             e.target.value = ''; // Clear the input
                             return;
                           }
-                          
+
                           // Clear any previous errors and set the file
-                          setFormErrors(prev => ({
+                          setFormErrors((prev) => ({
                             ...prev,
-                            document: undefined
+                            document: undefined,
                           }));
                           setDocumentFile(file);
                         }
@@ -466,7 +491,9 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                               e.preventDefault();
                               e.stopPropagation();
                               setDocumentFile(null);
-                              const fileInput = document.getElementById('document-upload') as HTMLInputElement;
+                              const fileInput = document.getElementById(
+                                'document-upload',
+                              ) as HTMLInputElement;
                               if (fileInput) fileInput.value = '';
                             }}
                             className="text-xs text-red-600 hover:text-red-800 underline"

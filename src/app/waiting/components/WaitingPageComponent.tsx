@@ -93,7 +93,7 @@ const WaitingPageComponent: React.FC<WaitingPageComponentProps> = ({
                   Email Notification
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  You'll receive an email confirmation within 24 hours
+                  You&apos;ll receive an email confirmation within 24 hours
                 </p>
               </div>
             </div>
@@ -144,13 +144,13 @@ const WaitingPageComponent: React.FC<WaitingPageComponentProps> = ({
           </button>
           {!emailSent && (
             <p className="text-xs text-gray-500 mt-2">
-              We'll send updates to your registered email address. Please check
-              your spam folder if you don't see our email.
+              We&apos;ll send updates to your registered email address. Please check
+              your spam folder if you don&apos;t see our email.
             </p>
           )}
           {emailSent && (
             <p className="text-xs text-green-600 mt-2">
-              We've sent a reminder to {userEmail}. Please check your inbox and
+              We&apos;ve sent a reminder to {userEmail}. Please check your inbox and
               spam folder.
             </p>
           )}
@@ -189,9 +189,9 @@ const WaitingPageComponent: React.FC<WaitingPageComponentProps> = ({
         {/* Return to Login Button */}
         <Button
           onClick={handleReturnToLogin}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+          className='text-sm sm:text-base py-2 sm:py-2.5 bg-primary-800 text-white hover:bg-primary-700 focus:ring-primary-600/50 bg-gradient-to-br from-primary-700 to-primary-800 w-full'
         >
-          Return to Login →
+          Return to Sign in
         </Button>
       </div>
     </div>
