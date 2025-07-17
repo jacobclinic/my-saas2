@@ -16,22 +16,50 @@ export const config = {
 
 export async function middleware(request: NextRequest) {
   const startTime = Date.now();
+  console.log('Middleware called for path:', request.nextUrl.pathname);
+
   if (request.nextUrl.pathname.startsWith('/api/public')) {
     return NextResponse.next();
   }
+
+  // Skip middleware for waiting page to avoid redirect loops
+  if (request.nextUrl.pathname === '/waiting') {
+    return NextResponse.next();
+  }
+
   const response = NextResponse.next();
+  console.log('Starting CSRF middleware for:', request.nextUrl.pathname);
   const csrfResponse = await withCsrfMiddleware(request, response);
+  console.log(
+    'CSRF middleware completed in',
+    Date.now() - startTime,
+    'ms for:',
+    request.nextUrl.pathname,
+  );
+  console.log('Starting session middleware for:', request.nextUrl.pathname);
   const sessionResponse = await sessionMiddleware(request, csrfResponse);
-  const onboardingResponse = await onboardingMiddleware(request, sessionResponse);
+  const onboardingResponse = await onboardingMiddleware(
+    request,
+    sessionResponse,
+  );
 
   return await roleBasedMiddleware(request, onboardingResponse);
 }
 
 async function sessionMiddleware(req: NextRequest, res: NextResponse) {
   const supabase = createMiddlewareClient(req, res);
+  console.log('Starting session retrieval for:', req.nextUrl.pathname);
   const startTime = Date.now();
   await supabase.auth.getSession();
   const endTime = Date.now();
+  console.log(
+    'Session retrieval took:',
+    endTime - startTime,
+    'ms for:',
+    req.nextUrl.pathname,
+  );
+  // const user = await supabase.auth.getSession();
+  // console.log('-----1------User:', user);
 
   return res;
 }
@@ -72,11 +100,14 @@ function isServerAction(request: NextRequest) {
   return headers.has(NEXT_ACTION_HEADER);
 }
 
-async function onboardingMiddleware(request: NextRequest, response: NextResponse) {
+async function onboardingMiddleware(
+  request: NextRequest,
+  response: NextResponse,
+) {
   const pathname = request.nextUrl.pathname;
-  
+
   // Skip onboarding check for specific paths including the onboarding page
-  const skipOnboardingCheck = 
+  const skipOnboardingCheck =
     pathname.startsWith('/auth') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
@@ -101,8 +132,11 @@ async function onboardingMiddleware(request: NextRequest, response: NextResponse
   }
 
   // Get user role from metadata
-  const userRole = user.user?.user_metadata['role'] || user.user?.user_metadata['userRole'] || user.user?.user_metadata['user_role'];
-  
+  const userRole =
+    user.user?.user_metadata['role'] ||
+    user.user?.user_metadata['userRole'] ||
+    user.user?.user_metadata['user_role'];
+
   // Only apply onboarding checks to tutors
   if (userRole !== 'tutor') {
     return response;
@@ -112,7 +146,9 @@ async function onboardingMiddleware(request: NextRequest, response: NextResponse
   try {
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('birthday, class_size, education_level, identity_url, photo_url, subjects_teach, user_role')
+      .select(
+        'birthday, class_size, education_level, identity_url, photo_url, subjects_teach, user_role, is_approved',
+      )
       .eq('id', user.user.id)
       .single();
 
@@ -127,22 +163,31 @@ async function onboardingMiddleware(request: NextRequest, response: NextResponse
     }
 
     // Check if user has completed required onboarding fields (including identity_url)
-    const hasRequiredDetails = 
-      userData.birthday && 
-      userData.class_size && 
-      userData.education_level && 
-      userData.subjects_teach && 
+    const hasRequiredDetails =
+      userData.birthday &&
+      userData.class_size &&
+      userData.education_level &&
+      userData.subjects_teach &&
       userData.identity_url &&
-      userData.birthday.trim() !== '' && 
-      userData.class_size.trim() !== '' && 
-      userData.education_level.trim() !== '' && 
+      userData.birthday.trim() !== '' &&
+      userData.class_size.trim() !== '' &&
+      userData.education_level.trim() !== '' &&
       userData.identity_url.trim() !== '' &&
       userData.subjects_teach.length > 0;
 
     // If user hasn't completed onboarding, redirect to onboarding page
     if (!hasRequiredDetails) {
-      const onboardingUrl = new URL(configuration.paths.onboarding, request.url);
+      const onboardingUrl = new URL(
+        configuration.paths.onboarding,
+        request.url,
+      );
       return NextResponse.redirect(onboardingUrl);
+    }
+
+    // If tutor has completed onboarding but is not approved, redirect to waiting page
+    if (hasRequiredDetails && !userData.is_approved) {
+      const waitingUrl = new URL('/waiting', request.url);
+      return NextResponse.redirect(waitingUrl);
     }
   } catch (error) {
     // If there's any error checking onboarding status, allow through
@@ -178,9 +223,15 @@ async function adminMiddleware(request: NextRequest, response: NextResponse) {
   return response;
 }
 
-async function roleBasedMiddleware(request: NextRequest, response: NextResponse) {
+async function roleBasedMiddleware(
+  request: NextRequest,
+  response: NextResponse,
+) {
   const pathname = request.nextUrl.pathname;
-  const isInAppPath = pathname.startsWith('/admin') || pathname.startsWith('/tutor') || pathname.startsWith('/student');
+  const isInAppPath =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/tutor') ||
+    pathname.startsWith('/student');
 
   if (!isInAppPath) {
     return response;
@@ -200,7 +251,11 @@ async function roleBasedMiddleware(request: NextRequest, response: NextResponse)
     return NextResponse.redirect(configuration.paths.signIn);
   }
 
-  const userRole = user.user?.user_metadata['role'] || user.user?.user_metadata['userRole'] || user.user?.user_metadata['user_role'] || 'admin';
+  const userRole =
+    user.user?.user_metadata['role'] ||
+    user.user?.user_metadata['userRole'] ||
+    user.user?.user_metadata['user_role'] ||
+    'admin';
 
   // Restrict access based on user userRole
   if (pathname.startsWith('/admin') && userRole !== 'admin') {
@@ -211,7 +266,11 @@ async function roleBasedMiddleware(request: NextRequest, response: NextResponse)
     return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
   }
 
-  if (pathname.startsWith('/students') && userRole !== 'tutor' && userRole !== 'admin') {
+  if (
+    pathname.startsWith('/students') &&
+    userRole !== 'tutor' &&
+    userRole !== 'admin'
+  ) {
     return NextResponse.redirect(`${configuration.site.siteUrl}/404`);
   }
 

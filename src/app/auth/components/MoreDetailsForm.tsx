@@ -105,19 +105,24 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
       if (documentFile) {
         formData.append('document', documentFile);
       }
-      
-      const result = await updateOnboardingDetailsAction(formData);
-      
-      // Check if the action returned an error response
-      if (result && 'error' in result && !result.success) {
-        toast.error(result.error);
-        return;
-      }
-      
+
+      await updateOnboardingDetailsAction(formData);
+
+      // If we reach here, there was no redirect (which means success)
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error submitting form:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile. Please try again.';
+
+      // Check if this is a redirect error (which is actually success)
+      if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
+        // This is a successful redirect, don't show error
+        return;
+      }
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Failed to update profile. Please try again.';
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -298,16 +303,103 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                     Upload a government-issued ID, passport, or professional
                     certificate for identity verification (required)
                   </p>
-                  <input
-                    type="file"
-                    name="document"
-                    required
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    className="w-full border rounded px-2 py-2 mb-2"
-                    onChange={(e) => {
-                      setDocumentFile(e.target.files?.[0] || null);
+                  <div
+                    className={`w-full border-2 border-dashed rounded-lg p-6 text-center transition-colors h-32 flex flex-col items-center justify-center ${
+                      documentFile
+                        ? 'border-green-300 bg-green-50'
+                        : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+                    }`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add(
+                        'border-blue-400',
+                        'bg-blue-50',
+                      );
                     }}
-                  />
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove(
+                        'border-blue-400',
+                        'bg-blue-50',
+                      );
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove(
+                        'border-blue-400',
+                        'bg-blue-50',
+                      );
+                      const files = e.dataTransfer.files;
+                      if (files.length > 0) {
+                        setDocumentFile(files[0]);
+                      }
+                    }}
+                  >
+                    <input
+                      type="file"
+                      name="document"
+                      required
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      id="document-upload"
+                      onChange={(e) => {
+                        setDocumentFile(e.target.files?.[0] || null);
+                      }}
+                    />
+                    <label
+                      htmlFor="document-upload"
+                      className="cursor-pointer flex flex-col items-center justify-center w-full h-full"
+                    >
+                      {documentFile ? (
+                        <>
+                          <svg
+                            className="w-8 h-8 text-green-500 mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <p className="text-sm text-green-700 font-medium">
+                            {documentFile.name}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            Click to change file
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-8 h-8 text-gray-400 mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                            />
+                          </svg>
+                          <p className="text-sm text-gray-600 font-medium">
+                            Upload your document
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Drag and drop or click to browse
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            PDF, JPG, JPEG, PNG (Max 10MB)
+                          </p>
+                        </>
+                      )}
+                    </label>
+                  </div>
                 </TextField.Label>
               </TextField>
 

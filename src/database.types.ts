@@ -588,6 +588,7 @@ export type Database = {
           first_name: string | null;
           id: string;
           identity_url: string | null;
+          is_approved: boolean;
           last_name: string | null;
           phone_number: string | null;
           photo_url: string | null;
@@ -608,6 +609,7 @@ export type Database = {
           first_name?: string | null;
           id: string;
           identity_url?: string | null;
+          is_approved?: boolean;
           last_name?: string | null;
           phone_number?: string | null;
           photo_url?: string | null;
@@ -628,6 +630,7 @@ export type Database = {
           first_name?: string | null;
           id?: string;
           identity_url?: string | null;
+          is_approved?: boolean;
           last_name?: string | null;
           phone_number?: string | null;
           photo_url?: string | null;

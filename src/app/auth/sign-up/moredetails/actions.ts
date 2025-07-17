@@ -46,6 +46,7 @@ export async function ensureUserRecord(
       id: userId,
       email: email,
       user_role: userRole,
+      is_approved: userRole === 'tutor' ? false : true, // Tutors need approval, others are auto-approved
     };
 
     // Add name fields if provided
@@ -190,6 +191,9 @@ export async function getUserByIdAction(userId: string): Promise<UserType> {
 }
 
 export async function updateOnboardingDetailsAction(formData: FormData) {
+  const client = getSupabaseServerActionClient();
+
+  let user;
   try {
     // Get form data
     const dob = formData.get('dob') as string;
@@ -207,17 +211,16 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
       classSize,
     });
 
-    // Get Supabase client
-    const client = getSupabaseServerActionClient();
-
     // Get current user
     const {
-      data: { user },
+      data: { user: currentUser },
     } = await client.auth.getUser();
 
-    if (!user) {
+    if (!currentUser) {
       throw new Error('User not authenticated');
     }
+
+    user = currentUser;
 
     let identityUrl = null;
 
@@ -226,45 +229,44 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
       console.log('Document file provided:', {
         name: documentFile.name,
         size: documentFile.size,
-        type: documentFile.type
+        type: documentFile.type,
       });
-      
-      try {
-        const bytes = await documentFile.arrayBuffer();
-        const bucket = client.storage.from('identity-proof');
-        const extension = documentFile.name.split('.').pop();
-        const fileName = `${user.id}.${extension}`;
 
-        console.log('Uploading document to bucket with filename:', fileName);
+      const bytes = await documentFile.arrayBuffer();
+      const bucket = client.storage.from('identity-proof');
+      const extension = documentFile.name.split('.').pop();
+      const fileName = `${user.id}.${extension}`;
 
-        // Check if bucket exists and is accessible
-        const { data: buckets, error: bucketListError } = await client.storage.listBuckets();
-        console.log('Available buckets:', buckets?.map(b => b.name));
-        if (bucketListError) {
-          console.error('Error listing buckets:', bucketListError);
-        }
+      console.log('Uploading document to bucket with filename:', fileName);
 
-        const result = await bucket.upload(fileName, bytes, {
-          upsert: true,
-        });
-
-        if (result.error) {
-          console.error('Storage upload error:', result.error);
-          throw new Error(`Upload failed: ${result.error.message}`);
-        }
-
-        console.log('Upload successful:', result.data);
-
-        const {
-          data: { publicUrl },
-        } = bucket.getPublicUrl(fileName);
-
-        identityUrl = publicUrl;
-        console.log('Generated public URL:', identityUrl);
-      } catch (uploadError) {
-        console.error('Error uploading identity document:', uploadError);
-        throw new Error(`Failed to upload identity document: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);
+      // Check if bucket exists and is accessible
+      const { data: buckets, error: bucketListError } =
+        await client.storage.listBuckets();
+      console.log(
+        'Available buckets:',
+        buckets?.map((b) => b.name),
+      );
+      if (bucketListError) {
+        console.error('Error listing buckets:', bucketListError);
       }
+
+      const result = await bucket.upload(fileName, bytes, {
+        upsert: true,
+      });
+
+      if (result.error) {
+        console.error('Storage upload error:', result.error);
+        throw new Error(`Upload failed: ${result.error.message}`);
+      }
+
+      console.log('Upload successful:', result.data);
+
+      const {
+        data: { publicUrl },
+      } = bucket.getPublicUrl(fileName);
+
+      identityUrl = publicUrl;
+      console.log('Generated public URL:', identityUrl);
     } else {
       console.log('No document file provided or file size is 0');
       throw new Error('Identity verification document is required');
@@ -273,8 +275,8 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
     // Update user profile in Supabase database with all onboarding fields
     const subjectsArray = validatedData.subjects
       .split(/[,\s]+/) // Split by commas and/or spaces
-      .map(subject => subject.trim()) // Trim whitespace
-      .filter(subject => subject.length > 0); // Remove empty strings
+      .map((subject) => subject.trim()) // Trim whitespace
+      .filter((subject) => subject.length > 0); // Remove empty strings
 
     const updateData = {
       birthday: validatedData.dob,
@@ -300,9 +302,6 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
 
     // Revalidate paths
     revalidatePath('/');
-
-    // Redirect to the appropriate destination
-    return redirect(returnUrl || '/dashboard');
   } catch (error) {
     console.error('Error updating onboarding details:', error);
     return {
@@ -310,4 +309,7 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
       error: error instanceof Error ? error.message : 'An error occurred',
     };
   }
+
+  // Redirect tutors to waiting page for approval (outside try-catch to allow redirect to work)
+  redirect('/waiting');
 }
