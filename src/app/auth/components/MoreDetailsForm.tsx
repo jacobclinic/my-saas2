@@ -403,11 +403,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                           const dataTransfer = new DataTransfer();
                           dataTransfer.items.add(file);
                           fileInput.files = dataTransfer.files;
-                          console.log(
-                            'File added to input via drag and drop:',
-                            file.name,
-                            file.size,
-                          );
+                          // File added to input via drag and drop
                         }
                       }
                     }}
