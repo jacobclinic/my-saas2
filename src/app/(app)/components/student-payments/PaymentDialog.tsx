@@ -67,6 +67,30 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check file size (5MB = 5 * 1024 * 1024 bytes)
+    const maxSizeInBytes = 5 * 1024 * 1024;
+    if (file.size > maxSizeInBytes) {
+      setUploadingFile({
+        file,
+        progress: 0,
+        status: 'error',
+        error: 'File is too large. Please use a file smaller than 1MB.',
+      });
+      return;
+    }
+
+    // Check file type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadingFile({
+        file,
+        progress: 0,
+        status: 'error',
+        error: 'Invalid file format. Please use PNG, JPEG, JPG, or PDF files only.',
+      });
+      return;
+    }
+
     try {
       setUploadingFile({
         file,
@@ -124,12 +148,30 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       }
     } catch (error) {
       console.log(error);
+      
+      // Enhanced error messaging
+      let errorMessage = 'Upload failed. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Body exceeded') || error.message.includes('1 MB limit') || error.message.includes('2mb limit') || error.message.includes('5mb limit')) {
+          errorMessage = 'File is too large. Please use a file smaller than 1MB.';
+        } else if (error.message.includes('network') || error.message.includes('Network')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+          errorMessage = 'Upload timed out. Please try again with a smaller file.';
+        } else if (error.message.includes('format') || error.message.includes('type')) {
+          errorMessage = 'Invalid file format. Please use PNG, JPEG, JPG, or PDF files only.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      }
+      
       setUploadingFile((prev) =>
         prev
           ? {
               ...prev,
               status: 'error',
-              error: 'Upload failed. Please try again.',
+              error: errorMessage,
             }
           : null,
       );
