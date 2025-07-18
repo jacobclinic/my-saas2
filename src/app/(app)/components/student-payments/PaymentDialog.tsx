@@ -67,7 +67,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size (5MB = 5 * 1024 * 1024 bytes)
+    // Check file size (1MB = 1 * 1024 * 1024 bytes)
     const maxSizeInBytes = 5 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
       setUploadingFile({
