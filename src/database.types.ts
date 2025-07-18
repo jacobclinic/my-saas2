@@ -258,6 +258,7 @@ export type Database = {
           description: string | null;
           end_time: string | null;
           id: string;
+          meeting_scheduled: boolean;
           meeting_url: string | null;
           recording_urls: string[] | null;
           recurring_session_id: string | null;
@@ -277,6 +278,7 @@ export type Database = {
           description?: string | null;
           end_time?: string | null;
           id?: string;
+          meeting_scheduled?: boolean;
           meeting_url?: string | null;
           recording_urls?: string[] | null;
           recurring_session_id?: string | null;
@@ -296,6 +298,7 @@ export type Database = {
           description?: string | null;
           end_time?: string | null;
           id?: string;
+          meeting_scheduled?: boolean;
           meeting_url?: string | null;
           recording_urls?: string[] | null;
           recurring_session_id?: string | null;
@@ -579,48 +582,147 @@ export type Database = {
           address: string | null;
           bank_details: Json | null;
           biography: string | null;
+          birthday: string | null;
+          city: string | null;
+          class_size: string | null;
           created_at: string;
           display_name: string | null;
+          district: string | null;
+          education_level: string | null;
           email: string | null;
           first_name: string | null;
           id: string;
+          identity_url: string | null;
+          is_approved: boolean;
           last_name: string | null;
           phone_number: string | null;
           photo_url: string | null;
           status: string | null;
+          subjects_teach: string[] | null;
           user_role: string | null;
         };
         Insert: {
           address?: string | null;
           bank_details?: Json | null;
           biography?: string | null;
+          birthday?: string | null;
+          city?: string | null;
+          class_size?: string | null;
           created_at?: string;
           display_name?: string | null;
+          district?: string | null;
+          education_level?: string | null;
           email?: string | null;
           first_name?: string | null;
           id: string;
+          identity_url?: string | null;
+          is_approved?: boolean;
           last_name?: string | null;
           phone_number?: string | null;
           photo_url?: string | null;
           status?: string | null;
+          subjects_teach?: string[] | null;
           user_role?: string | null;
         };
         Update: {
           address?: string | null;
           bank_details?: Json | null;
           biography?: string | null;
+          birthday?: string | null;
+          city?: string | null;
+          class_size?: string | null;
           created_at?: string;
           display_name?: string | null;
+          district?: string | null;
+          education_level?: string | null;
           email?: string | null;
           first_name?: string | null;
           id?: string;
+          identity_url?: string | null;
+          is_approved?: boolean;
           last_name?: string | null;
           phone_number?: string | null;
           photo_url?: string | null;
           status?: string | null;
+          subjects_teach?: string[] | null;
           user_role?: string | null;
         };
         Relationships: [];
+      };
+      zoom_sessions: {
+        Row: {
+          created_at: string;
+          creation_source: string | null;
+          duration: number | null;
+          host_id: string;
+          host_user_id: string;
+          id: number;
+          join_url: string;
+          meeting_id: string;
+          meeting_uuid: string;
+          password: string | null;
+          session_id: string;
+          settings_json: Json | null;
+          start_time: string;
+          start_url: string;
+          status: string | null;
+          timezone: string | null;
+          type: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          creation_source?: string | null;
+          duration?: number | null;
+          host_id: string;
+          host_user_id: string;
+          id?: number;
+          join_url: string;
+          meeting_id: string;
+          meeting_uuid: string;
+          password?: string | null;
+          session_id: string;
+          settings_json?: Json | null;
+          start_time: string;
+          start_url: string;
+          status?: string | null;
+          timezone?: string | null;
+          type?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          creation_source?: string | null;
+          duration?: number | null;
+          host_id?: string;
+          host_user_id?: string;
+          id?: number;
+          join_url?: string;
+          meeting_id?: string;
+          meeting_uuid?: string;
+          password?: string | null;
+          session_id?: string;
+          settings_json?: Json | null;
+          start_time?: string;
+          start_url?: string;
+          status?: string | null;
+          timezone?: string | null;
+          type?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'zoom_sessions_host_user_id_fkey';
+            columns: ['host_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'zoom_sessions_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'sessions';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       zoom_users: {
         Row: {
@@ -680,7 +782,6 @@ export type Database = {
     };
   };
 };
-
 type DefaultSchema = Database[Extract<keyof Database, 'public'>];
 
 export type Tables<

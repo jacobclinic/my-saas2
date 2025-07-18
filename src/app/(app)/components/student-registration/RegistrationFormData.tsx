@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../base-v2/ui/Card';
 import { Input } from '../base-v2/ui/Input';
 import { Button } from '../base-v2/ui/Button';
-import { User, Mail, Phone, ArrowRight, Lock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base-v2/ui/Select';
+import { Checkbox } from '../base-v2/ui/Checkbox';
+import { User, Mail, Phone, ArrowRight, Lock, Calendar, MapPin } from 'lucide-react';
 import { registerStudentAction } from '../../../actions/public/student-registration';
 import { ClassRegistrationData } from '~/lib/registration-link';
 import RegistrationSuccess from './RegistrationSuccess';
@@ -16,6 +18,8 @@ import { validateName } from '~/core/hooks/use-validate-name';
 import { validatePhoneNumber } from '~/core/hooks/use-validate-phonenumber';
 import { validateEmail } from '~/core/hooks/use-validate-email';
 import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
+import { validateBirthday, getBirthdayDateLimits } from '~/core/hooks/use-validate-birthday';
+import { SRI_LANKA_DISTRICTS } from '~/lib/constants/sri-lanka-districts';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 
@@ -24,7 +28,10 @@ interface RegistrationFormData {
   lastName: string;
   email: string;
   phone: string;
+  birthday: string;
   address: string;
+  city: string;
+  district: string;
   password: string;
 }
 
@@ -33,7 +40,10 @@ interface FieldTouchedState {
   lastName?: boolean;
   email?: boolean;
   phone?: boolean;
+  birthday?: boolean;
   address?: boolean;
+  city?: boolean;
+  district?: boolean;
   password?: boolean;
 }
 
@@ -51,7 +61,10 @@ const StudentRegistrationForm = ({
     lastName: '',
     email: '',
     phone: '',
+    birthday: '',
     address: '',
+    city: '',
+    district: '',
     password: '',
   });
   const [errors, setErrors] = useState<Partial<RegistrationFormData>>({});
@@ -62,14 +75,13 @@ const StudentRegistrationForm = ({
 
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   const signUpMutation = useSignUpWithEmailAndPasswordMutation();
+  const birthdayLimits = getBirthdayDateLimits();
 
-  // Real-time validation function
-  const validateField = (
-    fieldName: keyof RegistrationFormData,
-    value: string,
-  ) => {
+  // Simplified validation function
+  const validateFormField = (fieldName: keyof RegistrationFormData, value: string) => {
     const newErrors = { ...errors };
 
     switch (fieldName) {
@@ -101,6 +113,15 @@ const StudentRegistrationForm = ({
         }
         break;
 
+      case 'birthday':
+        const birthdayResult = validateBirthday(value);
+        if (!birthdayResult.isValid) {
+          newErrors.birthday = birthdayResult.message;
+        } else {
+          delete newErrors.birthday;
+        }
+        break;
+
       case 'password':
         const passwordResult = validatePassword(value);
         if (!passwordResult.isValid) {
@@ -115,6 +136,22 @@ const StudentRegistrationForm = ({
           newErrors.address = 'Address is required';
         } else {
           delete newErrors.address;
+        }
+        break;
+
+      case 'city':
+        if (!value.trim()) {
+          newErrors.city = 'City is required';
+        } else {
+          delete newErrors.city;
+        }
+        break;
+
+      case 'district':
+        if (!value.trim()) {
+          newErrors.district = 'District is required';
+        } else {
+          delete newErrors.district;
         }
         break;
     }
@@ -143,61 +180,8 @@ const StudentRegistrationForm = ({
 
     // Validate field if it has been touched
     if (fieldTouched[fieldName] || filteredValue.length > 0) {
-      validateField(fieldName, filteredValue);
+      validateFormField(fieldName, filteredValue);
     }
-  };
-
-  const validateForm = () => {
-    const newErrors: Partial<RegistrationFormData> = {};
-
-    // Validate first name
-    const firstNameResult = validateName(formData.firstName);
-    if (!firstNameResult.isValid) {
-      newErrors.firstName = firstNameResult.message;
-    }
-
-    // Validate last name
-    const lastNameResult = validateName(formData.lastName);
-    if (!lastNameResult.isValid) {
-      newErrors.lastName = lastNameResult.message;
-    }
-
-    // Validate email
-    const emailResult = validateEmail(formData.email);
-    if (!emailResult.isValid) {
-      newErrors.email = emailResult.message;
-    }
-
-    // Validate phone number
-    const phoneResult = validatePhoneNumber(formData.phone);
-    if (!phoneResult.isValid) {
-      newErrors.phone = phoneResult.message;
-    }
-
-    // Validate password
-    const passwordResult = validatePassword(formData.password);
-    if (!passwordResult.isValid) {
-      newErrors.password = passwordResult.message;
-    }
-
-    // Validate address
-    if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
-    }
-
-    // Check password confirmation
-    if (formData.password !== confirmPassword) {
-      setPasswordError('Passwords do not match');
-    } else {
-      setPasswordError('');
-    }
-
-    setErrors(newErrors);
-    return (
-      Object.keys(newErrors).length === 0 &&
-      !passwordError &&
-      confirmPassword.trim() !== ''
-    );
   };
 
   // Check if form is valid for enabling/disabling the submit button
@@ -207,6 +191,7 @@ const StudentRegistrationForm = ({
     const isLastNameValid = validateName(formData.lastName).isValid;
     const isEmailValid = validateEmail(formData.email).isValid;
     const isPhoneValid = validatePhoneNumber(formData.phone).isValid;
+    const isBirthdayValid = validateBirthday(formData.birthday).isValid;
     const isPasswordValid = validatePassword(formData.password).isValid;
 
     const isBasicInfoValid =
@@ -214,7 +199,10 @@ const StudentRegistrationForm = ({
       isLastNameValid &&
       isEmailValid &&
       isPhoneValid &&
+      isBirthdayValid &&
       formData.address.trim() !== '' &&
+      formData.city.trim() !== '' &&
+      formData.district.trim() !== '' &&
       isPasswordValid;
 
     const isPasswordConfirmationValid =
@@ -222,55 +210,56 @@ const StudentRegistrationForm = ({
       formData.password === confirmPassword &&
       !passwordError;
 
-    return isBasicInfoValid && isPasswordConfirmationValid;
+    return isBasicInfoValid && isPasswordConfirmationValid && agreeToTerms;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      if (validateForm()) {
-        try {
-          // Check if the user already exists in the database
-          const registerResult = await signUpMutation.trigger({
-            email: formData.email,
-            password: formData.password,
-            userRole: 'student',
-          });
+    
+    if (!isFormValid()) {
+      return;
+    }
 
-          if (!registerResult) {
-            throw new Error('User already exists');
-          }
-          console.log('User registered successfully:', registerResult);
-        } catch (error) {
-          setErrors({ email: 'User already exists' });
-          return;
-        }
+    try {
+      // Check if the user already exists in the database
+      const registerResult = await signUpMutation.trigger({
+        email: formData.email,
+        password: formData.password,
+        userRole: 'student',
+      });
 
-        const result = await registerStudentAction({
-          ...formData,
-          classId: classData.classId || '',
-          nameOfClass: classData.className,
-        });
-
-        if (result.success) {
-          console.log('Student registered successfully:', result);
-          // Redirect to credentials/welcome page
-          setIsRegistrationSuccess(true);
-          setRegisteredUserData({
-            username: result.userData?.email,
-            email: result.userData?.email,
-            nextClass: {
-              sessionId: nextSessionData.id,
-              date: classData.nextSession,
-              time: classData.time,
-              zoomLink: '',
-            },
-            materials: [],
-          });
-        } else {
-          setErrors({ email: result.error });
-        }
+      if (!registerResult) {
+        throw new Error('User already exists');
       }
+      console.log('User registered successfully:', registerResult);
+    } catch (error) {
+      setErrors({ email: 'User already exists' });
+      return;
+    }
+
+    const result = await registerStudentAction({
+      ...formData,
+      classId: classData.classId || '',
+      nameOfClass: classData.className,
+    });
+
+    if (result.success) {
+      console.log('Student registered successfully:', result);
+      // Redirect to credentials/welcome page
+      setIsRegistrationSuccess(true);
+      setRegisteredUserData({
+        username: result.userData?.email,
+        email: result.userData?.email,
+        nextClass: {
+          sessionId: nextSessionData.id,
+          date: classData.nextSession,
+          time: classData.time,
+          zoomLink: '',
+        },
+        materials: [],
+      });
+    } else {
+      setErrors({ email: result.error });
     }
   };
 
@@ -296,7 +285,7 @@ const StudentRegistrationForm = ({
     setFieldTouched({ ...fieldTouched, password: true });
 
     // Validate password field
-    validateField('password', newPassword);
+    validateFormField('password', newPassword);
 
     // Clear password error when password changes
     if (passwordError) {
@@ -350,7 +339,7 @@ const StudentRegistrationForm = ({
                     }
                     onBlur={() => {
                       setFieldTouched({ ...fieldTouched, firstName: true });
-                      validateField('firstName', formData.firstName);
+                      validateFormField('firstName', formData.firstName);
                     }}
                     icon={<User className="h-4 w-4 text-gray-500" />}
                   />
@@ -371,7 +360,7 @@ const StudentRegistrationForm = ({
                     }
                     onBlur={() => {
                       setFieldTouched({ ...fieldTouched, lastName: true });
-                      validateField('lastName', formData.lastName);
+                      validateFormField('lastName', formData.lastName);
                     }}
                     icon={<User className="h-4 w-4 text-gray-500" />}
                   />
@@ -392,7 +381,7 @@ const StudentRegistrationForm = ({
                   onChange={(e) => handleFieldChange('email', e.target.value)}
                   onBlur={() => {
                     setFieldTouched({ ...fieldTouched, email: true });
-                    validateField('email', formData.email);
+                    validateFormField('email', formData.email);
                   }}
                   icon={<Mail className="h-4 w-4 text-gray-500" />}
                 />
@@ -401,39 +390,100 @@ const StudentRegistrationForm = ({
                 )}
               </div>
 
-              <div>
-                <label className="text-sm font-medium">Phone Number</label>
-                <Input
-                  placeholder="Enter phone number"
-                  value={formData.phone}
-                  onChange={(e) => handleFieldChange('phone', e.target.value)}
-                  onBlur={() => {
-                    setFieldTouched({ ...fieldTouched, phone: true });
-                    validateField('phone', formData.phone);
-                  }}
-                  icon={<Phone className="h-4 w-4 text-gray-500" />}
-                />
-                {errors.phone && (
-                  <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Phone Number</label>
+                  <Input
+                    placeholder="07XXXXXXXX"
+                    value={formData.phone}
+                    onChange={(e) => handleFieldChange('phone', e.target.value)}
+                    onBlur={() => {
+                      setFieldTouched({ ...fieldTouched, phone: true });
+                      validateFormField('phone', formData.phone);
+                    }}
+                    icon={<Phone className="h-4 w-4 text-gray-500" />}
+                  />
+                  {errors.phone && (
+                    <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Birthday</label>
+                  <Input
+                    type="date"
+                    value={formData.birthday}
+                    min={birthdayLimits.min}
+                    max={birthdayLimits.max}
+                    onChange={(e) => handleFieldChange('birthday', e.target.value)}
+                    onBlur={() => {
+                      setFieldTouched({ ...fieldTouched, birthday: true });
+                      validateFormField('birthday', formData.birthday);
+                    }}
+                    icon={<Calendar className="h-4 w-4 text-gray-500" />}
+                  />
+                  {errors.birthday && (
+                    <p className="text-red-500 text-sm mt-1">{errors.birthday}</p>
+                  )}
+                </div>
               </div>
 
               <div>
                 <label className="text-sm font-medium">Address</label>
-                <textarea
-                  placeholder="123 main street, city, Province, Postal code"
+                <Input
+                  placeholder="123 main street"
                   value={formData.address}
                   onChange={(e) => handleFieldChange('address', e.target.value)}
                   onBlur={() => {
                     setFieldTouched({ ...fieldTouched, address: true });
-                    validateField('address', formData.address);
+                    validateFormField('address', formData.address);
                   }}
-                  rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                 />
                 {errors.address && (
                   <p className="text-red-500 text-sm mt-1">{errors.address}</p>
                 )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">City</label>
+                  <Input
+                    placeholder="Enter city"
+                    value={formData.city}
+                    onChange={(e) => handleFieldChange('city', e.target.value)}
+                    onBlur={() => {
+                      setFieldTouched({ ...fieldTouched, city: true });
+                      validateFormField('city', formData.city);
+                    }}
+                    icon={<MapPin className="h-4 w-4 text-gray-500" />}
+                  />
+                  {errors.city && (
+                    <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">District</label>
+                  <Select
+                    value={formData.district}
+                    onValueChange={(value) => handleFieldChange('district', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select district" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SRI_LANKA_DISTRICTS.map((district) => (
+                        <SelectItem key={district} value={district}>
+                          {district}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.district && (
+                    <p className="text-red-500 text-sm mt-1">{errors.district}</p>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -469,6 +519,36 @@ const StudentRegistrationForm = ({
                   <p className="text-red-500 text-sm mt-1">{passwordError}</p>
                 )}
               </div>
+            </div>
+
+            {/* Terms and Conditions */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="terms"
+                checked={agreeToTerms}
+                onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+              />
+              <label 
+                htmlFor="terms" 
+                className="text-sm text-gray-600 cursor-pointer"
+              >
+                I agree to the{' '}
+                <a 
+                  href="/terms" 
+                  target="_blank" 
+                  className="text-blue-600 hover:underline"
+                >
+                  Terms of Service
+                </a>
+                {' '}and{' '}
+                <a 
+                  href="/privacy" 
+                  target="_blank" 
+                  className="text-blue-600 hover:underline"
+                >
+                  Privacy Policy
+                </a>
+              </label>
             </div>
 
             <Button
