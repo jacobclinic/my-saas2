@@ -331,12 +331,7 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({
       let errorMessage = 'Upload failed. Please try again.';
 
       if (error instanceof Error) {
-        if (
-          error.message.includes('Body exceeded') ||
-          error.message.includes('1 MB limit') ||
-          error.message.includes('2mb limit') ||
-          error.message.includes('5mb limit')
-        ) {
+        if (error.message.includes('Body exceeded')) {
           errorMessage =
             'File is too large. Please use a file smaller than 1MB.';
         } else if (

@@ -80,13 +80,19 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     }
 
     // Check file type
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+    const allowedTypes = [
+      'image/png',
+      'image/jpeg',
+      'image/jpg',
+      'application/pdf',
+    ];
     if (!allowedTypes.includes(file.type)) {
       setUploadingFile({
         file,
         progress: 0,
         status: 'error',
-        error: 'Invalid file format. Please use PNG, JPEG, JPG, or PDF files only.',
+        error:
+          'Invalid file format. Please use PNG, JPEG, JPG, or PDF files only.',
       });
       return;
     }
@@ -148,24 +154,37 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       }
     } catch (error) {
       console.log(error);
-      
+
       // Enhanced error messaging
       let errorMessage = 'Upload failed. Please try again.';
-      
+
       if (error instanceof Error) {
-        if (error.message.includes('Body exceeded') || error.message.includes('1 MB limit') || error.message.includes('2mb limit') || error.message.includes('5mb limit')) {
-          errorMessage = 'File is too large. Please use a file smaller than 1MB.';
-        } else if (error.message.includes('network') || error.message.includes('Network')) {
-          errorMessage = 'Network error. Please check your connection and try again.';
-        } else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
-          errorMessage = 'Upload timed out. Please try again with a smaller file.';
-        } else if (error.message.includes('format') || error.message.includes('type')) {
-          errorMessage = 'Invalid file format. Please use PNG, JPEG, JPG, or PDF files only.';
+        if (error.message.includes('Body exceeded')) {
+          errorMessage =
+            'File is too large. Please use a file smaller than 1MB.';
+        } else if (
+          error.message.includes('network') ||
+          error.message.includes('Network')
+        ) {
+          errorMessage =
+            'Network error. Please check your connection and try again.';
+        } else if (
+          error.message.includes('timeout') ||
+          error.message.includes('Timeout')
+        ) {
+          errorMessage =
+            'Upload timed out. Please try again with a smaller file.';
+        } else if (
+          error.message.includes('format') ||
+          error.message.includes('type')
+        ) {
+          errorMessage =
+            'Invalid file format. Please use PNG, JPEG, JPG, or PDF files only.';
         } else if (error.message) {
           errorMessage = error.message;
         }
       }
-      
+
       setUploadingFile((prev) =>
         prev
           ? {
@@ -359,7 +378,8 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         <Alert className="bg-blue-50 border-blue-200">
           <Info className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-700">
-            Need help? Contact our support team via WhatsApp or call +9471 67 51 777
+            Need help? Contact our support team via WhatsApp or call +9471 67 51
+            777
           </AlertDescription>
         </Alert>
       </div>
