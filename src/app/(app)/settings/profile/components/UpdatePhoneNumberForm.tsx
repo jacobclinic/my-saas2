@@ -12,6 +12,8 @@ import Button from '~/core/ui/Button';
 import Modal from '~/core/ui/Modal';
 import AuthErrorMessage from '~/app/auth/components/AuthErrorMessage';
 import useSupabase from '~/core/hooks/use-supabase';
+import { validatePhoneNumber } from '~/core/hooks/use-validate-phonenumber';
+import { filterPhoneInput } from '~/core/utils/input-filters';
 
 import configuration from '~/configuration';
 
@@ -26,28 +28,37 @@ function UpdatePhoneNumberForm({
 }: UpdatePhoneNumberFormProps) {
   const { trigger, isMutating } = useUpdatePhoneNumber();
   const currentPhoneNumber = session.auth?.user?.phone ?? '';
+  const [phoneError, setPhoneError] = useState('');
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const form = event.currentTarget as HTMLFormElement;
+    const formData = new FormData(form);
+    const phoneNumber = formData.get('phoneNumber') as string;
+
+    // Validate phone number
+    const validation = validatePhoneNumber(phoneNumber);
+    if (!validation.isValid) {
+      setPhoneError(validation.message!);
+      return;
+    }
+
+    setPhoneError('');
+
+    const promise = trigger(phoneNumber).then(() => {
+      onUpdate(phoneNumber);
+    });
+
+    return toast.promise(promise, {
+      loading: `Updating phone number...`,
+      success: `Phone number successfully updated`,
+      error: `Sorry, we encountered an error while updating your phone number. Please try again`,
+    });
+  };
 
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-
-        const form = event.currentTarget;
-        const formData = new FormData(form);
-        const phoneNumber = formData.get('phoneNumber') as string;
-
-        const promise = trigger(phoneNumber).then(() => {
-          onUpdate(phoneNumber);
-        });
-
-        return toast.promise(promise, {
-          loading: `Updating phone number...`,
-          success: `Phone number successfully updated`,
-          error: `Sorry, we encountered an error while updating your phone number. Please try again`,
-        });
-      }}
-      data-cy={'update-phone-number-form'}
-    >
+    <form onSubmit={handleSubmit} data-cy={'update-phone-number-form'}>
       <div className={'flex flex-col space-y-4'}>
         <TextField>
           <TextField.Label>
@@ -55,8 +66,21 @@ function UpdatePhoneNumberForm({
             <TextField.Input
               name={'phoneNumber'}
               defaultValue={currentPhoneNumber}
+              onChange={(e) => {
+                // Filter to only allow digits
+                const target = e.target as HTMLInputElement;
+                const filteredValue = filterPhoneInput(target.value);
+                target.value = filteredValue;
+
+                // Clear error on change
+                if (phoneError) {
+                  setPhoneError('');
+                }
+              }}
             />
           </TextField.Label>
+
+          {phoneError && <TextField.Error error={phoneError} />}
 
           {/* Only show this if phone number is enabled */}
           <If condition={configuration.auth.providers.phoneNumber}>

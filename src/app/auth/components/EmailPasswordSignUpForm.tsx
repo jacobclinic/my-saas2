@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import TextField from '~/core/ui/TextField';
 import Button from '~/core/ui/Button';
 import If from '~/core/ui/If';
+import { validatePassword } from '~/core/hooks/use-validate-password';
+import { validateNameForForm } from '~/core/hooks/use-validate-name';
+import { validateEmailForForm } from '~/core/hooks/use-validate-email';
+import { filterNameInput } from '~/core/utils/input-filters';
 
 const EmailPasswordSignUpForm: React.FCC<{
   onSubmit: (params: {
@@ -29,31 +33,26 @@ const EmailPasswordSignUpForm: React.FCC<{
 
   const [userRole, setUserRole] = useState<'student' | 'tutor'>('student'); // Default userRole
 
-  const emailControl = register('email', { required: true });
-  const firstNameControl = register('firstName', { 
+  const emailControl = register('email', {
     required: true,
-    minLength: {
-      value: 2,
-      message: 'First name must be at least 2 characters',
-    },
-    validate: (value) => {
-      if (/\d/.test(value)) {
-        return 'First name cannot contain numbers';
-      }
-      return true;
+    validate: validateEmailForForm,
+  });
+  const firstNameControl = register('firstName', {
+    required: true,
+    validate: validateNameForForm,
+    onChange: (e) => {
+      // Filter input to allow only letters and spaces
+      const filtered = filterNameInput(e.target.value);
+      e.target.value = filtered;
     },
   });
-  const lastNameControl = register('lastName', { 
+  const lastNameControl = register('lastName', {
     required: true,
-    minLength: {
-      value: 2,
-      message: 'Last name must be at least 2 characters',
-    },
-    validate: (value) => {
-      if (/\d/.test(value)) {
-        return 'Last name cannot contain numbers';
-      }
-      return true;
+    validate: validateNameForForm,
+    onChange: (e) => {
+      // Filter input to allow only letters and spaces
+      const filtered = filterNameInput(e.target.value);
+      e.target.value = filtered;
     },
   });
   const errors = formState.errors;
@@ -66,60 +65,16 @@ const EmailPasswordSignUpForm: React.FCC<{
 
   const passwordControl = register('password', {
     required: true,
-    minLength: {
-      value: 8,
-      message: 'Please provide a password with at least 8 characters',
-    },
     validate: (value) => {
-
-      const hasLowercase = /[a-z]/.test(value);
-      const hasUppercase = /[A-Z]/.test(value);
-      const hasDigit = /\d/.test(value);
-
-      if (!hasLowercase) {
-        return 'Password must contain at least one lowercase letter';
+      const result = validatePassword(value);
+      if (!result.isValid) {
+        return result.message;
       }
-
-      if (!hasUppercase) {
-        return 'Password must contain at least one uppercase letter';
-      }
-
-      if (!hasDigit) {
-        return 'Password must contain at least one digit';
-      }
-
       return true;
     },
   });
 
   const passwordValue = watch(`password`);
-
-  // Handler to prevent numbers in name fields
-  const handleNameInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const key = e.key;
-    // Allow arrow keys, delete, backspace, tab, etc.
-    if (
-      key === 'ArrowLeft' ||
-      key === 'ArrowRight' ||
-      key === 'Backspace' ||
-      key === 'Delete' ||
-      key === 'Tab' ||
-      key === ' ' ||
-      key === '-'
-    ) {
-      return;
-    }
-
-    // Block any digit keys
-    if (/^\d$/.test(key)) {
-      e.preventDefault();
-    }
-
-    // block any symbols
-    if (/[^a-zA-Z\s]/.test(key)) {
-      e.preventDefault();
-    }
-  };
 
   const repeatPasswordControl = register('repeatPassword', {
     required: true,
@@ -181,9 +136,6 @@ const EmailPasswordSignUpForm: React.FCC<{
                   placeholder={'John'}
                   autoComplete="given-name"
                   className="text-sm sm:text-base"
-                  onKeyDown={handleNameInput}
-                  pattern="^[^0-9]+$"
-                  title="First name cannot contain numbers"
                 />
               </TextField.Label>
 
@@ -201,9 +153,6 @@ const EmailPasswordSignUpForm: React.FCC<{
                   placeholder={'Doe'}
                   autoComplete="family-name"
                   className="text-sm sm:text-base"
-                  onKeyDown={handleNameInput}
-                  pattern="^[^0-9]+$"
-                  title="Last name cannot contain numbers"
                 />
               </TextField.Label>
 
@@ -241,7 +190,8 @@ const EmailPasswordSignUpForm: React.FCC<{
                 className="text-sm sm:text-base"
               />
               <TextField.Hint>
-                8+ characters that includes lowercase, uppercase, digit, special character
+                8+ characters that includes lowercase, uppercase, digit, special
+                character
               </TextField.Hint>
               <TextField.Error
                 data-cy="password-error"

@@ -11,6 +11,11 @@ import RegistrationSuccess from './RegistrationSuccess';
 import useSignUpWithEmailAndPasswordMutation from '~/core/hooks/use-sign-up-with-email-password';
 import StudentRegistrationViaLogin from './RegisterViaLogin';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { validatePassword } from '~/core/hooks/use-validate-password';
+import { validateName } from '~/core/hooks/use-validate-name';
+import { validatePhoneNumber } from '~/core/hooks/use-validate-phonenumber';
+import { validateEmail } from '~/core/hooks/use-validate-email';
+import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 
@@ -69,67 +74,37 @@ const StudentRegistrationForm = ({
 
     switch (fieldName) {
       case 'firstName':
-        if (!value.trim()) {
-          newErrors.firstName = 'First name is required';
-        } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-          newErrors.firstName = 'First name should only contain letters';
-        } else {
-          delete newErrors.firstName;
-        }
-        break;
-
       case 'lastName':
-        if (!value.trim()) {
-          newErrors.lastName = 'Last name is required';
-        } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-          newErrors.lastName = 'Last name should only contain letters';
+        const nameResult = validateName(value);
+        if (!nameResult.isValid) {
+          newErrors[fieldName] = nameResult.message;
         } else {
-          delete newErrors.lastName;
+          delete newErrors[fieldName];
         }
         break;
 
       case 'email':
-        if (!value.trim()) {
-          newErrors.email = 'Email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
-          newErrors.email = 'Please enter a valid email address';
+        const emailResult = validateEmail(value);
+        if (!emailResult.isValid) {
+          newErrors.email = emailResult.message;
         } else {
           delete newErrors.email;
         }
         break;
 
       case 'phone':
-        if (!value.trim()) {
-          newErrors.phone = 'Phone number is required';
-        } else if (
-          !/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(
-            value.trim(),
-          )
-        ) {
-          newErrors.phone = 'Please enter a valid phone number';
-        } else if (value.trim().length < 10) {
-          newErrors.phone = 'Phone number must be at least 10 digits';
+        const phoneResult = validatePhoneNumber(value);
+        if (!phoneResult.isValid) {
+          newErrors.phone = phoneResult.message;
         } else {
           delete newErrors.phone;
         }
         break;
 
       case 'password':
-        if (!value.trim()) {
-          newErrors.password = 'Password is required';
-        } else if (value.length < 8) {
-          newErrors.password = 'Password must be at least 8 characters';
-        } else if (!/(?=.*[a-z])/.test(value)) {
-          newErrors.password =
-            'Password must contain at least one lowercase letter';
-        } else if (!/(?=.*[A-Z])/.test(value)) {
-          newErrors.password =
-            'Password must contain at least one uppercase letter';
-        } else if (!/(?=.*\d)/.test(value)) {
-          newErrors.password = 'Password must contain at least one digit';
-        } else if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value)) {
-          newErrors.password =
-            'Password must contain at least one special character';
+        const passwordResult = validatePassword(value);
+        if (!passwordResult.isValid) {
+          newErrors.password = passwordResult.message;
         } else {
           delete newErrors.password;
         }
@@ -152,15 +127,13 @@ const StudentRegistrationForm = ({
     fieldName: keyof RegistrationFormData,
     value: string,
   ) => {
-    // Apply input restrictions
+    // Apply input restrictions using utility functions
     let filteredValue = value;
 
     if (fieldName === 'firstName' || fieldName === 'lastName') {
-      // Only allow letters and spaces for names
-      filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+      filteredValue = filterNameInput(value);
     } else if (fieldName === 'phone') {
-      // Only allow digits, spaces, dashes, parentheses, and plus sign for phone
-      filteredValue = value.replace(/[^0-9+\-()\s.]/g, '');
+      filteredValue = filterPhoneInput(value);
     }
 
     setFormData({ ...formData, [fieldName]: filteredValue });
@@ -177,34 +150,37 @@ const StudentRegistrationForm = ({
   const validateForm = () => {
     const newErrors: Partial<RegistrationFormData> = {};
 
-    if (!formData.firstName.trim())
-      newErrors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = 'Please enter a valid email address';
+    // Validate first name
+    const firstNameResult = validateName(formData.firstName);
+    if (!firstNameResult.isValid) {
+      newErrors.firstName = firstNameResult.message;
     }
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (
-      !/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(
-        formData.phone.trim(),
-      )
-    ) {
-      newErrors.phone = 'Please enter a valid phone number';
-    } else if (formData.phone.trim().length < 10) {
-      newErrors.phone = 'Please enter a valid phone number';
+    // Validate last name
+    const lastNameResult = validateName(formData.lastName);
+    if (!lastNameResult.isValid) {
+      newErrors.lastName = lastNameResult.message;
     }
 
-    if (!formData.password.trim()) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+    // Validate email
+    const emailResult = validateEmail(formData.email);
+    if (!emailResult.isValid) {
+      newErrors.email = emailResult.message;
     }
 
+    // Validate phone number
+    const phoneResult = validatePhoneNumber(formData.phone);
+    if (!phoneResult.isValid) {
+      newErrors.phone = phoneResult.message;
+    }
+
+    // Validate password
+    const passwordResult = validatePassword(formData.password);
+    if (!passwordResult.isValid) {
+      newErrors.password = passwordResult.message;
+    }
+
+    // Validate address
     if (!formData.address.trim()) {
       newErrors.address = 'Address is required';
     }
@@ -226,39 +202,27 @@ const StudentRegistrationForm = ({
 
   // Check if form is valid for enabling/disabling the submit button
   const isFormValid = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex =
-      /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/;
-
-    // Password complexity validation
-    const isPasswordComplex = (password: string) => {
-      return (
-        password.length >= 8 &&
-        /(?=.*[a-z])/.test(password) && // lowercase
-        /(?=.*[A-Z])/.test(password) && // uppercase
-        /(?=.*\d)/.test(password) && // digit
-        /(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(password)
-      ); // special character
-    };
+    // Use validation functions
+    const isFirstNameValid = validateName(formData.firstName).isValid;
+    const isLastNameValid = validateName(formData.lastName).isValid;
+    const isEmailValid = validateEmail(formData.email).isValid;
+    const isPhoneValid = validatePhoneNumber(formData.phone).isValid;
+    const isPasswordValid = validatePassword(formData.password).isValid;
 
     const isBasicInfoValid =
-      formData.firstName.trim() !== '' &&
-      formData.lastName.trim() !== '' &&
-      formData.email.trim() !== '' &&
-      emailRegex.test(formData.email.trim()) &&
-      formData.phone.trim() !== '' &&
-      phoneRegex.test(formData.phone.trim()) &&
-      formData.phone.trim().length >= 10 &&
+      isFirstNameValid &&
+      isLastNameValid &&
+      isEmailValid &&
+      isPhoneValid &&
       formData.address.trim() !== '' &&
-      formData.password.trim() !== '' &&
-      isPasswordComplex(formData.password);
+      isPasswordValid;
 
-    const isPasswordValid =
+    const isPasswordConfirmationValid =
       confirmPassword.trim() !== '' &&
       formData.password === confirmPassword &&
       !passwordError;
 
-    return isBasicInfoValid && isPasswordValid;
+    return isBasicInfoValid && isPasswordConfirmationValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -487,7 +451,7 @@ const StudentRegistrationForm = ({
                 {!errors.password && (
                   <p className="text-gray-500 text-xs mt-1">
                     Password must contain at least 8 characters, including
-                    uppercase, lowercase, digit, and special character
+                    uppercase, lowercase, and digit
                   </p>
                 )}
 
