@@ -651,6 +651,65 @@ export type Database = {
         };
         Relationships: [];
       };
+      zoom_sessions: {
+        Row: {
+          id: number;
+          created_at: string;
+          session_id: string;
+          meeting_uuid: string;
+          meeting_id: string;
+          host_id: string;
+          host_user_id: string;
+          type: string | null;
+          status: string | null;
+          start_time: string;
+          duration: number | null;
+          timezone: string | null;
+          join_url: string;
+          start_url: string;
+          password: string | null;
+          settings_json: Json | null;
+          creation_source: string | null;
+        };
+        Insert: {
+          id?: number;
+          created_at?: string;
+          session_id: string;
+          meeting_uuid: string;
+          meeting_id: string;
+          host_id: string;
+          host_user_id: string;
+          type?: string | null;
+          status?: string | null;
+          start_time: string;
+          duration?: number | null;
+          timezone?: string | null;
+          join_url: string;
+          start_url: string;
+          password?: string | null;
+          settings_json?: Json | null;
+          creation_source?: string | null;
+        };
+        Update: {
+          id?: number;
+          created_at?: string;
+          session_id?: string;
+          meeting_uuid?: string;
+          meeting_id?: string;
+          host_id?: string;
+          host_user_id?: string;
+          type?: string | null;
+          status?: string | null;
+          start_time?: string;
+          duration?: number | null;
+          timezone?: string | null;
+          join_url?: string;
+          start_url?: string;
+          password?: string | null;
+          settings_json?: Json | null;
+          creation_source?: string | null;
+        };
+      };
     };
     Views: {
       [_ in never]: never;

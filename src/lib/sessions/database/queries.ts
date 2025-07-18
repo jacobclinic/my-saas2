@@ -8,6 +8,7 @@ import {
   USERS_TABLE,
   RESOURCE_MATERIALS_TABLE,
   STUDENT_PAYMENTS_TABLE,
+  ZOOM_USERS_TABLE
 } from '~/lib/db-tables';
 import { SessionsWithTableData } from '../types/session';
 import {
@@ -1930,5 +1931,87 @@ export async function checkUpcomingSessionAvailabilityForClass(
     throw new Error(
       `Failed to check session availability: ${(error as Error).message}`,
     );
+  }
+}
+
+type UpcomingSessionWithZoomUser = UpcomingSession & {
+  class: {
+    tutor: {
+      zoom_user: {
+        id: string;
+        zoom_user_id: string;
+        email: string;
+      }[];
+    };
+  };
+};
+
+export async function getTomorrowsSessionsWithZoomUser(
+  client: SupabaseClient<Database>
+): Promise<UpcomingSessionWithZoomUser[] | []> {
+  try {
+    // Current time in UTC
+    const now = new Date();
+
+    // Start of tomorrow in UTC (00:00:00)
+    const tomorrowStartUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0, 0, 0, 0
+    ));
+
+    // End of tomorrow in UTC (23:59:59.999)
+    const tomorrowEndUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      23, 59, 59, 999
+    ));
+
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(`
+        id,
+        created_at,
+        class_id,
+        recording_urls,
+        status,
+        start_time,
+        end_time,
+        title,
+        description,
+        updated_at,
+        class:${CLASSES_TABLE}!class_id (
+          id,
+          name,
+          subject,
+          tutor_id,
+          tutor:${USERS_TABLE}!tutor_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            zoom_user: ${ZOOM_USERS_TABLE}!tutor_id (
+              id,
+              zoom_user_id,
+              email
+            )
+          )
+        )
+      `, { count: 'exact' })
+      .gte('start_time', tomorrowStartUTC.toISOString())
+      .lte('start_time', tomorrowEndUTC.toISOString())
+      .order('start_time', { ascending: true });
+
+    if (error) {
+      console.error('Failed to fetch tomorrow\'s sessions:', error);
+      throw error;
+    }
+
+    return data as unknown as UpcomingSessionWithZoomUser[] || [];
+  } catch (error) {
+    console.error('Failed to fetch tomorrow\'s sessions:', error);
+    throw error;
   }
 }

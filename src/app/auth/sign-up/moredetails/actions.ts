@@ -9,7 +9,7 @@ import { USERS_TABLE } from '~/lib/db-tables';
 import { getUserById } from '~/lib/user/database/queries';
 import UserType from '~/lib/user/types/user';
 import { zoomClient } from '~/lib/zoom/v2/client';
-import { zoomService } from '~/lib/zoom/v2/zoom.service';
+import { ZoomService } from '~/lib/zoom/v2/zoom.service';
 
 const userDetailsSchema = z.object({
   displayName: z.string().min(2, 'Display name is required'),
@@ -38,6 +38,7 @@ export async function ensureUserRecord(
   try {
     if (userRole === 'tutor') {
       const displayName = `${firstName} ${lastName}`;
+      const zoomService = new ZoomService(client);
       await zoomService.createZoomUser({
         action: 'create',
         user_info: {

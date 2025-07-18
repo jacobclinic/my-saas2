@@ -65,6 +65,7 @@
     "@supabase/ssr": "^0.1.0",
     "@supabase/supabase-js": "2.39.8",
     "@tanstack/react-table": "^8.13.2",
+    "@zoom/meetingsdk": "^4.0.0",
     "@zoom/videosdk": "^2.1.5",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.9",

@@ -4,6 +4,8 @@ import { createZoomUser } from "./database/mutations";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "~/database.types";
 import getSupabaseServerActionClient from "~/core/supabase/action-client";
+import { getTomorrowsSessionsWithZoomUser } from "~/lib/sessions/database/queries";
+import { createZoomSession } from "~/lib/zoom_sessions/database/mutations";
 
 const logger = getLogger();
 
@@ -11,9 +13,9 @@ export class ZoomService {
     private client: ZoomClient;
     private supabaseClient: SupabaseClient<Database>;
 
-    constructor() {
+    constructor(supabaseClient?: SupabaseClient<Database>) {
         this.client = zoomClient
-        this.supabaseClient = getSupabaseServerActionClient();
+        this.supabaseClient = supabaseClient || getSupabaseServerActionClient();
     }
 
     async createZoomUser(user: ZoomCreateUserRequest) {
@@ -30,26 +32,12 @@ export class ZoomService {
         }
     }
 
-    async createZoomUserMeeting(userMeeting?: ZoomCreateUserMeetingRequest) {
+    async createZoomUserMeeting(userMeeting: ZoomCreateUserMeetingRequest) {
         try {
-            const dummyPayload: ZoomCreateUserMeetingRequest = {
-                userId: "QIfQsEAxR7WRAg1lDZAvtg",
-                body: {
-                    topic: "Test Meeting",
-                    agenda: "Test Meeting",
-                    default_password: true,
-                    duration: 360,
-                    password: "123456",
-                    pre_schedule: false,
-                    start_time: "2025-08-31T07:30:00Z",
-                    type: 2,
-                }
-            }
-            const zoomUserMeeting = await this.client.createUserMeeting(dummyPayload);
+            const zoomUserMeeting = await this.client.createUserMeeting(userMeeting);
             return zoomUserMeeting;
         } catch (error) {
             logger.error(error, "Failed to create the zoom meeting");
-            console.log(error, "Failed to create the zoom meeting");
             throw new Error('Failed to create zoom user meeting. Please try again.');
         }
     }
@@ -60,9 +48,68 @@ export class ZoomService {
             return zoomUserMeetings;
         } catch (error) {
             logger.error(error, "Failed to get the zoom user meetings");
-            console.log(error, "Failed to get the zoom user meetings");
+            throw new Error('Failed to get zoom user meetings. Please try again.');
+        }
+    }
+
+    async createMeetingsForTomorrowSessions() {
+        try {
+            const tomorrrowSessions = await getTomorrowsSessionsWithZoomUser(this.supabaseClient);
+            for (const session of tomorrrowSessions) {
+
+                if (session.class?.tutor && session.class.tutor.zoom_user.length === 0) {
+                    // Skip the loop for this session,
+                    continue;
+                }
+                const zoomUserId = session.class.tutor.zoom_user[0].zoom_user_id;
+                if (zoomUserId) {
+                    const meetingTitle = session.title || session.class.name;
+                    const sessionStartTime = new Date(session.start_time!);
+                    const sessionEndTime = new Date(session.end_time!);
+                    const meetingDurationMinutes = Math.round((sessionEndTime.getTime() - sessionStartTime.getTime()) / (1000 * 60));
+
+                    const meeting = await this.createZoomUserMeeting({
+                        userId: zoomUserId,
+                        body: {
+                            topic: meetingTitle!,
+                            agenda: session.description!,
+                            default_password: false,
+                            duration: meetingDurationMinutes,
+                            password: "123456",
+                            pre_schedule: false,
+                            start_time: sessionStartTime.toISOString(),
+                            type: 2,
+                            timezone: "UTC"
+                        }
+                    });
+
+                    const createZoomSessionPayload = {
+                        session_id: session.id,
+                        meeting_uuid: meeting.uuid,
+                        meeting_id: meeting.id!.toString(),
+                        host_id: zoomUserId,
+                        host_user_id: session.class.tutor.id,
+                        type: meeting.type,
+                        status: meeting.status,
+                        start_time: sessionStartTime.toISOString(),
+                        duration: meetingDurationMinutes,
+                        timezone: "UTC",
+                        join_url: meeting.join_url,
+                        start_url: meeting.start_url,
+                        password: "123456",
+                        settings_json: meeting.settings,
+                        creation_source: meeting.creation_source,
+                    }
+
+                    const zoomSession = await createZoomSession(this.supabaseClient,createZoomSessionPayload);
+                }
+            }
+            return tomorrrowSessions;
+        } catch (error) {
+            logger.error(error, "Failed to create the zoom meetings for tomorrow sessions");
+            throw new Error('Failed to create zoom meetings for tomorrow sessions. Please try again.');
         }
     }
 }
 
-export const zoomService = new ZoomService();
+// export const zoomService = new ZoomService();
