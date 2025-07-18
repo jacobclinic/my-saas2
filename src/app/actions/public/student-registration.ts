@@ -30,10 +30,13 @@ const registrationSchema = z.object({
   lastName: z.string().min(1),
   email: z.string().email(),
   phone: z.string().min(9),
+  birthday: z.string().min(1),
   classId: z.string().uuid(),
   password: z.string().min(6),
   nameOfClass: z.string().min(1),
   address: z.string().min(2),
+  city: z.string().min(1),
+  district: z.string().min(1),
 });
 
 export async function registerStudentAction(
@@ -77,7 +80,10 @@ export async function registerStudentAction(
         phone_number: validated.phone,
         first_name: validated.firstName,
         last_name: validated.lastName,
+        birthday: validated.birthday,
         address: validated.address,
+        city: validated.city,
+        district: validated.district,
         user_role: 'student',
       });
     } else {
@@ -92,6 +98,10 @@ export async function registerStudentAction(
             first_name: validated.firstName,
             last_name: validated.lastName,
             phone_number: validated.phone,
+            birthday: validated.birthday,
+            address: validated.address,
+            city: validated.city,
+            district: validated.district,
             user_role: 'student',
           },
         });

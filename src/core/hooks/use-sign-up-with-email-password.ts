@@ -1,63 +1,12 @@
 import useSWRMutation from 'swr/mutation';
 import useSupabase from './use-supabase';
 import configuration from '~/configuration';
+import { validatePasswordLegacy } from './use-validate-password';
 
 interface Credentials {
   email: string;
   password: string;
   userRole: string;
-}
-
-interface PasswordValidationError {
-  message: string;
-  requirements: string[];
-}
-
-/**
- * Validates password strength according to security requirements
- * @param password - The password to validate
- * @returns true if valid, throws error with details if invalid
- */
-function validatePassword(password: string): true {
-  const minLength = 8;
-  const hasLowerCase = /[a-z]/.test(password);
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasDigit = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-
-  const missingRequirements: string[] = [];
-
-  if (password.length < minLength) {
-    missingRequirements.push(`At least ${minLength} characters`);
-  }
-
-  if (!hasLowerCase) {
-    missingRequirements.push('At least one lowercase letter (a-z)');
-  }
-
-  if (!hasUpperCase) {
-    missingRequirements.push('At least one uppercase letter (A-Z)');
-  }
-
-  if (!hasDigit) {
-    missingRequirements.push('At least one digit (0-9)');
-  }
-
-  if (!hasSpecialChar) {
-    missingRequirements.push(
-      'At least one special character (!@#$%^&*()_+-=[]{}|;\':",./<>?)',
-    );
-  }
-
-  if (missingRequirements.length > 0) {
-    const error: PasswordValidationError = {
-      message: 'Password does not meet security requirements',
-      requirements: missingRequirements,
-    };
-    throw `Password must meet the following requirements:\n• ${missingRequirements.join('\n• ')}`;
-  }
-
-  return true;
 }
 
 /**
@@ -74,7 +23,7 @@ function useSignUpWithEmailAndPassword() {
 
       // Validate password before attempting signup
       try {
-        validatePassword(credentials.password);
+        validatePasswordLegacy(credentials.password);
       } catch (validationError) {
         return Promise.reject(validationError);
       }
