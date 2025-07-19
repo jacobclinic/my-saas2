@@ -43,18 +43,6 @@ function SignInPage({
 
       <SignInMethodsContainer redirectUrl={redirectUrl!} />
 
-      <div className={'flex justify-center text-xs'}>
-        <p className={'flex space-x-1'}>
-          <span>Don&apos;t have an account?</span>
-
-          <Link
-            className={'text-primary-800 hover:underline dark:text-primary'}
-            href={SIGN_UP_PATH}
-          >
-            Sign up
-          </Link>
-        </p>
-      </div>
     </div>
   );
 }
