@@ -139,7 +139,6 @@ async function roleBasedMiddleware(
 
   const supabase = createMiddlewareClient(request, response);
   const { data: user, error } = await supabase.auth.getUser();
-  console.log('-----role----------User:', user);
 
   // If the user is not authenticated, redirect to sign-in (except for moredetails page)
   if (error || !user?.user) {
