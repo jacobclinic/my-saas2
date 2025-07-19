@@ -20,11 +20,16 @@ export class ZoomService {
 
     async createZoomUser(user: ZoomCreateUserRequest) {
         try {
+
+            if(!user.tutor_id){
+                throw new Error('Cannot create a zoom user without a tutor ID');
+            }
+
             const zoomUser = await this.client.createUser(user);
 
             await createZoomUser(this.supabaseClient, {
                 ...zoomUser,
-                tutor_id: "ff0abf81-840a-4734-b423-da9a75f7fa59",
+                tutor_id: user.tutor_id,
             });
         } catch (error) {
             logger.error('Error creating zoom user:', error);

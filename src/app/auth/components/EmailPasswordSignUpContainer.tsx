@@ -53,8 +53,6 @@ const EmailPasswordSignUpContainer: React.FCC<{
         return;
       }
 
-      console.log('onSignupRequested-params --> ', params);
-
       try {
         const data = await signUpMutation.trigger({
           email: params.email,

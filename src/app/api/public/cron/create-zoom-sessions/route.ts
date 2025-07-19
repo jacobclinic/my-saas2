@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
         return new Response('Zoom sessions created successfully', { status: 200 });
     } catch (error) {
-        console.error('Error in GET /api/public/create-zoom-sessions:', error);
+        console.error('Error in POST /api/public/create-zoom-sessions:', error);
         return new Response('Internal Server Error', { status: 500 });
     }
 }

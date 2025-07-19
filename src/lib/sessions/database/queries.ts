@@ -2005,13 +2005,11 @@ export async function getTomorrowsSessionsWithZoomUser(
       .order('start_time', { ascending: true });
 
     if (error) {
-      console.error('Failed to fetch tomorrow\'s sessions:', error);
       throw error;
     }
 
     return data as unknown as UpcomingSessionWithZoomUser[] || [];
   } catch (error) {
-    console.error('Failed to fetch tomorrow\'s sessions:', error);
     throw error;
   }
 }
