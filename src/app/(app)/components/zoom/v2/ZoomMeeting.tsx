@@ -3,6 +3,11 @@ import ZoomMtgEmbedded from "@zoom/meetingsdk/embedded";
 import { generateZoomSdkSignature } from '~/lib/zoom/v2/actions';
 import useUserRole from '~/lib/user/hooks/use-userRole';
 
+import { ZoomMtg } from '@zoom/meetingsdk'
+
+ZoomMtg.preLoadWasm()
+ZoomMtg.prepareWebSDK()
+
 type ZoomMeetingProps = {
     params: {
         classId: string;
@@ -18,10 +23,12 @@ const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
     const isHost = role === "tutor" || role === "admin";
     const meetingNumber = params.zoomSession?.meeting_id;
     const password = params.zoomSession?.password;
+    // Todo Change this
     const userName = params.zoomSession?.tutor?.first_name;
     const userEmail = params.zoomSession?.tutor?.email;
 
     const getSignature = async () => {
+        console.log("Meeting data:", params.zoomSession);
         if (!meetingNumber || !password || !userName || !userEmail) {
             console.warn("Missing meeting data, cannot join meeting.");
             return;
@@ -38,36 +45,31 @@ const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
             return;
         }
         try {
-            await client.init({
-                zoomAppRoot: meetingSDKElement,
-                language: "en-US",
+            const dashboardUrl = `${window.location.origin}/dashboard`;
+            ZoomMtg.init({
+                leaveUrl: dashboardUrl,
                 patchJsMedia: true,
-                leaveOnPageUnload: true,
-                customize: {
-                    video: {
-                        isResizable: true,
-                        viewSizes: {
-                            default: {
-                                width: 1600,
-                                height: 800
-                            },
-                            ribbon: {
-                                width: 1600,
-                                height: 800
-                            }
-                        }
-                    }
-                }
-            });
+                success: (success: any) => {
+                    console.log('SDK initialized successfully', success)
 
-            await client.join({
-                signature,
-                meetingNumber,
-                password,
-                userName,
-                userEmail,
-            });
-            console.log("joined successfully");
+                    ZoomMtg.join({
+                        signature: signature,
+                        meetingNumber: meetingNumber,
+                        userName: userName,
+                        userEmail: userEmail,
+                        passWord: password,
+                        success: (success: any) => {
+                            console.log('Joined meeting successfully', success)
+                        },
+                        error: (error: any) => {
+                            console.error('Failed to join meeting:', error)
+                        }
+                    })
+                },
+                error: (error: any) => {
+                    console.error('Failed to initialize SDK:', error)
+                }
+            })
         } catch (error) {
             console.log(error);
         }

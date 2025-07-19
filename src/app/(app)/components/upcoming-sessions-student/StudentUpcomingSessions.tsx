@@ -24,6 +24,7 @@ import {
   utcToLocalDate,
 } from '~/lib/utils/timezone-utils-filter';
 import TimezoneIndicator from '../TimezoneIndicator';
+import { useRouter } from 'next/navigation';
 
 interface DateRange {
   start?: {
@@ -63,6 +64,8 @@ const StudentUpcomingSessions = ({
     useState<SessionStudentTableData | null>(null);
 
   const [isPending, startTransition] = useTransition();
+
+  const router = useRouter();
 
   // Transform upcoming sessions data
   useEffect(() => {
@@ -113,19 +116,26 @@ const StudentUpcomingSessions = ({
 
   const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
-      startTransition(async () => {
-        const result = await joinMeetingAsUser({
-          meetingId: sessionData?.zoomMeetingId,
-          studentData: {
-            first_name: userSession?.data?.first_name || '',
-            last_name: userSession?.data?.last_name || '',
-            email: userSession?.auth?.user?.email || '',
-          },
-        });
-        if (result.success) {
-          window.open(result.start_url, '_blank');
-        } else {
-          alert('Failed to generate join link');
+      // startTransition(async () => {
+      //   const result = await joinMeetingAsUser({
+      //     meetingId: sessionData?.zoomMeetingId,
+      //     studentData: {
+      //       first_name: userSession?.data?.first_name || '',
+      //       last_name: userSession?.data?.last_name || '',
+      //       email: userSession?.auth?.user?.email || '',
+      //     },
+      //   });
+      //   if (result.success) {
+      //     window.open(result.start_url, '_blank');
+      //   } else {
+      //     alert('Failed to generate join link');
+      //   }
+      // });
+      startTransition(() => {
+        if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
+          const classId = sessionData.sessionRawData.class.id;
+          const url = `/classes/${classId}/session/${sessionData.id}`;
+          router.push(url);
         }
       });
     },
@@ -138,8 +148,8 @@ const StudentUpcomingSessions = ({
       // Apply search term filter
       const matchesSearchTerm = searchTerm
         ? (session?.class?.name || '')
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase())
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
         : true;
 
       // Apply date range filter if dateRange is selected

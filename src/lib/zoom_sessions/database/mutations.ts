@@ -11,7 +11,7 @@ export type CreateZoomSessionPayload = {
   meeting_id: string;
   host_id: string;
   host_user_id: string;
-  type?: string | null;
+  type?: number;
   status?: string | null;
   start_time: string;
   duration?: number | null;
@@ -20,7 +20,7 @@ export type CreateZoomSessionPayload = {
   start_url: string;
   password?: string | null;
   settings_json?: Json | null;
-  creation_source?: string | null;
+  creation_source?: "other" | "open_api" | "web_portal" | null;
 };
 
 const ZOOM_SESSIONS_TABLE = 'zoom_sessions';
@@ -29,11 +29,12 @@ export async function createZoomSession(client: Client, data: CreateZoomSessionP
   try {
     const payload = {
       ...data,
+      type: data.type?.toString(),
       created_at: new Date().toISOString(),
     };
 
     console.log("Creating zoom session payload", JSON.stringify(payload));
-    
+
 
     const { data: insertedZoomSession, error } = await client
       .from(ZOOM_SESSIONS_TABLE)

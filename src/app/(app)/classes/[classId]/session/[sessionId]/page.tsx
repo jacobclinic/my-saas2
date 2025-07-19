@@ -13,18 +13,30 @@ type ClassSessionPageProps = {
 const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
   const [zoomSession, setZoomSession] = useState<any | null>(null);
 
+  console.log("Zoom session: starting", zoomSession);
 
   useEffect(() => {
     const fetchZoomSession = async () => {
       const session = await fetchZoomSessionBySessionId(params.sessionId);
-      setZoomSession(session);
+      console.log("Zoom session: fetched", session);
+      if (session) {
+        setZoomSession(session);
+      }
     };
     fetchZoomSession();
   }, [params.sessionId]);
+  
 
   return (
     <div>
-      <ZoomMeeting params={{ ...params, zoomSession }} />
+      {zoomSession && (
+        <ZoomMeeting params={{ ...params, zoomSession }} />
+      )}
+      {
+        !zoomSession && (
+          <p>Loading...</p>
+        )
+      }
     </div>
   );
 };

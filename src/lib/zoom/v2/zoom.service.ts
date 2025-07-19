@@ -79,7 +79,11 @@ export class ZoomService {
                             pre_schedule: false,
                             start_time: sessionStartTime.toISOString(),
                             type: 2,
-                            timezone: "UTC"
+                            timezone: "UTC",
+                            auto_recording: 'cloud',
+                            email_notification: false,
+                            join_before_host: true,
+                            jbh_time: 15,
                         }
                     });
 
@@ -102,6 +106,8 @@ export class ZoomService {
                     }
 
                     const zoomSession = await createZoomSession(this.supabaseClient,createZoomSessionPayload);
+                    // Wait for 50ms to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 50));
                 }
             }
             return tomorrrowSessions;

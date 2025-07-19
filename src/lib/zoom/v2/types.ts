@@ -47,13 +47,17 @@ type ZoomCreateUserMeetingRequest = {
         start_time: string;
         timezone?: string;
         type?: ZoomMeetingType;
+        auto_recording: 'local' | 'cloud' | 'none';
+        email_notification?: boolean;
+        join_before_host?: boolean;
+        jbh_time?: 0 | 5 | 10 | 15;
     }
 }
 
 
 type ZoomMeetingResponse = {
-    id?: number;
-    uuid?: string;
+    id: number;
+    uuid: string;
     host_email?: string;
     topic?: string;
     type?: number;
@@ -63,14 +67,15 @@ type ZoomMeetingResponse = {
     timezone?: string;
     agenda?: string;
     created_at?: string;
-    start_url?: string;
-    join_url?: string;
+    start_url: string;
+    join_url: string;
     password?: string;
     h323_password?: string;
     pstn_password?: string;
     encrypted_password?: string;
     registration_url?: string;
     pmi?: string;
+    creation_source?: "other" | "open_api" | "web_portal";
     settings?: {
         host_video?: boolean;
         participant_video?: boolean;

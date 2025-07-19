@@ -97,21 +97,11 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
   const joinMeetingAsTutor = useCallback(async () => {
     startTransition(async () => {
-      // const result = await joinMeetingAsHost({
-      //   meetingId: sessionData?.zoomMeetingId,
-      // });
-      // if (result.success) {
-      //   window.open(result.start_url, '_blank');
-      // } else {
-      //   alert('Failed to generate join link');
-      // }
-      console.log("Session data", sessionData);
       if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
         const classId = sessionData.sessionRawData.class.id;
         const url = `/classes/${classId}/session/${sessionData.id}`;
         router.push(url);
       }
-
     });
   }, [sessionData]);
 
