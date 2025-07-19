@@ -21,7 +21,7 @@ function SignInPage({
   return (
     <div
       className={
-        'flex w-full max-w-md flex-col items-center space-y-4 rounded-xl border-transparent bg-white px-2 py-6 dark:bg-background dark:shadow-[0_0_1200px_0] dark:shadow-primary/30 md:w-8/12 md:border md:px-8 md:py-8 md:shadow-xl dark:md:border-dark-800 lg:px-6'
+        'flex w-full max-w-md flex-col items-center space-y-4 rounded-xl border-transparent bg-white px-6 py-6 dark:bg-background dark:shadow-[0_0_1200px_0] dark:shadow-primary/30 md:w-8/12 md:border md:px-8 md:py-8 md:shadow-xl dark:md:border-dark-800 lg:px-6'
       }
     >
       <div className="flex w-full flex-col items-center pb-8">
@@ -43,18 +43,6 @@ function SignInPage({
 
       <SignInMethodsContainer redirectUrl={redirectUrl!} />
 
-      <div className={'flex justify-center text-xs'}>
-        <p className={'flex space-x-1'}>
-          <span>Don&apos;t have an account?</span>
-
-          <Link
-            className={'text-primary-800 hover:underline dark:text-primary'}
-            href={SIGN_UP_PATH}
-          >
-            Sign up
-          </Link>
-        </p>
-      </div>
     </div>
   );
 }

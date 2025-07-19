@@ -4,7 +4,8 @@ import getSupabaseServerComponentClient from '~/core/supabase/server-component-c
 import configuration from '~/configuration';
 import { getUserByIdAction } from './actions';
 import MoreDetailsForm from '../../components/MoreDetailsForm';
-import LogoImage from '~/core/ui/Logo/LogoImage';
+import Image from 'next/image';
+
 
 export const metadata: Metadata = {
   title: 'Complete Your Profile',
@@ -37,13 +38,18 @@ async function MoreDetailsPage({
     userData?.address.trim() !== '';
 
   if (hasRequiredDetails) {
-    console.log('User already has required details, redirecting to dashboard');
     redirect(searchParams.returnUrl || '/dashboard');
   }
 
   return (
     <div className="flex w-full max-w-lg flex-col items-center space-y-4 rounded-xl border-transparent bg-white px-2 py-6 dark:bg-background dark:shadow-[0_0_1200px_0] dark:shadow-primary/30 md:w-8/12 md:border md:px-8 md:py-8 md:shadow-xl dark:md:border-dark-800 lg:px-6">
-      <LogoImage className="mb-4" />
+      <Image
+        src="/assets/images/comaaas.png"
+        alt="Logo"
+        width={120}
+        height={120}
+        className="w-[95px] sm:w-[105px]"
+      />
       <MoreDetailsForm user={session.user} returnUrl={searchParams.returnUrl} />
     </div>
   );

@@ -11,7 +11,7 @@ import Alert from '~/core/ui/Alert';
 import EmailPasswordSignUpForm from '~/app/auth/components/EmailPasswordSignUpForm';
 
 import configuration from '~/configuration';
-import { ensureUserRecord } from '../sign-up/moredetails/actions';
+import { upsertUserDetails } from '~/lib/user/user-registration.server';
 
 const requireEmailConfirmation = configuration.auth.requireEmailConfirmation;
 
@@ -47,8 +47,9 @@ const EmailPasswordSignUpContainer: React.FCC<{
       firstName: string;
       lastName: string;
       userRole: string;
+      phoneNumber: string;
+      address: string;
     }) => {
-      // console.log('onSignupRequested-params', params);
       if (loading) {
         return;
       }
@@ -59,19 +60,18 @@ const EmailPasswordSignUpContainer: React.FCC<{
           password: params.password,
           userRole: params.userRole,
         });
+
         const userId = data?.user?.id;
         const email = data?.user?.email || params.email;
 
-        // If successful signup, ensure user record exists in database with name fields
+        // If successful signup, ensure user record exists in database with only basic info
         if (userId && email) {
           try {
-            await ensureUserRecord(
-              userId,
-              email,
-              params.userRole,
-              params.firstName,
-              params.lastName,
-            );
+            await upsertUserDetails({
+              id: userId,
+              first_name: params.firstName,
+              last_name: params.lastName,
+            });
           } catch (error) {
             console.error('Failed to create user record:', error);
           }
@@ -85,7 +85,7 @@ const EmailPasswordSignUpContainer: React.FCC<{
             onSubmit(userId);
           }
         } else {
-          // Here we redirect the user to the moredetails page to collect additional information
+          // Here we redirect the user to the onboarding page to complete their profile
           redirecting.current = true;
 
           // First sign in the user to create a valid session
@@ -95,13 +95,13 @@ const EmailPasswordSignUpContainer: React.FCC<{
               password: params.password,
             });
 
+            // Redirect to onboarding page
+            router.push(configuration.paths.onboarding);
+
             // If onSignUp callback is provided, call it first
             if (onSignUp) {
               onSignUp();
             }
-
-            // Then redirect to the moredetails page
-            router.push('/auth/sign-up/moredetails');
           } catch (signInError) {
             // If sign-in fails, redirect to sign-in page
             router.push(configuration.paths.signIn);

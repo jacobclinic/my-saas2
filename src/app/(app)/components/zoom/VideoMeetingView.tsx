@@ -1,5 +1,3 @@
-// components/zoom/VideoMeetingView.tsx
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
