@@ -23,6 +23,8 @@ import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentInvitationToClass } from '~/core/email/templates/emailTemplate';
 import { isAdminOrCLassTutor } from '../user/database/queries';
 import { createInvoiceForNewClass } from '../invoices/database/mutations';
+import { notifyStudentsAfterClassScheduleUpdate } from '../notifications/email/email.notification.service';
+import { notifyStudentsAfterClassScheduleUpdateSMS } from '../notifications/sms/sms.notification.service';
 import { generateWeeklyOccurrences, RecurrenceInput } from '../utils/recurrence-utils';
 import { isEqual } from '../utils/lodash-utils';
 import { ZoomService } from '../zoom/v2/zoom.service';
@@ -90,7 +92,6 @@ export const createClassAction = withSession(
       created_at: new Date().toISOString(),
     }));
 
-    // Insert all initial sessions into the database
     const { error: sessionError } = await client
       .from(SESSIONS_TABLE)
       .insert(sessions.flat());
@@ -199,84 +200,95 @@ export const updateClassAction = withSession(
         .insert(sessions.flat());
 
       if (sessionError) throw sessionError;
+      // Notify students about the schedule update
+      try {
+        // Helper function to get the next occurrence of a specific day
+        const getNextOccurrenceOfDay = (dayName: string): Date => {
+          const daysOfWeek = [
+            'sunday',
+            'monday',
+            'tuesday',
+            'wednesday',
+            'thursday',
+            'friday',
+            'saturday',
+          ];
+          const targetDayIndex = daysOfWeek.indexOf(dayName.toLowerCase());
 
+          if (targetDayIndex === -1) {
+            throw new Error(`Invalid day name: ${dayName}`);
+          }
+
+          const today = new Date();
+          const currentDayIndex = today.getDay();
+
+          // Calculate days until the target day
+          let daysUntilTarget = targetDayIndex - currentDayIndex;
+
+          // If the target day is today or has passed this week, get it for next week
+          if (daysUntilTarget <= 0) {
+            daysUntilTarget += 7;
+          }
+
+          // Create the next occurrence date
+          const nextOccurrence = new Date(today);
+          nextOccurrence.setDate(today.getDate() + daysUntilTarget);
+
+          return nextOccurrence;
+        };
+
+        // Format the time slots for notification - combine multiple slots if they exist
+        const timeSlots = params.classData.time_slots as unknown as TimeSlot[];
+        const scheduleInfo = timeSlots
+          .map((slot) => `${slot.day} ${slot.startTime}-${slot.endTime}`)
+          .join(', ');
+
+        // Use the first time slot's day and combined time for the template
+        const firstTimeSlot = timeSlots[0];
+
+        // Calculate the next occurrence of the updated class day
+        const nextSessionDate = getNextOccurrenceOfDay(
+          firstTimeSlot.day,
+        ).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+        
+        await Promise.all([
+          notifyStudentsAfterClassScheduleUpdate(client, {
+            classId: params.classId,
+            className: originalClass.name || 'Your Class',
+            updatedClassDay: firstTimeSlot.day,
+            updatedStartTime: firstTimeSlot.startTime,
+            updatedEndTime: scheduleInfo.includes(',')
+              ? scheduleInfo
+              : firstTimeSlot.endTime,
+            nextClassDate: nextSessionDate,
+          }),
+          notifyStudentsAfterClassScheduleUpdateSMS(client, {
+            classId: params.classId,
+            className: originalClass.name || 'Your Class',
+            updatedClassDay: firstTimeSlot.day,
+            updatedStartTime: firstTimeSlot.startTime,
+            updatedEndTime: scheduleInfo.includes(',')
+              ? scheduleInfo
+              : firstTimeSlot.endTime,
+            nextClassDate: nextSessionDate,
+          }),
+        ]);
+        console.log(
+          'Successfully sent schedule update notifications (email and SMS) to students',
+        );
+      } catch (notificationError) {
+        console.error(
+          'Failed to send schedule update notifications:',
+          notificationError,
+        );
+        // Don't throw here - we don't want to fail the entire update if notifications fail
+      }
     }
-
-    // If time slots were updated, delete existing upcoming sessions and create new ones
-    // if (params.classData.time_slots) {
-    //   // Delete all upcoming sessions for this class
-
-
-    //   // Get the updated class details to create new sessions
-    //   const { data: classDetails } = await client
-    //     .from(CLASSES_TABLE)
-    //     .select('*')
-    //     .eq('id', params.classId)
-    //     .single();
-
-    //   if (!classDetails) {
-    //     throw new Error('Failed to fetch updated class data');
-    //   }
-
-    //   // Create new sessions with the updated time slots
-    //   const initialSessions = await Promise.all(
-    //     (params.classData.time_slots as unknown as TimeSlot[]).map(
-    //       async (timeSlot) => {
-    //         // Get all upcoming occurrences for the year
-    //         const nextOccurrences = getUpcomingOccurrences(
-    //           timeSlot,
-    //           classDetails.starting_date ||
-    //           new Date().toISOString().split('T')[0],
-    //           new Date(new Date().getFullYear(), 11, 31)
-    //             .toISOString()
-    //             .split('T')[0],
-    //         );
-
-    //         // Take the first occurrence for Zoom meeting creation
-    //         const firstOccurrence = nextOccurrences[0];
-
-    //         // Create a single Zoom meeting for the first occurrence
-    //         const zoomMeeting = await createZoomMeeting(
-    //           params.classId,
-    //           {
-    //             name: classDetails.name || 'Class',
-    //             subject: classDetails.subject || 'Subject',
-    //             description: classDetails.description || 'Description',
-    //             yearGrade: classDetails.grade || '',
-    //             monthlyFee: String(classDetails.fee) || '',
-    //             startDate: classDetails.starting_date || '',
-    //             timeSlots: [timeSlot],
-    //             tutorId: classDetails.tutor_id || '',
-    //           },
-    //           {
-    //             startTime: new Date(firstOccurrence.startTime),
-    //             endTime: new Date(firstOccurrence.endTime),
-    //           },
-    //         );
-
-    //         // Map all occurrences to session objects, with only the first having a meeting_url
-    //         const sessions = nextOccurrences.map((occurrence, index) => ({
-    //           class_id: params.classId,
-    //           start_time: new Date(occurrence.startTime).toISOString(),
-    //           end_time: new Date(occurrence.endTime).toISOString(),
-    //           meeting_url: index === 0 ? zoomMeeting?.zoomMeeting.join_url : '', // Only first session gets the Zoom URL
-    //           zoom_meeting_id: zoomMeeting?.zoomMeeting.id,
-    //           status: 'scheduled',
-    //           created_at: new Date().toISOString(),
-    //         }));
-
-    //         return sessions;
-    //       },
-    //     ),
-    //   );
-
-    //   // Insert all new sessions into the database
-    //   const { error: sessionError } = await client
-    //     .from(SESSIONS_TABLE)
-    //     .insert(sessions.flat());
-
-    //   if (sessionError) throw sessionError;
-    // }
 
     revalidatePath('/classes');
     revalidatePath(`/classes/${result?.id}`);

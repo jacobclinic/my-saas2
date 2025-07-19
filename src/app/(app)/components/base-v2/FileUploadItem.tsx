@@ -27,8 +27,8 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
         <div className="flex items-center space-x-3">
           <File className="h-4 w-4 text-blue-600" />
           <div>
-            <p className="font-medium">{fileName}</p>
-            <p className="text-sm text-gray-600">{fileSize} MB</p>
+            <p className="text-sm font-medium">{fileName}</p>
+            <p className="text-xs text-gray-600">{fileSize} MB</p>
           </div>
         </div>
         

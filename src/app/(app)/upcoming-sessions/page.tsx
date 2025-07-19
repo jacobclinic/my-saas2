@@ -70,7 +70,7 @@ async function UpcomingSessionsPage() {
   return (
     <>
       <AppHeader title={'Upcoming Classes'} description={''} >
-        <div className='w-[225px]'>
+        <div className='lg:w-[225px]'>
           <TimezoneIndicator />
         </div>
       </AppHeader>

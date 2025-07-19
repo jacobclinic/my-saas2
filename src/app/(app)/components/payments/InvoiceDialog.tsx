@@ -16,24 +16,35 @@ interface InvoiceViewProps {
     id: string;
     classTitle: string;
     date: string;
-    amount: number;
     students: number;
+    paidStudents?: number;
+    classFee?: number;
   };
 }
 
 export function InvoiceView({ open, onOpenChange, invoice }: InvoiceViewProps) {
   const commissionRate = 0.15; // 15% commission
-  const commissionAmount = invoice.amount * commissionRate;
-  const tutorAmount = invoice.amount - commissionAmount;
+  // Monthly fee per student should always come from classFee
+  const monthlyFeePerStudent = invoice.classFee || 0;
+
+  // Use paid students count from database (invoices table with status = 'paid')
+  const paidStudents = invoice.paidStudents || 0;
+
+  // Calculate total amount based on paid students only
+  const totalAmount = monthlyFeePerStudent * paidStudents;
+
+  // Use total amount for commission and tutor amount calculations
+  const commissionAmount = totalAmount * commissionRate;
+  const tutorAmount = totalAmount - commissionAmount;
 
   const handleDownloadPDF = () => {
     // Prepare invoice data for PDF generation
     const invoiceData = [
       {
         description: `Monthly Fee - ${invoice.classTitle}`,
-        amount: `Rs. ${(invoice.amount / invoice.students).toFixed(2)}`,
-        students: `× ${invoice.students}`,
-        total: `Rs. ${invoice.amount.toFixed(2)}`,
+        amount: `Rs. ${monthlyFeePerStudent.toFixed(2)}`,
+        students: `× ${paidStudents}`,
+        total: `Rs. ${totalAmount.toFixed(2)}`,
         commission: `- Rs. ${commissionAmount.toFixed(2)}`,
         netAmount: `Rs. ${tutorAmount.toFixed(2)}`,
       },
@@ -62,7 +73,10 @@ export function InvoiceView({ open, onOpenChange, invoice }: InvoiceViewProps) {
       headerData: {
         className: invoice.classTitle,
         classDate: invoice.date,
-        classTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        classTime: new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
         numberOfStudents: invoice.students,
       },
     });
@@ -79,8 +93,10 @@ export function InvoiceView({ open, onOpenChange, invoice }: InvoiceViewProps) {
           <div className="flex justify-between items-start">
             <div>
               <h3 className="font-semibold text-lg">Comma Education</h3>
-              <p className="text-sm text-neutral-600">123 Education Street</p>
-              <p className="text-sm text-neutral-600">Colombo, Sri Lanka</p>
+              <p className="text-sm text-neutral-600">
+                76/A Sri Hemananda Street, Bataganwila
+              </p>
+              <p className="text-sm text-neutral-600">Galle, Sri Lanka</p>
             </div>
             <div className="text-right">
               <p className="text-sm font-medium">Invoice #{invoice.id}</p>
@@ -104,18 +120,18 @@ export function InvoiceView({ open, onOpenChange, invoice }: InvoiceViewProps) {
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Monthly Fee</span>
                   <span className="text-sm">
-                    Rs. {(invoice.amount / invoice.students).toFixed(2)}
+                    Rs. {monthlyFeePerStudent.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Students</span>
-                  <span className="text-sm">× {invoice.students}</span>
+                  <span className="text-sm font-medium">Paid Students</span>
+                  <span className="text-sm">× {paidStudents}</span>
                 </div>
                 <Separator className="my-1" />
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Total Amount</span>
                   <span className="font-medium">
-                    Rs. {invoice.amount.toFixed(2)}
+                    Rs. {totalAmount.toFixed(2)}
                   </span>
                 </div>
               </div>
