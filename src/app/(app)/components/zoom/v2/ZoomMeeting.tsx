@@ -19,14 +19,12 @@ type ZoomMeetingProps = {
 };
 
 const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
-    console.log("Zoom meeting params from Zoom Meeting", JSON.stringify(params));
     const client = ZoomMtgEmbedded.createClient();
-    const { data: role, isLoading } = useUserRole();
+    const { data: role } = useUserRole();
 
     const isHost = role === "tutor" || role === "admin";
     const meetingNumber = params.zoomSession?.meeting_id;
     const password = params.zoomSession?.password;
-    // Todo Change this
     const userName = params.userName;
     const userEmail = params.userEmail;
 

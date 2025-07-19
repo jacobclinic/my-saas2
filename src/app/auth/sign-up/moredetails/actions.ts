@@ -47,7 +47,8 @@ export async function ensureUserRecord(
           last_name: lastName || '',
           display_name: displayName || '',
           type: 1,
-        }
+        },
+        tutor_id: existingUser?.id!,
       })
     }
   } catch (error) {

@@ -70,20 +70,17 @@ export class ZoomClient {
 
     async createUser(createUserRequest: ZoomCreateUserRequest): Promise<ZoomCreateUserResponse> {
         const response = await this.axiosClient.post('/users', createUserRequest);
-        console.log("Zoom Create User Response", response.data);
         return response.data;
     }
 
     async createUserMeeting(createUserMeetingRequest: ZoomCreateUserMeetingRequest): Promise<ZoomMeetingResponse> {
         const body = createUserMeetingRequest.body;
         const response = await this.axiosClient.post(`/users/${createUserMeetingRequest.userId}/meetings`, body);
-        console.log("Zoom Create User Meeting Response", response.data);
         return response.data;
     }
 
     async getUserMeetings(userId: string): Promise<ZoomMeetingResponse> {
         const response = await this.axiosClient.get(`/users/${userId}/meetings`);
-        console.log("Zoom Get User Meetings Response", response.data);
         return response.data;
     }
 

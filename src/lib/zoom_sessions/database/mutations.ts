@@ -33,9 +33,6 @@ export async function createZoomSession(client: Client, data: CreateZoomSessionP
       created_at: new Date().toISOString(),
     };
 
-    console.log("Creating zoom session payload", JSON.stringify(payload));
-
-
     const { data: insertedZoomSession, error } = await client
       .from(ZOOM_SESSIONS_TABLE)
       .insert(payload)
@@ -47,7 +44,7 @@ export async function createZoomSession(client: Client, data: CreateZoomSessionP
 
     return insertedZoomSession;
   } catch (error) {
-    console.log(error);
+    logger.error(error, 'Failed to create zoom session');
     throw new Error('Failed to create zoom session. Please try again.');
   }
 }

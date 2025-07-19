@@ -19,6 +19,7 @@ type ZoomUserRequestInfo = {
 type ZoomCreateUserRequest = {
     action: ZoomCreateUserAction;
     user_info: ZoomUserRequestInfo;
+    tutor_id: string;
 }
 
 type ZoomUser = {
@@ -27,6 +28,7 @@ type ZoomUser = {
     id: string;
     last_name: string;
     type: ZoomUserType;
+    tutor_id: string;
 }
 
 type ZoomCreateUserResponse = ZoomUser;
