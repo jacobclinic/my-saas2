@@ -13,10 +13,13 @@ type ZoomMeetingProps = {
         classId: string;
         sessionId: string;
         zoomSession: any;
+        userEmail: string;
+        userName: string;
     };
 };
 
 const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
+    console.log("Zoom meeting params from Zoom Meeting", JSON.stringify(params));
     const client = ZoomMtgEmbedded.createClient();
     const { data: role, isLoading } = useUserRole();
 
@@ -24,11 +27,10 @@ const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
     const meetingNumber = params.zoomSession?.meeting_id;
     const password = params.zoomSession?.password;
     // Todo Change this
-    const userName = params.zoomSession?.tutor?.first_name;
-    const userEmail = params.zoomSession?.tutor?.email;
+    const userName = params.userName;
+    const userEmail = params.userEmail;
 
     const getSignature = async () => {
-        console.log("Meeting data:", params.zoomSession);
         if (!meetingNumber || !password || !userName || !userEmail) {
             console.warn("Missing meeting data, cannot join meeting.");
             return;
@@ -50,8 +52,6 @@ const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
                 leaveUrl: dashboardUrl,
                 patchJsMedia: true,
                 success: (success: any) => {
-                    console.log('SDK initialized successfully', success)
-
                     ZoomMtg.join({
                         signature: signature,
                         meetingNumber: meetingNumber,
@@ -59,15 +59,14 @@ const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
                         userEmail: userEmail,
                         passWord: password,
                         success: (success: any) => {
-                            console.log('Joined meeting successfully', success)
                         },
                         error: (error: any) => {
-                            console.error('Failed to join meeting:', error)
+                            console.log(error);
                         }
                     })
                 },
                 error: (error: any) => {
-                    console.error('Failed to initialize SDK:', error)
+                    console.log(error);
                 }
             })
         } catch (error) {
@@ -76,10 +75,10 @@ const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
     }
 
     useEffect(() => {
-        if (!isLoading && meetingNumber && password && userName && userEmail) {
+        if (meetingNumber && password && userName && userEmail) {
             getSignature();
         }
-    }, [isLoading, meetingNumber, password, userName, userEmail]);
+    }, [meetingNumber, password, userName, userEmail]);
 
     return (
         <div className="flex-1 w-full h-screen relative">

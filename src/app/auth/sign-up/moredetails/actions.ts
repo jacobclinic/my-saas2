@@ -33,16 +33,16 @@ export async function ensureUserRecord(
     .eq('id', userId)
     .single();
 
-  // Todo : Create the new users in zoom using comma education emails.
-  // Instead using the user email, use the comma education email.
   try {
     if (userRole === 'tutor') {
       const displayName = `${firstName} ${lastName}`;
+      const randomString = Math.random().toString(36).substring(2, 8);
+      const commaEducationEmail = `${firstName}.${lastName}.${randomString}@commaeducation.lk`;
       const zoomService = new ZoomService(client);
       await zoomService.createZoomUser({
         action: 'create',
         user_info: {
-          email: "myall7977@gmail.com",
+          email: commaEducationEmail,
           first_name: firstName || '',
           last_name: lastName || '',
           display_name: displayName || '',
