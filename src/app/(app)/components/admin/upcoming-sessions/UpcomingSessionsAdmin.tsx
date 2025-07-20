@@ -152,8 +152,8 @@ const UpcomingSessionsAdmin = ({
   return (
     <>
       <div className="max-w-7xl p-6">
-        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex flex-wrap gap-4 items-end">
-          <div>
+        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex flex-1 gap-4 items-end justify-between">
+          <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Search Tutor
             </label>
@@ -162,10 +162,10 @@ const UpcomingSessionsAdmin = ({
               value={selectedTutor}
               onChange={(e) => setSelectedTutor(e.target.value)}
               placeholder="Enter tutor name"
-              className="border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
             />
           </div>
-          <div>
+          <div className="flex-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Date filter
             </label>

@@ -177,8 +177,8 @@ const ClassesAdmin = ({
       <AppHeader title={'Class groups'} description={''} />
       <div className="max-w-7xl p-6">
         {/* Filters */}
-        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex flex-wrap gap-4 items-end">
-          <div>
+        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex gap-6 items-end">
+          <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Search Tutor
             </label>
@@ -187,15 +187,15 @@ const ClassesAdmin = ({
               value={selectedTutor}
               onChange={(e) => setSelectedTutor(e.target.value)}
               placeholder="Enter tutor name"
-              className="border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
             />
           </div>
-          <div>
+          <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Year Filter
             </label>
             <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Filter by year" />
               </SelectTrigger>
               <SelectContent>
@@ -210,12 +210,12 @@ const ClassesAdmin = ({
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Status Filter
             </label>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
