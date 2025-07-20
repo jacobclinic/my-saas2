@@ -34,6 +34,7 @@ const ClassesAdmin = ({
   const [selectedTutor, setSelectedTutor] = useState('');
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
   const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [showStudentsDialog, setShowStudentsDialog] = useState(false);
   const [selectedClassName, setSelectedClassName] = useState<string | null>(
     null,
@@ -103,7 +104,9 @@ const ClassesAdmin = ({
       : true;
     const yearMatch =
       selectedYear !== 'all' ? cls.grade === selectedYear : true;
-    return nameMatch && yearMatch;
+    const statusMatch =
+      selectedStatus !== 'all' ? cls.status === selectedStatus : true;
+    return nameMatch && yearMatch && statusMatch;
   });
 
   const handleCopyLink = async (cls: (typeof classData)[0]) => {
@@ -204,6 +207,23 @@ const ClassesAdmin = ({
                     </SelectItem>
                   );
                 })}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status Filter
+            </label>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="canceled">Canceled</SelectItem>
               </SelectContent>
             </Select>
           </div>
