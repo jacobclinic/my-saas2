@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import TextField from '~/core/ui/TextField';
 import Button from '~/core/ui/Button';
 import If from '~/core/ui/If';
+import { USER_ROLES } from '~/lib/constants';
 
 const EmailPasswordSignUpForm: React.FCC<{
   onSubmit: (params: {
@@ -12,7 +13,7 @@ const EmailPasswordSignUpForm: React.FCC<{
     repeatPassword: string;
     firstName: string;
     lastName: string;
-    userRole: 'tutor';
+    userRole: string;
     phoneNumber: string;
     address: string;
   }) => unknown;
@@ -39,8 +40,7 @@ const EmailPasswordSignUpForm: React.FCC<{
     },
   });
 
-  // const [userRole, setUserRole] = useState<'student' | 'tutor'>('student'); // Default userRole
-  const userRole = 'tutor';
+  const userRole = USER_ROLES.TUTOR;
   const emailControl = register('email', { required: true });
   const firstNameControl = register('firstName', {
     required: true,
