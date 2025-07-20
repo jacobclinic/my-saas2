@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../base-v2/ui/Select';
+import { Badge } from '../../base-v2/ui/Badge';
 import { GRADES } from '~/lib/constants-v2';
 import { format, toZonedTime } from 'date-fns-tz';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
@@ -172,6 +173,56 @@ const ClassesAdmin = ({
     setSelectedEditClassData(() => formatDataForEditCls(cls));
   };
 
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case 'active':
+        return (
+          <Badge
+            variant="outline"
+            className="bg-green-100 text-green-800 border-green-300"
+          >
+            Active
+          </Badge>
+        );
+      case 'canceled':
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            Canceled
+          </Badge>
+        );
+      case 'inactive':
+        return (
+          <Badge
+            variant="outline"
+            className="bg-gray-100 text-gray-800 border-gray-300"
+          >
+            Inactive
+          </Badge>
+        );
+      case 'draft':
+        return (
+          <Badge
+            variant="outline"
+            className="bg-yellow-100 text-yellow-800 border-yellow-300"
+          >
+            Draft
+          </Badge>
+        );
+      default:
+        return (
+          <Badge
+            variant="outline"
+            className="bg-gray-100 text-gray-800 border-gray-300"
+          >
+            {status || 'Unknown'}
+          </Badge>
+        );
+    }
+  };
+
   return (
     <>
       <AppHeader title={'Class groups'} description={''} />
@@ -275,7 +326,9 @@ const ClassesAdmin = ({
                       <>-</>
                     )}
                   </td>
-                  <td className="px-5 py-4 whitespace-nowrap">{cls.status}</td>
+                  <td className="px-5 py-4 whitespace-nowrap">
+                    {getStatusBadge(cls.status)}
+                  </td>
                   <td className="px-5 py-4 whitespace-nowrap space-x-2">
                     {/* View students Button */}
                     <div className="relative group inline-block">
