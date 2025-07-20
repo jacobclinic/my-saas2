@@ -4,11 +4,7 @@ import { DateRangePicker } from '@heroui/date-picker';
 import { useCallback, useEffect, useState } from 'react';
 import { PastSession } from '~/lib/sessions/types/session-v2';
 import AttendanceDialog from '../../past-sessions/AttendanceDialog';
-import {
-  PastSessionData,
-  SelectedSession,
-  SelectedSessionAdmin,
-} from '~/lib/sessions/types/past-sessions';
+import { PastSessionData } from '~/lib/sessions/types/past-sessions';
 import { Check, Link, Trash, Users } from 'lucide-react';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DeleteSessionDialog from './DeleteSessionDialog';
@@ -20,6 +16,7 @@ import {
 } from '~/lib/sessions/server-actions-v2';
 import { insertAttendanceAction } from '~/lib/attendance/server-actions';
 import { convertToLocalTime } from '~/lib/utils/timezone-utils';
+import TimezoneIndicator from '../../TimezoneIndicator';
 
 interface DateRange {
   start?: {
@@ -265,40 +262,45 @@ const PastSessionsAdmin = ({
     <>
       <div className="max-w-7xl p-6">
         {/* Filters */}
-        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex flex-1 gap-4 items-end justify-between">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search Tutor
-            </label>
-            <input
-              type="text"
-              value={selectedTutor}
-              onChange={(e) => setSelectedTutor(e.target.value)}
-              placeholder="Enter tutor name"
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-            />
-          </div>
-          <div className="flex-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date filter
-            </label>
-            <DateRangePicker
-              value={dateRange as any}
-              aria-label="Date Range"
-              onChange={handleDateRangeChange}
-              onReset={() => setDateRange(null)}
-              className="w-full sm:w-auto border rounded-lg border-gray-300"
-            />
+        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex justify-between">
+          <div className="flex flex-1 gap-4 items-end justify-between">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search Tutor
+              </label>
+              <input
+                type="text"
+                value={selectedTutor}
+                onChange={(e) => setSelectedTutor(e.target.value)}
+                placeholder="Enter tutor name"
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div className="flex-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date filter
+              </label>
+              <DateRangePicker
+                value={dateRange as any}
+                aria-label="Date Range"
+                onChange={handleDateRangeChange}
+                onReset={() => setDateRange(null)}
+                className="w-full sm:w-auto border rounded-lg border-gray-300"
+              />
+            </div>
+            <div>
+              <button
+                hidden={!dateRange}
+                onClick={() => setDateRange(null)}
+                className="text-sm border border-gray-300 rounded-md px-3 py-2.5"
+                aria-label="Clear date filter"
+              >
+                Clear
+              </button>
+            </div>
           </div>
           <div>
-            <button
-              hidden={!dateRange}
-              onClick={() => setDateRange(null)}
-              className="text-sm border border-gray-300 rounded-md px-3 py-2.5"
-              aria-label="Clear date filter"
-            >
-              Clear
-            </button>
+            <TimezoneIndicator />
           </div>
         </div>
 
@@ -350,7 +352,7 @@ const PastSessionsAdmin = ({
                       <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
                         {cls.attendance_marked || attendanceMarkedStatus[cls.id]
                           ? 'View Attendance'
-                          : 'Mark Attendance'}
+                          : 'View Attendance'}
                       </span>
                     </div>
                     {/* Copy Link Button */}

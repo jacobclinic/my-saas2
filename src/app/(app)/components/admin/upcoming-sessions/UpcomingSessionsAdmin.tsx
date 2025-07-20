@@ -12,6 +12,7 @@ import {
   convertToLocalTime,
   getUserTimezone,
 } from '~/lib/utils/timezone-utils';
+import TimezoneIndicator from '../../TimezoneIndicator';
 
 interface DateRange {
   start?: { year: number; month: number; day: number } | null;
@@ -152,41 +153,47 @@ const UpcomingSessionsAdmin = ({
   return (
     <>
       <div className="max-w-7xl p-6">
-        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex flex-1 gap-4 items-end justify-between">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search Tutor
-            </label>
-            <input
-              type="text"
-              value={selectedTutor}
-              onChange={(e) => setSelectedTutor(e.target.value)}
-              placeholder="Enter tutor name"
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-            />
-          </div>
-          <div className="flex-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date filter
-            </label>
-            <DateRangePicker
-              value={dateRange as any}
-              aria-label="Date Range"
-              onChange={handleDateRangeChange}
-              className="w-full sm:w-auto border rounded-lg border-gray-300"
-            />
+        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex justify-between">
+          <div className="flex flex-1 gap-4 items-end justify-between">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search Tutor
+              </label>
+              <input
+                type="text"
+                value={selectedTutor}
+                onChange={(e) => setSelectedTutor(e.target.value)}
+                placeholder="Enter tutor name"
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div className="flex-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date filter
+              </label>
+              <DateRangePicker
+                value={dateRange as any}
+                aria-label="Date Range"
+                onChange={handleDateRangeChange}
+                className="w-full sm:w-auto border rounded-lg border-gray-300"
+              />
+            </div>
+            <div>
+              <button
+                hidden={!dateRange}
+                onClick={() => setDateRange(null)}
+                className="text-sm border border-gray-300 rounded-md px-3 py-2.5"
+                aria-label="Clear date filter"
+              >
+                Clear
+              </button>
+            </div>
           </div>
           <div>
-            <button
-              hidden={!dateRange}
-              onClick={() => setDateRange(null)}
-              className="text-sm border border-gray-300 rounded-md px-3 py-2.5"
-              aria-label="Clear date filter"
-            >
-              Clear
-            </button>
+            <TimezoneIndicator />
           </div>
         </div>
+
         <div className="overflow-x-auto bg-white shadow-md rounded-lg">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

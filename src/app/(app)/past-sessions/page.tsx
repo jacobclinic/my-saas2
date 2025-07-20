@@ -54,11 +54,13 @@ async function PastSessionsPage() {
 
   return (
     <>
-      <AppHeader title={'Past Classes'} description={''} >
-        <div className='lg:w-[225px]'>
-          <TimezoneIndicator />
-        </div>
-      </AppHeader>
+      {userRole !== 'admin' && (
+        <AppHeader title={'Past Classes'} description={''}>
+          <div className="lg:w-[225px]">
+            <TimezoneIndicator />
+          </div>
+        </AppHeader>
+      )}
       <PageBody>
         {userRole === 'student' ? (
           <StudentPastSessionClient
