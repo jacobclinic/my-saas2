@@ -69,11 +69,13 @@ async function UpcomingSessionsPage() {
 
   return (
     <>
-      <AppHeader title={'Upcoming Classes'} description={''} >
-        <div className='lg:w-[225px]'>
-          <TimezoneIndicator />
-        </div>
-      </AppHeader>
+      {userRole !== 'admin' && (
+        <AppHeader title={'Upcoming Classes'} description={''}>
+          <div className="lg:w-[225px]">
+            <TimezoneIndicator />
+          </div>
+        </AppHeader>
+      )}
 
       <PageBody>
         {userRole === 'student' ? (

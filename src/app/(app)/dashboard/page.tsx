@@ -137,14 +137,6 @@ async function DashboardPage() {
       return (
         <>
           <UnauthorizedAccessToast />
-          <AppHeader
-            title="Admin Dashboard"
-            description={`Welcome back! ${
-              allUpcomingSessions.length
-                ? 'There are upcoming sessions.'
-                : 'There are no classes scheduled today'
-            }`}
-          />
           <PageBody>
             {!allUpcomingSessions.length ? (
               <Alert className="bg-blue-50 border-blue-200">

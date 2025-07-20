@@ -25,6 +25,7 @@ import DeleteClassDialog from '../../classes/DeleteClassDialog';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
 import AppHeader from '../../AppHeader';
+import TimezoneIndicator from '../../TimezoneIndicator';
 
 const ClassesAdmin = ({
   classesData,
@@ -171,41 +172,45 @@ const ClassesAdmin = ({
 
   return (
     <>
-      <AppHeader title={'Class groups'} description={''} />
       <div className="max-w-7xl p-6">
         {/* Filters */}
-        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex flex-wrap gap-4 items-end">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search Tutor
-            </label>
-            <input
-              type="text"
-              value={selectedTutor}
-              onChange={(e) => setSelectedTutor(e.target.value)}
-              placeholder="Enter tutor name"
-              className="border border-gray-300 rounded-md px-3 py-2"
-            />
+        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex justify-between">
+          <div className="flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search Tutor
+              </label>
+              <input
+                type="text"
+                value={selectedTutor}
+                onChange={(e) => setSelectedTutor(e.target.value)}
+                placeholder="Enter tutor name"
+                className="border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Year Filter
+              </label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Years</SelectItem>
+                  {GRADES.map((grade) => {
+                    return (
+                      <SelectItem key={grade} value={grade}>
+                        {grade}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Year Filter
-            </label>
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Years</SelectItem>
-                {GRADES.map((grade) => {
-                  return (
-                    <SelectItem key={grade} value={grade}>
-                      {grade}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            <TimezoneIndicator />
           </div>
         </div>
 
