@@ -7,7 +7,6 @@ import { Section, SectionBody, SectionHeader } from '~/core/ui/Section';
 import UserType from '~/lib/user/types/user';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { createUserByAdminAction } from '~/lib/user/actions.server';
-import { USER_ROLES } from '~/lib/constants';
 
 interface CreateUserModalProps {
   userRole: string;
