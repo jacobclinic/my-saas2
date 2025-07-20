@@ -190,6 +190,7 @@ async function onboardingMiddleware(
       return NextResponse.redirect(waitingUrl);
     }
   } catch (error) {
+    console.error('Error during onboarding checks:', error);
     // If there's any error checking onboarding status, allow through
   }
 

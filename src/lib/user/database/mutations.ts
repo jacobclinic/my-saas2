@@ -36,7 +36,7 @@ export async function createUser(client: SupabaseClient, data: UserData) {
 }
 
 
-export async function insertUserData(client: SupabaseClient,{
+export async function insertUserData(client: SupabaseClient, {
   id,
   first_name,
   last_name,

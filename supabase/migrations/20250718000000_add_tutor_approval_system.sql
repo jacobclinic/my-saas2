@@ -74,26 +74,66 @@ VALUES ('identity-proof', 'identity-proof', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Add storage policy for identity-proof bucket
-CREATE POLICY "Users can upload their own identity documents" ON storage.objects
-FOR INSERT WITH CHECK (
-  bucket_id = 'identity-proof' AND
-  auth.uid()::text = (storage.foldername(name))[1]
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'Users can upload their own identity documents'
+          AND tablename = 'objects'
+          AND schemaname = 'storage'
+    ) THEN
+        CREATE POLICY "Users can upload their own identity documents" ON storage.objects
+        FOR INSERT WITH CHECK (
+          bucket_id = 'identity-proof' AND
+          auth.uid()::text = (storage.foldername(name))[1]
+        );
+    END IF;
+END $$;
 
-CREATE POLICY "Users can read their own identity documents" ON storage.objects
-FOR SELECT USING (
-  bucket_id = 'identity-proof' AND
-  auth.uid()::text = (storage.foldername(name))[1]
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'Users can read their own identity documents'
+          AND tablename = 'objects'
+          AND schemaname = 'storage'
+    ) THEN
+        CREATE POLICY "Users can read their own identity documents" ON storage.objects
+        FOR SELECT USING (
+          bucket_id = 'identity-proof' AND
+          auth.uid()::text = (storage.foldername(name))[1]
+        );
+    END IF;
+END $$;
 
-CREATE POLICY "Users can update their own identity documents" ON storage.objects
-FOR UPDATE USING (
-  bucket_id = 'identity-proof' AND
-  auth.uid()::text = (storage.foldername(name))[1]
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'Users can update their own identity documents'
+          AND tablename = 'objects'
+          AND schemaname = 'storage'
+    ) THEN
+        CREATE POLICY "Users can update their own identity documents" ON storage.objects
+        FOR UPDATE USING (
+          bucket_id = 'identity-proof' AND
+         auth.uid()::text = (storage.foldername(name))[1]
+       );
+   END IF;
+END $$;
 
-CREATE POLICY "Users can delete their own identity documents" ON storage.objects
-FOR DELETE USING (
-  bucket_id = 'identity-proof' AND
-  auth.uid()::text = (storage.foldername(name))[1]
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'Users can delete their own identity documents'
+         AND tablename = 'objects'
+         AND schemaname = 'storage'
+   ) THEN
+       CREATE POLICY "Users can delete their own identity documents" ON storage.objects
+       FOR DELETE USING (
+         bucket_id = 'identity-proof' AND
+         auth.uid()::text = (storage.foldername(name))[1]
+       );
+   END IF;
+END $$;
