@@ -3,14 +3,11 @@
 import React, { useState, useTransition, useMemo, useEffect } from 'react';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
-import { Search, Eye, CheckCircle, DollarSign } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { TutorInvoice } from '~/lib/invoices/types/types';
-import {
-  getTutorInvoicesForPeriod,
-  markTutorInvoiceAsPaidAction,
-} from '~/lib/payments/admin-payment-actions';
+import { getTutorInvoicesForPeriod } from '~/lib/payments/admin-payment-actions';
 import { formatPeriod, generateMonthOptions } from '~/lib/utils/month-utils';
 import DataTable from '~/core/ui/DataTable';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
@@ -18,6 +15,9 @@ import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
 import { toast } from 'sonner';
 import { columnWidthsAdminPayments } from '~/lib/constants-v2';
+import PaymentDetailsDialog from './PaymentDetailsDialog';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+
 
 interface AdminTutorPaymentsViewProps {
   initialInvoices: TutorInvoice[];
@@ -52,6 +52,11 @@ const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
   const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
   const selectedPeriod = parentSelectedPeriod || urlMonth || currentMonth;
 
+  const [selectedInvoice, setSelectedInvoice] = useState<TutorInvoice | null>(
+    null,
+  );
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const csrfToken = useCsrfToken();
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
   // Start with server-provided data
@@ -181,24 +186,47 @@ const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
     handlePaginationChange,
   } = useTablePagination({ data: filteredInvoices });
 
-  const handleMarkAsPaid = async (invoiceId: string) => {
-    startTransition(async () => {
-      const result = await markTutorInvoiceAsPaidAction({
-        invoiceId,
-      });
+  const handleViewDetails = (invoice: TutorInvoice) => {
+    setSelectedInvoice(invoice);
+    setShowDetailsDialog(true);
+  };
 
-      if (result.success) {
-        // Update the local state
-        setInvoices((prevInvoices) =>
-          prevInvoices.map((invoice) =>
-            invoice.id === invoiceId ? { ...invoice, status: 'paid' } : invoice,
-          ),
-        );
-        toast.success('Invoice marked as paid');
-      } else {
-        toast.error(result.error || 'Failed to mark invoice as paid');
-      }
-    });
+  const handleCloseDialog = () => {
+    setShowDetailsDialog(false);
+    setSelectedInvoice(null);
+  };
+
+  const handleTutorStatusChange = (
+    invoiceId: string,
+    status: 'issued' | 'paid' | 'proof_uploaded',
+  ) => {
+    // Update the invoice status in the local state
+    setInvoices((prevInvoices) =>
+      prevInvoices.map((invoice) =>
+        invoice.id === invoiceId ? { ...invoice, status } : invoice,
+      ),
+    );
+
+    // Update the selected invoice if it's the one being changed
+    if (selectedInvoice && selectedInvoice.id === invoiceId) {
+      setSelectedInvoice((prevInvoice) =>
+        prevInvoice ? { ...prevInvoice, status } : null,
+      );
+    }
+  };
+
+  const handleTutorInvoiceUpdate = (updatedInvoice: TutorInvoice) => {
+    // Update the invoice in the local state
+    setInvoices((prevInvoices) =>
+      prevInvoices.map((invoice) =>
+        invoice.id === updatedInvoice.id ? updatedInvoice : invoice,
+      ),
+    );
+
+    // Update the selected invoice if it's the one being updated
+    if (selectedInvoice && selectedInvoice.id === updatedInvoice.id) {
+      setSelectedInvoice(updatedInvoice);
+    }
   };
 
   const getStatusBadge = (status: string | null) => {
@@ -290,24 +318,14 @@ const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
         if (invoice) {
           return (
             <div className="flex justify-center gap-2">
-              {invoice.status === 'issued' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleMarkAsPaid(invoice.id)}
-                  className="text-green-600 hover:text-green-800 hover:bg-green-50"
-                  disabled={isPending}
-                >
-                  <DollarSign className="h-4 w-4" />
-                  <span className="ml-1 text-xs">Mark Paid</span>
-                </Button>
-              )}
-
-              {invoice.status === 'paid' && (
-                <span className="text-green-600 text-sm font-medium">
-                  ✓ Paid
-                </span>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleViewDetails(invoice)}
+                className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
             </div>
           );
         }
@@ -392,6 +410,17 @@ const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
           pageCount={pageCount}
           onPaginationChange={handlePaginationChange}
           columnWidths={columnWidthsAdminPayments}
+        />
+      )}
+
+      {/* Tutor Invoice Details Dialog */}
+      {selectedInvoice && (
+        <PaymentDetailsDialog
+          open={showDetailsDialog}
+          onClose={handleCloseDialog}
+          tutorInvoice={selectedInvoice}
+          onTutorStatusChange={handleTutorStatusChange}
+          onTutorInvoiceUpdate={handleTutorInvoiceUpdate}
         />
       )}
     </div>

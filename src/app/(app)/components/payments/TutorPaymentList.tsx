@@ -58,7 +58,14 @@ export default function Payments() {
   ); // Default to current month name
 
   const [statusFilter, setStatusFilter] = useState('All');
-  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<{
+    id: string;
+    classTitle: string;
+    date: string;
+    students: number;
+    paidStudents?: number;
+    classFee?: number;
+  } | null>(null);
   const [payments, setPayments] = useState<TutorPaymentData[]>([]);
   const [currentMonthInvoices, setCurrentMonthInvoices] = useState<
     TutorInvoice[]
@@ -107,19 +114,31 @@ export default function Payments() {
     ];
     const monthName = monthNames[parseInt(month) - 1] || 'Unknown';
 
-    // For now, assume 1 student per invoice (this could be improved by counting actual students)
+    // Use actual student count from database, fallback to calculated if not available
     const studentCount =
-      invoice.amount > 0
-        ? Math.ceil(invoice.amount / (invoice.class_fee || 1))
-        : 0;
+      invoice.student_count ??
+      (invoice.amount > 0 && invoice.class_fee > 0
+        ? Math.ceil(invoice.amount / invoice.class_fee)
+        : 0);
+
+    // Get paid student count from database
+    const paidStudentCount = invoice.paid_student_count ?? 0;
+
+    // Calculate expected amount based on class fee and student count
+    const expectedAmount =
+      studentCount > 0 && invoice.class_fee > 0
+        ? studentCount * invoice.class_fee
+        : invoice.amount;
 
     return {
       id: invoice.id,
       className: invoice.class_name,
       date: `${monthName} ${year}`,
-      amount: invoice.amount,
+      amount: expectedAmount, // Show expected amount instead of just paid amount
       students: studentCount,
+      paidStudents: paidStudentCount, // Number of students who have actually paid
       status: invoice.status === 'paid' ? 'paid' : 'pending',
+      classFee: invoice.class_fee,
     };
   };
   // Calculate statistics from current month invoices and previous month earnings
@@ -132,11 +151,14 @@ export default function Payments() {
       0,
     );
 
+    // Use actual student count from database, fallback to calculation
     const activeStudents = currentInvoices.reduce((sum, inv) => {
-      return (
-        sum +
-        (inv.amount > 0 ? Math.ceil(inv.amount / (inv.class_fee || 1)) : 0)
-      );
+      const studentCount =
+        inv.student_count ??
+        (inv.amount > 0 && inv.class_fee > 0
+          ? Math.ceil(inv.amount / inv.class_fee)
+          : 0);
+      return sum + studentCount;
     }, 0);
 
     const pendingPayments = currentInvoices.filter(
@@ -500,15 +522,17 @@ export default function Payments() {
                           variant="outline"
                           size="sm"
                           className="border-primary-blue-200 text-primary-blue-700 hover:bg-primary-blue-50"
-                          onClick={() =>
+                          onClick={() => {
                             setSelectedInvoice({
                               id: payment.id,
                               classTitle: payment.className,
                               date: payment.date,
-                              amount: payment.amount,
                               students: payment.students,
-                            })
-                          }
+                              paidStudents: payment.paidStudents,
+                              classFee: payment.classFee,
+                            }),
+                              console.log('Selected Invoice:', payment);
+                          }}
                         >
                           <Eye size={16} className="mr-2" />
                           View Invoice

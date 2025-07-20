@@ -657,3 +657,57 @@ export async function getTutorsForSessionsWithin1Hr(
     throw error;
   }
 }
+
+export async function getStudentsByClassId(
+  client: SupabaseClient<Database>,
+  classId: string,
+): Promise<Student[] | []> {
+  try {
+    const { data, error } = await client
+      .from(STUDENT_CLASS_ENROLLMENTS_TABLE)
+      .select(
+        `
+          id,
+          student_id,
+          student:${USERS_TABLE}!student_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone_number
+          )
+        `,
+      )
+      .eq('class_id', classId);
+
+    if (error) {
+      throw new Error(`Error fetching students for class: ${error.message}`);
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    const transformedData: Student[] = data.map((enrollment) => {
+      const studentData = Array.isArray(enrollment.student)
+        ? enrollment.student[0]
+        : enrollment.student;
+
+      return {
+        id: enrollment.id,
+        student: {
+          id: studentData?.id ?? '',
+          first_name: studentData?.first_name ?? null,
+          last_name: studentData?.last_name ?? null,
+          email: studentData?.email ?? '',
+          phone_number: studentData?.phone_number ?? null,
+        },
+      };
+    });
+
+    return transformedData;
+  } catch (error) {
+    console.error('Failed to fetch students by class ID:', error);
+    throw error;
+  }
+}

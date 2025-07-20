@@ -48,6 +48,9 @@ interface TutorInvoice {
   amount: number;
   status: string | null;
   created_at: string;
+  student_count?: number; // Total enrolled students
+  paid_student_count?: number; // Students who have actually paid
+  payment_url?: string | null; // Payment proof URL from database
 }
 
 interface TutorInvoiceSummary {
