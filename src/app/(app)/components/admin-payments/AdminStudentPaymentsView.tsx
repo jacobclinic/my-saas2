@@ -23,7 +23,7 @@ import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
 import { toast } from 'sonner';
 import { formatPeriod, generateMonthOptions } from '~/lib/utils/month-utils';
-import { columnWidthsAdminPayments } from '~/lib/constants-v2';
+import { columnWidthsAdminStudentPayments } from '~/lib/constants-v2';
 
 interface AdminStudentPaymentsViewProps {
   initialPayments: PaymentWithDetails[];
@@ -432,8 +432,6 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     invoiceNo: payment.invoiceNo || '',
   }));
 
-
-
   return (
     <div className="space-y-6 width-full">
       {/* Filters */}
@@ -495,7 +493,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
           pageSize={pageSize}
           pageCount={pageCount}
           onPaginationChange={handlePaginationChange}
-          columnWidths={columnWidthsAdminPayments}
+          columnWidths={columnWidthsAdminStudentPayments}
         />
       )}{' '}
       {/* Payment Details Dialog */}

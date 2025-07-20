@@ -19,7 +19,7 @@ export const GRADES = [
   'Grade 7',
   'Grade 6',
   'Grade 5',
-  'Not applicable'
+  'Not applicable',
 ];
 
 export const SUBJECTS = [
@@ -43,11 +43,20 @@ export const dayMap: { [key: string]: number } = {
   saturday: 6,
 };
 
-export const columnWidthsAdminPayments = {
+export const columnWidthsAdminStudentPayments = {
   actions: '30px',
   status: '30px',
   amount: '100px',
   period: '100px',
   submittedDate: '120px',
   invoiceNo: '200px',
+};
+
+export const columnWidthsAdminTutorPayments = {
+  actions: '30px',
+  status: '30px',
+  amount: '100px',
+  period: '100px',
+  submittedDate: '120px',
+  invoiceNo: '300px',
 };
