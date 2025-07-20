@@ -1,39 +1,45 @@
 'use client';
 
 import React, { useEffect, useState, useTransition } from 'react';
-import { Input } from '../base-v2/ui/Input';
-import { Textarea } from '../base-v2/ui/Textarea';
+import { Input } from '../../base-v2/ui/Input';
+import { Textarea } from '../../base-v2/ui/Textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../base-v2/ui/Select';
-import TimezoneIndicator from '../TimezoneIndicator';
+} from '../../base-v2/ui/Select';
+import TimezoneIndicator from '../../TimezoneIndicator';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { createClassAction } from '~/lib/classes/server-actions-v2';
-import { useToast } from '../../lib/hooks/use-toast';
-import BaseDialog from '../base-v2/BaseDialog';
-import { NewClassData, TimeSlot } from '~/lib/classes/types/class-v2';
+import { createClassByAdminAction } from '~/lib/classes/server-actions-v2';
+import { useToast } from '../../../lib/hooks/use-toast';
+import BaseDialog from '../../base-v2/BaseDialog';
+import { AdminNewClassData, TimeSlot } from '~/lib/classes/types/class-v2';
 import Button from '~/core/ui/Button';
 import { Plus, X } from 'lucide-react';
+import SearchableSelect from '../../base-v2/ui/SearchableSelect';
 
-interface CreateClassDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onCreateClass?: (classData: NewClassData) => void;
-  loading?: boolean;
-  tutorId: string;
+interface TutorOption {
+  id: string;
+  name: string;
 }
 
-const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
+interface AdminCreateClassDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onCreateClass?: (classData: AdminNewClassData) => void;
+  loading?: boolean;
+  tutors: TutorOption[];
+}
+
+const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
   open,
   onClose,
   onCreateClass,
   loading = false,
-  tutorId,
+  tutors,
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
@@ -55,30 +61,35 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 
   const today = getTodayInSriLankaTimezone();
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const [newClass, setNewClass] = useState<NewClassData>({
+  const [newClass, setNewClass] = useState<AdminNewClassData>({
     name: '',
     subject: '',
     description: '',
     yearGrade: '',
     monthlyFee: '',
-    startDate: today, // Default to today's date in local timezone
-    timeSlots: [{ day: '', startTime: '', endTime: '', timezone: userTimezone }], // Single time slot
-    tutorId,
+    startDate: today,
+    timeSlots: [
+      { day: '', startTime: '', endTime: '', timezone: userTimezone },
+    ],
+    tutorId: '',
   });
 
-  const [allFilled, setAllFilled] = useState(false);
+  const [allFilled, setAllFilled] = useState<boolean>(false);
 
   const handleAddTimeSlot = () => {
-    setNewClass(prev => ({
+    setNewClass((prev) => ({
       ...prev,
-      timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }]
+      timeSlots: [
+        ...prev.timeSlots,
+        { day: '', startTime: '', endTime: '', timezone: userTimezone },
+      ],
     }));
   };
 
   const handleRemoveTimeSlot = (index: number) => {
-    setNewClass(prev => ({
+    setNewClass((prev) => ({
       ...prev,
-      timeSlots: prev.timeSlots.filter((_, i) => i !== index)
+      timeSlots: prev.timeSlots.filter((_, i) => i !== index),
     }));
   };
 
@@ -87,14 +98,14 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     field: keyof TimeSlot,
     value: string,
   ) => {
-    setNewClass((prev: NewClassData) => {
+    setNewClass((prev: AdminNewClassData) => {
       const updatedTimeSlots = prev.timeSlots.map((slot, i) =>
         i === index ? { ...slot, [field]: value } : slot,
       );
 
       return {
         ...prev,
-        timeSlots: updatedTimeSlots as [TimeSlot], // Type assertion to match the expected tuple type
+        timeSlots: updatedTimeSlots,
       };
     });
   };
@@ -104,9 +115,10 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     const payload = {
       ...newClass,
       startDate,
-    }
+    };
+
     startTransition(async () => {
-      const result = await createClassAction({
+      const result = await createClassByAdminAction({
         classData: payload,
         csrfToken,
       });
@@ -124,14 +136,16 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           description: '',
           yearGrade: '',
           monthlyFee: '',
-          startDate: '',
-          timeSlots: [{ day: '', startTime: '', endTime: '', timezone: userTimezone }], // Reset to a single time slot
-          tutorId,
+          startDate: today,
+          timeSlots: [
+            { day: '', startTime: '', endTime: '', timezone: userTimezone },
+          ],
+          tutorId: '',
         });
       } else {
         toast({
           title: 'Error',
-          description: 'Failed to create class',
+          description: result.error || 'Failed to create class',
           variant: 'destructive',
         });
       }
@@ -139,23 +153,21 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     onCreateClass?.(newClass);
   };
 
-  const isValid =
+  const isValid = Boolean(
     newClass.name &&
-    newClass.subject &&
-    newClass.monthlyFee &&
-    newClass.yearGrade &&
-    newClass.startDate &&
-    newClass.timeSlots.every(
-      (slot) => slot.day && slot.startTime && slot.endTime,
-    );
+      newClass.subject &&
+      newClass.monthlyFee &&
+      newClass.yearGrade &&
+      newClass.startDate &&
+      newClass.tutorId &&
+      newClass.timeSlots.every(
+        (slot) => slot.day && slot.startTime && slot.endTime,
+      ),
+  );
 
   useEffect(() => {
-    if (isValid) {
-      setAllFilled(true);
-    } else {
-      setAllFilled(false);
-    }
-  }, [newClass.name, newClass.subject, newClass.monthlyFee, newClass.yearGrade, newClass.startDate, newClass.timeSlots, isValid]);
+    setAllFilled(isValid);
+  }, [isValid]);
 
   const handleClose = () => {
     onClose();
@@ -165,20 +177,20 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       description: '',
       yearGrade: '',
       monthlyFee: '',
-      startDate: '',
-      timeSlots: [{ day: '', startTime: '', endTime: '', timezone: userTimezone }], // Reset to a single time slot
-      tutorId,
+      startDate: today,
+      timeSlots: [
+        { day: '', startTime: '', endTime: '', timezone: userTimezone },
+      ],
+      tutorId: '',
     });
   };
-
-
 
   return (
     <BaseDialog
       open={open}
       onClose={handleClose}
       title="Create Class Group"
-      description="Set up your class details and schedule"
+      description="Set up class details and assign a tutor"
       maxWidth="xl"
       onConfirm={handleSubmit}
       confirmButtonText="Create Class"
@@ -193,6 +205,19 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
             placeholder="Enter class name"
             value={newClass.name}
             onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Assign Tutor</label>
+          <SearchableSelect
+            options={tutors}
+            value={newClass.tutorId}
+            onValueChange={(value) =>
+              setNewClass({ ...newClass, tutorId: value })
+            }
+            placeholder="Search and select a tutor..."
+            className="mt-1"
           />
         </div>
 
@@ -276,17 +301,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
-          {/* <div>
-            <label className="text-sm font-medium">End Date</label>
-            <Input
-              type="date"
-              value={newClass.endDate}
-              onChange={(e) =>
-                setNewClass({ ...newClass, endDate: e.target.value })
-              }
-              min={new Date().toISOString().split('T')[0]}
-            />
-          </div> */}{' '}
         </div>
 
         {/* Class Schedule with Timezone Indicator */}
@@ -311,39 +325,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               <label className="text-sm font-medium">Start Time</label>
               <label className="text-sm font-medium">End Time</label>
             </div>
-            {/* <div className="flex gap-2 items-start">
-              <Select
-                value={newClass.timeSlot.day}
-                onValueChange={(value) => updateTimeSlot('day', value)}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select day" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DAYS_OF_WEEK.map(day => (
-                    <SelectItem key={day} value={day.toLowerCase()}>
-                      {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="flex gap-2">
-                <Input
-                  type="time"
-                  value={newClass.timeSlots.startTime}
-                  onChange={(e) => updateTimeSlot('startTime', e.target.value)}
-                  placeholder="Start time"
-                />
-
-                <Input
-                  type="time"
-                  value={newClass.timeSlot.endTime}
-                  onChange={(e) => updateTimeSlot('endTime', e.target.value)}
-                  placeholder="End time"
-                />
-              </div>
-            </div> */}
             {newClass.timeSlots.map((slot, index) => (
               <div key={index} className="flex gap-2 items-start">
                 <Select
@@ -402,4 +383,4 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   );
 };
 
-export default CreateClassDialog;
+export default AdminCreateClassDialog;

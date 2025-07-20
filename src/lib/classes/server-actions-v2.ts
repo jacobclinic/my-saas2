@@ -3,13 +3,19 @@
 import { revalidatePath } from 'next/cache';
 import {
   createClass,
+  createClassByAdmin,
   deleteClass,
   getClassById,
   updateClass,
 } from '~/lib/classes/database/mutations-v2';
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import { ClassType, NewClassData, TimeSlot } from './types/class-v2';
+import {
+  ClassType,
+  NewClassData,
+  AdminNewClassData,
+  TimeSlot,
+} from './types/class-v2';
 import { getUpcomingOccurrences } from '../utils/date-utils';
 import { zoomService } from '../zoom/zoom.service';
 import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
@@ -26,11 +32,20 @@ import { isAdminOrCLassTutor } from '../user/database/queries';
 import { createInvoiceForNewClass } from '../invoices/database/mutations';
 import { notifyStudentsAfterClassScheduleUpdate } from '../notifications/email/email.notification.service';
 import { notifyStudentsAfterClassScheduleUpdateSMS } from '../notifications/sms/sms.notification.service';
-import { generateWeeklyOccurrences, RecurrenceInput } from '../utils/recurrence-utils';
+import {
+  generateWeeklyOccurrences,
+  RecurrenceInput,
+} from '../utils/recurrence-utils';
 import { isEqual } from 'lodash';
+import { isAdmin } from '../user/actions.server';
 
 type CreateClassParams = {
   classData: NewClassData;
+  csrfToken: string;
+};
+
+type AdminCreateClassParams = {
+  classData: AdminNewClassData;
   csrfToken: string;
 };
 
@@ -47,7 +62,7 @@ type DeleteClassParams = {
 
 export const createClassAction = withSession(
   async (params: CreateClassParams) => {
-    console.log("Create class action called", params);
+    console.log('Create class action called', params);
 
     const { classData, csrfToken } = params;
     const client = getSupabaseServerActionClient();
@@ -65,17 +80,19 @@ export const createClassAction = withSession(
     const occurrences = [];
     const yearEndDate = new Date(new Date().getFullYear(), 11, 31)
       .toISOString()
-      .split('T')[0]
+      .split('T')[0];
 
     for (const slot of classData.timeSlots) {
       const recurrenceInputPayload: RecurrenceInput = {
         startDate: classData.startDate,
         endDate: yearEndDate,
         timeSlot: slot,
-        dayOfWeek: slot.day
-      }
+        dayOfWeek: slot.day,
+      };
       try {
-        const weeklyOccurences = generateWeeklyOccurrences(recurrenceInputPayload);
+        const weeklyOccurences = generateWeeklyOccurrences(
+          recurrenceInputPayload,
+        );
         occurrences.push(...weeklyOccurences);
       } catch (error) {
         console.error('Error generating weekly occurrences:', error);
@@ -85,7 +102,7 @@ export const createClassAction = withSession(
 
     // TODO: Create a zoom meeting for the first occurrence.
 
-    // 
+    //
 
     const sessions = occurrences.map((occurrence, index) => ({
       class_id: classResult?.id,
@@ -127,11 +144,112 @@ export const createClassAction = withSession(
   },
 );
 
+export const createClassByAdminAction = withSession(
+  async (params: AdminCreateClassParams) => {
+    console.log('Create class by admin action called', params);
+
+    const { classData, csrfToken } = params;
+    const client = getSupabaseServerActionClient();
+
+    // Verify CSRF token
+    await verifyCsrfToken(csrfToken);
+
+    // Get the current user's session and verify admin role
+    const {
+      data: { session },
+      error: sessionError,
+    } = await client.auth.getSession();
+
+    if (sessionError || !session?.user) {
+      return {
+        success: false,
+        error: 'User not authenticated',
+      };
+    }
+
+    const userId = session.user.id;
+
+    // Check if user is admin
+    const admin = await isAdmin(client);
+    if (!admin) {
+      return {
+        success: false,
+        error: 'Unautherized access',
+      };
+    }
+
+    // Create the class
+    const classResult = await createClassByAdmin(client, classData);
+
+    // Generate initial sessions for the year
+    const occurrences = [];
+    const yearEndDate = new Date(new Date().getFullYear(), 11, 31)
+      .toISOString()
+      .split('T')[0];
+
+    for (const slot of classData.timeSlots) {
+      const recurrenceInputPayload: RecurrenceInput = {
+        startDate: classData.startDate,
+        endDate: yearEndDate,
+        timeSlot: slot,
+        dayOfWeek: slot.day,
+      };
+
+      try {
+        const weeklyOccurrences = generateWeeklyOccurrences(
+          recurrenceInputPayload,
+        );
+        occurrences.push(...weeklyOccurrences);
+      } catch (error) {
+        console.error('Error generating weekly occurrences:', error);
+        throw error;
+      }
+    }
+
+    const sessions = occurrences.map((occurrence) => ({
+      class_id: classResult?.id,
+      start_time: new Date(occurrence.startTime).toISOString(),
+      end_time: new Date(occurrence.endTime).toISOString(),
+      meeting_url: '',
+      zoom_meeting_id: '',
+      status: 'scheduled',
+      created_at: new Date().toISOString(),
+    }));
+
+    const { error: sessionInsertError } = await client
+      .from(SESSIONS_TABLE)
+      .insert(sessions.flat());
+
+    if (sessionInsertError) throw sessionInsertError;
+
+    // Create an invoice for the newly created class
+    if (classResult?.id) {
+      const invoiceId = await createInvoiceForNewClass(client, classResult.id);
+      if (!invoiceId) {
+        console.error(
+          'Failed to create invoice for new class:',
+          classResult.id,
+        );
+        // Continue with class creation even if invoice creation fails
+      }
+    }
+
+    // Revalidate paths
+    revalidatePath('/classes');
+    revalidatePath('/(app)/classes');
+    revalidatePath('/(app)/admin/classes');
+
+    return {
+      success: true,
+      class: classResult,
+    };
+  },
+);
+
 export const updateClassAction = withSession(
   async (params: UpdateClassParams) => {
-
     const client = getSupabaseServerActionClient();
-    console.log("Update class action called", params);
+    console.log('Update class action called', params);
 
     // Get the current user's session
     const {
@@ -260,7 +378,7 @@ export const updateClassAction = withSession(
           month: 'long',
           day: 'numeric',
         });
-        
+
         await Promise.all([
           notifyStudentsAfterClassScheduleUpdate(client, {
             classId: params.classId,
@@ -565,10 +683,14 @@ export const sendEmailMSGToStudentAction = withSession(
   },
 );
 
-
-function generateAllWeeklyOccurrencesForYear(classData: { startDate: string; timeSlots: TimeSlot[] }) {
+function generateAllWeeklyOccurrencesForYear(classData: {
+  startDate: string;
+  timeSlots: TimeSlot[];
+}) {
   const occurrences = [];
-  const yearEndDate = new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0];
+  const yearEndDate = new Date(new Date().getFullYear(), 11, 31)
+    .toISOString()
+    .split('T')[0];
 
   for (const slot of classData.timeSlots) {
     const recurrenceInputPayload: RecurrenceInput = {
@@ -579,10 +701,15 @@ function generateAllWeeklyOccurrencesForYear(classData: { startDate: string; tim
     };
 
     try {
-      const weeklyOccurrences = generateWeeklyOccurrences(recurrenceInputPayload);
+      const weeklyOccurrences = generateWeeklyOccurrences(
+        recurrenceInputPayload,
+      );
       occurrences.push(...weeklyOccurrences);
     } catch (error) {
-      console.error(`Error generating weekly occurrences for slot: ${JSON.stringify(slot)}`, error);
+      console.error(
+        `Error generating weekly occurrences for slot: ${JSON.stringify(slot)}`,
+        error,
+      );
       throw error;
     }
   }

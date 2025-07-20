@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Edit, Link, Trash, Users } from 'lucide-react';
+import { Check, Edit, Link, Trash, Users, Plus } from 'lucide-react';
 import {
   ClassListData,
   ClassListStudent,
@@ -10,6 +10,7 @@ import {
   EditClassData,
   SelectedClassAdmin,
   TimeSlot,
+  TutorOption,
 } from '~/lib/classes/types/class-v2';
 import {
   Select,
@@ -27,11 +28,16 @@ import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
 import AppHeader from '../../AppHeader';
 import TimezoneIndicator from '../../TimezoneIndicator';
+import AdminCreateClassDialog from './AdminCreateClassDialog';
+import Button from '~/core/ui/Button';
+import { AdminNewClassData } from '~/lib/classes/types/class-v2';
 
 const ClassesAdmin = ({
   classesData,
+  tutors,
 }: {
   classesData: ClassWithTutorAndEnrollmentAdmin[];
+  tutors: TutorOption[];
 }) => {
   const [selectedTutor, setSelectedTutor] = useState('');
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
@@ -48,6 +54,8 @@ const ClassesAdmin = ({
   const [editLoading, setEditLoading] = useState(false);
   const [selectedEditClassData, setSelectedEditClassData] =
     useState<ClassListData>({} as ClassListData);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
 
   const createSchedule = (cls: ClassWithTutorAndEnrollmentAdmin) => {
     return (
@@ -174,6 +182,18 @@ const ClassesAdmin = ({
     setSelectedEditClassData(() => formatDataForEditCls(cls));
   };
 
+  const handleCreateClass = async (classData: AdminNewClassData) => {
+    try {
+      setCreateLoading(true);
+      // The actual creation is handled in the dialog component
+      // This is just for any additional logic if needed
+    } catch (error) {
+      console.error('Error creating class:', error);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'active':
@@ -227,6 +247,20 @@ const ClassesAdmin = ({
   return (
     <>
       <div className="max-w-7xl p-6">
+        {/* Header with Create Button */}
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Class groups
+          </h1>
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            className="bg-blue-700 hover:bg-blue-900 text-white"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Class
+          </Button>
+        </div>
+
         {/* Filters */}
         <div className="bg-white shadow-md rounded-lg pb-4 pl-4 pr-4 mb-2">
           {/* Timezone Indicator */}
@@ -417,6 +451,14 @@ const ClassesAdmin = ({
         onUpdateClass={handleUpdateClass}
         classData={selectedEditClassData}
         loading={editLoading}
+      />
+
+      <AdminCreateClassDialog
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onCreateClass={handleCreateClass}
+        loading={createLoading}
+        tutors={tutors}
       />
     </>
   );

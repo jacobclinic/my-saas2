@@ -13,7 +13,7 @@ import { USER_ROLES } from '../constants';
 import { generateSecurePassword } from '../utility-functions';
 import UserType from './types/user';
 import { withSession } from '~/core/generic/actions-utils';
-import { fetchUserRole } from './database/queries';
+import { fetchUserRole, getAllUsersByUserRoleData } from './database/queries';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getUserCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
 import { EmailService } from '~/core/email/send-email-mailtrap';
@@ -108,7 +108,7 @@ export const createUserByAdminAction = async (
         userRole: userRole,
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
       });
-      
+
       const emailService = EmailService.getInstance();
       await emailService.sendEmail({
         from: configuration.email.fromAddress || 'noreply@yourinstitute.com',
@@ -272,8 +272,10 @@ export async function createStudentAction({
 
       // Send welcome email with credentials
       const { EmailService } = await import('~/core/email/send-email-mailtrap');
-      const { getStudentRegistrationEmailTemplate } = await import('~/core/email/templates/emailTemplate');
-      
+      const { getStudentRegistrationEmailTemplate } = await import(
+        '~/core/email/templates/emailTemplate'
+      );
+
       const { html, text } = getStudentRegistrationEmailTemplate({
         studentName: `${firstName} ${lastName}`,
         email,
@@ -384,3 +386,54 @@ export const isAdmin = withSession(
     return userRole === USER_ROLES.ADMIN;
   },
 );
+
+export const fetchTutorsForAdminAction = withSession(async () => {
+  const client = getSupabaseServerActionClient();
+
+  // Get the current user's session and verify admin role
+  const {
+    data: { session },
+    error: sessionError,
+  } = await client.auth.getSession();
+
+  if (sessionError || !session?.user) {
+    console.error('User not authenticated:', sessionError);
+    return { success: false, error: 'User not authenticated', tutors: [] };
+  }
+
+  const userId = session.user.id;
+
+  // Check if user is admin
+  const Admin = await isAdmin(client);
+
+  if (!Admin) {
+    console.error('Unauthorized access attempt:');
+    return {
+      success: false,
+      error: 'Unauthorized: Admin access required',
+      tutors: [],
+    };
+  }
+
+  // Use the database query function for consistency
+  try {
+    const tutorUsers = await getAllUsersByUserRoleData(client, 'tutor');
+
+    const formattedTutors = tutorUsers.map((tutor) => {
+      const firstName = tutor.first_name?.trim() || '';
+      const lastName = tutor.last_name?.trim() || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      const finalName = fullName || tutor.email || 'Unnamed Tutor';
+
+      return {
+        id: tutor.id,
+        name: finalName,
+      };
+    });
+
+    return { success: true, error:null, tutors: formattedTutors };
+  } catch (error) {
+    console.error('Error in fetchTutorsForAdminAction:', error);
+    return { success: false, error: 'Failed to fetch tutors', tutors: [] };
+  }
+});

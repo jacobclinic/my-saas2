@@ -59,8 +59,6 @@ export async function fetchUserRole(
   return data.user_role;
 }
 
-
-
 export async function getAllUsersByUserRoleData(
   client: SupabaseClient<Database>,
   userRole: string,
@@ -70,8 +68,6 @@ export async function getAllUsersByUserRoleData(
       .from(USERS_TABLE)
       .select()
       .eq('user_role', userRole);
-
-    // console.log("getAllUsersData", data)
 
     if (error) {
       throw new Error(`Error fetching all users: ${error.message}`);

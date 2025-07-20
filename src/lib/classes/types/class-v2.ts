@@ -237,3 +237,19 @@ export interface SelectedClassAdmin {
   grade: string | null;
   upcomingSession: string | null;
 }
+
+export interface AdminNewClassData {
+  name: string;
+  subject: string;
+  description: string;
+  yearGrade: string;
+  monthlyFee: string;
+  startDate: string;
+  timeSlots: TimeSlot[];
+  tutorId: string;
+}
+
+export interface TutorOption {
+  id: string;
+  name: string;
+}
