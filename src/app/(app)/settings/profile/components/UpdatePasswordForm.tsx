@@ -14,6 +14,7 @@ import Alert from '~/core/ui/Alert';
 import If from '~/core/ui/If';
 
 import configuration from '~/configuration';
+import { validatePassword } from '~/core/utils/validate-password';
 
 const UpdatePasswordForm: React.FCC<{ user: User }> = ({ user }) => {
   const updateUserMutation = useUpdateUserMutation();
@@ -30,31 +31,32 @@ const UpdatePasswordForm: React.FCC<{ user: User }> = ({ user }) => {
 
   const newPasswordControl = register('newPassword', {
     value: '',
-    required: true,
-    minLength: {
-      value: 6,
-      message: `Please provide a password with at least 6 characters`,
-    },
+    required: 'Password is required',
     validate: (value) => {
       // current password cannot be the same as the current one
       if (value === getValues('currentPassword')) {
         return `Your password has not changed`;
       }
+
+      // Use the validatePassword function for comprehensive validation
+      const validation = validatePassword(value);
+      if (!validation.isValid) {
+        return validation.message;
+      }
+
+      return true;
     },
   });
 
   const repeatPasswordControl = register('repeatPassword', {
     value: '',
-    required: true,
-    minLength: {
-      value: 6,
-      message: `Please provide a password with at least 6 characters`,
-    },
+    required: 'Please confirm your password',
     validate: (value) => {
       // new password and repeat new password must match
       if (value !== getValues('newPassword')) {
         return `Passwords do not match. Make sure you're using the correct password`;
       }
+      return true;
     },
   });
 

@@ -4,13 +4,22 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../base-v2/ui/Card';
 import { Input } from '../base-v2/ui/Input';
 import { Button } from '../base-v2/ui/Button';
-import { User, Mail, Phone, ArrowRight, Lock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base-v2/ui/Select';
+import { Checkbox } from '../base-v2/ui/Checkbox';
+import { User, Mail, Phone, ArrowRight, Lock, Calendar, MapPin } from 'lucide-react';
 import { registerStudentAction } from '../../../actions/public/student-registration';
 import { ClassRegistrationData } from '~/lib/registration-link';
 import RegistrationSuccess from './RegistrationSuccess';
 import useSignUpWithEmailAndPasswordMutation from '~/core/hooks/use-sign-up-with-email-password';
 import StudentRegistrationViaLogin from './RegisterViaLogin';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
+import { SRI_LANKA_DISTRICTS } from '~/lib/constants/sri-lanka-districts';
+import { validatePassword } from '~/core/utils/validate-password';
+import { getBirthdayDateLimits, validateBirthday } from '~/core/utils/validate-birthday';
+import { validateEmail } from '../../../../core/utils/validate-email';
+import { validatePhoneNumber } from '~/core/utils/validate-phonenumber';
+import { validateName } from '~/core/utils/validate-name';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 
@@ -19,7 +28,10 @@ interface RegistrationFormData {
   lastName: string;
   email: string;
   phone: string;
+  birthday: string;
   address: string;
+  city: string;
+  district: string;
   password: string;
 }
 
@@ -28,7 +40,10 @@ interface FieldTouchedState {
   lastName?: boolean;
   email?: boolean;
   phone?: boolean;
+  birthday?: boolean;
   address?: boolean;
+  city?: boolean;
+  district?: boolean;
   password?: boolean;
 }
 
@@ -46,7 +61,10 @@ const StudentRegistrationForm = ({
     lastName: '',
     email: '',
     phone: '',
+    birthday: '',
     address: '',
+    city: '',
+    district: '',
     password: '',
   });
   const [errors, setErrors] = useState<Partial<RegistrationFormData>>({});
@@ -57,79 +75,57 @@ const StudentRegistrationForm = ({
 
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   const signUpMutation = useSignUpWithEmailAndPasswordMutation();
+  const birthdayLimits = getBirthdayDateLimits();
 
-  // Real-time validation function
-  const validateField = (
-    fieldName: keyof RegistrationFormData,
-    value: string,
-  ) => {
+  // Simplified validation function
+  const validateFormField = (fieldName: keyof RegistrationFormData, value: string) => {
     const newErrors = { ...errors };
 
     switch (fieldName) {
       case 'firstName':
-        if (!value.trim()) {
-          newErrors.firstName = 'First name is required';
-        } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-          newErrors.firstName = 'First name should only contain letters';
-        } else {
-          delete newErrors.firstName;
-        }
-        break;
-
       case 'lastName':
-        if (!value.trim()) {
-          newErrors.lastName = 'Last name is required';
-        } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-          newErrors.lastName = 'Last name should only contain letters';
+        const nameResult = validateName(value);
+        if (!nameResult.isValid) {
+          newErrors[fieldName] = nameResult.message;
         } else {
-          delete newErrors.lastName;
+          delete newErrors[fieldName];
         }
         break;
 
       case 'email':
-        if (!value.trim()) {
-          newErrors.email = 'Email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
-          newErrors.email = 'Please enter a valid email address';
+        const emailResult = validateEmail(value);
+        if (!emailResult.isValid) {
+          newErrors.email = emailResult.message;
         } else {
           delete newErrors.email;
         }
         break;
 
       case 'phone':
-        if (!value.trim()) {
-          newErrors.phone = 'Phone number is required';
-        } else if (
-          !/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(
-            value.trim(),
-          )
-        ) {
-          newErrors.phone = 'Please enter a valid phone number';
-        } else if (value.trim().length < 10) {
-          newErrors.phone = 'Phone number must be at least 10 digits';
+        const phoneResult = validatePhoneNumber(value);
+        if (!phoneResult.isValid) {
+          newErrors.phone = phoneResult.message;
         } else {
           delete newErrors.phone;
         }
         break;
 
+      case 'birthday':
+        const birthdayResult = validateBirthday(value);
+        if (!birthdayResult.isValid) {
+          newErrors.birthday = birthdayResult.message;
+        } else {
+          delete newErrors.birthday;
+        }
+        break;
+
       case 'password':
-        if (!value.trim()) {
-          newErrors.password = 'Password is required';
-        } else if (value.length < 8) {
-          newErrors.password = 'Password must be at least 8 characters';
-        } else if (!/(?=.*[a-z])/.test(value)) {
-          newErrors.password =
-            'Password must contain at least one lowercase letter';
-        } else if (!/(?=.*[A-Z])/.test(value)) {
-          newErrors.password =
-            'Password must contain at least one uppercase letter';
-        } else if (!/(?=.*\d)/.test(value)) {
-          newErrors.password = 'Password must contain at least one digit';
-        } else if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value)) {
-          newErrors.password =
-            'Password must contain at least one special character';
+        const passwordResult = validatePassword(value);
+        if (!passwordResult.isValid) {
+          newErrors.password = passwordResult.message;
         } else {
           delete newErrors.password;
         }
@@ -142,6 +138,22 @@ const StudentRegistrationForm = ({
           delete newErrors.address;
         }
         break;
+
+      case 'city':
+        if (!value.trim()) {
+          newErrors.city = 'City is required';
+        } else {
+          delete newErrors.city;
+        }
+        break;
+
+      case 'district':
+        if (!value.trim()) {
+          newErrors.district = 'District is required';
+        } else {
+          delete newErrors.district;
+        }
+        break;
     }
 
     setErrors(newErrors);
@@ -152,15 +164,13 @@ const StudentRegistrationForm = ({
     fieldName: keyof RegistrationFormData,
     value: string,
   ) => {
-    // Apply input restrictions
+    // Apply input restrictions using utility functions
     let filteredValue = value;
 
     if (fieldName === 'firstName' || fieldName === 'lastName') {
-      // Only allow letters and spaces for names
-      filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+      filteredValue = filterNameInput(value);
     } else if (fieldName === 'phone') {
-      // Only allow digits, spaces, dashes, parentheses, and plus sign for phone
-      filteredValue = value.replace(/[^0-9+\-()\s.]/g, '');
+      filteredValue = filterPhoneInput(value);
     }
 
     setFormData({ ...formData, [fieldName]: filteredValue });
@@ -170,143 +180,86 @@ const StudentRegistrationForm = ({
 
     // Validate field if it has been touched
     if (fieldTouched[fieldName] || filteredValue.length > 0) {
-      validateField(fieldName, filteredValue);
+      validateFormField(fieldName, filteredValue);
     }
-  };
-
-  const validateForm = () => {
-    const newErrors: Partial<RegistrationFormData> = {};
-
-    if (!formData.firstName.trim())
-      newErrors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (
-      !/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(
-        formData.phone.trim(),
-      )
-    ) {
-      newErrors.phone = 'Please enter a valid phone number';
-    } else if (formData.phone.trim().length < 10) {
-      newErrors.phone = 'Please enter a valid phone number';
-    }
-
-    if (!formData.password.trim()) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-
-    if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
-    }
-
-    // Check password confirmation
-    if (formData.password !== confirmPassword) {
-      setPasswordError('Passwords do not match');
-    } else {
-      setPasswordError('');
-    }
-
-    setErrors(newErrors);
-    return (
-      Object.keys(newErrors).length === 0 &&
-      !passwordError &&
-      confirmPassword.trim() !== ''
-    );
   };
 
   // Check if form is valid for enabling/disabling the submit button
   const isFormValid = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex =
-      /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/;
-
-    // Password complexity validation
-    const isPasswordComplex = (password: string) => {
-      return (
-        password.length >= 8 &&
-        /(?=.*[a-z])/.test(password) && // lowercase
-        /(?=.*[A-Z])/.test(password) && // uppercase
-        /(?=.*\d)/.test(password) && // digit
-        /(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(password)
-      ); // special character
-    };
+    // Use validation functions
+    const isFirstNameValid = validateName(formData.firstName).isValid;
+    const isLastNameValid = validateName(formData.lastName).isValid;
+    const isEmailValid = validateEmail(formData.email).isValid;
+    const isPhoneValid = validatePhoneNumber(formData.phone).isValid;
+    const isBirthdayValid = validateBirthday(formData.birthday).isValid;
+    const isPasswordValid = validatePassword(formData.password).isValid;
 
     const isBasicInfoValid =
-      formData.firstName.trim() !== '' &&
-      formData.lastName.trim() !== '' &&
-      formData.email.trim() !== '' &&
-      emailRegex.test(formData.email.trim()) &&
-      formData.phone.trim() !== '' &&
-      phoneRegex.test(formData.phone.trim()) &&
-      formData.phone.trim().length >= 10 &&
+      isFirstNameValid &&
+      isLastNameValid &&
+      isEmailValid &&
+      isPhoneValid &&
+      isBirthdayValid &&
       formData.address.trim() !== '' &&
-      formData.password.trim() !== '' &&
-      isPasswordComplex(formData.password);
+      formData.city.trim() !== '' &&
+      formData.district.trim() !== '' &&
+      isPasswordValid;
 
-    const isPasswordValid =
+    const isPasswordConfirmationValid =
       confirmPassword.trim() !== '' &&
       formData.password === confirmPassword &&
       !passwordError;
 
-    return isBasicInfoValid && isPasswordValid;
+    return isBasicInfoValid && isPasswordConfirmationValid && agreeToTerms;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      if (validateForm()) {
-        try {
-          // Check if the user already exists in the database
-          const registerResult = await signUpMutation.trigger({
-            email: formData.email,
-            password: formData.password,
-            userRole: 'student',
-          });
+    
+    if (!isFormValid()) {
+      return;
+    }
 
-          if (!registerResult) {
-            throw new Error('User already exists');
-          }
-          console.log('User registered successfully:', registerResult);
-        } catch (error) {
-          setErrors({ email: 'User already exists' });
-          return;
-        }
+    try {
+      // Check if the user already exists in the database
+      const registerResult = await signUpMutation.trigger({
+        email: formData.email,
+        password: formData.password,
+        userRole: 'student',
+      });
 
-        const result = await registerStudentAction({
-          ...formData,
-          classId: classData.classId || '',
-          nameOfClass: classData.className,
-        });
-
-        if (result.success) {
-          console.log('Student registered successfully:', result);
-          // Redirect to credentials/welcome page
-          setIsRegistrationSuccess(true);
-          setRegisteredUserData({
-            username: result.userData?.email,
-            email: result.userData?.email,
-            nextClass: {
-              sessionId: nextSessionData.id,
-              date: classData.nextSession,
-              time: classData.time,
-              zoomLink: '',
-            },
-            materials: [],
-          });
-        } else {
-          setErrors({ email: result.error });
-        }
+      if (!registerResult) {
+        throw new Error('User already exists');
       }
+      console.log('User registered successfully:', registerResult);
+    } catch (error) {
+      setErrors({ email: 'User already exists' });
+      return;
+    }
+
+    const result = await registerStudentAction({
+      ...formData,
+      classId: classData.classId || '',
+      nameOfClass: classData.className,
+    });
+
+    if (result.success) {
+      console.log('Student registered successfully:', result);
+      // Redirect to credentials/welcome page
+      setIsRegistrationSuccess(true);
+      setRegisteredUserData({
+        username: result.userData?.email,
+        email: result.userData?.email,
+        nextClass: {
+          sessionId: nextSessionData.id,
+          date: classData.nextSession,
+          time: classData.time,
+          zoomLink: '',
+        },
+        materials: [],
+      });
+    } else {
+      setErrors({ email: result.error });
     }
   };
 
@@ -332,7 +285,7 @@ const StudentRegistrationForm = ({
     setFieldTouched({ ...fieldTouched, password: true });
 
     // Validate password field
-    validateField('password', newPassword);
+    validateFormField('password', newPassword);
 
     // Clear password error when password changes
     if (passwordError) {
@@ -386,7 +339,7 @@ const StudentRegistrationForm = ({
                     }
                     onBlur={() => {
                       setFieldTouched({ ...fieldTouched, firstName: true });
-                      validateField('firstName', formData.firstName);
+                      validateFormField('firstName', formData.firstName);
                     }}
                     icon={<User className="h-4 w-4 text-gray-500" />}
                   />
@@ -407,7 +360,7 @@ const StudentRegistrationForm = ({
                     }
                     onBlur={() => {
                       setFieldTouched({ ...fieldTouched, lastName: true });
-                      validateField('lastName', formData.lastName);
+                      validateFormField('lastName', formData.lastName);
                     }}
                     icon={<User className="h-4 w-4 text-gray-500" />}
                   />
@@ -428,7 +381,7 @@ const StudentRegistrationForm = ({
                   onChange={(e) => handleFieldChange('email', e.target.value)}
                   onBlur={() => {
                     setFieldTouched({ ...fieldTouched, email: true });
-                    validateField('email', formData.email);
+                    validateFormField('email', formData.email);
                   }}
                   icon={<Mail className="h-4 w-4 text-gray-500" />}
                 />
@@ -437,39 +390,100 @@ const StudentRegistrationForm = ({
                 )}
               </div>
 
-              <div>
-                <label className="text-sm font-medium">Phone Number</label>
-                <Input
-                  placeholder="Enter phone number"
-                  value={formData.phone}
-                  onChange={(e) => handleFieldChange('phone', e.target.value)}
-                  onBlur={() => {
-                    setFieldTouched({ ...fieldTouched, phone: true });
-                    validateField('phone', formData.phone);
-                  }}
-                  icon={<Phone className="h-4 w-4 text-gray-500" />}
-                />
-                {errors.phone && (
-                  <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Phone Number</label>
+                  <Input
+                    placeholder="07XXXXXXXX"
+                    value={formData.phone}
+                    onChange={(e) => handleFieldChange('phone', e.target.value)}
+                    onBlur={() => {
+                      setFieldTouched({ ...fieldTouched, phone: true });
+                      validateFormField('phone', formData.phone);
+                    }}
+                    icon={<Phone className="h-4 w-4 text-gray-500" />}
+                  />
+                  {errors.phone && (
+                    <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Birthday</label>
+                  <Input
+                    type="date"
+                    value={formData.birthday}
+                    min={birthdayLimits.min}
+                    max={birthdayLimits.max}
+                    onChange={(e) => handleFieldChange('birthday', e.target.value)}
+                    onBlur={() => {
+                      setFieldTouched({ ...fieldTouched, birthday: true });
+                      validateFormField('birthday', formData.birthday);
+                    }}
+                    icon={<Calendar className="h-4 w-4 text-gray-500" />}
+                  />
+                  {errors.birthday && (
+                    <p className="text-red-500 text-sm mt-1">{errors.birthday}</p>
+                  )}
+                </div>
               </div>
 
               <div>
                 <label className="text-sm font-medium">Address</label>
-                <textarea
-                  placeholder="123 main street, city, Province, Postal code"
+                <Input
+                  placeholder="123 main street"
                   value={formData.address}
                   onChange={(e) => handleFieldChange('address', e.target.value)}
                   onBlur={() => {
                     setFieldTouched({ ...fieldTouched, address: true });
-                    validateField('address', formData.address);
+                    validateFormField('address', formData.address);
                   }}
-                  rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                 />
                 {errors.address && (
                   <p className="text-red-500 text-sm mt-1">{errors.address}</p>
                 )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">City</label>
+                  <Input
+                    placeholder="Enter city"
+                    value={formData.city}
+                    onChange={(e) => handleFieldChange('city', e.target.value)}
+                    onBlur={() => {
+                      setFieldTouched({ ...fieldTouched, city: true });
+                      validateFormField('city', formData.city);
+                    }}
+                    icon={<MapPin className="h-4 w-4 text-gray-500" />}
+                  />
+                  {errors.city && (
+                    <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">District</label>
+                  <Select
+                    value={formData.district}
+                    onValueChange={(value) => handleFieldChange('district', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select district" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SRI_LANKA_DISTRICTS.map((district) => (
+                        <SelectItem key={district} value={district}>
+                          {district}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.district && (
+                    <p className="text-red-500 text-sm mt-1">{errors.district}</p>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -487,7 +501,7 @@ const StudentRegistrationForm = ({
                 {!errors.password && (
                   <p className="text-gray-500 text-xs mt-1">
                     Password must contain at least 8 characters, including
-                    uppercase, lowercase, digit, and special character
+                    uppercase, lowercase, and digit
                   </p>
                 )}
 
@@ -505,6 +519,36 @@ const StudentRegistrationForm = ({
                   <p className="text-red-500 text-sm mt-1">{passwordError}</p>
                 )}
               </div>
+            </div>
+
+            {/* Terms and Conditions */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="terms"
+                checked={agreeToTerms}
+                onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+              />
+              <label 
+                htmlFor="terms" 
+                className="text-sm text-gray-600 cursor-pointer"
+              >
+                I agree to the{' '}
+                <a 
+                  href="/terms" 
+                  target="_blank" 
+                  className="text-blue-600 hover:underline"
+                >
+                  Terms of Service
+                </a>
+                {' '}and{' '}
+                <a 
+                  href="/privacy" 
+                  target="_blank" 
+                  className="text-blue-600 hover:underline"
+                >
+                  Privacy Policy
+                </a>
+              </label>
             </div>
 
             <Button

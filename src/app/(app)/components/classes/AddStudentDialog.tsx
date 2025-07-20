@@ -9,6 +9,10 @@ import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '../../lib/hooks/use-toast';
 import { sendEmailMSGToStudentAction } from '~/lib/classes/server-actions-v2';
+import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
+import { validateEmail } from '../../../../core/utils/validate-email';
+import { validateName } from '~/core/utils/validate-name';
+import { validatePhoneNumber } from '~/core/utils/validate-phonenumber';
 
 interface AddStudentDialogProps {
   open: boolean;
@@ -43,9 +47,6 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
     phone: '',
   });
 
-  // Email validation regex
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
   // Validation function
   const validateField = (name: string, value: string) => {
     let error = '';
@@ -53,18 +54,21 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
     switch (name) {
       case 'firstName':
       case 'lastName':
-        if (value.length < 3) {
-          error = `${name === 'firstName' ? 'First name' : 'Last name'} must be at least 3 characters`;
+        const nameResult = validateName(value);
+        if (!nameResult.isValid) {
+          error = nameResult.message!;
         }
         break;
       case 'email':
-        if (!emailRegex.test(value)) {
-          error = 'Please enter a valid email address';
+        const emailResult = validateEmail(value);
+        if (!emailResult.isValid) {
+          error = emailResult.message!;
         }
         break;
       case 'phone':
-        if (value.length < 10) {
-          error = 'Phone number must be at least 10 characters';
+        const phoneResult = validatePhoneNumber(value);
+        if (!phoneResult.isValid) {
+          error = phoneResult.message!;
         }
         break;
     }
@@ -73,10 +77,19 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
   };
 
   const handleInputChange = (name: string, value: string) => {
-    setNewStudent({ ...newStudent, [name]: value });
+    // Apply input restrictions using utility functions
+    let filteredValue = value;
+
+    if (name === 'firstName' || name === 'lastName') {
+      filteredValue = filterNameInput(value);
+    } else if (name === 'phone') {
+      filteredValue = filterPhoneInput(value);
+    }
+
+    setNewStudent({ ...newStudent, [name]: filteredValue });
 
     // Validate the field and update errors
-    const error = validateField(name, value);
+    const error = validateField(name, filteredValue);
     setErrors({ ...errors, [name]: error });
   };
 
@@ -132,10 +145,10 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
   };
 
   const isValid =
-    newStudent.firstName.length >= 3 &&
-    newStudent.lastName.length >= 3 &&
-    emailRegex.test(newStudent.email) &&
-    newStudent.phone.length >= 10 &&
+    validateName(newStudent.firstName).isValid &&
+    validateName(newStudent.lastName).isValid &&
+    validateEmail(newStudent.email).isValid &&
+    validatePhoneNumber(newStudent.phone).isValid &&
     Object.values(errors).every((error) => error === '');
 
   return (
