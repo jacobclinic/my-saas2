@@ -19,8 +19,6 @@ function useSignUpWithEmailAndPassword() {
   return useSWRMutation(
     key,
     (_, { arg: credentials }: { arg: Credentials }) => {
-      console.log('onSignupRequested-params', credentials);
-
       // Validate password before attempting signup
       try {
         validatePasswordLegacy(credentials.password);

@@ -611,6 +611,7 @@ export type Database = {
           created_at?: string;
           display_name?: string | null;
           district?: string | null;
+
           education_level?: string | null;
           email?: string | null;
           first_name?: string | null;

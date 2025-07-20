@@ -23,6 +23,7 @@ import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
 import { toast } from 'sonner';
 import { formatPeriod, generateMonthOptions } from '~/lib/utils/month-utils';
+import { columnWidthsAdminPayments } from '~/lib/constants-v2';
 
 interface AdminStudentPaymentsViewProps {
   initialPayments: PaymentWithDetails[];
@@ -321,7 +322,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
         return (
           <Badge
             variant="outline"
-            className="bg-gray-100 text-gray-800 border-gray-300"
+            className="bg-red-100 text-red-800 border-red-300"
           >
             Not Paid
           </Badge>
@@ -357,6 +358,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     {
       header: 'Amount',
       accessorKey: 'amount',
+      className: 'text-right',
       cell: ({ row }: { row: { original: PaymentTableData } }) => (
         <span className="text-right block">
           Rs. {row.original.amount.toLocaleString()}
@@ -375,8 +377,18 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     {
       header: 'Status',
       accessorKey: 'status',
-      cell: ({ row }: { row: { original: PaymentTableData } }) =>
-        getStatusBadge(row.original.status),
+      cell: ({ row }: { row: { original: PaymentTableData } }) => (
+        <span
+          style={{
+            maxWidth: 80,
+            minWidth: 80,
+            width: 80,
+            display: 'inline-block',
+          }}
+        >
+          {getStatusBadge(row.original.status)}
+        </span>
+      ),
     },
     {
       header: 'Actions',
@@ -387,7 +399,10 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
 
         if (payment) {
           return (
-            <div className="flex justify-center gap-2">
+            <div
+              className="flex justify-center gap-2"
+              style={{ maxWidth: 30, minWidth: 30, width: 30 }}
+            >
               <Button
                 variant="ghost"
                 size="sm"
@@ -396,31 +411,6 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
               >
                 <Eye className="h-4 w-4" />
               </Button>
-
-              {(payment.status === PaymentStatus.PENDING ||
-                payment.status === PaymentStatus.PENDING_VERIFICATION) && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleApprovePayment(payment.id)}
-                    className="text-green-600 hover:text-green-800 hover:bg-green-50"
-                    disabled={isPending}
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleViewDetails(payment)}
-                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                    disabled={isPending}
-                  >
-                    <XCircle className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
             </div>
           );
         }
@@ -442,8 +432,10 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     invoiceNo: payment.invoiceNo || '',
   }));
 
+
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 width-full">
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 min-w-[150px]">
@@ -503,6 +495,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
           pageSize={pageSize}
           pageCount={pageCount}
           onPaginationChange={handlePaginationChange}
+          columnWidths={columnWidthsAdminPayments}
         />
       )}{' '}
       {/* Payment Details Dialog */}

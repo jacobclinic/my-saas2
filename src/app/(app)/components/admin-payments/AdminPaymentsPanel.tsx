@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base-v2/ui/Tabs';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
-  getPaymentSummaryAction,
   generateInvoicesAction,
   generateAllInvoicesAction,
   getTutorInvoicesForPeriod,
@@ -15,7 +14,6 @@ import AdminStudentPaymentsView from './AdminStudentPaymentsView';
 import AdminTutorPaymentsView from './AdminTutorPaymentsView';
 import { PaymentWithDetails } from '~/lib/payments/types/admin-payments';
 import { TutorInvoice } from '~/lib/invoices/types/types';
-import AdminOverviewTab from './AdminOverviewTab';
 import { Button } from '../base-v2/ui/Button';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import {
@@ -27,21 +25,9 @@ import {
 } from '../base-v2/ui/Select';
 import { Loader2, RefreshCcw, CheckCircle } from 'lucide-react';
 
-interface PaymentSummary {
-  total: number;
-  pending: number;
-  pendingVerification: number;
-  verified: number;
-  rejected: number;
-  notPaid: number;
-  totalVerifiedAmount: number;
-}
+interface AdminPaymentsPanelProps {}
 
-interface AdminPaymentsPanelProps {
-  initialSummary: PaymentSummary | null;
-}
-
-const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
+const AdminPaymentsPanel = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -55,10 +41,7 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
     urlMonth || currentMonth,
   );
 
-  const [activeTab, setActiveTab] = useState('overview');
-  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(
-    initialSummary,
-  );
+  const [activeTab, setActiveTab] = useState('student-payments');
 
   // Student payments state
   const [studentPayments, setStudentPayments] = useState<PaymentWithDetails[]>(
@@ -71,7 +54,6 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
   const [tutorInvoices, setTutorInvoices] = useState<TutorInvoice[]>([]);
   const [tutorInvoicesLoaded, setTutorInvoicesLoaded] = useState(false);
   const [loadingTutorInvoices, setLoadingTutorInvoices] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingInvoices, setIsGeneratingInvoices] = useState(false);
   const [invoiceMessage, setInvoiceMessage] = useState<{
     type: 'success' | 'error';
@@ -107,13 +89,9 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
   }, []);
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-
-    // Load student payments when student-payments tab is selected for the first time
     if (tab === 'student-payments' && !studentPaymentsLoaded) {
       loadStudentPaymentsForPeriod(selectedPeriod);
     }
-
-    // Load tutor invoices when tutor-payments tab is selected for the first time
     if (tab === 'tutor-payments' && !tutorInvoicesLoaded) {
       loadTutorInvoicesForPeriod(selectedPeriod);
     }
@@ -151,20 +129,15 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
     } finally {
       setLoadingTutorInvoices(false);
     }
-  }; // Handle URL parameter changes (only when navigating back/forward or external URL changes)
+  };
   useEffect(() => {
     const urlMonth = searchParams.get('month');
-
-    // Skip if this is a programmatic change we initiated
     if (isProgrammaticChange.current) {
       isProgrammaticChange.current = false;
       return;
     }
-
     if (urlMonth && urlMonth !== selectedPeriod) {
       setSelectedPeriod(urlMonth);
-
-      // Reload data for the new period if tabs are already loaded (for back/forward navigation)
       if (studentPaymentsLoaded) {
         loadStudentPaymentsForPeriod(urlMonth);
       }
@@ -177,7 +150,18 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
     selectedPeriod,
     studentPaymentsLoaded,
     tutorInvoicesLoaded,
-  ]); // Handle period change from child components
+  ]);
+
+  // Load student payments and tutor invoices on initial mount
+  useEffect(() => {
+    if (!studentPaymentsLoaded) {
+      loadStudentPaymentsForPeriod(selectedPeriod);
+    }
+    if (!tutorInvoicesLoaded) {
+      loadTutorInvoicesForPeriod(selectedPeriod);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const handlePeriodChange = (period: string) => {
     // Mark this as a programmatic change to prevent double loading
     isProgrammaticChange.current = true;
@@ -227,13 +211,12 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
           type: 'success',
           text: `${result.message} for ${selectedInvoiceMonth} (took ${result.executionTime} seconds)`,
         });
-
-        // Refresh data after generating invoices
-        const summaryResult = await getPaymentSummaryAction({
-          invoicePeriod: selectedInvoiceMonth,
-        });
-        if (summaryResult.success && summaryResult.summary) {
-          setPaymentSummary(summaryResult.summary);
+        // Optionally, reload data if needed
+        if (activeTab === 'student-payments') {
+          loadStudentPaymentsForPeriod(selectedPeriod);
+        }
+        if (activeTab === 'tutor-payments') {
+          loadTutorInvoicesForPeriod(selectedPeriod);
         }
       } else {
         setInvoiceMessage({
@@ -253,47 +236,43 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
   };
 
   return (
-    <div className="p-6 max-w-6xl">
-      {' '}
+    <div className="p-2 max-w-full mx-auto ml-3 mr-3 mt-3">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>{' '}
-        {activeTab !== 'overview' && (
-          <div className="flex items-center gap-4">
-            <Select
-              value={selectedInvoiceMonth}
-              onValueChange={handleMonthSelection}
-            >
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Select month for invoice generation" />
-              </SelectTrigger>
-              <SelectContent>
-                {invoiceMonthOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              onClick={handleGenerateInvoices}
-              disabled={isGeneratingInvoices || !selectedInvoiceMonth}
-              className="flex items-center gap-2"
-            >
-              {isGeneratingInvoices ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating Invoices...
-                </>
-              ) : (
-                <>
-                  <RefreshCcw className="h-4 w-4" />
-                  Generate Invoices
-                </>
-              )}
-            </Button>
-          </div>
-        )}
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <Select
+            value={selectedInvoiceMonth}
+            onValueChange={handleMonthSelection}
+          >
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Select month for invoice generation" />
+            </SelectTrigger>
+            <SelectContent>
+              {invoiceMonthOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={handleGenerateInvoices}
+            disabled={isGeneratingInvoices || !selectedInvoiceMonth}
+            className="flex items-center gap-2"
+          >
+            {isGeneratingInvoices ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generating Invoices...
+              </>
+            ) : (
+              <>
+                <RefreshCcw className="h-4 w-4" />
+                Generate Invoices
+              </>
+            )}
+          </Button>
+        </div>
       </div>
       {invoiceMessage && (
         <Alert
@@ -317,18 +296,9 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
       )}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="mb-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="student-payments">Student Payments</TabsTrigger>
           <TabsTrigger value="tutor-payments">Tutor Payments</TabsTrigger>
         </TabsList>
-        {/* Overview Tab */}
-        <TabsContent value="overview">
-          <AdminOverviewTab
-            paymentSummary={paymentSummary}
-            isLoading={isLoading}
-            onTabChange={handleTabChange}
-          />
-        </TabsContent>{' '}
         <TabsContent value="student-payments">
           {loadingStudentPayments ? (
             <div className="py-8 text-center">
@@ -349,7 +319,7 @@ const AdminPaymentsPanel = ({ initialSummary }: AdminPaymentsPanelProps) => {
               onPeriodChange={handlePeriodChange}
             />
           )}
-        </TabsContent>{' '}
+        </TabsContent>
         <TabsContent value="tutor-payments">
           {loadingTutorInvoices ? (
             <div className="py-8 text-center">
