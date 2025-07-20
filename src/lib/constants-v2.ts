@@ -42,3 +42,12 @@ export const dayMap: { [key: string]: number } = {
   friday: 5,
   saturday: 6,
 };
+
+export const columnWidthsAdminPayments = {
+  actions: '30px',
+  status: '30px',
+  amount: '100px',
+  period: '100px',
+  submittedDate: '120px',
+  invoiceNo: '200px',
+};

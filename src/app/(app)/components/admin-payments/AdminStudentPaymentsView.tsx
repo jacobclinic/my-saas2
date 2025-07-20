@@ -23,6 +23,7 @@ import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
 import { toast } from 'sonner';
 import { formatPeriod, generateMonthOptions } from '~/lib/utils/month-utils';
+import { columnWidthsAdminPayments } from '~/lib/constants-v2';
 
 interface AdminStudentPaymentsViewProps {
   initialPayments: PaymentWithDetails[];
@@ -431,14 +432,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
     invoiceNo: payment.invoiceNo || '',
   }));
 
-  const columnWidths = {
-    actions: '30px',
-    status: '30px',
-    amount: '100px',
-    period: '100px',
-    submittedDate: '120px',
-    invoiceNo: '200px',
-  };
+
 
   return (
     <div className="space-y-6 width-full">
@@ -501,7 +495,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
           pageSize={pageSize}
           pageCount={pageCount}
           onPaginationChange={handlePaginationChange}
-          columnWidths={columnWidths}
+          columnWidths={columnWidthsAdminPayments}
         />
       )}{' '}
       {/* Payment Details Dialog */}
