@@ -228,7 +228,12 @@ const ClassesAdmin = ({
     <>
       <div className="max-w-7xl p-6">
         {/* Filters */}
-        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex justify-between">
+        <div className="bg-white shadow-md rounded-lg pb-4 pl-4 pr-4 mb-2">
+          {/* Timezone Indicator */}
+          <div className="flex justify-end">
+            <TimezoneIndicator />
+          </div>
+
           <div className="flex gap-6 items-end">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -262,26 +267,23 @@ const ClassesAdmin = ({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <div>
-            <TimezoneIndicator />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status Filter
-            </label>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="canceled">Canceled</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status Filter
+              </label>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="canceled">Canceled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
