@@ -23,7 +23,6 @@ function validatePassword(password: string): true {
   const hasLowerCase = /[a-z]/.test(password);
   const hasUpperCase = /[A-Z]/.test(password);
   const hasDigit = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
 
   const missingRequirements: string[] = [];
 
@@ -43,11 +42,6 @@ function validatePassword(password: string): true {
     missingRequirements.push('At least one digit (0-9)');
   }
 
-  if (!hasSpecialChar) {
-    missingRequirements.push(
-      'At least one special character (!@#$%^&*()_+-=[]{}|;\':",./<>?)',
-    );
-  }
 
   if (missingRequirements.length > 0) {
     const error: PasswordValidationError = {
@@ -70,8 +64,6 @@ function useSignUpWithEmailAndPassword() {
   return useSWRMutation(
     key,
     (_, { arg: credentials }: { arg: Credentials }) => {
-      console.log('onSignupRequested-params', credentials);
-
       // Validate password before attempting signup
       try {
         validatePassword(credentials.password);

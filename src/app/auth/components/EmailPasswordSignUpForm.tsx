@@ -1,9 +1,10 @@
 import { useForm } from 'react-hook-form';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import TextField from '~/core/ui/TextField';
 import Button from '~/core/ui/Button';
 import If from '~/core/ui/If';
+import { USER_ROLES } from '~/lib/constants';
 
 const EmailPasswordSignUpForm: React.FCC<{
   onSubmit: (params: {
@@ -12,7 +13,9 @@ const EmailPasswordSignUpForm: React.FCC<{
     repeatPassword: string;
     firstName: string;
     lastName: string;
-    userRole: 'student' | 'tutor';
+    userRole: string;
+    phoneNumber: string;
+    address: string;
   }) => unknown;
   loading: boolean;
 }> = ({ onSubmit, loading }) => {
@@ -23,18 +26,27 @@ const EmailPasswordSignUpForm: React.FCC<{
       repeatPassword: '',
       firstName: '',
       lastName: '',
+      phoneNumber: '',
+      address: '',
     },
     mode: 'onChange',
   });
+  // Address validation: more than 3 characters
+  const addressControl = register('address', {
+    required: 'Address is required',
+    minLength: {
+      value: 4,
+      message: 'Address must be more than 3 characters',
+    },
+  });
 
-  const [userRole, setUserRole] = useState<'student' | 'tutor'>('student'); // Default userRole
-
+  const userRole = USER_ROLES.TUTOR;
   const emailControl = register('email', { required: true });
-  const firstNameControl = register('firstName', { 
+  const firstNameControl = register('firstName', {
     required: true,
     minLength: {
-      value: 2,
-      message: 'First name must be at least 2 characters',
+      value: 3,
+      message: 'First name must be at least 3 characters',
     },
     validate: (value) => {
       if (/\d/.test(value)) {
@@ -43,11 +55,11 @@ const EmailPasswordSignUpForm: React.FCC<{
       return true;
     },
   });
-  const lastNameControl = register('lastName', { 
+  const lastNameControl = register('lastName', {
     required: true,
     minLength: {
-      value: 2,
-      message: 'Last name must be at least 2 characters',
+      value: 3,
+      message: 'Last name must be at least 3 characters',
     },
     validate: (value) => {
       if (/\d/.test(value)) {
@@ -57,6 +69,50 @@ const EmailPasswordSignUpForm: React.FCC<{
     },
   });
   const errors = formState.errors;
+  // Phone number validation: starts with 0, length 10 digits
+  const phoneNumberControl = register('phoneNumber', {
+    required: 'Phone number is required',
+    pattern: {
+      value: /^0\d{9}$/,
+      message: 'Phone number must start with 0 and be 10 digits',
+    },
+  });
+
+  // Prevent non-digit input for phone number
+  const handlePhoneInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const key = e.key;
+    // Allow control keys
+    if (
+      key === 'ArrowLeft' ||
+      key === 'ArrowRight' ||
+      key === 'Backspace' ||
+      key === 'Delete' ||
+      key === 'Tab'
+    ) {
+      return;
+    }
+    // Block non-digit keys
+    if (!/\d/.test(key)) {
+      e.preventDefault();
+    }
+  };
+
+  // Check if all required fields are filled and no errors
+  const requiredFields: (keyof typeof values)[] = [
+    'email',
+    'password',
+    'repeatPassword',
+    'firstName',
+    'lastName',
+    'phoneNumber',
+    'address',
+  ];
+  const values = watch();
+  const allFilled = requiredFields.every(
+    (field) => values[field] && values[field].toString().trim().length > 0,
+  );
+  const hasErrors = Object.keys(errors).length > 0;
+  const isFormValid = allFilled && !hasErrors;
 
   // Re-validate password when user role changes
   useEffect(() => {
@@ -71,7 +127,6 @@ const EmailPasswordSignUpForm: React.FCC<{
       message: 'Please provide a password with at least 8 characters',
     },
     validate: (value) => {
-
       const hasLowercase = /[a-z]/.test(value);
       const hasUppercase = /[A-Z]/.test(value);
       const hasDigit = /\d/.test(value);
@@ -87,7 +142,6 @@ const EmailPasswordSignUpForm: React.FCC<{
       if (!hasDigit) {
         return 'Password must contain at least one digit';
       }
-
       return true;
     },
   });
@@ -138,31 +192,6 @@ const EmailPasswordSignUpForm: React.FCC<{
 
   return (
     <div className="w-full">
-      {/* Role Selection Tabs */}
-      <div className="flex mb-4">
-        <button
-          type="button"
-          className={`w-1/2 p-2 ${
-            userRole === 'student'
-              ? 'text-white bg-gradient-to-br from-primary-700 to-primary-800'
-              : 'bg-gray-100'
-          }`}
-          onClick={() => setUserRole('student')}
-        >
-          Student
-        </button>
-        <button
-          type="button"
-          className={`w-1/2 p-2 ${
-            userRole === 'tutor'
-              ? 'text-white bg-gradient-to-br from-primary-700 to-primary-800'
-              : 'bg-gray-100'
-          }`}
-          onClick={() => setUserRole('tutor')}
-        >
-          Tutor
-        </button>
-      </div>
       <form
         className={'w-full'}
         onSubmit={handleSubmit((data) => onSubmit({ ...data, userRole }))}
@@ -186,10 +215,8 @@ const EmailPasswordSignUpForm: React.FCC<{
                   title="First name cannot contain numbers"
                 />
               </TextField.Label>
-
               <TextField.Error error={errors.firstName?.message} />
             </TextField>
-
             <TextField>
               <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
                 Last Name
@@ -206,7 +233,6 @@ const EmailPasswordSignUpForm: React.FCC<{
                   title="Last name cannot contain numbers"
                 />
               </TextField.Label>
-
               <TextField.Error error={errors.lastName?.message} />
             </TextField>
           </div>
@@ -224,8 +250,45 @@ const EmailPasswordSignUpForm: React.FCC<{
                 className="text-sm sm:text-base"
               />
             </TextField.Label>
-
             <TextField.Error error={errors.email?.message} />
+          </TextField>
+
+          {/* Phone number */}
+          <TextField>
+            <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
+              Phone Number
+              <TextField.Input
+                {...phoneNumberControl}
+                data-cy={'phone-number-input'}
+                required
+                type="tel"
+                placeholder={'07XXXXXXXX'}
+                autoComplete="tel"
+                className="text-sm sm:text-base"
+                maxLength={10}
+                pattern="^0\d{9}$"
+                title="Phone number must start with 0 and be 10 digits"
+                onKeyDown={handlePhoneInput}
+              />
+            </TextField.Label>
+            <TextField.Error error={errors.phoneNumber?.message} />
+          </TextField>
+
+          {/* Address input field below phone and dob */}
+          <TextField>
+            <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
+              Address
+              <TextField.Input
+                {...addressControl}
+                data-cy={'address-input'}
+                required
+                type="text"
+                placeholder={'Enter your address'}
+                autoComplete="street-address"
+                className="text-sm sm:text-base"
+              />
+            </TextField.Label>
+            <TextField.Error error={errors.address?.message} />
           </TextField>
 
           <TextField>
@@ -241,7 +304,7 @@ const EmailPasswordSignUpForm: React.FCC<{
                 className="text-sm sm:text-base"
               />
               <TextField.Hint>
-                8+ characters that includes lowercase, uppercase, digit, special character
+                8+ characters that includes lowercase, uppercase, digit
               </TextField.Hint>
               <TextField.Error
                 data-cy="password-error"
@@ -278,6 +341,7 @@ const EmailPasswordSignUpForm: React.FCC<{
               }
               type="submit"
               loading={loading}
+              disabled={!isFormValid || loading}
             >
               <If condition={loading} fallback={`Get Started`}>
                 Signing up...
