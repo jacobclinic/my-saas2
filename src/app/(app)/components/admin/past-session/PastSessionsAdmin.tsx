@@ -350,7 +350,7 @@ const PastSessionsAdmin = ({
                       <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
                         {cls.attendance_marked || attendanceMarkedStatus[cls.id]
                           ? 'View Attendance'
-                          : 'Mark Attendance'}
+                          : 'View Attendance'}
                       </span>
                     </div>
                     {/* Copy Link Button */}
