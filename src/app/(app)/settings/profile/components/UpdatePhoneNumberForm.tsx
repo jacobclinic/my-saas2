@@ -12,10 +12,10 @@ import Button from '~/core/ui/Button';
 import Modal from '~/core/ui/Modal';
 import AuthErrorMessage from '~/app/auth/components/AuthErrorMessage';
 import useSupabase from '~/core/hooks/use-supabase';
-import { validatePhoneNumber } from '~/core/hooks/use-validate-phonenumber';
 import { filterPhoneInput } from '~/core/utils/input-filters';
 
 import configuration from '~/configuration';
+import { validatePhoneNumber } from '~/core/utils/validate-phonenumber';
 
 interface UpdatePhoneNumberFormProps {
   session: UserSession;

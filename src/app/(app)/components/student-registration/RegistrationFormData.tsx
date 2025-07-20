@@ -13,13 +13,13 @@ import RegistrationSuccess from './RegistrationSuccess';
 import useSignUpWithEmailAndPasswordMutation from '~/core/hooks/use-sign-up-with-email-password';
 import StudentRegistrationViaLogin from './RegisterViaLogin';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
-import { validatePassword } from '~/core/hooks/use-validate-password';
-import { validateName } from '~/core/hooks/use-validate-name';
-import { validatePhoneNumber } from '~/core/hooks/use-validate-phonenumber';
-import { validateEmail } from '~/core/hooks/use-validate-email';
 import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
-import { validateBirthday, getBirthdayDateLimits } from '~/core/hooks/use-validate-birthday';
 import { SRI_LANKA_DISTRICTS } from '~/lib/constants/sri-lanka-districts';
+import { validatePassword } from '~/core/utils/validate-password';
+import { getBirthdayDateLimits, validateBirthday } from '~/core/utils/validate-birthday';
+import { validateEmail } from '../../../../core/utils/validate-email';
+import { validatePhoneNumber } from '~/core/utils/validate-phonenumber';
+import { validateName } from '~/core/utils/validate-name';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 

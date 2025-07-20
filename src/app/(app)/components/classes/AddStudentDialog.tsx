@@ -9,10 +9,10 @@ import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '../../lib/hooks/use-toast';
 import { sendEmailMSGToStudentAction } from '~/lib/classes/server-actions-v2';
-import { validateName } from '~/core/hooks/use-validate-name';
-import { validateEmail } from '~/core/hooks/use-validate-email';
-import { validatePhoneNumber } from '~/core/hooks/use-validate-phonenumber';
 import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
+import { validateEmail } from '../../../../core/utils/validate-email';
+import { validateName } from '~/core/utils/validate-name';
+import { validatePhoneNumber } from '~/core/utils/validate-phonenumber';
 
 interface AddStudentDialogProps {
   open: boolean;

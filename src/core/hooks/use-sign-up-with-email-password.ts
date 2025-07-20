@@ -1,7 +1,7 @@
 import useSWRMutation from 'swr/mutation';
 import useSupabase from './use-supabase';
 import configuration from '~/configuration';
-import { validatePasswordLegacy } from './use-validate-password';
+import { validatePasswordLegacy } from '../utils/validate-password';
 
 interface Credentials {
   email: string;

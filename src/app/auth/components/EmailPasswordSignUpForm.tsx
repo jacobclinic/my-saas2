@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import TextField from '~/core/ui/TextField';
 import Button from '~/core/ui/Button';
 import If from '~/core/ui/If';
-import { validatePassword } from '~/core/hooks/use-validate-password';
-import { validateNameForForm } from '~/core/hooks/use-validate-name';
-import { validateEmailForForm } from '~/core/hooks/use-validate-email';
 import { filterNameInput } from '~/core/utils/input-filters';
+import { validatePassword } from '~/core/utils/validate-password';
+import { validateEmailForForm } from '../../../core/utils/validate-email';
+import { validateNameForForm } from '~/core/utils/validate-name';
 
 const EmailPasswordSignUpForm: React.FCC<{
   onSubmit: (params: {

@@ -19,9 +19,9 @@ import type UserData from '~/core/session/types/user-data';
 import AuthErrorMessage from '~/app/auth/components/AuthErrorMessage';
 import ImageUploader from '~/core/ui/ImageUploader';
 import { USERS_TABLE } from '~/lib/db-tables';
-import { validateNameForForm } from '~/core/hooks/use-validate-name';
-import { validatePhoneNumberForForm } from '~/core/hooks/use-validate-phonenumber';
 import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
+import { validateNameForForm } from '~/core/utils/validate-name';
+import { validatePhoneNumberForForm } from '~/core/utils/validate-phonenumber';
 
 function UpdateProfileForm({
   session,

@@ -13,7 +13,7 @@ export function validateBirthday(birthday: string): BirthdayValidationResult {
 
   const today = new Date();
   const birthDate = new Date(birthday);
-  
+
   // Check if the date is valid
   if (isNaN(birthDate.getTime())) {
     return {
@@ -25,8 +25,11 @@ export function validateBirthday(birthday: string): BirthdayValidationResult {
   // Calculate age
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
-  
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
     age--;
   }
 
@@ -59,9 +62,17 @@ export function validateBirthday(birthday: string): BirthdayValidationResult {
 // Helper function to get min and max dates for the date picker
 export function getBirthdayDateLimits() {
   const today = new Date();
-  const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
-  const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
-  
+  const maxDate = new Date(
+    today.getFullYear() - 13,
+    today.getMonth(),
+    today.getDate(),
+  );
+  const minDate = new Date(
+    today.getFullYear() - 100,
+    today.getMonth(),
+    today.getDate(),
+  );
+
   return {
     min: minDate.toISOString().split('T')[0],
     max: maxDate.toISOString().split('T')[0],
