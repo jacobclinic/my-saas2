@@ -8,11 +8,19 @@ import {
   INVOICES_TABLE,
 } from '~/lib/db-tables';
 import { TutorDashboardData, ClassWithEnrollmentRawData } from '../types/types';
+import { isAdminOrTutor } from '~/lib/auth/permissions';
 
 export async function getTutorDashboardData(
   client: SupabaseClient<Database>,
   tutorId: string,
 ): Promise<TutorDashboardData | null> {
+  // Security check: Verify the tutorId corresponds to a user with 'tutor' role
+  const isAutherized = await isAdminOrTutor(client, tutorId);
+  if (!isAutherized) {
+    console.error('Unauthorized access attempt to tutor dashboard');
+    return null;
+  }
+
   // Get current month in format YYYY-MM (e.g., '2025-06')
   const currentDate = new Date();
   const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;

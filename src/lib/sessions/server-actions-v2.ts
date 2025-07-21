@@ -9,14 +9,21 @@ import {
   uploadMaterialToStorage,
 } from '../utils/upload-material-utils';
 import { getSessionDataById } from './database/queries';
-import { updateAllOccurrences, updateAttendanceMarked, updateSession } from './database/mutations';
+import {
+  updateAllOccurrences,
+  updateAttendanceMarked,
+  updateSession,
+} from './database/mutations';
 import { updateZoomSessionAction } from './server-actions-v2-legacy';
 import { fetchMeetingParticipants } from '../zoom/zoom-other.service';
-import { isAdminOrCLassTutor } from '../user/database/queries';
 import { SessionUpdateOption } from '../enums';
 import { getUpcomingOccurrences } from '../utils/date-utils';
-import { getClassDataByClassId, getClassDataById } from '../classes/database/queries';
+import {
+  getClassDataByClassId,
+  getClassDataById,
+} from '../classes/database/queries';
 import { TimeSlot } from '../classes/types/class-v2';
+import { isAdminOrCLassRelatedTutor } from '../auth/permissions';
 
 const supabase = getSupabaseServerActionClient();
 
@@ -38,7 +45,7 @@ export const updateSessionAction = withSession(
     const { sessionId, sessionData } = params;
     const client = getSupabaseServerActionClient();
 
-    console.log("Updating session with update params", params);
+    console.log('Updating session with update params', params);
 
     try {
       // Get existing session details
@@ -51,10 +58,10 @@ export const updateSessionAction = withSession(
         (sessionData.startTime || sessionData.endTime) &&
         ((sessionData.startTime &&
           new Date(session.start_time || '').getTime() !==
-          new Date(sessionData.startTime).getTime()) ||
+            new Date(sessionData.startTime).getTime()) ||
           (sessionData.endTime &&
             new Date(session.end_time || '').getTime() !==
-            new Date(sessionData.endTime).getTime()));
+              new Date(sessionData.endTime).getTime()));
 
       // Build update object with only provided fields
       const updateData: Record<string, any> = {
@@ -301,7 +308,11 @@ export const getAttendanceAction = withSession(
     }
 
     const userId = session.user.id;
-    const havePermission = await isAdminOrCLassTutor(client, userId, classId);
+    const havePermission = await isAdminOrCLassRelatedTutor(
+      client,
+      userId,
+      classId,
+    );
 
     if (!havePermission) {
       return {

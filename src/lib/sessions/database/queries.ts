@@ -217,7 +217,7 @@ import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
 // ------------------version 2----------------
 
-// create a query to get session data by sessions id
+//query to get session data by sessions id
 export async function getSessionDataById(
   client: SupabaseClient<Database>,
   sessionId: string,

@@ -13,7 +13,7 @@ import StudentDashboard from '../components/student-dashboard/StudentDashboard';
 import TutorDBClient from '../components/tutor-dashboard/TutorDashBoardClient';
 import AdminDashboardClient from '../components/admin/dashboard/AdminDashboardClient';
 import UnauthorizedAccessToast from '../components/UnauthorizedAccessToast';
-import { getTutorDashboardDataAction } from '~/lib/tutorStats/server-action';
+import { getTutorDashboardData } from '~/lib/tutorStats/database/queries';
 
 export const metadata = {
   title: 'Dashboard',
@@ -52,13 +52,13 @@ async function DashboardPage() {
 
     // Fetch appropriate data based on user role
     if (userRole === 'tutor') {
-      const [sessionData] = await Promise.all([
+      const [sessionData, tutorStat] = await Promise.all([
         getAllUpcommingSessionsByTutorIdData(client, user.id, true),
+        getTutorDashboardData(client, user.id),
       ]);
 
-      const { tutorStat, error } = await getTutorDashboardDataAction(user.id);
-      if (error) {
-        console.error('Error fetching tutor dashboard data:', error);
+      if (!tutorStat) {
+        console.error('Error fetching tutor dashboard data for user:', user.id);
         return (
           <>
             <AppHeader
@@ -95,7 +95,7 @@ async function DashboardPage() {
             ) : (
               <TutorDBClient
                 upcomingSessionDataPerWeek={sessionData}
-                tutorStat={tutorStat!}
+                tutorStat={tutorStat}
               />
             )}
           </PageBody>
