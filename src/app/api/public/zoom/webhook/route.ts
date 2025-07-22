@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZoomWebhookEventHandlerRegistry } from "~/lib/zoom/v2/webhook-handler";
 import crypto from 'crypto';
-
-export type ZoomWebhookPayload = {
-  event: string;
-  payload: any;
-}
+import { ZoomWebhookEvent } from "~/lib/zoom/v2/types";
 
 const ZOOM_WEBHOOK_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN as string;
 
@@ -15,7 +11,7 @@ export async function POST(req: Request) {
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const dataPayload: ZoomWebhookPayload = await req.json();
+    const dataPayload: ZoomWebhookEvent = await req.json();
     const handlerKey = dataPayload.event as keyof typeof ZoomWebhookEventHandlerRegistry;
     const handler = ZoomWebhookEventHandlerRegistry[handlerKey];
     if (!handler) {
@@ -38,8 +34,6 @@ export async function isAutheticatedRequest(request: Request) {
   }
   return false;
 }
-
-
 
 // import { NextRequest, NextResponse } from 'next/server';
 // import { processRecording } from '~/lib/zoom/zoom-other.service'; // Adjust path if needed
