@@ -9,7 +9,7 @@ import { redirect } from 'next/navigation';
 import StudentSessionDetails from '~/app/(app)/components/student-sessions/StudentSessionDetails';
 import { getClassDataByIdwithNextSession } from '~/lib/classes/database/queries';
 import { USER_ROLES } from '~/lib/constants';
-import { getUserRoleAction } from '~/lib/user/actions.server';
+import { getUserRoleAction } from '~/lib/user/server-actions';
 import AppHeader from '~/app/(app)/components/AppHeader';
 
 interface Params {
@@ -32,7 +32,7 @@ export default async function SessionViewPage({ params }: Params) {
   }
 
   // Check user role
-  const userRole = await getUserRoleAction(user.id)
+  const userRole = await getUserRoleAction(user.id);
   if (!userRole) {
     console.error('Error fetching user role');
     redirect('/dashboard');
@@ -80,7 +80,7 @@ export default async function SessionViewPage({ params }: Params) {
 
   return (
     <>
-      <AppHeader title={"Class Details"} />
+      <AppHeader title={'Class Details'} />
 
       <PageBody>
         <StudentSessionDetails

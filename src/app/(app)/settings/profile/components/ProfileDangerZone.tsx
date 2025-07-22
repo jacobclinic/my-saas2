@@ -9,7 +9,7 @@ import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import ErrorBoundary from '~/core/ui/ErrorBoundary';
 import Alert from '~/core/ui/Alert';
 
-import { deleteUserAccountAction } from '~/lib/user/actions.server';
+import { deleteUserAccountAction } from '~/lib/user/server-actions';
 
 function ProfileDangerZone() {
   return <DeleteProfileContainer />;

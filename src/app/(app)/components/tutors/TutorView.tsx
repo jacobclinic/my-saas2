@@ -13,8 +13,9 @@ import {
   GraduationCap,
   Users,
   BookOpen,
-  Check,
-  X,
+  FileText,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
 import UserType from '~/lib/user/types/user';
 import { approveTutorAction } from '~/lib/user/actions/approve-tutor-action';
@@ -232,87 +233,118 @@ const TutorView: React.FC<TutorViewProps> = ({
           </div>
         </div>
 
-        {/* Identity Verification */}
-        <div>
+        {/* Identity Proof */}
+        <div className="space-y-3">
           <h3 className="text-lg font-semibold mb-4 text-blue-600">
-            Identity Verification
+            Identity Proof
           </h3>
-          <div className="p-4 border rounded-lg space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Proof of Identity</p>
-                <p className="font-medium">
-                  {tutor.identity_url
-                    ? 'Document uploaded'
-                    : 'No document uploaded'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {tutor.identity_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleViewIdentityProof}
-                    className="flex items-center gap-2"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    View Document
-                  </Button>
-                )}
-              </div>
-            </div>
 
-            {/* Approval Actions - Show only if identity proof is uploaded and tutor is not already approved/rejected */}
-            {tutor.identity_url &&
-              tutor.status !== 'ACTIVE' &&
-              tutor.status !== 'REJECTED' && (
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <p className="text-sm text-gray-600">
-                    Review the identity document and approve or reject this
-                    tutor:
-                  </p>
-                  <div className="flex items-center gap-2">
+          {tutor.identity_url ? (
+            <div className="bg-gray-50 border rounded-lg p-1">
+              <div className="relative overflow-hidden rounded">
+                <a
+                  href={tutor.identity_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute top-2 right-2 bg-white/80 hover:bg-white p-1 rounded-full shadow-md z-10"
+                >
+                  <ExternalLink className="h-4 w-4 text-blue-600" />
+                </a>
+
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 p-6">
+                  <div className="text-center space-y-4">
+                    <FileText className="h-12 w-12 mx-auto text-blue-500" />
+                    <p className="text-gray-700">
+                      Identity proof document available
+                    </p>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleApproveReject(false)}
-                      disabled={isProcessing}
-                      className="flex items-center gap-2 text-red-600 border-red-300 hover:bg-red-50"
+                      variant="default"
+                      onClick={handleViewIdentityProof}
+                      className="inline-flex items-center"
                     >
-                      <X className="h-4 w-4" />
-                      Reject
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleApproveReject(true)}
-                      disabled={isProcessing}
-                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                    >
-                      <Check className="h-4 w-4" />
-                      Approve
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Identity Proof
                     </Button>
                   </div>
                 </div>
-              )}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50 border rounded-lg p-6 text-center">
+              <FileText className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+              <p className="text-gray-500 italic">
+                No identity proof available
+              </p>
+            </div>
+          )}
 
-            {/* Show current approval status */}
-            {(tutor.status === 'ACTIVE' || tutor.status === 'REJECTED') && (
-              <div className="pt-4 border-t">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-gray-600">Status:</p>
-                  {tutor.status === 'ACTIVE' ? (
-                    <Badge className="bg-green-100 text-green-800 border-green-300">
-                      Approved
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-red-100 text-red-800 border-red-300">
-                      Rejected
-                    </Badge>
-                  )}
-                </div>
+          {/* Approval Actions - Show only if identity proof is uploaded and tutor is not already approved/rejected */}
+          {tutor.identity_url &&
+            tutor.status !== 'ACTIVE' &&
+            tutor.status !== 'REJECTED' && (
+              <div className="flex justify-end gap-2 w-full">
+                <Button
+                  variant="destructive"
+                  onClick={() => handleApproveReject(false)}
+                  disabled={isProcessing}
+                  className="flex items-center gap-2"
+                >
+                  <XCircle className="h-4 w-4" />
+                  {isProcessing ? 'Processing...' : 'Reject'}
+                </Button>
+                <Button
+                  onClick={() => handleApproveReject(true)}
+                  disabled={isProcessing}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  {isProcessing ? 'Processing...' : 'Approve'}
+                </Button>
               </div>
             )}
-          </div>
+
+          {/* Show current approval status */}
+          {(tutor.status === 'ACTIVE' || tutor.status === 'REJECTED') && (
+            <div
+              className={`border rounded-lg p-4 ${
+                tutor.status === 'ACTIVE'
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-red-50 border-red-200'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {tutor.status === 'ACTIVE' ? (
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-red-600" />
+                )}
+                <div>
+                  <p
+                    className={`text-sm font-medium ${
+                      tutor.status === 'ACTIVE'
+                        ? 'text-green-900'
+                        : 'text-red-900'
+                    }`}
+                  >
+                    {tutor.status === 'ACTIVE'
+                      ? 'Tutor Approved'
+                      : 'Tutor Rejected'}
+                  </p>
+                  <p
+                    className={`text-sm ${
+                      tutor.status === 'ACTIVE'
+                        ? 'text-green-700'
+                        : 'text-red-700'
+                    }`}
+                  >
+                    {tutor.status === 'ACTIVE'
+                      ? 'This tutor has been approved and can start teaching'
+                      : 'This tutor application has been rejected'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </BaseDialog>

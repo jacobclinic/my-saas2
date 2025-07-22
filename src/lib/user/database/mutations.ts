@@ -15,6 +15,50 @@ export interface UpdateTutorData {
   status: string;
 }
 
+export interface UpdateUserData {
+  first_name?: string | null;
+  last_name?: string | null;
+  phone_number?: string | null;
+  address?: string | null;
+  display_name?: string | null;
+  photo_url?: string | null;
+}
+
+export async function updateUserData(
+  client: Client,
+  userId: string,
+  data: UpdateUserData,
+) {
+  const { data: updatedUser, error } = await client
+    .from('users')
+    .update(data)
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating user:', error);
+    throw new Error(`Failed to update user: ${error.message}`);
+  }
+
+  return updatedUser;
+}
+
+export async function insertUserData(client: Client, userData: any) {
+  const { data: insertedUser, error } = await client
+    .from('users')
+    .insert(userData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error inserting user:', error);
+    throw new Error(`Failed to insert user: ${error.message}`);
+  }
+
+  return insertedUser;
+}
+
 export async function updateTutorMutation(
   client: Client,
   tutorId: string,

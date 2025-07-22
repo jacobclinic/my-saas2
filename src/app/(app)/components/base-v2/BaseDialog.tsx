@@ -1,6 +1,12 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/Dialog";
-import { Button } from "./ui/Button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from './ui/Dialog';
+import { Button } from './ui/Button';
 import { cn } from '../../lib/utils';
 import { Trash } from 'lucide-react';
 
@@ -15,7 +21,14 @@ export interface BaseDialogProps {
   closeButtonText?: string;
   onConfirm?: () => void;
   confirmButtonText?: string | React.ReactNode;
-  confirmButtonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'primary';
+  confirmButtonVariant?:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link'
+    | 'primary';
   contentClassName?: string;
   description?: React.ReactNode;
   loading?: boolean;
@@ -54,19 +67,26 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
-    '2xl': 'max-w-2xl'
+    '2xl': 'max-w-2xl',
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className={cn(maxWidthClasses[maxWidth], "max-h-[90dvh] overflow-y-auto")}>
+      <DialogContent
+        className={cn(
+          maxWidthClasses[maxWidth],
+          'max-h-[90dvh] overflow-y-auto',
+        )}
+      >
         <DialogHeader className={headerClassName}>
           <DialogTitle>{title}</DialogTitle>
-          {description && <p className="text-sm text-gray-500">{description}</p>}
+          {description && (
+            <p className="text-sm text-gray-500">{description}</p>
+          )}
         </DialogHeader>
-        
+
         {/* Wrapping content in a scrollable div */}
-        <div className={cn("overflow-y-auto", contentClassName)}>
+        <div className={cn('overflow-y-auto', contentClassName)}>
           {children}
         </div>
 
@@ -74,9 +94,9 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
           {footer || (
             <>
               {showCloseButton && (
-                <Button 
+                <Button
                   type="button"
-                  variant="outline" 
+                  variant="outline"
                   onClick={onClose}
                   disabled={loading}
                 >
@@ -84,9 +104,9 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
                 </Button>
               )}
               {deleteClassOption && (
-                <Button 
+                <Button
                   type="button"
-                  variant="outline" 
+                  variant="outline"
                   onClick={onDeleteClass}
                   disabled={deleteClassBtnDisabled}
                   className="bg-red-500 text-white hover:bg-red-600"
@@ -96,7 +116,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
                 </Button>
               )}
               {onConfirm && (
-                <Button 
+                <Button
                   type="button"
                   onClick={onConfirm}
                   variant={confirmButtonVariant}

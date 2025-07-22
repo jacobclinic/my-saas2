@@ -200,7 +200,7 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
     const education = formData.get('education') as string;
     const subjects = formData.get('subjects') as string;
     const classSize = formData.get('classSize') as string;
-    const documentFile = formData.get('document') as File | null;
+    const identityUrl = formData.get('identityUrl') as string; // Get from uploaded result
     const returnUrl = formData.get('returnUrl') as string;
 
     // Validate form data
@@ -222,40 +222,8 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
 
     user = currentUser;
 
-    let identityUrl = null;
-
-    // Handle document upload if provided
-    if (documentFile && documentFile.size > 0) {
-
-      const bytes = await documentFile.arrayBuffer();
-      const bucket = client.storage.from('identity-proof');
-      const extension = documentFile.name.split('.').pop();
-      const fileName = `${user.id}.${extension}`;
-
-      // Check if bucket exists and is accessible
-      const { data: buckets, error: bucketListError } =
-        await client.storage.listBuckets();
-  
-      if (bucketListError) {
-        console.error('Error listing buckets:', bucketListError);
-      }
-
-      const result = await bucket.upload(fileName, bytes, {
-        upsert: true,
-      });
-
-      if (result.error) {
-        console.error('Storage upload error:', result.error);
-        throw new Error(`Upload failed: ${result.error.message}`);
-      }
-
-      const {
-        data: { publicUrl },
-      } = bucket.getPublicUrl(fileName);
-
-      identityUrl = publicUrl;
-    } else {
-      console.log('No document file provided or file size is 0');
+    // Validate that identity URL is provided
+    if (!identityUrl) {
       throw new Error('Identity verification document is required');
     }
 
@@ -272,7 +240,6 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
       class_size: validatedData.classSize,
       identity_url: identityUrl,
     };
-
 
     const { error } = await client
       .from(USERS_TABLE)

@@ -9,7 +9,7 @@ import ErrorBoundary from '~/core/ui/ErrorBoundary';
 import { useFormStatus } from 'react-dom';
 import Alert from '~/core/ui/Alert';
 import { generateStudentCSV, HeaderData } from '~/lib/utils/csvGenerator';
-import { deleteStudentEnrollment } from '~/lib/user/actions.server';
+import { deleteStudentEnrollment } from '~/lib/user/server-actions';
 import { Download, Mail, MapPin, Phone, Search, Trash2 } from 'lucide-react';
 import { Input } from '../base-v2/ui/Input';
 import { ScrollArea } from '../base-v2/ui/scroll-area';

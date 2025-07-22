@@ -19,18 +19,23 @@ export async function upsertUserDetails({
   phone_number,
 }: UpsertUserProps) {
   const client = getSupabaseServerActionClient({ admin: true });
-  const { success, error } = await insertUserData(client, {
-    id,
-    first_name,
-    last_name,
-    address: address || null,
-    phone_number: phone_number || null,
-    displayName: `${first_name} ${last_name}`,
-    photoUrl: null,
-  });
-  if (!success) {
+
+  try {
+    await insertUserData(client, {
+      id,
+      first_name,
+      last_name,
+      address: address || null,
+      phone_number: phone_number || null,
+      display_name: `${first_name} ${last_name}`,
+      photo_url: null,
+    });
+
+    return { success: true };
+  } catch (error) {
     console.error('Error inserting user data:', error);
-    throw new Error(error || 'Failed to insert user data');
+    throw new Error(
+      error instanceof Error ? error.message : 'Failed to insert user data',
+    );
   }
-  return { success: true };
 }
