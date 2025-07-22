@@ -12,6 +12,8 @@ interface UserType {
   first_name?: string | null;
   last_name?: string | null;
   created_at?: string;
+  is_approved?: boolean;
+  subjects_teach?: string[] | null;
 }
 
 export default UserType;
