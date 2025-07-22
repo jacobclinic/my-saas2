@@ -9,7 +9,7 @@ import { redirect } from 'next/navigation';
 import StudentSessionDetails from '~/app/(app)/components/student-sessions/StudentSessionDetails';
 import { getClassDataByIdwithNextSession } from '~/lib/classes/database/queries';
 import { USER_ROLES } from '~/lib/constants';
-import { getUserRoleAction } from '~/lib/user/server-actions';
+import { getUserRoleAction } from '~/lib/user/actions.server';
 import AppHeader from '~/app/(app)/components/AppHeader';
 
 interface Params {

@@ -7,7 +7,7 @@ import getSupabaseServerActionClient from '../../../core/supabase/action-client'
 import sendEmail from '../../../core/email/send-email';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
-import { updateUserWithRetry } from '~/lib/user/server-actions';
+import { updateUserWithRetry } from '~/lib/user/actions.server';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentRegistrationEmailTemplate } from '~/core/email/templates/emailTemplate';
 

@@ -17,8 +17,7 @@ import { fetchUserRole } from './database/queries';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getUserCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
 import { EmailService } from '~/core/email/send-email-mailtrap';
-import { uploadIdentityProof } from '../utils/upload-material-utils';
-import { USERS_TABLE } from '../db-tables';
+
 
 export async function deleteUserAccountAction() {
   const logger = getLogger();
@@ -387,65 +386,5 @@ export const isAdmin = withSession(
   },
 );
 
-export const uploadIdentityProofAction = withSession(
-  async ({
-    userId,
-    file: { name, type, size, buffer },
-    csrfToken,
-  }: {
-    userId: string;
-    file: {
-      name: string;
-      type: string;
-      size: number;
-      buffer: number[];
-    };
-    csrfToken: string;
-  }) => {
-    const client = getSupabaseServerActionClient();
 
-    try {
-      // Upload the identity proof file
-      const { url, error: uploadError } = await uploadIdentityProof(
-        client,
-        {
-          name,
-          type,
-          buffer,
-        },
-        userId,
-      );
-
-      if (uploadError) throw uploadError;
-
-      // Update the user record with the identity proof URL
-      const { error: updateError } = await client
-        .from(USERS_TABLE)
-        .update({
-          identity_url: url,
-        })
-        .eq('id', userId);
-
-      if (updateError) {
-        console.error('Error updating user with identity URL:', updateError);
-        throw new Error('Failed to save identity proof URL');
-      }
-
-      revalidatePath('/auth/sign-up/moredetails');
-      revalidatePath('/waiting');
-
-      return {
-        success: true,
-        url,
-        message: 'Identity proof uploaded successfully',
-      };
-    } catch (error: any) {
-      console.error('Server error:', error);
-      return {
-        success: false,
-        error: error.message || 'Upload failed',
-      };
-    }
-  },
-);
 

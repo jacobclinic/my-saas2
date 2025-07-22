@@ -11,10 +11,8 @@ import useSupabase from '~/core/hooks/use-supabase';
 import {
   updateProfilePhotoAction,
   updateOnboardingDetailsAction,
+  uploadIdentityProofAction,
 } from '../sign-up/moredetails/actions';
-import { getFileBuffer } from '~/lib/utils/upload-material-utils';
-import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { uploadIdentityProofAction } from '~/lib/user/server-actions';
 
 interface MoreDetailsFormProps {
   user: User;
@@ -36,7 +34,6 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
   }>({});
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const client = useSupabase();
-  const csrfToken = useCsrfToken();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -107,19 +104,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
     try {
       // First upload the identity proof file using the new upload action
       if (documentFile) {
-        // Convert file to buffer using the same approach as PaymentDetailsDialog
-        const buffer = await getFileBuffer(documentFile);
+        const uploadFormData = new FormData();
+        uploadFormData.append('identityFile', documentFile);
 
-        const identityUploadResult = await uploadIdentityProofAction({
-          userId: user.id,
-          file: {
-            name: documentFile.name,
-            type: documentFile.type,
-            size: documentFile.size,
-            buffer: Array.from(new Uint8Array(buffer)),
-          },
-          csrfToken,
-        });
+        const identityUploadResult =
+          await uploadIdentityProofAction(uploadFormData);
 
         if (!identityUploadResult.success) {
           throw new Error(

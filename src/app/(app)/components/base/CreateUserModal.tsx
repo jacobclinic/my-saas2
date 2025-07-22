@@ -6,7 +6,7 @@ import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
 import { Section, SectionBody, SectionHeader } from '~/core/ui/Section';
 import UserType from '~/lib/user/types/user';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { createUserByAdminAction } from '~/lib/user/server-actions';
+import { createUserByAdminAction } from '~/lib/user/actions.server';
 
 interface CreateUserModalProps {
   userRole: string;
