@@ -10,15 +10,16 @@ import { TutorTableData } from '~/lib/user/types/tutor';
 import UserType from '~/lib/user/types/user';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base-v2/ui/Tabs';
 import { Button } from '../base-v2/ui/Button';
+import { Badge } from '../base-v2/ui/Badge';
 import { Eye, Edit } from 'lucide-react';
 
 import { USER_ROLES } from '~/lib/constants';
-import CreateUserModal from '../base/CreateUserModal';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import TutorView from './TutorView';
 import TutorEdit from './TutorEdit';
 import { updateTutorAction } from '~/lib/user/actions/update-tutor-action';
 import { toast } from 'sonner';
+import { columnWidthsAdminTutor } from '~/lib/constants-v2';
 
 export default function TutorsList({
   tutorsData,
@@ -116,6 +117,22 @@ type UserTypeWithDetails = UserType & {
   activeClassesCount?: number;
 };
 
+// Helper function to get status badge variant
+const getStatusBadgeVariant = (status: string) => {
+  switch (status?.toUpperCase()) {
+    case 'ACTIVE':
+      return 'green';
+    case 'REJECTED':
+      return 'red';
+    case 'INACTIVE':
+      return 'gray';
+    case 'PENDING':
+      return 'yellow';
+    default:
+      return 'gray';
+  }
+};
+
 // Extended TutorTableData for pending tutors
 type PendingTutorTableData = TutorTableData & {
   subjects: string;
@@ -198,6 +215,26 @@ function ApprovedTutorsTable({
     {
       header: 'Subjects',
       accessorKey: 'subjects',
+      cell: ({ row }: { row: { original: ApprovedTutorTableData } }) => {
+        const tutorId = row.original.id;
+        const tutor = tutorsData.find((t) => t.id === tutorId);
+        const subjects = tutor?.subjects_teach || [];
+
+        return (
+          <div className="flex flex-wrap gap-1">
+            {subjects.slice(0, 2).map((subject, index) => (
+              <Badge key={index} variant="blue" className="text-xs">
+                {subject}
+              </Badge>
+            ))}
+            {subjects.length > 2 && (
+              <Badge variant="blue" className="text-xs">
+                +{subjects.length - 2}
+              </Badge>
+            )}
+          </div>
+        );
+      },
     },
     {
       header: 'Active Classes',
@@ -206,6 +243,17 @@ function ApprovedTutorsTable({
     {
       header: 'Status',
       accessorKey: 'status',
+      cell: ({ row }: { row: { original: ApprovedTutorTableData } }) => {
+        const tutorId = row.original.id;
+        const tutor = tutorsData.find((t) => t.id === tutorId);
+        const status = tutor?.status || 'INACTIVE';
+
+        return (
+          <Badge variant={getStatusBadgeVariant(status)} className="text-xs">
+            {status}
+          </Badge>
+        );
+      },
     },
     {
       header: 'Action',
@@ -334,7 +382,6 @@ function ApprovedTutorsTable({
             onChange={setSearchFilter}
           />
         </div>
-        <CreateUserModal userRole={USER_ROLES.TUTOR} />
       </div>
       <DataTable
         data={tableData}
@@ -343,6 +390,7 @@ function ApprovedTutorsTable({
         pageSize={pageSize}
         pageCount={pageCount}
         onPaginationChange={handlePaginationChange}
+        columnWidths={columnWidthsAdminTutor}
       />
 
       {/* Tutor View Dialog */}
@@ -383,10 +431,10 @@ function PendingTutorsTable({
     setShowTutorDialog(true);
   };
 
-  const handleEditTutor = (tutor: UserTypeWithDetails) => {
-    setSelectedTutor(tutor);
-    setShowEditDialog(true);
-  };
+  // const handleEditTutor = (tutor: UserTypeWithDetails) => {
+  //   setSelectedTutor(tutor);
+  //   setShowEditDialog(true);
+  // };
 
   const handleCloseTutorDialog = () => {
     setShowTutorDialog(false);
@@ -440,6 +488,26 @@ function PendingTutorsTable({
     {
       header: 'Subjects',
       accessorKey: 'subjects',
+      cell: ({ row }: { row: { original: PendingTutorTableData } }) => {
+        const tutorId = row.original.id;
+        const tutor = tutorsData.find((t) => t.id === tutorId);
+        const subjects = tutor?.subjects_teach || [];
+
+        return (
+          <div className="flex flex-wrap gap-1">
+            {subjects.slice(0, 2).map((subject, index) => (
+              <Badge key={index} variant="blue" className="text-xs">
+                {subject}
+              </Badge>
+            ))}
+            {subjects.length > 2 && (
+              <Badge variant="blue" className="text-xs">
+                +{subjects.length - 2}
+              </Badge>
+            )}
+          </div>
+        );
+      },
     },
     {
       header: 'Applied Date',
@@ -448,6 +516,17 @@ function PendingTutorsTable({
     {
       header: 'Status',
       accessorKey: 'status',
+      cell: ({ row }: { row: { original: PendingTutorTableData } }) => {
+        const tutorId = row.original.id;
+        const tutor = tutorsData.find((t) => t.id === tutorId);
+        const status = tutor?.status || 'PENDING';
+
+        return (
+          <Badge variant={getStatusBadgeVariant(status)} className="text-xs">
+            {status}
+          </Badge>
+        );
+      },
     },
     {
       header: 'Action',
@@ -459,14 +538,6 @@ function PendingTutorsTable({
         if (tutor) {
           return (
             <div className="flex justify-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEditTutor(tutor)}
-                className="text-green-600 hover:text-green-800 hover:bg-green-50"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
               <Button
                 variant="ghost"
                 size="sm"

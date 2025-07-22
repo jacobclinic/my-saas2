@@ -8,6 +8,7 @@ import TextField from '~/core/ui/TextField';
 import ImageUploader from '~/core/ui/ImageUploader';
 import Logo from '~/core/ui/Logo';
 import useSupabase from '~/core/hooks/use-supabase';
+import { CLASS_SIZE_OPTIONS } from '~/lib/constants-v2';
 import {
   updateProfilePhotoAction,
   updateOnboardingDetailsAction,
@@ -314,10 +315,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                     <option value="" disabled>
                       Select class size
                     </option>
-                    <option value="1-5">1-5</option>
-                    <option value="6-10">6-10</option>
-                    <option value="11-20">11-20</option>
-                    <option value="21+">21+</option>
+                    {CLASS_SIZE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
                   </select>
                 </TextField.Label>
               </TextField>

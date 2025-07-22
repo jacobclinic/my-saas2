@@ -5,6 +5,7 @@ import BaseDialog from '../base-v2/BaseDialog';
 import { Input } from '../base-v2/ui/Input';
 import Label from '~/core/ui/Label';
 import { Textarea } from '../base-v2/ui/Textarea';
+import { CLASS_SIZE_OPTIONS } from '~/lib/constants-v2';
 import {
   Select,
   SelectContent,
@@ -46,13 +47,7 @@ const educationLevels = [
   'Other',
 ];
 
-const classSizeOptions = [
-  '1-5 students',
-  '6-10 students',
-  '11-15 students',
-  '16-20 students',
-  '21+ students',
-];
+const classSizeOptions = CLASS_SIZE_OPTIONS;
 
 const statusOptions = [
   { value: 'ACTIVE', label: 'Active' },
@@ -167,7 +162,7 @@ const TutorEdit: React.FC<TutorEditProps> = ({
   const handleSubjectsChange = (value: string) => {
     setSubjectsText(value);
     const subjects = value
-      .split(',')
+      .split(/[,\s]+/) // Split by commas and/or spaces
       .map((s) => s.trim())
       .filter((s) => s !== '');
     setFormData((prev) => ({
@@ -184,7 +179,7 @@ const TutorEdit: React.FC<TutorEditProps> = ({
       const updatedData = {
         ...formData,
         subjects_teach: subjectsText
-          .split(',')
+          .split(/[,\s]+/) // Split by commas and/or spaces
           .map((s) => s.trim())
           .filter((s) => s !== ''),
       };
