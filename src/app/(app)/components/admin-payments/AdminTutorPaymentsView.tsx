@@ -1,27 +1,24 @@
 'use client';
 
-import React, { useState, useTransition, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
 import { Eye } from 'lucide-react';
 import { format } from 'date-fns';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { TutorInvoice } from '~/lib/invoices/types/types';
-import { getTutorInvoicesForPeriod } from '~/lib/payments/admin-payment-actions';
 import { formatPeriod, generateMonthOptions } from '~/lib/utils/month-utils';
 import DataTable from '~/core/ui/DataTable';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
-import { toast } from 'sonner';
-import { columnWidthsAdminStudentPayments, columnWidthsAdminTutorPayments } from '~/lib/constants-v2';
+import { columnWidthsAdminTutorPayments } from '~/lib/constants-v2';
 import PaymentDetailsDialog from './PaymentDetailsDialog';
-import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 interface AdminTutorPaymentsViewProps {
-  initialInvoices: TutorInvoice[];
-  selectedPeriod?: string;
-  onPeriodChange?: (period: string) => void;
+  invoices: TutorInvoice[];
+  selectedPeriod: string;
+  onPeriodChange: (period: string) => void;
+  isLoading?: boolean;
 }
 
 // Define a type for the table data
@@ -38,89 +35,33 @@ interface TutorInvoiceTableData {
 }
 
 const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
-  initialInvoices,
-  selectedPeriod: parentSelectedPeriod,
+  invoices: initialInvoices,
+  selectedPeriod,
   onPeriodChange,
+  isLoading = false,
 }) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFilter, setSearchFilter] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all'); // Use parent's selected period or fallback to URL/current month
-  const urlMonth = searchParams.get('month');
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-  const selectedPeriod = parentSelectedPeriod || urlMonth || currentMonth;
-
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedInvoice, setSelectedInvoice] = useState<TutorInvoice | null>(
     null,
   );
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const csrfToken = useCsrfToken();
-  const [isPending, startTransition] = useTransition();
-  const [isLoading, setIsLoading] = useState(false);
-  // Start with server-provided data
+  // Local state for invoices to handle optimistic updates
   const [invoices, setInvoices] = useState<TutorInvoice[]>(initialInvoices);
 
   // Generate period options using the reusable utility
   const periodOptions = useMemo(() => generateMonthOptions(), []);
 
-  // Function to fetch data for the selected period
-  const fetchInvoicesForPeriod = async (period: string) => {
-    setIsLoading(true);
-    try {
-      const result = await getTutorInvoicesForPeriod(period);
-      if (result.success && result.invoices) {
-        setInvoices(result.invoices);
-      } else {
-        toast.error(result.error || 'Failed to fetch tutor invoices');
-      }
-    } catch (error) {
-      console.error('Error fetching tutor invoices:', error);
-      toast.error('Failed to load tutor invoice data');
-    } finally {
-      setIsLoading(false);
-    }
-  }; // Handle period change - use parent handler if available, otherwise update URL independently
-  const handlePeriodChange = (value: string) => {
-    if (onPeriodChange) {
-      // Parent is managing period changes
-      onPeriodChange(value);
-    } else {
-      // Component is managing its own period changes
-      // Update URL with new month parameter
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('month', value);
-
-      // Use router.replace with shallow routing to avoid full page reload
-      router.replace(`/payments?${params.toString()}`, { scroll: false });
-
-      // Fetch new data for the selected period
-      fetchInvoicesForPeriod(value);
-    }
-  };
-
-  // Sync invoices data when initialInvoices change (from parent)
-  useEffect(() => {
+  // Update local invoices when props change
+  React.useEffect(() => {
     setInvoices(initialInvoices);
   }, [initialInvoices]);
-  // Only fetch data independently if no parent is managing the period and we have no initial data
-  useEffect(() => {
-    // Only fetch if:
-    // 1. No parent is managing the period (onPeriodChange is null/undefined)
-    // 2. We have no initial invoices
-    // 3. URL has a month parameter that differs from current selection
-    if (!onPeriodChange && initialInvoices.length === 0) {
-      if (searchParams.has('month')) {
-        const month = searchParams.get('month');
-        if (month && month !== selectedPeriod) {
-          fetchInvoicesForPeriod(month);
-        }
-      } else {
-        // Fetch current month data if no month in URL
-        fetchInvoicesForPeriod(selectedPeriod);
-      }
-    }
-  }, [searchParams, onPeriodChange, initialInvoices.length, selectedPeriod]);
+
+  // Handle period change
+  const handlePeriodChange = (value: string) => {
+    onPeriodChange(value);
+  };
 
   // Define filter options for search
   const filterOptions = [
@@ -387,20 +328,18 @@ const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
         />
       </div>
 
-      {/* Invoices Table */}
-      {isLoading ? (
-        <div className="py-8 text-center">
-          <div
-            className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
-            role="status"
-          >
-            <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-              Loading...
-            </span>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="text-gray-600">Loading invoices...</span>
           </div>
-          <p className="mt-2 text-gray-600">Loading tutor invoice data...</p>
         </div>
-      ) : (
+      )}
+
+      {/* Invoices Table */}
+      {!isLoading && (
         <DataTable
           data={tableData}
           columns={columns}

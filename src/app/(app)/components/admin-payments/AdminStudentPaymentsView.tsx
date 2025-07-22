@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState, useTransition, useMemo, useEffect } from 'react';
+import React, { useState, useTransition, useMemo } from 'react';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
-import { Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { format } from 'date-fns';
-import { useRouter, useSearchParams } from 'next/navigation';
 import PaymentDetailsDialog from './PaymentDetailsDialog';
 import {
   PaymentWithDetails,
@@ -14,7 +13,6 @@ import {
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
   approveStudentPaymentAction,
-  getPaymentsForPeriod,
   rejectStudentPaymentAction,
 } from '~/lib/payments/admin-payment-actions';
 import DataTable from '~/core/ui/DataTable';
@@ -26,9 +24,10 @@ import { formatPeriod, generateMonthOptions } from '~/lib/utils/month-utils';
 import { columnWidthsAdminStudentPayments } from '~/lib/constants-v2';
 
 interface AdminStudentPaymentsViewProps {
-  initialPayments: PaymentWithDetails[];
-  selectedPeriod?: string;
-  onPeriodChange?: (period: string) => void;
+  payments: PaymentWithDetails[];
+  selectedPeriod: string;
+  onPeriodChange: (period: string) => void;
+  isLoading?: boolean;
 }
 
 // Define a type for the table data
@@ -45,89 +44,35 @@ interface PaymentTableData {
 }
 
 const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
-  initialPayments,
-  selectedPeriod: parentSelectedPeriod,
+  payments: initialPayments,
+  selectedPeriod,
   onPeriodChange,
+  isLoading = false,
 }) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFilter, setSearchFilter] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all'); // Use parent's selected period or fallback to URL/current month
-  const urlMonth = searchParams.get('month');
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-  const selectedPeriod = parentSelectedPeriod || urlMonth || currentMonth;
-
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedPayment, setSelectedPayment] =
     useState<PaymentWithDetails | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const csrfToken = useCsrfToken();
-  const [isPending, startTransition] = useTransition();
-  const [isLoading, setIsLoading] = useState(false);
-  // Start with server-provided data
+  const [, startTransition] = useTransition();
+  // Local state for payments to handle optimistic updates
   const [payments, setPayments] =
     useState<PaymentWithDetails[]>(initialPayments);
 
   // Generate period options using utility function
   const periodOptions = useMemo(() => generateMonthOptions(), []);
 
-  // Function to fetch data for the selected period
-  const fetchPaymentsForPeriod = async (period: string) => {
-    setIsLoading(true);
-    try {
-      const result = await getPaymentsForPeriod(period);
-      if (result.success && result.payments) {
-        setPayments(result.payments);
-      } else {
-        toast.error(result.error || 'Failed to fetch payments');
-      }
-    } catch (error) {
-      console.error('Error fetching payments:', error);
-      toast.error('Failed to load payment data');
-    } finally {
-      setIsLoading(false);
-    }
-  }; // Handle period change - use parent handler if available, otherwise update URL independently
-  const handlePeriodChange = (value: string) => {
-    if (onPeriodChange) {
-      // Parent is managing period changes
-      onPeriodChange(value);
-    } else {
-      // Component is managing its own period changes
-      // Update URL with new month parameter
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('month', value);
-
-      // Use router.replace with shallow routing to avoid full page reload
-      router.replace(`/payments?${params.toString()}`, { scroll: false });
-
-      // Fetch new data for the selected period
-      fetchPaymentsForPeriod(value);
-    }
-  };
-
-  // Sync payments data when initialPayments change (from parent)
-  useEffect(() => {
+  // Update local payments when props change
+  React.useEffect(() => {
     setPayments(initialPayments);
   }, [initialPayments]);
-  // Only fetch data independently if no parent is managing the period and we have no initial data
-  useEffect(() => {
-    // Only fetch if:
-    // 1. No parent is managing the period (onPeriodChange is null/undefined)
-    // 2. We have no initial payments
-    // 3. URL has a month parameter that differs from current selection
-    if (!onPeriodChange && initialPayments.length === 0) {
-      if (searchParams.has('month')) {
-        const month = searchParams.get('month');
-        if (month && month !== selectedPeriod) {
-          fetchPaymentsForPeriod(month);
-        }
-      } else {
-        // Fetch current month data if no month in URL
-        fetchPaymentsForPeriod(selectedPeriod);
-      }
-    }
-  }, [searchParams, onPeriodChange, initialPayments.length, selectedPeriod]);
+
+  // Handle period change
+  const handlePeriodChange = (value: string) => {
+    onPeriodChange(value);
+  };
 
   // Define filter options for search
   const filterOptions = [
@@ -472,20 +417,19 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
           onChange={handlePeriodChange}
         />
       </div>
-      {/* Payments Table */}
-      {isLoading ? (
-        <div className="py-8 text-center">
-          <div
-            className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
-            role="status"
-          >
-            <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-              Loading...
-            </span>
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="text-gray-600">Loading payments...</span>
           </div>
-          <p className="mt-2 text-gray-600">Loading payment data...</p>
         </div>
-      ) : (
+      )}
+
+      {/* Payments Table */}
+      {!isLoading && (
         <DataTable
           data={tableData}
           columns={columns}
@@ -495,7 +439,7 @@ const AdminStudentPaymentsView: React.FC<AdminStudentPaymentsViewProps> = ({
           onPaginationChange={handlePaginationChange}
           columnWidths={columnWidthsAdminStudentPayments}
         />
-      )}{' '}
+      )}
       {/* Payment Details Dialog */}
       {selectedPayment && (
         <PaymentDetailsDialog

@@ -13,6 +13,7 @@ import type {
   TutorInvoice,
   TutorInvoiceSummary,
 } from '../types/types';
+import { isUserAdmin } from '~/lib/user/actions.server';
 
 export async function getMonthlyInvoices(
   client: SupabaseClient,
@@ -195,6 +196,11 @@ export async function getAllTutorInvoices(
   client: SupabaseClient,
   invoicePeriod?: string,
 ): Promise<TutorInvoice[]> {
+  // Check if user is admin
+  const adminCheck = await isUserAdmin(client);
+  if (!adminCheck) {
+    throw new Error('User is not an admin');
+  }
   try {
     let query = client
       .from(TUTOR_INVOICES_TABLE)
@@ -330,7 +336,7 @@ export async function getTutorInvoicesByTutorId(
     if (!data) {
       return [];
     }
-    
+
     // For each tutor invoice, get the count of students who have paid
     const tutorInvoicesWithPaidCount = await Promise.all(
       data.map(async (invoice) => {

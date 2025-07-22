@@ -11,7 +11,8 @@ import {
 import { Info } from 'lucide-react';
 import AdminPaymentsPanel from '~/app/(app)/components/admin-payments/AdminPaymentsPanel';
 import StudentPaymentsView from '~/app/(app)/components/student-payments/StudentPaymentsView';
-import { getPaymentSummaryForPage } from '~/lib/payments/admin-payment-actions';
+import { getAllStudentPayments } from '~/lib/payments/database/queries';
+import { getAllTutorInvoices } from '~/lib/invoices/database/queries';
 
 export const metadata = {
   title: 'Payments Management',
@@ -50,10 +51,21 @@ async function PaymentsPage({
     }
 
     const userRole = userData?.user_role || 'unknown';
-    const selectedPeriod = searchParams.month || currentMonth; // Default to January 2025    // Render appropriate component based on user role
+    const selectedPeriod = searchParams.month || currentMonth;
+
+    // Render appropriate component based on user role
     if (userRole === 'admin') {
       // For administrators, show the full payment management interface
       try {
+        // Fetch data for the selected period on the server
+        const [studentPaymentsResult, tutorInvoices] = await Promise.all([
+          getAllStudentPayments(client, selectedPeriod),
+          getAllTutorInvoices(client, selectedPeriod),
+        ]);
+
+        const studentPayments = studentPaymentsResult.paymentData || [];
+        const tutorInvoicesData = tutorInvoices || [];
+
         return (
           <>
             <PageBody>
@@ -64,7 +76,11 @@ async function PaymentsPage({
                   </div>
                 }
               >
-                <AdminPaymentsPanel/>
+                <AdminPaymentsPanel
+                  studentPayments={studentPayments}
+                  tutorInvoices={tutorInvoicesData}
+                  selectedPeriod={selectedPeriod}
+                />
               </Suspense>
             </PageBody>
           </>
