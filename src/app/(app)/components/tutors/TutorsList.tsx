@@ -156,6 +156,10 @@ function ApprovedTutorsTable({
     setSelectedTutor(null);
   };
 
+  const handleTutorUpdate = (updatedTutor: UserTypeWithDetails) => {
+    onTutorUpdate(updatedTutor);
+  };
+
   const handleSaveTutor = async (updatedData: Partial<UserTypeWithDetails>) => {
     if (!selectedTutor) return;
 
@@ -346,6 +350,7 @@ function ApprovedTutorsTable({
         open={showTutorDialog}
         onClose={handleCloseTutorDialog}
         tutor={selectedTutor}
+        onTutorUpdate={handleTutorUpdate}
       />
 
       {/* Tutor Edit Dialog */}
@@ -391,6 +396,10 @@ function PendingTutorsTable({
   const handleCloseEditDialog = () => {
     setShowEditDialog(false);
     setSelectedTutor(null);
+  };
+
+  const handleTutorUpdate = (updatedTutor: UserTypeWithDetails) => {
+    onTutorUpdate(updatedTutor);
   };
 
   const handleSaveTutor = async (updatedData: Partial<UserTypeWithDetails>) => {
@@ -578,6 +587,7 @@ function PendingTutorsTable({
         open={showTutorDialog}
         onClose={handleCloseTutorDialog}
         tutor={selectedTutor}
+        onTutorUpdate={handleTutorUpdate}
       />
 
       {/* Tutor Edit Dialog */}
