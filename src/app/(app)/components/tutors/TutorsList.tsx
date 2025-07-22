@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import Tile from '~/core/ui/Tile';
 import DataTable from '~/core/ui/DataTable';
@@ -10,12 +10,15 @@ import { TutorTableData } from '~/lib/user/types/tutor';
 import UserType from '~/lib/user/types/user';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base-v2/ui/Tabs';
 import { Button } from '../base-v2/ui/Button';
-import { Eye } from 'lucide-react';
+import { Eye, Edit } from 'lucide-react';
 
 import { USER_ROLES } from '~/lib/constants';
 import CreateUserModal from '../base/CreateUserModal';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import TutorView from './TutorView';
+import TutorEdit from './TutorEdit';
+import { updateTutorAction } from '~/lib/user/actions/update-tutor-action';
+import { toast } from 'sonner';
 
 export default function TutorsList({
   tutorsData,
@@ -23,12 +26,26 @@ export default function TutorsList({
   tutorsData: UserTypeWithDetails[];
 }) {
   const [activeTab, setActiveTab] = useState('approved-tutors');
+  const [tutors, setTutors] = useState<UserTypeWithDetails[]>(tutorsData);
+
+  // Update local state when props change
+  useEffect(() => {
+    setTutors(tutorsData);
+  }, [tutorsData]);
+
+  const updateTutorInState = (updatedTutor: UserTypeWithDetails) => {
+    setTutors((prevTutors) =>
+      prevTutors.map((tutor) =>
+        tutor.id === updatedTutor.id ? { ...tutor, ...updatedTutor } : tutor,
+      ),
+    );
+  };
 
   // Separate tutors by approval status
   const approvedTutors = useMemo(() => {
     console.log(
       'All tutors data:',
-      tutorsData.map((t) => ({
+      tutors.map((t) => ({
         id: t.id,
         name: `${t.first_name} ${t.last_name}`,
         status: t.status,
@@ -36,19 +53,19 @@ export default function TutorsList({
       })),
     );
     // Approved tutors are those with is_approved = true
-    const approved = tutorsData.filter((tutor) => tutor.is_approved === true);
+    const approved = tutors.filter((tutor) => tutor.is_approved === true);
     console.log('Approved tutors count:', approved.length);
     return approved;
-  }, [tutorsData]);
+  }, [tutors]);
 
   const pendingTutors = useMemo(() => {
     // Pending tutors are those with is_approved = false or null
-    const pending = tutorsData.filter(
+    const pending = tutors.filter(
       (tutor) => tutor.is_approved === false || tutor.is_approved === null,
     );
     console.log('Pending tutors count:', pending.length);
     return pending;
-  }, [tutorsData]);
+  }, [tutors]);
 
   return (
     <div className={'flex flex-col space-y-6 pb-36 h-[calc(100dvh-100px)]'}>
@@ -68,11 +85,17 @@ export default function TutorsList({
               </TabsList>
 
               <TabsContent value="approved-tutors">
-                <ApprovedTutorsTable tutorsData={approvedTutors} />
+                <ApprovedTutorsTable
+                  tutorsData={approvedTutors}
+                  onTutorUpdate={updateTutorInState}
+                />
               </TabsContent>
 
               <TabsContent value="pending-approval">
-                <PendingTutorsTable tutorsData={pendingTutors} />
+                <PendingTutorsTable
+                  tutorsData={pendingTutors}
+                  onTutorUpdate={updateTutorInState}
+                />
               </TabsContent>
             </Tabs>
           </Tile.Body>
@@ -101,23 +124,58 @@ type PendingTutorTableData = TutorTableData & {
 
 function ApprovedTutorsTable({
   tutorsData,
+  onTutorUpdate,
 }: {
   tutorsData: UserTypeWithDetails[];
+  onTutorUpdate: (updatedTutor: UserTypeWithDetails) => void;
 }) {
   const [searchFilter, setSearchFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTutor, setSelectedTutor] =
     useState<UserTypeWithDetails | null>(null);
   const [showTutorDialog, setShowTutorDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleViewTutor = (tutor: UserTypeWithDetails) => {
     setSelectedTutor(tutor);
     setShowTutorDialog(true);
   };
 
+  const handleEditTutor = (tutor: UserTypeWithDetails) => {
+    setSelectedTutor(tutor);
+    setShowEditDialog(true);
+  };
+
   const handleCloseTutorDialog = () => {
     setShowTutorDialog(false);
     setSelectedTutor(null);
+  };
+
+  const handleCloseEditDialog = () => {
+    setShowEditDialog(false);
+    setSelectedTutor(null);
+  };
+
+  const handleSaveTutor = async (updatedData: Partial<UserTypeWithDetails>) => {
+    if (!selectedTutor) return;
+
+    try {
+      const result = await updateTutorAction({
+        tutorId: selectedTutor.id,
+        ...updatedData,
+      } as any);
+
+      if (result.success) {
+        toast.success('Tutor updated successfully');
+        // Update the local state instead of reloading the page
+        onTutorUpdate({ ...selectedTutor, ...updatedData });
+      } else {
+        toast.error(result.error || 'Failed to update tutor');
+      }
+    } catch (error) {
+      console.error('Error updating tutor:', error);
+      toast.error('An unexpected error occurred');
+    }
   };
 
   const columns = [
@@ -155,6 +213,14 @@ function ApprovedTutorsTable({
         if (tutor) {
           return (
             <div className="flex justify-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEditTutor(tutor)}
+                className="text-green-600 hover:text-green-800 hover:bg-green-50"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -281,29 +347,72 @@ function ApprovedTutorsTable({
         onClose={handleCloseTutorDialog}
         tutor={selectedTutor}
       />
+
+      {/* Tutor Edit Dialog */}
+      <TutorEdit
+        open={showEditDialog}
+        onClose={handleCloseEditDialog}
+        tutor={selectedTutor}
+        onSave={handleSaveTutor}
+      />
     </div>
   );
 }
 
 function PendingTutorsTable({
   tutorsData,
+  onTutorUpdate,
 }: {
   tutorsData: UserTypeWithDetails[];
+  onTutorUpdate: (updatedTutor: UserTypeWithDetails) => void;
 }) {
   const [searchFilter, setSearchFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTutor, setSelectedTutor] =
     useState<UserTypeWithDetails | null>(null);
   const [showTutorDialog, setShowTutorDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleViewTutor = (tutor: UserTypeWithDetails) => {
     setSelectedTutor(tutor);
     setShowTutorDialog(true);
   };
 
+  const handleEditTutor = (tutor: UserTypeWithDetails) => {
+    setSelectedTutor(tutor);
+    setShowEditDialog(true);
+  };
+
   const handleCloseTutorDialog = () => {
     setShowTutorDialog(false);
     setSelectedTutor(null);
+  };
+
+  const handleCloseEditDialog = () => {
+    setShowEditDialog(false);
+    setSelectedTutor(null);
+  };
+
+  const handleSaveTutor = async (updatedData: Partial<UserTypeWithDetails>) => {
+    if (!selectedTutor) return;
+
+    try {
+      const result = await updateTutorAction({
+        tutorId: selectedTutor.id,
+        ...updatedData,
+      } as any);
+
+      if (result.success) {
+        toast.success('Tutor updated successfully');
+        // Update the local state instead of reloading the page
+        onTutorUpdate({ ...selectedTutor, ...updatedData });
+      } else {
+        toast.error(result.error || 'Failed to update tutor');
+      }
+    } catch (error) {
+      console.error('Error updating tutor:', error);
+      toast.error('An unexpected error occurred');
+    }
   };
 
   const columns = [
@@ -341,6 +450,14 @@ function PendingTutorsTable({
         if (tutor) {
           return (
             <div className="flex justify-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEditTutor(tutor)}
+                className="text-green-600 hover:text-green-800 hover:bg-green-50"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -461,6 +578,14 @@ function PendingTutorsTable({
         open={showTutorDialog}
         onClose={handleCloseTutorDialog}
         tutor={selectedTutor}
+      />
+
+      {/* Tutor Edit Dialog */}
+      <TutorEdit
+        open={showEditDialog}
+        onClose={handleCloseEditDialog}
+        tutor={selectedTutor}
+        onSave={handleSaveTutor}
       />
     </div>
   );

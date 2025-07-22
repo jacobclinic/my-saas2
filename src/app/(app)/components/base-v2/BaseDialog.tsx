@@ -75,6 +75,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
             <>
               {showCloseButton && (
                 <Button 
+                  type="button"
                   variant="outline" 
                   onClick={onClose}
                   disabled={loading}
@@ -84,6 +85,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
               )}
               {deleteClassOption && (
                 <Button 
+                  type="button"
                   variant="outline" 
                   onClick={onDeleteClass}
                   disabled={deleteClassBtnDisabled}
@@ -95,6 +97,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
               )}
               {onConfirm && (
                 <Button 
+                  type="button"
                   onClick={onConfirm}
                   variant={confirmButtonVariant}
                   disabled={loading || confirmButtonDisabled}
