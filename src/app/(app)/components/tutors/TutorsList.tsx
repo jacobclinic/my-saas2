@@ -9,10 +9,13 @@ import SearchBar from '../base-v2/ui/SearchBar';
 import { TutorTableData } from '~/lib/user/types/tutor';
 import UserType from '~/lib/user/types/user';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base-v2/ui/Tabs';
+import { Button } from '../base-v2/ui/Button';
+import { Eye } from 'lucide-react';
 
 import { USER_ROLES } from '~/lib/constants';
 import CreateUserModal from '../base/CreateUserModal';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
+import TutorView from './TutorView';
 
 export default function TutorsList({
   tutorsData,
@@ -103,6 +106,19 @@ function ApprovedTutorsTable({
 }) {
   const [searchFilter, setSearchFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTutor, setSelectedTutor] =
+    useState<UserTypeWithDetails | null>(null);
+  const [showTutorDialog, setShowTutorDialog] = useState(false);
+
+  const handleViewTutor = (tutor: UserTypeWithDetails) => {
+    setSelectedTutor(tutor);
+    setShowTutorDialog(true);
+  };
+
+  const handleCloseTutorDialog = () => {
+    setShowTutorDialog(false);
+    setSelectedTutor(null);
+  };
 
   const columns = [
     {
@@ -132,12 +148,25 @@ function ApprovedTutorsTable({
     {
       header: 'Action',
       accessorKey: 'action',
-      cell: () => {
-        return (
-          <div className="flex gap-2">
-            {/* Action buttons can be added here */}
-          </div>
-        );
+      cell: ({ row }: { row: { original: ApprovedTutorTableData } }) => {
+        const tutorId = row.original.id;
+        const tutor = tutorsData.find((t) => t.id === tutorId);
+
+        if (tutor) {
+          return (
+            <div className="flex justify-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleViewTutor(tutor)}
+                className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            </div>
+          );
+        }
+        return null;
       },
     },
   ];
@@ -245,6 +274,13 @@ function ApprovedTutorsTable({
         pageCount={pageCount}
         onPaginationChange={handlePaginationChange}
       />
+
+      {/* Tutor View Dialog */}
+      <TutorView
+        open={showTutorDialog}
+        onClose={handleCloseTutorDialog}
+        tutor={selectedTutor}
+      />
     </div>
   );
 }
@@ -256,6 +292,19 @@ function PendingTutorsTable({
 }) {
   const [searchFilter, setSearchFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTutor, setSelectedTutor] =
+    useState<UserTypeWithDetails | null>(null);
+  const [showTutorDialog, setShowTutorDialog] = useState(false);
+
+  const handleViewTutor = (tutor: UserTypeWithDetails) => {
+    setSelectedTutor(tutor);
+    setShowTutorDialog(true);
+  };
+
+  const handleCloseTutorDialog = () => {
+    setShowTutorDialog(false);
+    setSelectedTutor(null);
+  };
 
   const columns = [
     {
@@ -285,12 +334,25 @@ function PendingTutorsTable({
     {
       header: 'Action',
       accessorKey: 'action',
-      cell: () => {
-        return (
-          <div className="flex gap-2">
-            {/* Action buttons for approval/rejection can be added here */}
-          </div>
-        );
+      cell: ({ row }: { row: { original: PendingTutorTableData } }) => {
+        const tutorId = row.original.id;
+        const tutor = tutorsData.find((t) => t.id === tutorId);
+
+        if (tutor) {
+          return (
+            <div className="flex justify-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleViewTutor(tutor)}
+                className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            </div>
+          );
+        }
+        return null;
       },
     },
   ];
@@ -392,6 +454,13 @@ function PendingTutorsTable({
         pageSize={pageSize}
         pageCount={pageCount}
         onPaginationChange={handlePaginationChange}
+      />
+
+      {/* Tutor View Dialog */}
+      <TutorView
+        open={showTutorDialog}
+        onClose={handleCloseTutorDialog}
+        tutor={selectedTutor}
       />
     </div>
   );
