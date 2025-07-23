@@ -56,10 +56,14 @@ function JoinClassSignin() {
           return;
         }
 
-        // On successful sign-in, redirect redirectUrl
-        router.push(
-          `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionParams.sessionId}?type=upcoming`,
-        );
+        // On successful sign-in, redirect to the original URL
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          router.push(
+            `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionParams.sessionId}?type=upcoming`,
+          );
+        }
       } catch (error: any) {
         console.log('Error:', error);
         // Handle specific error types or messages from the API
@@ -68,7 +72,13 @@ function JoinClassSignin() {
         console.error('Sign in error:', error);
       }
     },
-    [router, sessionParams.sessionId, setAuthError],
+    [
+      router,
+      sessionParams.sessionId,
+      setAuthError,
+      redirectUrl,
+      signInMutation,
+    ],
   );
 
   return (
