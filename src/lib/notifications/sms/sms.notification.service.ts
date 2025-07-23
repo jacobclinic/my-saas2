@@ -43,19 +43,6 @@ const smsConfig: APIConfig = {
   baseUrl: process.env.TEXTIT_BASE_URL!,
 };
 
-// Validation function for SMS configuration
-function validateSMSConfig(): { isValid: boolean; missingVars: string[] } {
-  const missingVars: string[] = [];
-
-  if (!process.env.TEXTIT_ID) missingVars.push('TEXTIT_ID');
-  if (!process.env.TEXTIT_PASSWORD) missingVars.push('TEXTIT_PASSWORD');
-  if (!process.env.TEXTIT_BASE_URL) missingVars.push('TEXTIT_BASE_URL');
-
-  return {
-    isValid: missingVars.length === 0,
-    missingVars,
-  };
-}
 
 // Phone number formatting function
 function formatPhoneNumber(phoneNumber: string): {
@@ -505,19 +492,6 @@ export async function notifyUpcomingSessionsBefore1HourSMS(
 export async function sendSingleSMS(
   request: SingleSMSRequest,
 ): Promise<APIResponse> {
-  // Validate SMS configuration
-  const configValidation = validateSMSConfig();
-
-  if (!configValidation.isValid) {
-    console.error(
-      'SMS configuration invalid. Missing:',
-      configValidation.missingVars,
-    );
-    return {
-      success: false,
-      error: `SMS configuration invalid. Missing: ${configValidation.missingVars.join(', ')}`,
-    };
-  }
 
   if (!request.phoneNumber || request.phoneNumber.trim() === '') {
     return {

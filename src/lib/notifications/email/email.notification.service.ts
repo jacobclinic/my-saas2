@@ -271,6 +271,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
     for (let i = 0; i < emailTasks.length; i++) {
       try {
         await sendSingleEmail(emailTasks[i]);
+        console.log('sending payment reminder to', emailTasks[i].to);
         logger.info('sending payment reminder to', emailTasks[i].to);
       } catch (error) {
         logger.error('Failed to send email to', {
