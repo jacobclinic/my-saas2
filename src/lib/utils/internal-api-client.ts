@@ -1,22 +1,16 @@
 /**
  * Utility functions for calling internal API routes for notifications
  */
+const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
 
 export async function sendTutorRegistrationNotification(
   tutorName: string,
   email: string,
   phoneNumber?: string,
 ): Promise<void> {
-  const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
-  
-  if (!INTERNAL_API_SECRET) {
-    console.error('INTERNAL_API_SECRET not set. Cannot send notifications.');
-    throw new Error('Internal API secret not configured');
-  }
-
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/api/internal/send-tutor-notification`,
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/internal/send-tutor-registration`,
       {
         method: 'POST',
         headers: {
@@ -50,12 +44,6 @@ export async function sendTutorApprovalNotification(
   isApproved: boolean,
   phoneNumber?: string,
 ): Promise<void> {
-  const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
-  
-  if (!INTERNAL_API_SECRET) {
-    console.error('INTERNAL_API_SECRET not set. Cannot send notifications.');
-    throw new Error('Internal API secret not configured');
-  }
   try {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_SITE_URL}/api/internal/send-tutor-approval`,

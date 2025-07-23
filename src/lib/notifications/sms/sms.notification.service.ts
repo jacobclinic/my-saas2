@@ -43,68 +43,61 @@ const smsConfig: APIConfig = {
   baseUrl: process.env.TEXTIT_BASE_URL!,
 };
 
-// Debug configuration on module load
-console.log('🔵 SMS CONFIG DEBUG: SMS configuration loaded');
-console.log('🔵 SMS CONFIG DEBUG: TEXTIT_ID present:', !!process.env.TEXTIT_ID);
-console.log('🔵 SMS CONFIG DEBUG: TEXTIT_PASSWORD present:', !!process.env.TEXTIT_PASSWORD);
-console.log('🔵 SMS CONFIG DEBUG: TEXTIT_BASE_URL present:', !!process.env.TEXTIT_BASE_URL);
-console.log('🔵 SMS CONFIG DEBUG: TEXTIT_BASE_URL value:', process.env.TEXTIT_BASE_URL || 'default');
-
 // Validation function for SMS configuration
 function validateSMSConfig(): { isValid: boolean; missingVars: string[] } {
   const missingVars: string[] = [];
-  
+
   if (!process.env.TEXTIT_ID) missingVars.push('TEXTIT_ID');
   if (!process.env.TEXTIT_PASSWORD) missingVars.push('TEXTIT_PASSWORD');
   if (!process.env.TEXTIT_BASE_URL) missingVars.push('TEXTIT_BASE_URL');
-  
+
   return {
     isValid: missingVars.length === 0,
-    missingVars
+    missingVars,
   };
 }
 
 // Phone number formatting function
-function formatPhoneNumber(phoneNumber: string): { formatted: string; isValid: boolean; error?: string } {
-  console.log('🔵 SMS DEBUG: Formatting phone number:', phoneNumber);
-  
+function formatPhoneNumber(phoneNumber: string): {
+  formatted: string;
+  isValid: boolean;
+  error?: string;
+} {
   if (!phoneNumber || phoneNumber.trim() === '') {
     return { formatted: '', isValid: false, error: 'Phone number is empty' };
   }
-  
+
   // Remove all non-digit characters except +
   let cleaned = phoneNumber.replace(/[^\d+]/g, '');
-  console.log('🔵 SMS DEBUG: Cleaned phone number:', cleaned);
-  
+
   // If it starts with +, keep it
   if (cleaned.startsWith('+')) {
-    console.log('🔵 SMS DEBUG: Phone number has international format');
     return { formatted: cleaned, isValid: true };
   }
-  
+
   // If it starts with 0, replace with +94 (Sri Lanka)
   if (cleaned.startsWith('0')) {
     cleaned = '+94' + cleaned.substring(1);
-    console.log('🔵 SMS DEBUG: Converted local format to international:', cleaned);
   }
   // If it starts with 94, add +
   else if (cleaned.startsWith('94')) {
     cleaned = '+' + cleaned;
-    console.log('🔵 SMS DEBUG: Added + to country code:', cleaned);
   }
   // If it doesn't start with country code, assume Sri Lanka
   else if (cleaned.match(/^[1-9]/)) {
     cleaned = '+94' + cleaned;
-    console.log('🔵 SMS DEBUG: Added Sri Lanka country code:', cleaned);
   }
-  
+
   // Basic validation - should be at least 10 digits after country code
   const digitsOnly = cleaned.replace(/[^\d]/g, '');
   if (digitsOnly.length < 10) {
-    return { formatted: cleaned, isValid: false, error: 'Phone number too short' };
+    return {
+      formatted: cleaned,
+      isValid: false,
+      error: 'Phone number too short',
+    };
   }
-  
-  console.log('🔵 SMS DEBUG: Final formatted phone number:', cleaned);
+
   return { formatted: cleaned, isValid: true };
 }
 async function sendBulkSMS(request: SMSRequest): Promise<APIResponse> {
@@ -512,54 +505,40 @@ export async function notifyUpcomingSessionsBefore1HourSMS(
 export async function sendSingleSMS(
   request: SingleSMSRequest,
 ): Promise<APIResponse> {
-  console.log('🔵 SMS DEBUG: Starting sendSingleSMS');
-  console.log('🔵 SMS DEBUG: request:', JSON.stringify(request, null, 2));
-  console.log('🔵 SMS DEBUG: phoneNumber:', request.phoneNumber);
-  console.log('🔵 SMS DEBUG: message length:', request.message?.length);
-  
   // Validate SMS configuration
   const configValidation = validateSMSConfig();
-  console.log('🔵 SMS DEBUG: Config validation:', configValidation);
-  
+
   if (!configValidation.isValid) {
-    console.error('❌ SMS DEBUG: SMS configuration invalid. Missing:', configValidation.missingVars);
+    console.error(
+      'SMS configuration invalid. Missing:',
+      configValidation.missingVars,
+    );
     return {
       success: false,
       error: `SMS configuration invalid. Missing: ${configValidation.missingVars.join(', ')}`,
     };
   }
-  
-  // Check SMS configuration
-  console.log('🔵 SMS DEBUG: smsConfig check:');
-  console.log('🔵 SMS DEBUG: smsConfig.id:', smsConfig.id ? 'Present' : 'Missing');
-  console.log('🔵 SMS DEBUG: smsConfig.password:', smsConfig.password ? 'Present' : 'Missing');
-  console.log('🔵 SMS DEBUG: smsConfig.baseUrl:', smsConfig.baseUrl || 'Using default');
-  
+
   if (!request.phoneNumber || request.phoneNumber.trim() === '') {
-    console.error('❌ SMS DEBUG: phoneNumber is empty or null');
     return {
       success: false,
       error: 'Phone number is required',
     };
   }
-  
+
   // Format and validate phone number
   const phoneValidation = formatPhoneNumber(request.phoneNumber);
-  console.log('🔵 SMS DEBUG: Phone validation result:', phoneValidation);
-  
+
   if (!phoneValidation.isValid) {
-    console.error('❌ SMS DEBUG: Invalid phone number:', phoneValidation.error);
     return {
       success: false,
       error: `Invalid phone number: ${phoneValidation.error}`,
     };
   }
-  
+
   const formattedPhone = phoneValidation.formatted;
-  console.log('🔵 SMS DEBUG: Using formatted phone:', formattedPhone);
-  
+
   if (!request.message || request.message.trim() === '') {
-    console.error('❌ SMS DEBUG: message is empty or null');
     return {
       success: false,
       error: 'Message is required',
@@ -568,7 +547,6 @@ export async function sendSingleSMS(
 
   try {
     const encodedMessage = encodeURIComponent(request.message);
-    console.log('🔵 SMS DEBUG: encodedMessage:', encodedMessage);
 
     const baseUrl = smsConfig.baseUrl || 'https://www.textit.biz';
     const url = new URL(`${baseUrl}/sendmsg/`);
@@ -580,8 +558,6 @@ export async function sendSingleSMS(
     });
 
     const fullUrl = `${url}?${params.toString()}`;
-    console.log('🔵 SMS DEBUG: Full URL (without password):', fullUrl.replace(/pw=[^&]*/, 'pw=****'));
-    console.log('🔵 SMS DEBUG: Making GET request to TextIt API');
 
     const response = await fetch(fullUrl, {
       method: 'GET',
@@ -590,28 +566,23 @@ export async function sendSingleSMS(
       },
     });
 
-    console.log('🔵 SMS DEBUG: Response status:', response.status);
-    console.log('🔵 SMS DEBUG: Response headers:', Object.fromEntries(response.headers));
-
     const textResponse = await response.text();
-    console.log('🔵 SMS DEBUG: Raw response text:', textResponse);
 
     if (textResponse.startsWith('OK:')) {
       const messageId = textResponse.split(':')[1];
-      console.log('✅ SMS DEBUG: SMS sent successfully, messageId:', messageId);
       return {
         success: true,
         messageId: messageId,
       };
     } else {
-      console.error('❌ SMS DEBUG: SMS failed with response:', textResponse);
+      console.error('SMS failed with response:', textResponse);
       return {
         success: false,
         error: textResponse,
       };
     }
   } catch (error) {
-    console.error('❌ SMS DEBUG: Exception in sendSingleSMS:', error);
+    console.error('Exception in sendSingleSMS:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -832,43 +803,32 @@ export async function notifyStudentsAfterClassScheduleUpdateSMS(
 }
 
 export async function sendTutorRegistrationSMS(
-  client: SupabaseClient,
   tutorName: string,
   tutorPhone: string,
 ) {
-  console.log('🔵 SMS DEBUG: Starting sendTutorRegistrationSMS');
-  console.log('🔵 SMS DEBUG: tutorName:', tutorName);
-  console.log('🔵 SMS DEBUG: tutorPhone:', tutorPhone);
-  console.log('🔵 SMS DEBUG: tutorPhone type:', typeof tutorPhone);
-  console.log('🔵 SMS DEBUG: tutorPhone length:', tutorPhone?.length);
-  
   if (!tutorPhone || tutorPhone.trim() === '') {
-    console.error('❌ SMS DEBUG: tutorPhone is empty or null');
+    console.error('SMS Error: tutorPhone is empty or null');
     return;
   }
 
   try {
     const message = `Thanks for applying to Comma Education, ${tutorName}! We're reviewing your application. We'll notify you once accepted, then you can log in to the tutor portal with your registration email/password
 `;
-    console.log('🔵 SMS DEBUG: Message:', message);
-    console.log('🔵 SMS DEBUG: About to call sendSingleSMS');
-    
+
     const result = await sendSingleSMS({
       phoneNumber: tutorPhone,
       message: message,
     });
-    
-    console.log('🔵 SMS DEBUG: sendSingleSMS result:', result);
-    
+
     if (result.success) {
-      console.log(`✅ Successfully sent tutor registration SMS to: ${tutorPhone}`);
+      console.log(`Successfully sent tutor registration SMS to: ${tutorPhone}`);
     } else {
       console.error(
-        `❌ Failed to send tutor registration SMS to: ${tutorPhone} - ${result.error}`,
+        `Failed to send tutor registration SMS to: ${tutorPhone} - ${result.error}`,
       );
     }
   } catch (error) {
-    console.error('❌ Error sending tutor registration SMS:', error);
+    console.error('Error sending tutor registration SMS:', error);
   }
 }
 
@@ -877,15 +837,8 @@ export async function sendTutorApprovalSMS(
   tutorPhone: string,
   is_approved: boolean,
 ) {
-  console.log('🔵 SMS DEBUG: Starting sendTutorApprovalSMS');
-  console.log('🔵 SMS DEBUG: tutorName:', tutorName);
-  console.log('🔵 SMS DEBUG: tutorPhone:', tutorPhone);
-  console.log('🔵 SMS DEBUG: is_approved:', is_approved);
-  console.log('🔵 SMS DEBUG: tutorPhone type:', typeof tutorPhone);
-  console.log('🔵 SMS DEBUG: tutorPhone length:', tutorPhone?.length);
-  
   if (!tutorPhone || tutorPhone.trim() === '') {
-    console.error('❌ SMS DEBUG: tutorPhone is empty or null');
+    console.error('SMS Error: tutorPhone is empty or null');
     return;
   }
 
@@ -897,25 +850,22 @@ export async function sendTutorApprovalSMS(
       //update rejection mail
       message = `Hi ${tutorName}, We are sorry to inform you that your Comma Education application has been rejected!\n Your documents could not be verified.\nTry again with proper documents`;
     }
-    
-    console.log('🔵 SMS DEBUG: Message:', message);
-    console.log('🔵 SMS DEBUG: About to call sendSingleSMS');
-    
+
     const result = await sendSingleSMS({
       phoneNumber: tutorPhone,
       message: message,
     });
-    
-    console.log('🔵 SMS DEBUG: sendSingleSMS result:', result);
-    
+
     if (result.success) {
-      console.log(`✅ Successfully sent tutor ${is_approved ? 'approval' : 'rejection'} SMS to: ${tutorPhone}`);
+      console.log(
+        `Successfully sent tutor ${is_approved ? 'approval' : 'rejection'} SMS to: ${tutorPhone}`,
+      );
     } else {
       console.error(
-        `❌ Failed to send tutor ${is_approved ? 'approval' : 'rejection'} SMS to: ${tutorPhone} - ${result.error}`,
+        `Failed to send tutor ${is_approved ? 'approval' : 'rejection'} SMS to: ${tutorPhone} - ${result.error}`,
       );
     }
   } catch (error) {
-    console.error('❌ Error sending tutor approval SMS:', error);
+    console.error('Error sending tutor approval SMS:', error);
   }
 }

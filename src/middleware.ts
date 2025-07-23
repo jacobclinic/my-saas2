@@ -18,8 +18,10 @@ export async function middleware(request: NextRequest) {
   const startTime = Date.now();
   console.log('Middleware called for path:', request.nextUrl.pathname);
 
-  if (request.nextUrl.pathname.startsWith('/api/public') || 
-      request.nextUrl.pathname.startsWith('/api/internal')) {
+  if (
+    request.nextUrl.pathname.startsWith('/api/public') ||
+    request.nextUrl.pathname.startsWith('/api/internal')
+  ) {
     return NextResponse.next();
   }
 
@@ -118,6 +120,7 @@ async function onboardingMiddleware(
     pathname === '/favicon.ico' ||
     pathname === '/sitemap.xml' ||
     pathname === '/robots.txt' ||
+    pathname === '/waiting' || // Skip for waiting page to avoid loops
     pathname === configuration.paths.onboarding;
 
   if (skipOnboardingCheck) {

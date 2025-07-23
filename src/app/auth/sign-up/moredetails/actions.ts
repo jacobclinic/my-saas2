@@ -195,6 +195,9 @@ export async function getUserByIdAction(userId: string): Promise<UserType> {
 export async function updateOnboardingDetailsAction(formData: FormData) {
   const client = getSupabaseServerActionClient();
 
+  // Get returnUrl early to use outside try-catch
+  const returnUrl = formData.get('returnUrl') as string;
+
   let user;
   try {
     // Get form data
@@ -203,7 +206,6 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
     const subjects = formData.get('subjects') as string;
     const classSize = formData.get('classSize') as string;
     const identityUrl = formData.get('identityUrl') as string; // Get from uploaded result
-    const returnUrl = formData.get('returnUrl') as string;
 
     // Validate form data
     const validatedData = onboardingSchema.parse({
@@ -279,8 +281,10 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
       console.error('Error sending tutor registration notifications:', error);
     }
 
-    // Revalidate paths
+    // Revalidate paths to ensure middleware sees updated data
     revalidatePath('/');
+    revalidatePath('/waiting');
+    revalidatePath('/auth/sign-up/moredetails');
   } catch (error) {
     console.error('Error updating onboarding details:', error);
     return {
@@ -290,7 +294,18 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
   }
 
   // Redirect tutors to waiting page for approval (outside try-catch to allow redirect to work)
-  redirect('/waiting');
+  // Check user role to determine redirect destination
+  const userRole =
+    user.user_metadata?.role ||
+    user.user_metadata?.userRole ||
+    user.user_metadata?.user_role;
+
+  if (userRole === 'tutor') {
+    redirect('/waiting');
+  } else {
+    // For non-tutors, redirect to dashboard
+    redirect(returnUrl || '/dashboard');
+  }
 }
 
 export async function uploadIdentityProofAction(formData: FormData) {
