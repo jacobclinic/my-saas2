@@ -17,7 +17,10 @@ import { USER_ROLES } from '~/lib/constants';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import TutorView from './TutorView';
 import TutorEdit from './TutorEdit';
-import { updateTutorAction } from '~/lib/user/actions/update-tutor-action';
+import {
+  updateTutorAction,
+  UpdateTutorActionData,
+} from '~/lib/user/actions/update-tutor-action';
 import { toast } from 'sonner';
 import { columnWidthsAdminTutor } from '~/lib/constants-v2';
 
@@ -181,10 +184,24 @@ function ApprovedTutorsTable({
     if (!selectedTutor) return;
 
     try {
-      const result = await updateTutorAction({
+      // Create properly typed data for updateTutorAction
+      const updateData: UpdateTutorActionData = {
         tutorId: selectedTutor.id,
-        ...updatedData,
-      } as any);
+        first_name: updatedData.first_name || selectedTutor.first_name || '',
+        last_name: updatedData.last_name || selectedTutor.last_name || '',
+        phone_number:
+          updatedData.phone_number || selectedTutor.phone_number || '',
+        address: updatedData.address || selectedTutor.address || '',
+        birthday: updatedData.birthday || selectedTutor.birthday || '',
+        education_level:
+          updatedData.education_level || selectedTutor.education_level || '',
+        subjects_teach:
+          updatedData.subjects_teach || selectedTutor.subjects_teach || [],
+        class_size: updatedData.class_size || selectedTutor.class_size || '',
+        status: updatedData.status || selectedTutor.status || 'ACTIVE',
+      };
+
+      const result = await updateTutorAction(updateData);
 
       if (result.success) {
         toast.success('Tutor updated successfully');
@@ -454,10 +471,24 @@ function PendingTutorsTable({
     if (!selectedTutor) return;
 
     try {
-      const result = await updateTutorAction({
+      // Create properly typed data for updateTutorAction
+      const updateData: UpdateTutorActionData = {
         tutorId: selectedTutor.id,
-        ...updatedData,
-      } as any);
+        first_name: updatedData.first_name || selectedTutor.first_name || '',
+        last_name: updatedData.last_name || selectedTutor.last_name || '',
+        phone_number:
+          updatedData.phone_number || selectedTutor.phone_number || '',
+        address: updatedData.address || selectedTutor.address || '',
+        birthday: updatedData.birthday || selectedTutor.birthday || '',
+        education_level:
+          updatedData.education_level || selectedTutor.education_level || '',
+        subjects_teach:
+          updatedData.subjects_teach || selectedTutor.subjects_teach || [],
+        class_size: updatedData.class_size || selectedTutor.class_size || '',
+        status: updatedData.status || selectedTutor.status || 'ACTIVE',
+      };
+
+      const result = await updateTutorAction(updateData);
 
       if (result.success) {
         toast.success('Tutor updated successfully');

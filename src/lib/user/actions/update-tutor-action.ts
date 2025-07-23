@@ -35,9 +35,11 @@ export async function updateTutorAction(
     ];
 
     for (const field of requiredFields) {
+      const fieldValue = updateData[field as keyof UpdateTutorData];
       if (
-        !updateData[field as keyof UpdateTutorData] ||
-        updateData[field as keyof UpdateTutorData].toString().trim() === ''
+        fieldValue === undefined ||
+        fieldValue === null ||
+        (typeof fieldValue === 'string' && fieldValue.trim() === '')
       ) {
         return {
           success: false,

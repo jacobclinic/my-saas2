@@ -24,6 +24,8 @@ export interface UpdateUserData {
   photo_url?: string | null;
 }
 
+export type InsertUserData = Database['public']['Tables']['users']['Insert'];
+
 export async function updateUserData(
   client: Client,
   userId: string,
@@ -44,7 +46,7 @@ export async function updateUserData(
   return updatedUser;
 }
 
-export async function insertUserData(client: Client, userData: any) {
+export async function insertUserData(client: Client, userData: InsertUserData) {
   const { data: insertedUser, error } = await client
     .from('users')
     .insert(userData)
