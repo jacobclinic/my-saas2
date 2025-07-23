@@ -261,8 +261,8 @@ export async function getUpcomingSessionsWithUnpaidStudentsBetween2_3Days(
   try {
     // Calculate time range: now to 3 days from now
     const now = new Date();
-    const twoDaysFromNow = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
-    const threeDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const twoDaysFromNow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
     // Fetch sessions with class and enrollment data
     const { data: rawSessionData, error: sessionError } = await client
