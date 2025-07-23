@@ -140,7 +140,7 @@ const PastSessionsAdmin = ({
   });
 
   const handleCopyLink = (cls: (typeof classData)[0]) => {
-    const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}`;
+    const link =`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}&sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date?.split('T')[0]}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`;
     navigator.clipboard.writeText(link);
     setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
     setTimeout(() => {
@@ -172,6 +172,7 @@ const PastSessionsAdmin = ({
     topic: cls.topic || '',
     zoom_meeting_id: cls.zoomMeetingId || '',
     classId: cls.classId || '',
+    subject: cls.subject || null,
     tutorId: '', // Add a placeholder or retrieve actual tutorId if available
     attendance_marked: cls.attendance_marked!,
     recordingUrl: [],

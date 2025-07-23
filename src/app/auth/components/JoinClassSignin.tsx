@@ -114,7 +114,13 @@ function JoinClassSignin() {
           </h3>
           {sessionParams.sessionDate && (
             <p className="text-sm text-blue-800 mb-1">
-              {sessionParams.sessionDate} · {sessionParams.sessionTime}
+              Date:{' '} {sessionParams.sessionDate} 
+            </p>
+          )}
+
+          {sessionParams.sessionDate && (
+            <p className="text-sm text-blue-800 mb-1">
+              Time:{' '} {sessionParams.sessionTime}
             </p>
           )}
 

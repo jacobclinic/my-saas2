@@ -280,7 +280,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                       className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
                       onClick={() =>
                         handleCopyLink(
-                          `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}`,
+                          `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`,
                           'student',
                         )
                       }
