@@ -67,7 +67,8 @@ export async function getAllUsersByUserRoleData(
     const { data, error } = await client
       .from(USERS_TABLE)
       .select()
-      .eq('user_role', userRole);
+      .eq('user_role', userRole)
+      .order('created_at', { ascending: false });
 
     // console.log("getAllUsersData", data)
 
