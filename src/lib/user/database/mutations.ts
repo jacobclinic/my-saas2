@@ -47,18 +47,18 @@ export async function updateUserData(
 }
 
 export async function insertUserData(client: Client, userData: InsertUserData) {
-  const { data: insertedUser, error } = await client
+  const { data: upsertedUser, error } = await client
     .from('users')
-    .insert(userData)
+    .upsert(userData, { onConflict: 'id' })
     .select()
     .single();
 
   if (error) {
-    console.error('Error inserting user:', error);
-    throw new Error(`Failed to insert user: ${error.message}`);
+    console.error('Error upserting user:', error);
+    throw new Error(`Failed to upsert user: ${error.message}`);
   }
 
-  return insertedUser;
+  return upsertedUser;
 }
 
 export async function updateTutorMutation(

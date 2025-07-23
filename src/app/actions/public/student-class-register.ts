@@ -1,11 +1,9 @@
-// app/actions/public/student-class-register.ts
 'use server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
 import { USERS_TABLE } from '~/lib/db-tables';
-import sendEmail from '~/core/email/send-email';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { EmailService } from '~/core/email/send-email-mailtrap';

@@ -9,6 +9,7 @@ import { USERS_TABLE } from '~/lib/db-tables';
 import { getUserById } from '~/lib/user/database/queries';
 import UserType from '~/lib/user/types/user';
 import { uploadIdentityProof } from '~/lib/utils/upload-material-utils';
+import { sendTutorRegistrationNotification } from '~/lib/utils/internal-api-client';
 
 const userDetailsSchema = z.object({
   displayName: z.string().min(2, 'Display name is required'),
@@ -250,6 +251,32 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
     if (error) {
       console.error('Database update error:', error);
       throw error;
+    }
+
+    //notify tutors
+    const { data: userData, error: userError } = await client
+      .from(USERS_TABLE)
+      .select(
+        `
+        first_name, 
+        last_name, 
+        email,
+        phone_number
+      `,
+      )
+      .eq('id', user.id)
+      .single();
+
+    const FullName = userData?.first_name + ' ' + userData?.last_name;
+
+    try {
+      await sendTutorRegistrationNotification(
+        FullName,
+        userData?.email!,
+        userData?.phone_number || undefined,
+      );
+    } catch (error) {
+      console.error('Error sending tutor registration notifications:', error);
     }
 
     // Revalidate paths

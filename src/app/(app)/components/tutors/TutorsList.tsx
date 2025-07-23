@@ -47,15 +47,6 @@ export default function TutorsList({
 
   // Separate tutors by approval status
   const approvedTutors = useMemo(() => {
-    console.log(
-      'All tutors data:',
-      tutors.map((t) => ({
-        id: t.id,
-        name: `${t.first_name} ${t.last_name}`,
-        status: t.status,
-        is_approved: t.is_approved,
-      })),
-    );
     // Approved tutors are those with is_approved = true
     const approved = tutors.filter((tutor) => tutor.is_approved === true);
     console.log('Approved tutors count:', approved.length);
