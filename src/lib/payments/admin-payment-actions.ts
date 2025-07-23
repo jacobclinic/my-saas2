@@ -13,7 +13,11 @@ import {
 import _ from 'cypress/types/lodash';
 import { isAdmin as isUserAdmin } from '../user/actions.server';
 import { getAllStudentPayments } from './database/queries';
-import { INVOICES_TABLE, STUDENT_PAYMENTS_TABLE, TUTOR_INVOICES_TABLE } from '../db-tables';
+import {
+  INVOICES_TABLE,
+  STUDENT_PAYMENTS_TABLE,
+  TUTOR_INVOICES_TABLE,
+} from '../db-tables';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { getAllTutorInvoices } from '../invoices/database/queries';
 import { TutorInvoice } from '../invoices/types/types';

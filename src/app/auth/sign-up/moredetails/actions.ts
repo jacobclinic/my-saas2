@@ -8,6 +8,7 @@ import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { USERS_TABLE } from '~/lib/db-tables';
 import { getUserById } from '~/lib/user/database/queries';
 import UserType from '~/lib/user/types/user';
+import { uploadIdentityProof } from '~/lib/utils/upload-material-utils';
 
 const userDetailsSchema = z.object({
   displayName: z.string().min(2, 'Display name is required'),
@@ -200,7 +201,7 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
     const education = formData.get('education') as string;
     const subjects = formData.get('subjects') as string;
     const classSize = formData.get('classSize') as string;
-    const documentFile = formData.get('document') as File | null;
+    const identityUrl = formData.get('identityUrl') as string; // Get from uploaded result
     const returnUrl = formData.get('returnUrl') as string;
 
     // Validate form data
@@ -222,40 +223,8 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
 
     user = currentUser;
 
-    let identityUrl = null;
-
-    // Handle document upload if provided
-    if (documentFile && documentFile.size > 0) {
-
-      const bytes = await documentFile.arrayBuffer();
-      const bucket = client.storage.from('identity-proof');
-      const extension = documentFile.name.split('.').pop();
-      const fileName = `${user.id}.${extension}`;
-
-      // Check if bucket exists and is accessible
-      const { data: buckets, error: bucketListError } =
-        await client.storage.listBuckets();
-  
-      if (bucketListError) {
-        console.error('Error listing buckets:', bucketListError);
-      }
-
-      const result = await bucket.upload(fileName, bytes, {
-        upsert: true,
-      });
-
-      if (result.error) {
-        console.error('Storage upload error:', result.error);
-        throw new Error(`Upload failed: ${result.error.message}`);
-      }
-
-      const {
-        data: { publicUrl },
-      } = bucket.getPublicUrl(fileName);
-
-      identityUrl = publicUrl;
-    } else {
-      console.log('No document file provided or file size is 0');
+    // Validate that identity URL is provided
+    if (!identityUrl) {
       throw new Error('Identity verification document is required');
     }
 
@@ -272,7 +241,6 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
       class_size: validatedData.classSize,
       identity_url: identityUrl,
     };
-
 
     const { error } = await client
       .from(USERS_TABLE)
@@ -296,4 +264,71 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
 
   // Redirect tutors to waiting page for approval (outside try-catch to allow redirect to work)
   redirect('/waiting');
+}
+
+export async function uploadIdentityProofAction(formData: FormData) {
+  const client = getSupabaseServerActionClient();
+
+  try {
+    // Get current user
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get file data from form
+    const file = formData.get('identityFile') as File;
+
+    if (!file) {
+      throw new Error('No file provided');
+    }
+
+    // Convert file to buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Array.from(new Uint8Array(arrayBuffer));
+
+    // Upload the identity proof file
+    const { url, error: uploadError } = await uploadIdentityProof(
+      client,
+      {
+        name: file.name,
+        type: file.type,
+        buffer,
+      },
+      user.id,
+    );
+
+    if (uploadError) throw uploadError;
+
+    // Update the user record with the identity proof URL
+    const { error: updateError } = await client
+      .from(USERS_TABLE)
+      .update({
+        identity_url: url,
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Error updating user with identity URL:', updateError);
+      throw new Error('Failed to save identity proof URL');
+    }
+
+    revalidatePath('/auth/sign-up/moredetails');
+    revalidatePath('/waiting');
+
+    return {
+      success: true,
+      url,
+      message: 'Identity proof uploaded successfully',
+    };
+  } catch (error: any) {
+    console.error('Server error:', error);
+    return {
+      success: false,
+      error: error.message || 'Upload failed',
+    };
+  }
 }

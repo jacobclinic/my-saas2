@@ -44,7 +44,7 @@ export const dayMap: { [key: string]: number } = {
 };
 
 export const columnWidthsAdminStudentPayments = {
-  actions: '30px',
+  actions: '80px',
   status: '30px',
   amount: '100px',
   period: '100px',
@@ -53,10 +53,23 @@ export const columnWidthsAdminStudentPayments = {
 };
 
 export const columnWidthsAdminTutorPayments = {
-  actions: '30px',
+  actions: '80px',
   status: '30px',
   amount: '100px',
   period: '100px',
   submittedDate: '120px',
   invoiceNo: '300px',
 };
+
+export const columnWidthsAdminTutor = {
+  action: '80px',
+  name: '200px',
+  email: '200px',
+  phoneNumber: '150px',
+  subjects: '200px',
+  activeClasses: '120px',
+  appliedDate: '120px',
+  status: '120px',
+};
+
+export const CLASS_SIZE_OPTIONS = ['1-5', '6-10', '11-15', '16-20', '20+'];

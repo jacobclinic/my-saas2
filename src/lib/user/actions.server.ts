@@ -18,6 +18,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getUserCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 
+
 export async function deleteUserAccountAction() {
   const logger = getLogger();
   const client = getSupabaseServerActionClient();
@@ -384,3 +385,6 @@ export const isAdmin = withSession(
     return userRole === USER_ROLES.ADMIN;
   },
 );
+
+
+

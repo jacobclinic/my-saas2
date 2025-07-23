@@ -138,3 +138,37 @@ export async function uploadTutorPaymentSlip(
     return { url: '', error: error as Error };
   }
 }
+
+export async function uploadIdentityProof(
+  supabase: SupabaseClient,
+  fileData: {
+    name: string;
+    type: string;
+    buffer: number[];
+  },
+  userId: string,
+): Promise<{ url: string; error: Error | null }> {
+  try {
+    const uint8Array = new Uint8Array(fileData.buffer);
+    const fileExt = fileData.name.split('.').pop();
+    const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `identity-proof/${userId}/${uniqueFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('identity-proof')
+      .upload(filePath, uint8Array, {
+        contentType: fileData.type,
+        cacheControl: '3600',
+      });
+
+    if (uploadError) throw uploadError;
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('identity-proof').getPublicUrl(filePath);
+
+    return { url: publicUrl, error: null };
+  } catch (error) {
+    return { url: '', error: error as Error };
+  }
+}
