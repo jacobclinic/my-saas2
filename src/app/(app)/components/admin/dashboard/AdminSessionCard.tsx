@@ -371,12 +371,8 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionData={{
           title: sessionData?.sessionRawData?.title || '',
           description: sessionData?.sessionRawData?.description || '',
-          startTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .startTime || '',
-          endTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .endTime || '',
+          startTime: sessionData.start_time || '',
+          endTime: sessionData.end_time || '',
           meetingUrl: sessionData?.sessionRawData?.meeting_url || '',
           materials: sessionData?.materials || [],
         }}

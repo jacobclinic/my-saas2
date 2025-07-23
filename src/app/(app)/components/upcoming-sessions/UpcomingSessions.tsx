@@ -16,7 +16,6 @@ import {
   datePickerObjectToLocalDate,
   utcToLocalDate,
 } from '~/lib/utils/timezone-utils-filter';
-import TimezoneIndicator from '../TimezoneIndicator';
 
 interface DateRange {
   start?: {
@@ -73,6 +72,8 @@ const UpcomingSessions = ({
       subject: session?.class?.subject || '',
       date: formattedDate,
       time: formattedTime,
+      start_time: session.start_time || '',
+      end_time: session.end_time || '',
       registeredStudents: session?.class?.students?.length || 0,
       zoomMeetingId: session?.zoom_meeting_id || '',
       zoomLinkTutor: session?.meeting_url || '',

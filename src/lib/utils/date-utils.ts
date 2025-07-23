@@ -287,7 +287,7 @@ export function getUpcomingOccurrencesForMonth(
 
 export function convertTimeRangeToISO(
   timeRange: string,
-  date: Date = new Date('2025-05-03'),
+  date: Date,
 ): TimeRange {
   try {
     // Validate and split the input (e.g., "6:13 AM - 6:22 AM" -> ["6:13 AM", "6:22 AM"])
