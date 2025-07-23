@@ -140,9 +140,7 @@ const PastSessionsAdmin = ({
   });
 
   const handleCopyLink = (cls: (typeof classData)[0]) => {
-    const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&redirectUrl=${encodeURIComponent(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`,
-    )}`;
+    const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}`;
     navigator.clipboard.writeText(link);
     setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
     setTimeout(() => {

@@ -182,11 +182,11 @@ async function sendNotificationSms(
     }).format(sessionDate);
 
     if (status === 'before') {
-      message = `REMINDER: Your ${session.class.name} class is tomorrow ${localDate} at ${localTime}. \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
+      message = `REMINDER: Your ${session.class.name} class is tomorrow ${localDate} at ${localTime}.\nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
     } else if (status === 'after') {
-      message = `The recording for your ${session.class.name} class is ready! Access it and all class materials here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
+      message = `The recording for your ${session.class.name} class is ready! Access it and all class materials here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
     } else {
-      message = `Your ${session.class.name} class is starting at ${localTime} today! \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
+      message = `Your ${session.class.name} class is starting at ${localTime} today!\nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
     }
 
     const smsRequest: SMSRequest = {

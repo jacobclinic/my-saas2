@@ -33,13 +33,10 @@ async function sendNotifySessionEmails(
   try {
     // Flatten all students across all sessions into a single array
     const emailTasks = data.flatMap((session) => {
-      logger.info('session', session);
-      console.log('session', session);
       return (
         session.class?.students.map((student) => ({
           to: student.student.email,
-          class_id: session.class.id,
-          topic: session.title,
+          session_id: session.id,
           first_name: student.student.first_name,
           class_name: session.class?.name ?? 'Unnamed Class',
           start_time: new Date(session.start_time).toLocaleString(),
@@ -75,9 +72,7 @@ async function sendNotifySessionEmails(
           className: task.class_name,
           sessionDate: localDate,
           sessionTime: localTime,
-          topic: task.topic,
-          classId: task.class_id,
-          studentEmail: task.to,
+          sessionId: task.session_id,
         });
         console.log('sending email to', task.to);
 
@@ -98,9 +93,7 @@ async function sendNotifySessionEmails(
             month: 'long',
             day: 'numeric',
           }),
-          topic: task.topic,
-          classId: task.class_id,
-          studentEmail: task.to,
+          sessionId: task.session_id,
         });
         await emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
@@ -115,9 +108,7 @@ async function sendNotifySessionEmails(
           className: task.class_name,
           sessionDate: localDate,
           sessionTime: localTime,
-          topic: task.topic,
-          classId: task.class_id,
-          studentEmail: task.to,
+          sessionId: task.session_id,
         });
 
         await emailService.sendEmail({
@@ -229,9 +220,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
           first_name: student.student.first_name,
           class_name: session.class?.name ?? 'Unnamed Class',
           start_time: new Date(session.start_time!).toLocaleString(),
-          fee: session.class.fee,
-          classId: session.class.id,
-          paymentUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}?type=upcoming&sessionId=${session.session_id}&className=${session.class.name}&sessionDate=${DATE}&sessionTime=${TIME}&sessionSubject=${session.class.subject}&sessionTitle=${session.title}`)}`,
+          sessionId: session.session_id,
         })) || []
       );
     });
@@ -250,10 +239,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
         sessionMonth: new Date(task.start_time).toLocaleString('en-US', {
           month: 'long',
         }),
-        studentEmail: task.to,
-        classFee: task.fee,
-        paymentUrl: task.paymentUrl,
-        classId: task.classId,
+        sessionId: task.sessionId,
       });
       await emailService.sendEmail({
         from: process.env.EMAIL_SENDER!,
