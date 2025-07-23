@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect } from "react";
 import ZoomMtgEmbedded from "@zoom/meetingsdk/embedded";
 import { generateZoomSdkSignature } from '~/lib/zoom/v2/actions';
