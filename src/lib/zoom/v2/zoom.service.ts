@@ -59,8 +59,8 @@ export class ZoomService {
 
     async createMeetingsForTomorrowSessions() {
         try {
-            const tomorrrowSessions = await getTomorrowsSessionsWithZoomUser(this.supabaseClient);
-            for (const session of tomorrrowSessions) {
+            const tomorrowSessions = await getTomorrowsSessionsWithZoomUser(this.supabaseClient);
+            for (const session of tomorrowSessions) {
 
                 if (session.class?.tutor && session.class.tutor.zoom_user.length === 0) {
                     // Skip the loop for this session,
@@ -115,7 +115,7 @@ export class ZoomService {
                     await new Promise(resolve => setTimeout(resolve, 50));
                 }
             }
-            return tomorrrowSessions;
+            return tomorrowSessions;
         } catch (error) {
             logger.error(error, "Failed to create the zoom meetings for tomorrow sessions");
             throw new Error('Failed to create zoom meetings for tomorrow sessions. Please try again.');
