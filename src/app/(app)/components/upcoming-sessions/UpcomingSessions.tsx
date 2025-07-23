@@ -2,9 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import type { UpcomingSessionTableData } from '~/lib/sessions/types/upcoming-sessions';
-import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Input } from '../base-v2/ui/Input';
-import { Info, Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import UpcommingSessionCard from './UpcommingSessionCard';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { DateRangePicker } from '@heroui/date-picker';

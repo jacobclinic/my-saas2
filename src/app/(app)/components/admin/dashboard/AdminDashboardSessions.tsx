@@ -3,19 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import type { UpcomingSessionTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { Input } from '../../base-v2/ui/Input';
-import { Info, Search, X } from 'lucide-react';
-import UpcommingSessionCard from './AdminSessionCard';
+import { Search } from 'lucide-react';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
-import { DateRangePicker } from '@heroui/date-picker';
 import AdminSessionCard from './AdminSessionCard';
 import {
   formatDateTimeRange,
-  getUserTimezone,
 } from '~/lib/utils/timezone-utils';
-import {
-  datePickerObjectToLocalDate,
-  utcToLocalDate,
-} from '~/lib/utils/timezone-utils-filter';
+
 import TimezoneIndicator from '../../TimezoneIndicator';
 
 interface DateRange {
