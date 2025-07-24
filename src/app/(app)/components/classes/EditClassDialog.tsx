@@ -64,6 +64,9 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteClassLoading, setDeleteClassLoading] = useState(false);
 
+  // Extract the minimum time slots condition for reusability
+  const hasMinimumTimeSlots = editedClass.timeSlots.length <= 1;
+
   const handleDeleteClass = async (classId: string) => {
     try {
       setDeleteClassLoading(true);
@@ -137,7 +140,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
 
   const handleRemoveTimeSlot = (index: number) => {
     // Ensure at least one time slot remains
-    if (editedClass.timeSlots.length <= 1) {
+    if (hasMinimumTimeSlots) {
       return;
     }
 
@@ -458,11 +461,11 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
                     size="icon"
                     onClick={() => handleRemoveTimeSlot(index)}
                     className={`${
-                      editedClass.timeSlots.length <= 1
+                      hasMinimumTimeSlots
                         ? 'text-gray-300 cursor-not-allowed'
                         : 'text-red-500 hover:text-red-600'
                     }`}
-                    disabled={editedClass.timeSlots.length <= 1}
+                    disabled={hasMinimumTimeSlots}
                   >
                     <X className="h-4 w-4" />
                   </Button>
