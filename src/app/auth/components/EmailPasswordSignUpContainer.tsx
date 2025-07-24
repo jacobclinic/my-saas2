@@ -50,7 +50,7 @@ const EmailPasswordSignUpContainer: React.FCC<{
       phoneNumber: string;
       address: string;
     }) => {
-      if (loading) {
+      if (loading || redirecting.current) {
         return;
       }
 
@@ -71,6 +71,8 @@ const EmailPasswordSignUpContainer: React.FCC<{
               id: userId,
               first_name: params.firstName,
               last_name: params.lastName,
+              address: params.address,
+              phone_number: params.phoneNumber,
             });
           } catch (error) {
             console.error('Failed to create user record:', error);
@@ -85,7 +87,7 @@ const EmailPasswordSignUpContainer: React.FCC<{
             onSubmit(userId);
           }
         } else {
-          // Here we redirect the user to the onboarding page to complete their profile
+          // Here we redirect the user to the moredetails page to complete their profile
           redirecting.current = true;
 
           // First sign in the user to create a valid session
@@ -104,10 +106,12 @@ const EmailPasswordSignUpContainer: React.FCC<{
             }
           } catch (signInError) {
             // If sign-in fails, redirect to sign-in page
+            redirecting.current = false; // Reset on error
             router.push(configuration.paths.signIn);
           }
         }
       } catch (error) {
+        redirecting.current = false; // Reset on error
         if (onError) {
           onError(error);
         }
@@ -115,12 +119,12 @@ const EmailPasswordSignUpContainer: React.FCC<{
     },
     [
       loading,
-      onError,
-      onSignUp,
-      onSubmit,
       signUpMutation,
       signInMutation,
       router,
+      onError,
+      onSignUp,
+      onSubmit,
     ],
   );
 

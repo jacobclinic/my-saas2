@@ -14,7 +14,8 @@ function useUpdateProfile() {
   const key = 'useUpdateProfile';
 
   return useMutation(key, async (_, { arg: data }: { arg: Payload }) => {
-    return updateUserData(client, data);
+    const { id, ...updateData } = data;
+    return updateUserData(client, id, updateData);
   });
 }
 

@@ -4,7 +4,6 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
-import sendEmail from '../../../core/email/send-email';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { updateUserWithRetry } from '~/lib/user/actions.server';

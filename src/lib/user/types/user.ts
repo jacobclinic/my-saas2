@@ -12,6 +12,14 @@ interface UserType {
   first_name?: string | null;
   last_name?: string | null;
   created_at?: string;
+  is_approved?: boolean;
+  subjects_teach?: string[] | null;
+  birthday?: string | null;
+  education_level?: string | null;
+  class_size?: string | null;
+  identity_url?: string | null;
+  district?: string | null;
+  city?: string | null;
 }
 
 export default UserType;
