@@ -512,7 +512,7 @@ export async function sendTutorClassReminder(client: SupabaseClient) {
       } catch (error) {
         failureCount++;
         console.error(
-          `Failed to send Tutor 1-hour reminder email sent successfully for class ${tutorSession.class_name} for tutor ${tutorSession.tutor_name}`,
+          `Failed to send Tutor 1-hour reminder email for class ${tutorSession.class_name} for tutor ${tutorSession.tutor_name}`,
         );
       }
 
