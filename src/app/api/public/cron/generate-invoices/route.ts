@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
 
     // Generate both student and tutor invoices
-    await generateMonthlyInvoices(supabase, currentYear, nextMonth)
+    await generateMonthlyInvoices(supabase, currentYear, nextMonth);
     
 
     return new Response('Invoices generated successfully', { status: 200 });
