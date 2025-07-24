@@ -487,7 +487,7 @@ export async function sendTutorClassReminder(client: SupabaseClient) {
       // todo - update the link to the tutor session
 
       console.log(
-        `Sending 1-hour reminder eamil to tutor for class: ${tutorSession.class_name}, Phone: ${tutorSession.tutor_phone_number}, Tutor: ${tutorSession.tutor_name}`,
+        `Sending 1-hour reminder email to tutor for class: ${tutorSession.class_name}, Phone: ${tutorSession.tutor_phone_number}, Tutor: ${tutorSession.tutor_name}`,
       );
 
       const { html, text } = getTutorClassReminderTemplate({
