@@ -7,6 +7,7 @@ import {
 } from '~/lib/db-tables';
 import { checkUpcomingSessionAvailabilityForClass } from '~/lib/sessions/database/queries';
 import { Enrollment } from '../types/types';
+import { TUTOR_PAYOUT_RATE } from '~/lib/constants-v2';
 
 export async function generateMonthlyInvoicesStudents(
   client: SupabaseClient,
@@ -264,7 +265,6 @@ export async function generateMonthlyInvoicesTutor(
         const numberOfPaidInvoices = paidStudentInvoices?.length || 0;
         const classFee = classData.fee || 0;
         const totalRevenue = numberOfPaidInvoices * classFee;
-        const TUTOR_PAYOUT_RATE = 0.85;
         const tutorPayment = totalRevenue * TUTOR_PAYOUT_RATE;
 
         // Create invoice number with exactly 12 characters: YY + MM + 4 chars from tutorId + 4 chars from classId
