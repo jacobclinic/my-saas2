@@ -6,10 +6,7 @@ import {
   PaymentStatus,
   PaymentWithDetails,
 } from '~/lib/payments/types/admin-payments';
-import {
-  generateMonthlyInvoicesStudents,
-  generateMonthlyInvoicesTutor,
-} from '../invoices/database/mutations';
+import { generateMonthlyInvoices } from '../invoices/database/mutations';
 import _ from 'cypress/types/lodash';
 import { isAdmin as isUserAdmin } from '../user/actions.server';
 import { getAllStudentPayments } from './database/queries';
@@ -262,81 +259,6 @@ export const getPaymentSummaryAction = withSession(
   },
 );
 
-export const generateInvoicesAction = withSession(
-  async ({
-    csrfToken,
-    invoicePeriod,
-  }: {
-    csrfToken: string;
-    invoicePeriod: string;
-  }) => {
-    const client = getSupabaseServerActionClient();
-
-    try {
-      const [year, month] = invoicePeriod.split('-').map(Number);
-
-      // Start timing the operation
-      const startTime = performance.now();
-
-      // Generate the invoices
-      await generateMonthlyInvoicesStudents(client, year, month);
-
-      // Calculate how long it took
-      const endTime = performance.now();
-      const executionTime = Math.round((endTime - startTime) / 1000);
-
-      return {
-        success: true,
-        message: `Invoices successfully generated for ${invoicePeriod}`,
-        executionTime,
-      };
-    } catch (error: any) {
-      console.error('Error generating invoices:', error);
-      return {
-        success: false,
-        message: `Failed to generate invoices: ${error.message}`,
-      };
-    }
-  },
-);
-
-export const generateTutorInvoicesAction = withSession(
-  async ({ invoicePeriod }: { csrfToken: string; invoicePeriod: string }) => {
-    const client = getSupabaseServerActionClient();
-
-    const isAdmin = await isUserAdmin(client);
-    if (!isAdmin) {
-      return { success: false, error: 'User is not an admin' };
-    }
-
-    try {
-      const [year, month] = invoicePeriod.split('-').map(Number);
-
-      // Start timing the operation
-      const startTime = performance.now();
-
-      // Generate the tutor invoices
-      await generateMonthlyInvoicesTutor(client, year, month);
-
-      // Calculate how long it took
-      const endTime = performance.now();
-      const executionTime = Math.round((endTime - startTime) / 1000);
-
-      return {
-        success: true,
-        message: `Tutor invoices successfully generated for ${invoicePeriod}`,
-        executionTime,
-      };
-    } catch (error: any) {
-      console.error('Error generating tutor invoices:', error);
-      return {
-        success: false,
-        error: error.message || 'Failed to generate tutor invoices',
-      };
-    }
-  },
-);
-
 export const generateAllInvoicesAction = withSession(
   async ({ invoicePeriod }: { invoicePeriod: string }) => {
     const client = getSupabaseServerActionClient();
@@ -353,12 +275,7 @@ export const generateAllInvoicesAction = withSession(
       const startTime = performance.now();
 
       // Generate both student and tutor invoices
-      await Promise.all([
-        generateMonthlyInvoicesStudents(client, year, month),
-        generateMonthlyInvoicesTutor(client, year, month),
-      ]);
-      // await generateMonthlyInvoicesStudents(client, year, month);
-      // await generateMonthlyInvoicesTutor(client, year, month);
+      await generateMonthlyInvoices(client, year, month);
 
       // Calculate how long it took
       const endTime = performance.now();

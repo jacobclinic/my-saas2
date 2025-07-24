@@ -6,7 +6,6 @@ import {
   USERS_TABLE,
   STUDENT_CLASS_ENROLLMENTS_TABLE,
 } from '~/lib/db-tables';
-import { generateMonthlyInvoicesStudents } from './mutations';
 import { SupabaseClient } from '@supabase/supabase-js';
 import type {
   Invoice,
@@ -20,9 +19,7 @@ export async function getMonthlyInvoices(
   month: number,
 ): Promise<Invoice[]> {
   try {
-    // Generate invoices first
-    await generateMonthlyInvoicesStudents(client, year, month);
-
+    
     const { data, error } = await client
       .from('invoices')
       .select(

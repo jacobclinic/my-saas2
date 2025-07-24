@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base-v2/ui/Tabs';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
-  generateInvoicesAction,
   generateAllInvoicesAction,
   getTutorInvoicesForPeriod,
   getAllStudentPaymentsAction,
