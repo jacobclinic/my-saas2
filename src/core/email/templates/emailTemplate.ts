@@ -1520,7 +1520,7 @@ export function getNotifyClassUpdateTemplate(params: {
                     <tr>
                       <td>
                         <h1>Important Schedule Update for Your ${className} class</h1>
-                        <p>>Hello ${studentName},</p>
+                        <p>Hello ${studentName},</p>
 
                         <p>Effective from ${firstClassDate}, all future sessions for this class will be held on:</p>                    
                         
