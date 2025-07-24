@@ -121,7 +121,7 @@ const UpcomingSessionsAdmin = ({
   });
 
   const handleCopyLink = (cls: (typeof classData)[0]) => {
-    const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}&sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date?.split('T')[0]}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`;
+    const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date?.split('T')[0]}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`;
     navigator.clipboard.writeText(link);
     setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
     setTimeout(() => {
