@@ -19,7 +19,6 @@ export const metadata = {
 async function TutorsPage() {
   const client = getSupabaseServerComponentClient();
   const tutorsData = await getAllTutorsWithDetails(client, USER_ROLES.TUTOR);
-  console.log('tutorsData-server-component------', tutorsData);
   return (
     <PageBody>
       <TutorsList tutorsData={tutorsData} />

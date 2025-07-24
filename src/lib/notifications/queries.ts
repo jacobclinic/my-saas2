@@ -600,7 +600,8 @@ export async function getTutorsForSessionsWithin1Hr(
               id,
               first_name,
               last_name,
-              phone_number
+              phone_number,
+              email
             )
           )
         `,
@@ -647,6 +648,7 @@ export async function getTutorsForSessionsWithin1Hr(
             ? `${tutorData.first_name}${tutorData.last_name ? ` ${tutorData.last_name}` : ''}`
             : null,
           tutor_phone_number: tutorData?.phone_number || null,
+          tutor_email: tutorData.email
         } as TutorNotificationClass;
       })
       .filter((item): item is TutorNotificationClass => item !== null);

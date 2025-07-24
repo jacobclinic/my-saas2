@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
+import { sendTutorApprovalNotification } from '~/lib/utils/internal-api-client';
 
 export interface ApproveTutorActionResult {
   success: boolean;
@@ -31,6 +32,19 @@ export async function approveTutorAction(
     if (error) {
       console.error('Error updating tutor approval status:', error);
       throw new Error(`Failed to update tutor: ${error.message}`);
+    }
+
+    // Send email notification based on approval status
+    try {
+      await sendTutorApprovalNotification(
+        `${updatedTutor.first_name} ${updatedTutor.last_name}`,
+        updatedTutor.email!,
+        approve,
+        updatedTutor.phone_number || undefined,
+      );
+    } catch (emailError) {
+      console.error('Failed to send tutor approval email:', emailError);
+      // Don't fail the entire operation if email fails
     }
 
     // Revalidate the tutors page to refresh the data

@@ -3,9 +3,11 @@ import {
   notifyAfterSessionsEmail,
   notifyUpcomingSessionsBefore1Hrs,
   notifyUpcomingSessionsBefore24Hrs,
+  sendTutorClassReminder,
 } from '~/lib/notifications/email/email.notification.service';
 import {
   notifyAfterSessionSMS,
+  notifyTutorsWithin1HourSMS,
   notifyUpcomingSessionsBefore1HourSMS,
   notifyUpcomingSessionsSMS,
 } from '~/lib/notifications/sms/sms.notification.service';
@@ -46,6 +48,12 @@ export async function POST(req: Request) {
     await Promise.all([
       notifyUpcomingSessionsBefore1HourSMS(supabase),
       notifyUpcomingSessionsBefore1Hrs(supabase)
+    ])
+
+    //Notify upcoming session within 1 hour for tutors
+    await Promise.all([
+      notifyTutorsWithin1HourSMS(supabase),
+      sendTutorClassReminder(supabase)
     ])
 
     console.log('All notification processes completed.');
