@@ -1570,7 +1570,14 @@ export async function getAllPastSessionsByStudentIdData(
             name,
             subject,
             tutor_id,
-            fee
+            fee,
+            tutor:${USERS_TABLE}!id(
+              id,
+              first_name,
+              last_name,
+              email
+            ),
+            students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(id)
           ),
           materials:${RESOURCE_MATERIALS_TABLE}!id (
             id,
@@ -1618,6 +1625,15 @@ export async function getAllPastSessionsByStudentIdData(
         else classTemp = sessionData.class;
       }
 
+      let tutorTemp;
+      if (classTemp?.tutor) {
+        if (Array.isArray(classTemp.tutor)) {
+          tutorTemp = classTemp.tutor[0];
+        } else {
+          tutorTemp = classTemp.tutor;
+        }
+      }
+
       // Find relevant payment
       const sessionMonth = new Date(sessionData.start_time || '')
         .toISOString()
@@ -1644,7 +1660,17 @@ export async function getAllPastSessionsByStudentIdData(
 
       return {
         ...sessionData,
-        class: classTemp,
+        class: classTemp
+          ? {
+              id: classTemp.id,
+              name: classTemp.name,
+              subject: classTemp.subject,
+              tutor_id: classTemp.tutor_id,
+              fee: classTemp.fee,
+              tutor: tutorTemp,
+              students: classTemp.students,
+            }
+          : undefined,
         materials: transformedMaterials || [],
         payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
         payment_amount: currentPayment?.amount || classTemp?.fee || null,

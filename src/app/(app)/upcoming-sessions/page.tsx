@@ -55,7 +55,6 @@ async function UpcomingSessionsPage() {
       client,
       user.user.id,
     );
-    console.log('Upcoming sessions for student:', upcomingSessionData);
   } else if (userRole === 'tutor') {
     // For tutors, show their own payment history
     upcomingSessionData = await getAllUpcommingSessionsByTutorIdDataPerWeek(
