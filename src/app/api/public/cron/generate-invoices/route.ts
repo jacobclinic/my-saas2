@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import {
-  generateMonthlyInvoicesStudents,
-  generateMonthlyInvoicesTutor,
+  generateMonthlyInvoices
 } from '~/lib/invoices/database/mutations';
 
 export async function POST(req: Request) {
@@ -26,10 +25,8 @@ export async function POST(req: Request) {
     const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
 
     // Generate both student and tutor invoices
-    await Promise.all([
-      generateMonthlyInvoicesStudents(supabase, currentYear, nextMonth),
-      generateMonthlyInvoicesTutor(supabase, currentYear, nextMonth),
-    ]);
+    await generateMonthlyInvoices(supabase, currentYear, nextMonth)
+    
 
     return new Response('Invoices generated successfully', { status: 200 });
   } catch (error) {
