@@ -1,3 +1,7 @@
-import { nanoid } from 'nanoid'
+import { customAlphabet } from 'nanoid'
+const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
-export const generateId = (length?: number) => nanoid(length);
+const customNanoid = customAlphabet(alphabet, 12);
+customNanoid()
+
+export const generateId = (length?: number) => customNanoid(length);
