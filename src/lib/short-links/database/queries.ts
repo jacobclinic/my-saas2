@@ -1,7 +1,7 @@
 import { SHORT_LINKS_TABLE } from "~/lib/db-tables";
 import { Client, ShortLink } from "../types";
 
-export async function getShortLinkByCode(client: Client, shortCode: string,) : Promise<ShortLink> {
+export async function getShortLinkByCode(client: Client, shortCode: string): Promise<ShortLink> {
     const { data, error } = await client
         .from(SHORT_LINKS_TABLE)
         .select('*')

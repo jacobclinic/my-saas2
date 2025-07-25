@@ -9,6 +9,10 @@ interface TimeRange {
   endTime: string; // e.g., "2025-05-03T06:22:00Z"
 }
 
+export function getCurrentDateTimeISO(): string {
+  return new Date().toISOString();
+}
+
 export function getNextNOccurrences(
   timeSlot: TimeSlot,
   startDate: string,

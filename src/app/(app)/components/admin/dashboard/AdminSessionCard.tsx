@@ -111,19 +111,18 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
     setShowLessonDetailsDialog(false);
   };
 
-  const handleCopyLink = async (
-    link: string,
-    type: 'student' | 'materials' | 'tutor',
-  ) => {
+  const handleCopyLink = async (link: string, type: 'student' | 'materials' | 'tutor',) => {
     const data = await createShortUrlAction({
       originalUrl: link,
       csrfToken
     });
-    navigator.clipboard.writeText(data.shortUrl!);
-    setLinkCopied({ ...linkCopied, [type]: true });
-    setTimeout(() => {
-      setLinkCopied({ ...linkCopied, [type]: false });
-    }, 2000);
+    if (data.success && data.shortUrl) {
+      navigator.clipboard.writeText(data.shortUrl);
+      setLinkCopied({ ...linkCopied, [type]: true });
+      setTimeout(() => {
+        setLinkCopied({ ...linkCopied, [type]: false });
+      }, 2000);
+    }
   };
 
   const copyTutorLink = useCallback(async () => {

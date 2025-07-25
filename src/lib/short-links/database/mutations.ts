@@ -1,7 +1,8 @@
 import { SHORT_LINKS_TABLE } from '~/lib/db-tables';
 import { Client, ShortLink } from '../types';
+import { getCurrentDateTimeISO } from '~/lib/utils/date-utils';
 
-export async function insertShortLink(client: Client, shortCode: string, originalUrl: string,): Promise<ShortLink> {
+export async function insertShortLink(client: Client, shortCode: string, originalUrl: string): Promise<ShortLink> {
     const { data, error } = await client
         .from(SHORT_LINKS_TABLE)
         .select('id')
@@ -21,7 +22,7 @@ export async function insertShortLink(client: Client, shortCode: string, origina
         .insert({
             short_code: shortCode,
             original_url: originalUrl,
-            created_at: new Date().toISOString(),
+            created_at: getCurrentDateTimeISO(),
             is_valid: true,
         })
         .select('*')
