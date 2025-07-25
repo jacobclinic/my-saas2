@@ -44,6 +44,7 @@ import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '~/app/(app)/lib/hooks/use-toast';
 import { convertTimeRangeToISO } from '~/lib/utils/date-utils';
 import AddLessonDetailsDialog from '../../upcoming-sessions/AddLessonDetailsDialog';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,
@@ -110,15 +111,18 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
     setShowLessonDetailsDialog(false);
   };
 
-  const handleCopyLink = (
-    link: string,
-    type: 'student' | 'materials' | 'tutor',
-  ) => {
-    navigator.clipboard.writeText(link);
-    setLinkCopied({ ...linkCopied, [type]: true });
-    setTimeout(() => {
-      setLinkCopied({ ...linkCopied, [type]: false });
-    }, 2000);
+  const handleCopyLink = async (link: string, type: 'student' | 'materials' | 'tutor',) => {
+    const data = await createShortUrlAction({
+      originalUrl: link,
+      csrfToken
+    });
+    if (data.success && data.shortUrl) {
+      navigator.clipboard.writeText(data.shortUrl);
+      setLinkCopied({ ...linkCopied, [type]: true });
+      setTimeout(() => {
+        setLinkCopied({ ...linkCopied, [type]: false });
+      }, 2000);
+    }
   };
 
   const copyTutorLink = useCallback(async () => {

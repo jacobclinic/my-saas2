@@ -5,6 +5,15 @@
 - **General Rules**
 - Always ask followup questions if something is confusing to you.
 - Never assume anything without strong reseaoning.
+- For file naming, use the kebab naming convention (e.g., `short-links-service.ts`).
+- For componet naming, use PascalCase (e.g., `TutorEditDialog`).
+- Always use TypeScript for all code files.
+- All the database mutations should be done through a mutations.ts file. Usually there are multiple mutations in a single file and multiple mutations files. Usually a file named `mutations.ts` is used for all the mutations related to a single table. There is a folder in `src/lib/` for each table, e.g., `src/lib/short-links/database/mutations.ts` for short links table mutations.
+- All the database queries should be done through a queries.ts file. Usually there are multiple queries in a single file and multiple queries files. Usually a file named `queries.ts` is used for all the queries related to a single table. There is a folder in `src/lib/` for each table, e.g., `src/lib/short-links/database/queries.ts` for short links table queries.
+- Always use `import` statements for importing modules.
+- Always use `export` statements for exporting modules.
+- Always use `const` for variables that are not reassigned.
+- Always use `async/await` for asynchronous operations.
 
 - **Use Workspace Dependencies:**  
   Always use workspace dependencies over standard library alternatives.  
@@ -13,6 +22,7 @@
   - For UI components, use those from `../base-v2/ui/` directorty.
   - For notifications, use `sonner` (`toast`).
   - For icons, use `lucide-react`.
+
 
 - **Barrel Files for External Dependencies:**  
   Never import external dependencies (like `date-fns`, `lodash`, etc.) directly in feature code.  

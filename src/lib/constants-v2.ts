@@ -77,3 +77,5 @@ export const CLASS_SIZE_OPTIONS = ['1-5', '6-10', '11-15', '16-20', '20+'];
 
 // % of the total revenue that goes to the tutor
 export const TUTOR_PAYOUT_RATE = 0.85;
+
+export const COMMA_EDU_DOMAIN = 'commaeducation.lk';
