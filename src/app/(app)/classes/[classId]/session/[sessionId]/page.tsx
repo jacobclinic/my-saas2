@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { fetchZoomSessionBySessionId } from '~/lib/zoom_sessions/server-actions-v2';
+import { fetchZoomSessionBySessionIdAction, validateStudentPaymentForSessionAction } from '~/lib/zoom_sessions/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
 import dynamic from 'next/dynamic';
 
@@ -26,10 +26,12 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
   const userEmail = userSession?.auth?.user?.email!;
   const userName = userSession?.data?.first_name! || userEmail;
 
+  console.log("ClassSessionPage params:", userSession);
+
   useEffect(() => {
     const fetchZoomSession = async () => {
       try {
-        const session = await fetchZoomSessionBySessionId(params.sessionId);
+        const session = await fetchZoomSessionBySessionIdAction(params.sessionId);
         if (session) {
           setZoomSession(session);
           setError("");
@@ -43,8 +45,25 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
     };
 
     fetchZoomSession();
-
   }, [params.sessionId]);
+
+
+  useEffect(() => {
+    const validatePayment = async () => {
+      if (!userSession) return;
+
+      const isValid = await validateStudentPaymentForSessionAction(params.sessionId, params.classId, userSession.auth.user.id);
+
+      if (!isValid) {
+        setError("You must complete the payment to access this session.");
+      } else {
+        setError("");
+      }
+    };
+
+    validatePayment();
+  }, [params.sessionId, params.classId, userSession]);
+
 
   if (!zoomSession) {
     return (

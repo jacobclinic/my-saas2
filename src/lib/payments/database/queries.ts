@@ -374,3 +374,33 @@ export async function getPaymentSummary(
     throw new Error('Failed to fetch payment summary. Please try again.');
   }
 }
+
+export async function getStudentPaymentsByPeriod(
+  client: Client,
+  studentId: string,
+  classId: string,
+  paymentPeriod: string
+) {
+  try {
+    const { data, error } = await client
+      .from(STUDENT_PAYMENTS_TABLE)
+      .select(`*,
+        invoice:${INVOICES_TABLE}!fk_student_payments_invoice_id (
+          id,
+          invoice_no,
+          invoice_period,
+          status,
+          amount
+        )`)
+      .eq('class_id', classId)
+      .eq('student_id', studentId)
+      .eq('payment_period', paymentPeriod);
+
+    if (error) throw error;
+    return data;
+
+  } catch (error) {
+    console.error('Error fetching student payments:', error);
+    return [];
+  }
+}

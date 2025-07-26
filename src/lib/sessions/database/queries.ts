@@ -345,15 +345,15 @@ export async function getAllUpcommingSessionsData(
         ...sessionData,
         class: classTemp
           ? {
-              id: classTemp.id,
-              name: classTemp.name,
-              subject: classTemp.subject,
-              tutor_id: classTemp.tutor_id,
-              tutor: Array.isArray(classTemp.tutor)
-                ? classTemp.tutor[0]
-                : classTemp.tutor || undefined,
-              students: classTemp.students,
-            }
+            id: classTemp.id,
+            name: classTemp.name,
+            subject: classTemp.subject,
+            tutor_id: classTemp.tutor_id,
+            tutor: Array.isArray(classTemp.tutor)
+              ? classTemp.tutor[0]
+              : classTemp.tutor || undefined,
+            students: classTemp.students,
+          }
           : undefined,
       };
     });
@@ -438,15 +438,15 @@ export async function getTodaysAllUpcommingSessionsData(
         ...sessionData,
         class: classTemp
           ? {
-              id: classTemp.id,
-              name: classTemp.name,
-              subject: classTemp.subject,
-              tutor_id: classTemp.tutor_id,
-              tutor: Array.isArray(classTemp.tutor)
-                ? classTemp.tutor[0]
-                : classTemp.tutor || undefined,
-              students: classTemp.students,
-            }
+            id: classTemp.id,
+            name: classTemp.name,
+            subject: classTemp.subject,
+            tutor_id: classTemp.tutor_id,
+            tutor: Array.isArray(classTemp.tutor)
+              ? classTemp.tutor[0]
+              : classTemp.tutor || undefined,
+            students: classTemp.students,
+          }
           : undefined,
       };
     });
@@ -1053,15 +1053,15 @@ export async function getAllPastSessionsDataAdmin(
         ...sessionData,
         class: classTemp
           ? {
-              id: classTemp.id,
-              name: classTemp.name,
-              subject: classTemp.subject,
-              tutor_id: classTemp.tutor_id,
-              tutor: Array.isArray(classTemp.tutor)
-                ? classTemp.tutor[0]
-                : classTemp.tutor || undefined,
-              students: classTemp.students,
-            }
+            id: classTemp.id,
+            name: classTemp.name,
+            subject: classTemp.subject,
+            tutor_id: classTemp.tutor_id,
+            tutor: Array.isArray(classTemp.tutor)
+              ? classTemp.tutor[0]
+              : classTemp.tutor || undefined,
+            students: classTemp.students,
+          }
           : undefined,
         attendance: attendanceTemp ?? [],
       };
@@ -1496,15 +1496,15 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
         ...sessionData,
         class: classTemp
           ? {
-              id: classTemp.id,
-              name: classTemp.name,
-              subject: classTemp.subject,
-              tutor_id: classTemp.tutor_id,
-              fee: classTemp.fee,
-              tutor: Array.isArray(classTemp.tutor)
-                ? classTemp.tutor[0]
-                : classTemp.tutor || undefined,
-            }
+            id: classTemp.id,
+            name: classTemp.name,
+            subject: classTemp.subject,
+            tutor_id: classTemp.tutor_id,
+            fee: classTemp.fee,
+            tutor: Array.isArray(classTemp.tutor)
+              ? classTemp.tutor[0]
+              : classTemp.tutor || undefined,
+          }
           : undefined,
         materials: transformedMaterials || [],
         payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
@@ -2070,6 +2070,42 @@ export async function getTomorrowsSessionsWithZoomUser(
 
     return data as unknown as UpcomingSessionWithZoomUser[] || [];
   } catch (error) {
+    throw error;
+  }
+}
+
+export async function getSessionById( client: SupabaseClient<Database>,  session_id: string) {
+  try {
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id,
+          attendance_marked
+        `,
+        { count: 'exact' },
+      )
+      .eq('id', session_id)
+      .single();
+
+    if (error) {
+      throw new Error(`Error fetching session: ${error.message}`);
+    }
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch session:', error);
     throw error;
   }
 }
