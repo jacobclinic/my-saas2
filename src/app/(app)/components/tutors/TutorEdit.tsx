@@ -14,11 +14,12 @@ import {
   SelectValue,
 } from '../base-v2/ui/Select';
 import UserType from '~/lib/user/types/user';
+import { CommaZoomUser } from '~/lib/zoom/v2/types';
 
 interface ExtendedUserType extends UserType {
   activeClassesCount?: number;
+  zoom_user: CommaZoomUser | null;
 }
-
 interface TutorEditProps {
   open: boolean;
   onClose: () => void;

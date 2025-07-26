@@ -27,6 +27,7 @@ import { notifyStudentsAfterClassScheduleUpdate } from '../notifications/email/e
 import { notifyStudentsAfterClassScheduleUpdateSMS } from '../notifications/sms/sms.notification.service';
 import { generateWeeklyOccurrences, RecurrenceInput } from '../utils/recurrence-utils';
 import { isEqual } from '../utils/lodash-utils';
+import { ZoomService } from '../zoom/v2/zoom.service';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -109,6 +110,10 @@ export const createClassAction = withSession(
         // The invoice can be generated later with the monthly job
       }
     }
+
+    const zoomService = new ZoomService(client);
+    // Call this method to create zoom meetings for newly created classes.
+    await zoomService.createMeetingsForTomorrowSessions();
 
     // Revalidate paths
     revalidatePath('/classes');
@@ -254,7 +259,7 @@ export const updateClassAction = withSession(
           month: 'long',
           day: 'numeric',
         });
-        
+
         await Promise.all([
           notifyStudentsAfterClassScheduleUpdate(client, {
             classId: params.classId,
@@ -288,6 +293,11 @@ export const updateClassAction = withSession(
         // Don't throw here - we don't want to fail the entire update if notifications fail
       }
     }
+
+    const zoomService = new ZoomService(client);
+    // Call this method to create zoom meetings for newly created classes.
+    await zoomService.createMeetingsForTomorrowSessions();
+
 
     revalidatePath('/classes');
     revalidatePath(`/classes/${result?.id}`);

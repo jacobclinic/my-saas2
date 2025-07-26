@@ -1,3 +1,6 @@
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "~/database.types";
+
 export type ZoomWebhookPayload = {
     event: string;
     payload: any;
@@ -69,6 +72,11 @@ export type ZoomUser = {
     tutor_id: string;
 }
 
+export type CommaZoomUser = Omit<ZoomUser, 'first_name' | 'last_name' | 'type'> & {
+    zoom_user_id: string;
+    account_type: ZoomUserType;
+}
+
 export type ZoomCreateUserResponse = ZoomUser;
 
 // Can extend this.
@@ -129,3 +137,5 @@ export type ZoomMeetingResponse = {
         meeting_authentication?: boolean;
     };
 }
+
+export type Client = SupabaseClient<Database>;

@@ -23,6 +23,7 @@ import {
 } from '~/lib/user/actions/update-tutor-action';
 import { toast } from 'sonner';
 import { columnWidthsAdminTutor } from '~/lib/constants-v2';
+import { CommaZoomUser } from '~/lib/zoom/v2/types';
 
 export default function TutorsList({
   tutorsData,
@@ -109,6 +110,7 @@ type ApprovedTutorTableData = TutorTableData & {
 // Extended UserType with active classes count
 type UserTypeWithDetails = UserType & {
   activeClassesCount?: number;
+  zoom_user: CommaZoomUser | null;
 };
 
 // Helper function to get status badge variant

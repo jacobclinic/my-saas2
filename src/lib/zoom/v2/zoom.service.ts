@@ -8,6 +8,7 @@ import { getSessionsTillTomorrowWithZoomUser, getTomorrowsSessionsWithZoomUser }
 import { createZoomSession } from "~/lib/zoom_sessions/database/mutations";
 import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest } from "./types";
 import { ZOOM_SESSIONS_TABLE } from "~/lib/db-tables";
+import { getZoomUserByTutorId } from "./database/queries";
 
 
 const logger = getLogger();
@@ -26,6 +27,12 @@ export class ZoomService {
 
             if (!user.tutor_id) {
                 throw new Error('Cannot create a zoom user without a tutor ID');
+            }
+            const existingZoomUser = await getZoomUserByTutorId(this.supabaseClient, user.tutor_id);
+            
+            if (existingZoomUser) {
+                logger.warn(`Zoom user already exists for tutor ID: ${user.tutor_id}`);
+                return existingZoomUser;
             }
 
             const zoomUser = await this.client.createUser(user);

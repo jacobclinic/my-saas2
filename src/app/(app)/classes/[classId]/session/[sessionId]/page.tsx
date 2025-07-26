@@ -86,11 +86,6 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
       {zoomSession && (
         <ZoomMeeting params={{ ...params, zoomSession, userEmail, userName }} />
       )}
-      {
-        !zoomSession && (
-          <p>Loading...</p>
-        )
-      }
     </div>
   );
 };

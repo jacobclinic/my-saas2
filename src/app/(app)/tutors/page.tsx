@@ -18,6 +18,7 @@ export const metadata = {
 
 async function TutorsPage() {
   const client = getSupabaseServerComponentClient();
+  //  zoom_user: CommaZoomUser | null
   const tutorsData = await getAllTutorsWithDetails(client, USER_ROLES.TUTOR);
   return (
     <PageBody>
