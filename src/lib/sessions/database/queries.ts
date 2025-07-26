@@ -1946,6 +1946,66 @@ type UpcomingSessionWithZoomUser = UpcomingSession & {
   };
 };
 
+export async function getSessionsTillTomorrowWithZoomUser(
+  client: SupabaseClient<Database>
+): Promise<UpcomingSessionWithZoomUser[] | []> {
+  try {
+    // Current time in UTC
+    const now = new Date();
+
+    // End of tomorrow in UTC (23:59:59.999)
+    const tomorrowEndUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      23, 59, 59, 999
+    ));
+
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(`
+        id,
+        created_at,
+        class_id,
+        recording_urls,
+        status,
+        start_time,
+        end_time,
+        title,
+        description,
+        updated_at,
+        class:${CLASSES_TABLE}!class_id (
+          id,
+          name,
+          subject,
+          tutor_id,
+          tutor:${USERS_TABLE}!tutor_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            zoom_user: ${ZOOM_USERS_TABLE}!tutor_id (
+              id,
+              zoom_user_id,
+              email
+            )
+          )
+        )
+      `, { count: 'exact' })
+      .gt('start_time', now.toISOString())
+      .lte('start_time', tomorrowEndUTC.toISOString())
+      .order('start_time', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data as unknown as UpcomingSessionWithZoomUser[] || [];
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function getTomorrowsSessionsWithZoomUser(
   client: SupabaseClient<Database>
 ): Promise<UpcomingSessionWithZoomUser[] | []> {

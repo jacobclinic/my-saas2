@@ -1,12 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
+import getLogger from '~/core/logger';
 import { ZoomService } from '~/lib/zoom/v2/zoom.service';
-import getSupabaseServerActionClient from '~/core/supabase/action-client';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const logger = getLogger();
+
 export async function POST(req: Request) {
     try {
 
+        if (!supabaseUrl || !supabaseKey) {
+            logger.error('Supabase URL or Key is not defined');
+            return new Response('Internal Server Error', { status: 500 });
+        }
 
         // Validate request
         const authHeader = req.headers.get('Authorization');
@@ -16,16 +23,16 @@ export async function POST(req: Request) {
 
         const supabase = createClient(supabaseUrl!, supabaseKey!, {
             auth: {
-              persistSession: false,
+                persistSession: false,
             },
-          });
+        });
 
         const zoomService = new ZoomService(supabase);
         const sessions = await zoomService.createMeetingsForTomorrowSessions();
 
         return new Response('Zoom sessions created successfully', { status: 200 });
     } catch (error) {
-        console.error('Error in POST /api/public/create-zoom-sessions:', error);
+        logger.error('Error in POST /api/public/create-zoom-sessions:', error);
         return new Response('Internal Server Error', { status: 500 });
     }
 }

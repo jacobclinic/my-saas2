@@ -1,11 +1,49 @@
-type ZoomUserType = 1 | 2 | 3; // 1=Basic, 2=Licensed, 3=On-prem
-type ZoomCreateUserAction = 'create' | 'autoCreate' | 'custCreate' | 'ssoCreate';
+export type ZoomWebhookPayload = {
+    event: string;
+    payload: any;
+}
 
-type ZoomUserFeature = {
+interface BaseZoomWebhookPayload<T extends string, P> {
+    event: T;
+    payload: P;
+    event_ts: number;
+}
+
+interface ZoomUrlValidationPayload {
+    plainToken: string;
+}
+
+interface ZoomMeetingEndedPayload {
+    account_id: string;
+    operator: string;
+    operator_id: string;
+    operation: string;
+    object: {
+        id: string;
+        uuid: string;
+        host_id: string;
+        topic: string;
+        type: number;
+        start_time: string;
+        timezone: string;
+        duration: number;
+        end_time: string;
+    };
+}
+
+export type ZoomWebhookEvent = BaseZoomWebhookPayload<'meeting.ended', ZoomMeetingEndedPayload> | BaseZoomWebhookPayload<
+    'endpoint.url_validation',
+    ZoomUrlValidationPayload
+>
+
+export type ZoomUserType = 1 | 2 | 3; // 1=Basic, 2=Licensed, 3=On-prem
+export type ZoomCreateUserAction = 'create' | 'autoCreate' | 'custCreate' | 'ssoCreate';
+
+export type ZoomUserFeature = {
     zoom_phone: boolean;
 }
 
-type ZoomUserRequestInfo = {
+export type ZoomUserRequestInfo = {
     email: string;
     first_name?: string;
     last_name?: string;
@@ -16,13 +54,13 @@ type ZoomUserRequestInfo = {
     plan_united_type?: string;
 }
 
-type ZoomCreateUserRequest = {
+export type ZoomCreateUserRequest = {
     action: ZoomCreateUserAction;
     user_info: ZoomUserRequestInfo;
     tutor_id: string;
 }
 
-type ZoomUser = {
+export type ZoomUser = {
     email: string;
     first_name: string;
     id: string;
@@ -31,13 +69,13 @@ type ZoomUser = {
     tutor_id: string;
 }
 
-type ZoomCreateUserResponse = ZoomUser;
+export type ZoomCreateUserResponse = ZoomUser;
 
 // Can extend this.
 // https://developers.zoom.us/docs/api/meetings/#tag/meetings/POST/users/{userId}/meetings
-type ZoomMeetingType = 1 | 2 | 3 | 8 | 10;
+export type ZoomMeetingType = 1 | 2 | 3 | 8 | 10;
 
-type ZoomCreateUserMeetingRequest = {
+export type ZoomCreateUserMeetingRequest = {
     userId: string;
     body: {
         topic: string;
@@ -56,8 +94,7 @@ type ZoomCreateUserMeetingRequest = {
     }
 }
 
-
-type ZoomMeetingResponse = {
+export type ZoomMeetingResponse = {
     id: number;
     uuid: string;
     host_email?: string;

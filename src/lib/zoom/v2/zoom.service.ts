@@ -4,8 +4,11 @@ import { createZoomUser } from "./database/mutations";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "~/database.types";
 import getSupabaseServerActionClient from "~/core/supabase/action-client";
-import { getTomorrowsSessionsWithZoomUser } from "~/lib/sessions/database/queries";
+import { getSessionsTillTomorrowWithZoomUser, getTomorrowsSessionsWithZoomUser } from "~/lib/sessions/database/queries";
 import { createZoomSession } from "~/lib/zoom_sessions/database/mutations";
+import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest } from "./types";
+import { ZOOM_SESSIONS_TABLE } from "~/lib/db-tables";
+
 
 const logger = getLogger();
 
@@ -21,7 +24,7 @@ export class ZoomService {
     async createZoomUser(user: ZoomCreateUserRequest) {
         try {
 
-            if(!user.tutor_id){
+            if (!user.tutor_id) {
                 throw new Error('Cannot create a zoom user without a tutor ID');
             }
 
@@ -57,13 +60,68 @@ export class ZoomService {
         }
     }
 
+    async checkIfZoomSessionExists(sessionId: string) {
+        try {
+            const zoomSession = await this.supabaseClient
+                .from(ZOOM_SESSIONS_TABLE)
+                .select('*')
+                .eq('session_id', sessionId)
+                .single();
+            if (!zoomSession.data) {
+                return null;
+            }
+            return zoomSession;
+        } catch (error) {
+            logger.error(error, "Failed to check if zoom session exists");
+            throw new Error('Failed to check if zoom session exists. Please try again.');
+        }
+    }
+
+    async getZoomSessionsByIdList(sessionId: string[]) {
+        try {
+            const meetings = await this.supabaseClient
+                .from(ZOOM_SESSIONS_TABLE)
+                .select('*')
+                .in('session_id', sessionId);
+            return meetings;
+        } catch (error) {
+            logger.error(error, "Failed to get zoom meetings by IDs");
+            throw new Error('Failed to get zoom meetings by IDs. Please try again.');
+        }
+    }
+
+    async getExistingZoomSessionsIds(sessionIds: string[]) {
+        try {
+            const meetings = await this.getZoomSessionsByIdList(sessionIds);
+            const meetingIds = meetings.data?.map(meeting => meeting.session_id) || [];
+            if (meetingIds.length === 0) {
+                return [];
+            }
+            return meetingIds;
+        } catch (error) {
+            logger.error(error, "Failed to get existing zoom sessions");
+            return [];
+        }
+    }
+
     async createMeetingsForTomorrowSessions() {
         try {
-            const tomorrowSessions = await getTomorrowsSessionsWithZoomUser(this.supabaseClient);
-            for (const session of tomorrowSessions) {
+            // This will return all sessions that are scheduled for tomorrow.starting from 12 am to 11:59:59 pm.
+            // const tomorrowSessions = await getTomorrowsSessionsWithZoomUser(this.supabaseClient);
 
+            // This will return all sessions that are being scheduled till tomorrow midnight.
+            const tomorrowSessions = await getSessionsTillTomorrowWithZoomUser(this.supabaseClient);
+            const sessionIds = tomorrowSessions.map(session => session.id);
+            const existingZoomSessionIds = await this.getExistingZoomSessionsIds(sessionIds);
+            for (const session of tomorrowSessions) {
+                logger.info(`Processing session: ${session.id}`);
+                if (existingZoomSessionIds.includes(session.id)) {
+                    logger.warn(`Skipping ${session.id} : Zoom session already exists`);
+                    continue;
+                }
                 if (session.class?.tutor && session.class.tutor.zoom_user.length === 0) {
                     // Skip the loop for this session,
+                     logger.warn(`Skipping ${session.id} : Tutor is not associated with any zoom user`);
                     continue;
                 }
                 const zoomUserId = session.class.tutor.zoom_user[0].zoom_user_id;
@@ -110,7 +168,7 @@ export class ZoomService {
                         creation_source: meeting.creation_source,
                     }
 
-                    const zoomSession = await createZoomSession(this.supabaseClient,createZoomSessionPayload);
+                    const zoomSession = await createZoomSession(this.supabaseClient, createZoomSessionPayload);
                     // Wait for 50ms to avoid rate limiting
                     await new Promise(resolve => setTimeout(resolve, 50));
                 }

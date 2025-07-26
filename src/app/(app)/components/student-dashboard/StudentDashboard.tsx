@@ -142,21 +142,6 @@ const StudentDashboard = ({
 
   const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
-      // startTransition(async () => {
-      //   const result = await joinMeetingAsUser({
-      //     meetingId: sessionData?.zoomMeetingId,
-      //     studentData: {
-      //       first_name: userSession?.data?.first_name || '',
-      //       last_name: userSession?.data?.last_name || '',
-      //       email: userSession?.auth?.user?.email || '',
-      //     },
-      //   });
-      //   if (result.success) {
-      //     window.open(result.start_url, '_blank');
-      //   } else {
-      //     alert('Failed to generate join link');
-      //   }
-      // });
       startTransition(async () => {
         if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
           const classId = sessionData.sessionRawData.class.id;
