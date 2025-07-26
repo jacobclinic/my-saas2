@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchZoomSessionBySessionIdAction, validateStudentPaymentForSessionAction } from '~/lib/zoom_sessions/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
 import dynamic from 'next/dynamic';
+import useUserRole from '~/lib/user/hooks/use-userRole';
 
 // Zoom meeting is a client side only component
 // Top level imports will not ensure it.
@@ -22,11 +23,11 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
   const [zoomSession, setZoomSession] = useState<any | null>(null);
   const [error, setError] = useState("")
   const userSession = useUserSession();
+  const { data: role } = useUserRole();
 
   const userEmail = userSession?.auth?.user?.email!;
   const userName = userSession?.data?.first_name! || userEmail;
-
-  console.log("ClassSessionPage params:", userSession);
+  const isHost = role === "tutor" || role === "admin";
 
   useEffect(() => {
     const fetchZoomSession = async () => {
@@ -37,26 +38,28 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
           setError("");
         } else {
           setZoomSession(null);
-          setError("A virtual classroom has not been set up for this session. Please contact your tutor for more information.");
+          setError("A virtual classroom has not been set up for this session. Please contact the support if you think this is an error.");
         }
       } catch (error) {
         setError("Something went wrong while fetching the virtual classroom. Please try again and contact admin if the problem persists.");
       }
     };
-
-    fetchZoomSession();
-  }, [params.sessionId]);
-
-
-  useEffect(() => {
     const validatePayment = async () => {
       if (!userSession) return;
 
-      const isValid = await validateStudentPaymentForSessionAction(params.sessionId, params.classId, userSession.auth.user.id);
+      if (isHost) {
+        fetchZoomSession();
+        setError("");
+        return;
+      }
 
+      // Validate student payment for the session
+      const isValid = await validateStudentPaymentForSessionAction(params.sessionId, params.classId, userSession.auth.user.id);
       if (!isValid) {
         setError("You must complete the payment to access this session.");
       } else {
+        // Only set zoom session if payment is valid
+        fetchZoomSession();
         setError("");
       }
     };
