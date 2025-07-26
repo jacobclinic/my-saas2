@@ -14,7 +14,9 @@ interface UpcomingSessionTableData {
   name: string;
   subject: string;
   date: string;
-  time: string;
+  time?: string;
+  start_time: string;
+  end_time: string;
   registeredStudents: number;
   zoomLinkTutor: string;
   zoomLinkStudent: string;

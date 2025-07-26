@@ -42,7 +42,6 @@ import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '~/app/(app)/lib/hooks/use-toast';
-import { convertTimeRangeToISO } from '~/lib/utils/date-utils';
 import AddLessonDetailsDialog from '../../upcoming-sessions/AddLessonDetailsDialog';
 
 const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
@@ -371,12 +370,8 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionData={{
           title: sessionData?.sessionRawData?.title || '',
           description: sessionData?.sessionRawData?.description || '',
-          startTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .startTime || '',
-          endTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .endTime || '',
+          startTime: sessionData.start_time || '',
+          endTime: sessionData.end_time || '',
           meetingUrl: sessionData?.sessionRawData?.meeting_url || '',
           materials: sessionData?.materials || [],
         }}
