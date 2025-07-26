@@ -315,3 +315,11 @@ export function convertTimeRangeToISO(
     throw new Error(`Invalid time range: ${(error as Error).message}`);
   }
 }
+
+
+export function getPaymentPeriodFromDate(date: Date): string {
+  const utcDate = new Date(date.toISOString());
+  const year = utcDate.getUTCFullYear();
+  const month = (utcDate.getUTCMonth() + 1).toString().padStart(2, '0');
+  return `${year}-${month}`;
+}

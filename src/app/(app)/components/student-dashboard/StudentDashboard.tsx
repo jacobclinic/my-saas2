@@ -17,6 +17,7 @@ import StudentSessionCard from './StudentSessionCard';
 import StudentNextSessionCard from './StudentNextSessionCard';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import PaginationControls from '../../components/PaginationControls';
+import { useRouter } from 'next/navigation';
 
 const StudentDashboard = ({
   upcomingSessionData,
@@ -32,6 +33,8 @@ const StudentDashboard = ({
   const [upcomingSessions, setUpcomingSessions] = useState<
     SessionStudentTableData[]
   >([]);
+
+  const router = useRouter();
 
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedSession, setSelectedSession] =
@@ -140,18 +143,10 @@ const StudentDashboard = ({
   const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
       startTransition(async () => {
-        const result = await joinMeetingAsUser({
-          meetingId: sessionData?.zoomMeetingId,
-          studentData: {
-            first_name: userSession?.data?.first_name || '',
-            last_name: userSession?.data?.last_name || '',
-            email: userSession?.auth?.user?.email || '',
-          },
-        });
-        if (result.success) {
-          window.open(result.start_url, '_blank');
-        } else {
-          alert('Failed to generate join link');
+        if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
+          const classId = sessionData.sessionRawData.class.id;
+          const url = `/classes/${classId}/session/${sessionData.id}`;
+          router.push(url);
         }
       });
     },

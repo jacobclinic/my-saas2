@@ -8,6 +8,8 @@ import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { USERS_TABLE } from '~/lib/db-tables';
 import { getUserById } from '~/lib/user/database/queries';
 import UserType from '~/lib/user/types/user';
+import { zoomClient } from '~/lib/zoom/v2/client';
+import { ZoomService } from '~/lib/zoom/v2/zoom.service';
 import { uploadIdentityProof } from '~/lib/utils/upload-material-utils';
 import { sendTutorRegistrationNotification } from '~/lib/utils/internal-api-client';
 
@@ -39,6 +41,28 @@ export async function ensureUserRecord(
     .select('id, first_name, last_name')
     .eq('id', userId)
     .single();
+
+  try {
+    if (userRole === 'tutor') {
+      const displayName = `${firstName} ${lastName}`;
+      const randomString = Math.random().toString(36).substring(2, 8);
+      const commaEducationEmail = `${firstName}.${lastName}.${randomString}@commaeducation.lk`;
+      const zoomService = new ZoomService(client);
+      await zoomService.createZoomUser({
+        action: 'create',
+        user_info: {
+          email: commaEducationEmail,
+          first_name: firstName || '',
+          last_name: lastName || '',
+          display_name: displayName || '',
+          type: 1,
+        },
+        tutor_id: existingUser?.id!,
+      })
+    }
+  } catch (error) {
+    console.error('Error creating zoom user:', error);
+  }
 
   if (!existingUser) {
     // If user record doesn't exist, create it
