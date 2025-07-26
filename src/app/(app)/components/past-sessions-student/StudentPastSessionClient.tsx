@@ -21,7 +21,6 @@ const StudentPastSessionClient = ({
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentSessions = filteredData.slice(indexOfFirstItem, indexOfLastItem);
-
   // Handler for when filters are applied in the child component
   const handleFilterChange = (newFilteredData: PastSession[]) => {
     setFilteredData(newFilteredData);

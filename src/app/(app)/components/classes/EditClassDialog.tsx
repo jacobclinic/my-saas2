@@ -64,6 +64,9 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteClassLoading, setDeleteClassLoading] = useState(false);
 
+  // Extract the minimum time slots condition for reusability
+  const hasMinimumTimeSlots = editedClass.timeSlots.length <= 1;
+
   const handleDeleteClass = async (classId: string) => {
     try {
       setDeleteClassLoading(true);
@@ -136,6 +139,11 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
   };
 
   const handleRemoveTimeSlot = (index: number) => {
+    // Ensure at least one time slot remains
+    if (hasMinimumTimeSlots) {
+      return;
+    }
+
     setEditedClass((prev) => ({
       ...prev,
       timeSlots: prev.timeSlots.filter((_, i) => i !== index),
@@ -388,9 +396,8 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
             </div>
           </div>
 
-
           <div>
-            {/* <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center mb-2">
               <label className="text-sm font-medium">Class Schedule</label>
               <Button
                 type="button"
@@ -401,7 +408,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
                 <Plus className="h-4 w-4 mr-2" />
                 Add Time Slot
               </Button>
-            </div> */}
+            </div>
 
             <div className="space-y-2 flex flex-col pb-2">
               <div className="flex self-end gap-[75px] mr-14">
@@ -448,17 +455,20 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
                     />
                   </div>
 
-                  {editedClass.timeSlots.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveTimeSlot(index)}
-                      className="text-red-500 hover:text-red-600"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoveTimeSlot(index)}
+                    className={`${
+                      hasMinimumTimeSlots
+                        ? 'text-gray-300 cursor-not-allowed'
+                        : 'text-red-500 hover:text-red-600'
+                    }`}
+                    disabled={hasMinimumTimeSlots}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
             </div>

@@ -2,8 +2,7 @@
 
 import React, { useCallback, useEffect, useState, useTransition } from 'react';
 import type {
-  SessionStudentTableData,
-  UpcomingSessionTableData,
+  SessionStudentTableData
 } from '~/lib/sessions/types/upcoming-sessions';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Input } from '../base-v2/ui/Input';

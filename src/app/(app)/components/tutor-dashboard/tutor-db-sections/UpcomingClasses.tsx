@@ -42,6 +42,8 @@ const UpcomingClassesSection = ({
           subject: session?.class?.subject || '',
           date: formattedDate,
           time: formattedTime,
+          start_time: session?.start_time || '',
+          end_time: session?.end_time || '',
           registeredStudents: session?.class?.students?.length || 0,
           zoomLinkTutor: session?.meeting_url || '',
           zoomLinkStudent: session?.meeting_url || '',

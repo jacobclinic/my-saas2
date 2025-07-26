@@ -6,12 +6,9 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../base-v2/ui/Card';
-import { Alert, AlertDescription } from '../base-v2/ui/Alert';
+import { Card, CardContent } from '../base-v2/ui/Card';
 import { Download, ExternalLink, FileText, Info, Video } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
-import StudentSessionDetailsHeader from './StudentSessionDetailsHeader';
-import StudentSessionDetailsMaterials from './StudentSessionDetailsMaterials';
 import PaymentDialog from '../student-payments/PaymentDialog';
 import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
@@ -122,7 +119,7 @@ const StudentSessionDetails = ({
 
       setClassTableData(formattedData);
     }
-  }, [sessionData]);
+  }, [classData, sessionData]);
   // Helper function to format session data
   const formatSessionData = (
     sessionData: UpcomingSession | PastSession,

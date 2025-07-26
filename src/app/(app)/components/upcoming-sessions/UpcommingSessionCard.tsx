@@ -32,7 +32,6 @@ import {
 import MaterialUploadDialog from './MaterialUploadDialog';
 import EditSessionDialog from './EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
-import { parse, format } from 'date-fns';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
@@ -41,9 +40,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../base-v2/ui/tooltip';
-import { convertTimeRangeToISO } from '~/lib/utils/date-utils';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
-import { SessionUpdateOption } from '~/lib/enums';
 
 import { useRouter } from 'next/navigation';
 
@@ -386,12 +383,8 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionData={{
           title: sessionData.lessonTitle || '',
           description: sessionData.lessonDescription || '',
-          startTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .startTime || '',
-          endTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .endTime || '',
+          startTime: sessionData.start_time || '',
+          endTime: sessionData.end_time || '',
           meetingUrl: sessionData.zoomLinkStudent || '',
           materials: sessionData.materials || [],
         }}

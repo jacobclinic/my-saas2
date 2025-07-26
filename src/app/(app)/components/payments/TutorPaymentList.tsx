@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useTransition, useCallback } from 'react';
 import {
   Search,
   Calendar,
@@ -184,27 +184,28 @@ export default function Payments() {
     };
   };
   // Fetch invoices for a specific month
-  const fetchInvoicesForMonth = async (
-    monthPeriod: string,
-  ): Promise<TutorInvoice[]> => {
-    if (!userId) return [];
+  const fetchInvoicesForMonth = useCallback(
+    async (monthPeriod: string): Promise<TutorInvoice[]> => {
+      if (!userId) return [];
 
-    try {
-      const result = await getTutorInvoicesAction({
-        tutorId: userId,
-        invoicePeriod: monthPeriod,
-      });
+      try {
+        const result = await getTutorInvoicesAction({
+          tutorId: userId,
+          invoicePeriod: monthPeriod,
+        });
 
-      if (result.success && result.invoices) {
-        return result.invoices;
-      } else {
-        throw new Error(result.error || 'Failed to fetch invoices');
+        if (result.success && result.invoices) {
+          return result.invoices;
+        } else {
+          throw new Error(result.error || 'Failed to fetch invoices');
+        }
+      } catch (err) {
+        console.error('Error fetching tutor invoices:', err);
+        return [];
       }
-    } catch (err) {
-      console.error('Error fetching tutor invoices:', err);
-      return [];
-    }
-  };
+    },
+    [userId],
+  );
 
   // Initial load: current month + previous month for growth calculation
   useEffect(() => {
@@ -248,7 +249,7 @@ export default function Payments() {
     startTransition(() => {
       loadInitialData();
     });
-  }, [userId]); // Load specific month when filter changes
+  }, [fetchInvoicesForMonth, userId]); // Load specific month when filter changes
   useEffect(() => {
     if (!userId || !hasInitiallyLoaded) return;
 
@@ -292,7 +293,13 @@ export default function Payments() {
     startTransition(() => {
       loadMonthData();
     });
-  }, [monthFilter, userId, lastMonthEarnings, hasInitiallyLoaded]); // Don't filter during loading to prevent "No payments found" flash
+  }, [
+    monthFilter,
+    userId,
+    lastMonthEarnings,
+    hasInitiallyLoaded,
+    fetchInvoicesForMonth,
+  ]); // Don't filter during loading to prevent "No payments found" flash
   const filteredPayments = isFilterLoading
     ? []
     : payments.filter((p) => {
@@ -492,7 +499,7 @@ export default function Payments() {
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              </TableHeader>{' '}
+              </TableHeader>
               <TableBody>
                 {filteredPayments.length > 0 ? (
                   filteredPayments.map((payment) => (

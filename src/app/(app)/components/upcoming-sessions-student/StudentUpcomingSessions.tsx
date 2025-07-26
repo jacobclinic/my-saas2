@@ -3,27 +3,21 @@
 import React, { useCallback, useEffect, useState, useTransition } from 'react';
 import type {
   SessionStudentTableData,
-  UpcomingSessionTableData,
 } from '~/lib/sessions/types/upcoming-sessions';
-import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Input } from '../base-v2/ui/Input';
-import { Calendar, Info, Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { DateRangePicker } from '@heroui/date-picker';
 import StudentSessionCard from '../student-dashboard/StudentSessionCard';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
-import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
 import PaymentDialog from '../student-payments/PaymentDialog';
 import {
   formatDateTimeRange,
-  getUserTimezone,
 } from '~/lib/utils/timezone-utils';
 import {
   datePickerObjectToLocalDate,
-  utcToLocalDate,
 } from '~/lib/utils/timezone-utils-filter';
-import TimezoneIndicator from '../TimezoneIndicator';
 import { useRouter } from 'next/navigation';
 
 interface DateRange {
