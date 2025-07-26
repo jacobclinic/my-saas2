@@ -7,6 +7,7 @@ import {
 } from '~/lib/db-tables';
 import { checkUpcomingSessionAvailabilityForClass } from '~/lib/sessions/database/queries';
 import { Enrollment } from '../types/types';
+import { TUTOR_PAYOUT_RATE } from '~/lib/constants-v2';
 
 export async function generateMonthlyInvoicesStudents(
   client: SupabaseClient,
@@ -244,9 +245,6 @@ export async function generateMonthlyInvoicesTutor(
           .eq('payment_period', invoicePeriod)
           .single();
 
-        if (existingTutorInvoice) {
-          continue;
-        } // Get all paid student invoices for this class in the given period
         const { data: paidStudentInvoices, error: paidInvoicesError } =
           await client
             .from(INVOICES_TABLE)
@@ -266,20 +264,37 @@ export async function generateMonthlyInvoicesTutor(
         // Calculate tutor payment: number of paid invoices × class fee
         const numberOfPaidInvoices = paidStudentInvoices?.length || 0;
         const classFee = classData.fee || 0;
-        const tutorPayment = numberOfPaidInvoices * classFee;
+        const totalRevenue = numberOfPaidInvoices * classFee;
+        const tutorPayment = totalRevenue * TUTOR_PAYOUT_RATE;
 
         // Create invoice number with exactly 12 characters: YY + MM + 4 chars from tutorId + 4 chars from classId
         const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${tutorId.substring(0, 6)}${classData.id.substring(0, 6)}`;
 
-        // Always create tutor invoice for active classes, even if amount is 0
-        tutorInvoicesToInsert.push({
-          tutor_id: tutorId,
-          class_id: classData.id,
-          invoice_no: invoiceNo,
-          payment_period: invoicePeriod,
-          amount: tutorPayment,
-          status: 'issued',
-        });
+        if (existingTutorInvoice) {
+          const { error: updateError } = await client
+            .from(TUTOR_INVOICES_TABLE)
+            .update({
+              amount: tutorPayment,
+            })
+            .eq('id', existingTutorInvoice.id);
+
+          if (updateError) {
+            console.error(
+              `Error updating tutor invoice for class ${classData.id}:`,
+              updateError,
+            );
+          }
+        } else {
+          // Always create tutor invoice for active classes, even if amount is 0
+          tutorInvoicesToInsert.push({
+            tutor_id: tutorId,
+            class_id: classData.id,
+            invoice_no: invoiceNo,
+            payment_period: invoicePeriod,
+            amount: tutorPayment,
+            status: 'issued',
+          });
+        }
       }
     }
 

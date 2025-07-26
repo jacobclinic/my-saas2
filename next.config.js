@@ -5,16 +5,27 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '5mb',
+    },
+  },
   images: {
     remotePatterns: getRemotePatterns(),
   },
   webpack: (config, { isServer }) => {
-    // Add webpack configuration for Zoom SDK
+    // Add webpack configuration for Zoom SDK and email services
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         crypto: false,
+        stream: false,
+        path: false,
+        net: false,
+        tls: false,
+        child_process: false,
+        dns: false,
       };
     }
     return config;

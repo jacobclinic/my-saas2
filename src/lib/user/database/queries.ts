@@ -59,8 +59,6 @@ export async function fetchUserRole(
   return data.user_role;
 }
 
-
-
 export async function getAllUsersByUserRoleData(
   client: SupabaseClient<Database>,
   userRole: string,
@@ -69,7 +67,8 @@ export async function getAllUsersByUserRoleData(
     const { data, error } = await client
       .from(USERS_TABLE)
       .select()
-      .eq('user_role', userRole);
+      .eq('user_role', userRole)
+      .order('created_at', { ascending: false });
 
     // console.log("getAllUsersData", data)
 
@@ -91,6 +90,8 @@ export async function getAllUsersByUserRoleData(
       user_role: user.user_role || undefined,
       address: user.address || undefined,
       biography: user.biography || undefined,
+      is_approved: user.is_approved,
+      subjects_teach: user.subjects_teach,
     })) as UserType[];
   } catch (error) {
     console.error('Failed to fetch all users:', error);
@@ -155,4 +156,62 @@ export async function isAdminOrCLassTutor(
   }
 
   return true;
+}
+
+/**
+ * Get active classes count for a tutor
+ */
+export async function getTutorActiveClassesCount(
+  client: SupabaseClient<Database>,
+  tutorId: string,
+): Promise<number> {
+  try {
+    const { count, error } = await client
+      .from(CLASSES_TABLE)
+      .select('*', { count: 'exact', head: true })
+      .eq('tutor_id', tutorId)
+      .eq('status', 'active');
+
+    if (error) {
+      console.error('Error fetching active classes count:', error);
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    console.error('Failed to fetch active classes count:', error);
+    return 0;
+  }
+}
+
+/**
+ * Get all tutors with their active classes count and subjects
+ */
+export async function getAllTutorsWithDetails(
+  client: SupabaseClient<Database>,
+  userRole: string,
+): Promise<(UserType & { activeClassesCount: number })[]> {
+  try {
+    // First get all tutors
+    const tutors = await getAllUsersByUserRoleData(client, userRole);
+
+    // Then get active classes count for each tutor
+    const tutorsWithDetails = await Promise.all(
+      tutors.map(async (tutor) => {
+        const activeClassesCount = await getTutorActiveClassesCount(
+          client,
+          tutor.id,
+        );
+        return {
+          ...tutor,
+          activeClassesCount,
+        };
+      }),
+    );
+
+    return tutorsWithDetails;
+  } catch (error) {
+    console.error('Failed to fetch tutors with details:', error);
+    throw error;
+  }
 }

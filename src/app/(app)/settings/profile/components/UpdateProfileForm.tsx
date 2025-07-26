@@ -19,6 +19,9 @@ import type UserData from '~/core/session/types/user-data';
 import AuthErrorMessage from '~/app/auth/components/AuthErrorMessage';
 import ImageUploader from '~/core/ui/ImageUploader';
 import { USERS_TABLE } from '~/lib/db-tables';
+import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
+import { validateNameForForm } from '~/core/utils/validate-name';
+import { validatePhoneNumberForForm } from '~/core/utils/validate-phonenumber';
 
 function UpdateProfileForm({
   session,
@@ -38,7 +41,7 @@ function UpdateProfileForm({
   const user = session.auth?.user;
   const email = user?.email ?? '';
 
-  const { register, handleSubmit, reset } = useForm({
+  const { register, handleSubmit, reset, formState } = useForm({
     defaultValues: {
       displayName: currentDisplayName,
       firstName: currentFirstName,
@@ -48,6 +51,8 @@ function UpdateProfileForm({
       photoURL: '',
     },
   });
+
+  const errors = formState.errors;
 
   const onSubmit = async (data: {
     displayName: string;
@@ -82,14 +87,36 @@ function UpdateProfileForm({
 
   const firstNameControl = register('firstName', {
     value: currentFirstName,
+    validate: validateNameForForm,
+    onChange: (e) => {
+      // Filter input to allow only letters and spaces
+      const filtered = filterNameInput(e.target.value);
+      e.target.value = filtered;
+    },
   });
 
   const lastNameControl = register('lastName', {
     value: currentLastName,
+    validate: validateNameForForm,
+    onChange: (e) => {
+      // Filter input to allow only letters and spaces
+      const filtered = filterNameInput(e.target.value);
+      e.target.value = filtered;
+    },
   });
 
   const phoneNumberControl = register('phoneNumber', {
     value: currentPhoneNumber,
+    validate: (value) => {
+      // Allow empty phone number for optional field
+      if (!value || value.trim() === '') return true;
+      return validatePhoneNumberForForm(value);
+    },
+    onChange: (e) => {
+      // Filter input to allow only digits
+      const filtered = filterPhoneInput(e.target.value);
+      e.target.value = filtered;
+    },
   });
 
   const addressControl = register('address', {
@@ -148,9 +175,10 @@ function UpdateProfileForm({
               <TextField.Input
                 {...firstNameControl}
                 data-cy={'profile-first-name'}
-                minLength={2}
+                minLength={3}
                 placeholder={'Enter your first name'}
               />
+              <TextField.Error error={errors.firstName?.message} />
             </TextField.Label>
           </TextField>
 
@@ -160,9 +188,10 @@ function UpdateProfileForm({
               <TextField.Input
                 {...lastNameControl}
                 data-cy={'profile-last-name'}
-                minLength={2}
+                minLength={3}
                 placeholder={'Enter your last name'}
               />
+              <TextField.Error error={errors.lastName?.message} />
             </TextField.Label>
           </TextField>
         </div>
@@ -176,6 +205,7 @@ function UpdateProfileForm({
               type={'tel'}
               placeholder={'Enter your mobile number'}
             />
+            <TextField.Error error={errors.phoneNumber?.message} />
           </TextField.Label>
         </TextField>
 

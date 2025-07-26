@@ -102,4 +102,5 @@ interface TutorNotificationClass {
   next_session_time: string;
   tutor_name: string | null;
   tutor_phone_number: string | null;
+  tutor_email: string;
 }

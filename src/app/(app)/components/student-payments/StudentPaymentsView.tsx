@@ -178,7 +178,7 @@ const StudentPaymentsView: React.FC = () => {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-full mx-auto">
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6">
         <div className="flex flex-wrap gap-4 items-center">

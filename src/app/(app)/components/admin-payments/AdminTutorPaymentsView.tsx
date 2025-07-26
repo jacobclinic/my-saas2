@@ -14,6 +14,7 @@ import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import SearchBar from '../base-v2/ui/SearchBar';
 import Filter from '../base/Filter';
 import { toast } from 'sonner';
+import { columnWidthsAdminTutorPayments } from '~/lib/constants-v2';
 import PaymentDetailsDialog from './PaymentDetailsDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 
@@ -407,6 +408,7 @@ const AdminTutorPaymentsView: React.FC<AdminTutorPaymentsViewProps> = ({
           pageSize={pageSize}
           pageCount={pageCount}
           onPaginationChange={handlePaginationChange}
+          columnWidths={columnWidthsAdminTutorPayments}
         />
       )}
 
