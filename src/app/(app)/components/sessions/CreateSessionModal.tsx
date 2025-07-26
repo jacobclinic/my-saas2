@@ -68,7 +68,7 @@ export default function CreateSessionModal({ classId, revalidateSessionsByClassI
     resetToDefaultValues();    
     // // redirect to /tasks
     // return router.push(`/classes`);
-  }, [classForSession, date, description, time, title])
+  }, [classForSession, csrfToken, date, description, revalidateSessionsByClassIdDataFetch, time, title])
  
   return (
     <ModalComponent

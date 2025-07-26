@@ -62,23 +62,25 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     yearGrade: '',
     monthlyFee: '',
     startDate: today, // Default to today's date in local timezone
-    timeSlots: [{ day: '', startTime: '', endTime: '', timezone: userTimezone }], // Single time slot
+    timeSlots: [
+      { day: '', startTime: '', endTime: '', timezone: userTimezone },
+    ], // Single time slot
     tutorId,
   });
 
   const [allFilled, setAllFilled] = useState(false);
 
   const handleAddTimeSlot = () => {
-    setNewClass(prev => ({
+    setNewClass((prev) => ({
       ...prev,
-      timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }]
+      timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }],
     }));
   };
 
   const handleRemoveTimeSlot = (index: number) => {
-    setNewClass(prev => ({
+    setNewClass((prev) => ({
       ...prev,
-      timeSlots: prev.timeSlots.filter((_, i) => i !== index)
+      timeSlots: prev.timeSlots.filter((_, i) => i !== index),
     }));
   };
 
@@ -104,7 +106,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     const payload = {
       ...newClass,
       startDate,
-    }
+    };
     startTransition(async () => {
       const result = await createClassAction({
         classData: payload,
@@ -125,7 +127,9 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           yearGrade: '',
           monthlyFee: '',
           startDate: '',
-          timeSlots: [{ day: '', startTime: '', endTime: '', timezone: userTimezone }], // Reset to a single time slot
+          timeSlots: [
+            { day: '', startTime: '', endTime: '', timezone: userTimezone },
+          ], // Reset to a single time slot
           tutorId,
         });
       } else {
@@ -162,6 +166,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     newClass.yearGrade,
     newClass.startDate,
     newClass.timeSlots,
+    isValid,
   ]);
 
   const handleClose = () => {
@@ -173,12 +178,12 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       yearGrade: '',
       monthlyFee: '',
       startDate: '',
-      timeSlots: [{ day: '', startTime: '', endTime: '', timezone: userTimezone }], // Reset to a single time slot
+      timeSlots: [
+        { day: '', startTime: '', endTime: '', timezone: userTimezone },
+      ], // Reset to a single time slot
       tutorId,
     });
   };
-
-
 
   return (
     <BaseDialog
