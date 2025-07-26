@@ -138,4 +138,58 @@ export type ZoomMeetingResponse = {
     };
 }
 
+export type ZoomRecordingFileType = {
+    deleted_time?: string;
+    download_url: string;
+    file_path: string;
+    file_size: number;
+    file_type: string;
+    file_extension?: string;
+    id: string;
+    meeting_id: string;
+    play_url: string;
+    recording_end: string;
+    recording_start: string;
+    recording_type?: string;
+    status: string;
+}
+
+export type ZoomParticipantAudioFile = {
+    download_url: string;
+    file_name: string;
+    file_path: string;
+    file_size: number;
+    file_type: string;
+    id: string;
+    play_url: string;
+    recording_end: string;
+    recording_start: string;
+    status: string;
+}
+
+export type ZoomMeetingRecordingResponse = {
+    account_id: string;
+    duration: number;
+    host_id: string;
+    id: number;
+    recording_count: number;
+    start_time: string;
+    topic: string;
+    total_size: number;
+    type: string;
+    uuid: string;
+    recording_play_passcode?: string;
+    auto_delete?: boolean;
+    auto_delete_date?: string;
+    recording_files: ZoomRecordingFileType[];
+    download_access_token?: string;
+    password?: string;
+    participant_audio_files?: ZoomParticipantAudioFile[];
+}
+
 export type Client = SupabaseClient<Database>;
+
+export type ZoomMeetingRecordingUrl = {
+    play_url: string;
+    download_url: string;
+}

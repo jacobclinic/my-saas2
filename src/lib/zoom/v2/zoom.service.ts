@@ -6,7 +6,7 @@ import { Database } from "~/database.types";
 import getSupabaseServerActionClient from "~/core/supabase/action-client";
 import { getSessionsTillTomorrowWithZoomUser, getTomorrowsSessionsWithZoomUser } from "~/lib/sessions/database/queries";
 import { createZoomSession } from "~/lib/zoom_sessions/database/mutations";
-import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest } from "./types";
+import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomMeetingRecordingUrl } from "./types";
 import { ZOOM_SESSIONS_TABLE } from "~/lib/db-tables";
 import { getZoomUserByTutorId } from "./database/queries";
 
@@ -30,7 +30,7 @@ export class ZoomService {
             }
             const { data: existingZoomUser, error } = await getZoomUserByTutorId(this.supabaseClient, user.tutor_id);
 
-            if(error && error.code !== 'PGRST116') {
+            if (error && error.code !== 'PGRST116') {
                 logger.info("No zoom user found for the tutor ID, creating a new one.");
             }
 
@@ -188,6 +188,29 @@ export class ZoomService {
         } catch (error) {
             logger.error(error, "Failed to create the zoom meetings for tomorrow sessions");
             throw new Error('Failed to create zoom meetings for tomorrow sessions. Please try again.');
+        }
+    }
+
+    async getZoomMeetingRecordingUrls(meetingId: string): Promise<ZoomMeetingRecordingUrl[]> {
+        try {
+            const recordingUrls: ZoomMeetingRecordingUrl[] = [];
+            const recordings = await this.client.getMeetingRecordings(meetingId);
+            logger.info(`Fetched recordings for meeting ID: ${meetingId}`, recordings);
+            if (recordings && recordings.recording_files && recordings.recording_files.length > 0) {
+                for (const file of recordings.recording_files) {
+                    if (file.file_extension && file.file_extension.toLowerCase() === 'mp4') {
+                        const downloadUrl = file.download_url;
+                        recordingUrls.push({
+                            play_url: file.play_url,
+                            download_url: downloadUrl,
+                        });
+                    }
+                }
+            }
+            return recordingUrls;
+        } catch (error) {
+            logger.error(error, "Failed to get zoom meeting recordings");
+            throw new Error('Failed to get zoom meeting recordings. Please try again.');
         }
     }
 }

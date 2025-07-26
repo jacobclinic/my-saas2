@@ -28,11 +28,7 @@ export async function isAutheticatedRequest(request: Request) {
   const message = `v0:${request.headers.get('x-zm-request-timestamp')}:${JSON.stringify(request.body)}`;
   const hashForVerify = crypto.createHmac('sha256', ZOOM_WEBHOOK_SECRET_TOKEN).update(message).digest('hex');
   const signature = `v0=${hashForVerify}`
-  if (request.headers.get("x-zm-signature") === signature) {
-    // Valid zoom webhook request
-    return true;
-  }
-  return false;
+  return request.headers.get("x-zm-signature") === signature
 }
 
 
