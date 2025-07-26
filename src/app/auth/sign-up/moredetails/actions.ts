@@ -3,15 +3,17 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { USERS_TABLE } from '~/lib/db-tables';
 import { getUserById } from '~/lib/user/database/queries';
 import UserType from '~/lib/user/types/user';
-import { zoomClient } from '~/lib/zoom/v2/client';
 import { ZoomService } from '~/lib/zoom/v2/zoom.service';
 import { uploadIdentityProof } from '~/lib/utils/upload-material-utils';
 import { sendTutorRegistrationNotification } from '~/lib/utils/internal-api-client';
+import getLogger from '~/core/logger';
+
+
+const logger = getLogger();
 
 const userDetailsSchema = z.object({
   displayName: z.string().min(2, 'Display name is required'),
@@ -133,7 +135,8 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
     // Create Zoom user if not already created
     const zoomDisplayName = `${currentUserData.first_name} ${currentUserData.last_name}`;
     const randomString = Math.random().toString(36).substring(2, 8);
-    const commaEducationEmail = `${zoomDisplayName.trim()}.${randomString}@commaeducation.lk`;
+    const commaEducationEmail = `${zoomDisplayName.replace(/\s/g, '').toLowerCase()}.${randomString}@commaeducation.lk`;
+    logger.info(`Creating Zoom user for email: ${commaEducationEmail}`);
     const zoomService = new ZoomService(client);
     await zoomService.createZoomUser({
       action: 'create',
@@ -163,9 +166,6 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
       .single();
 
     const FullName = userData?.first_name + ' ' + userData?.last_name;
-
-    console.log("User data for notification:", userData);
-
 
     try {
       await sendTutorRegistrationNotification(

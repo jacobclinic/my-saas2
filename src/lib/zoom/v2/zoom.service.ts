@@ -28,8 +28,12 @@ export class ZoomService {
             if (!user.tutor_id) {
                 throw new Error('Cannot create a zoom user without a tutor ID');
             }
-            const existingZoomUser = await getZoomUserByTutorId(this.supabaseClient, user.tutor_id);
-            
+            const { data: existingZoomUser, error } = await getZoomUserByTutorId(this.supabaseClient, user.tutor_id);
+
+            if(error && error.code !== 'PGRST116') {
+                logger.info("No zoom user found for the tutor ID, creating a new one.");
+            }
+
             if (existingZoomUser) {
                 logger.warn(`Zoom user already exists for tutor ID: ${user.tutor_id}`);
                 return existingZoomUser;
@@ -128,7 +132,7 @@ export class ZoomService {
                 }
                 if (session.class?.tutor && session.class.tutor.zoom_user.length === 0) {
                     // Skip the loop for this session,
-                     logger.warn(`Skipping ${session.id} : Tutor is not associated with any zoom user`);
+                    logger.warn(`Skipping ${session.id} : Tutor is not associated with any zoom user`);
                     continue;
                 }
                 const zoomUserId = session.class.tutor.zoom_user[0].zoom_user_id;

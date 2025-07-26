@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomCreateUserResponse, ZoomMeetingResponse } from "./types";
 
 export class ZoomClient {
     private axiosClient: AxiosInstance;
