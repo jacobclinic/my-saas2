@@ -16,13 +16,15 @@ import useVerifyOtp from '~/core/hooks/use-verify-otp';
 
 function EmailOtpContainer({
   shouldCreateUser,
+  redirectUrl,
 }: React.PropsWithChildren<{
   shouldCreateUser: boolean;
+  redirectUrl?: string | null;
 }>) {
   const [email, setEmail] = useState('');
 
   if (email) {
-    return <VerifyOtpForm email={email} />;
+    return <VerifyOtpForm email={email} redirectUrl={redirectUrl} />;
   }
 
   return (
@@ -30,7 +32,13 @@ function EmailOtpContainer({
   );
 }
 
-function VerifyOtpForm({ email }: { email: string }) {
+function VerifyOtpForm({
+  email,
+  redirectUrl,
+}: {
+  email: string;
+  redirectUrl?: string | null;
+}) {
   const router = useRouter();
   const verifyOtpMutation = useVerifyOtp();
   const [verifyCode, setVerifyCode] = useState('');
@@ -42,18 +50,25 @@ function VerifyOtpForm({ email }: { email: string }) {
         event.preventDefault();
 
         const origin = window.location.origin;
-        const redirectTo = [origin, configuration.paths.authCallback].join('');
+        const callbackUrl = [origin, configuration.paths.authCallback].join('');
+        const finalRedirectUrl = redirectUrl
+          ? `${callbackUrl}?returnUrl=${encodeURIComponent(redirectUrl)}`
+          : callbackUrl;
 
         await verifyOtpMutation.trigger({
           email,
           token: verifyCode,
           type: 'email',
           options: {
-            redirectTo,
+            redirectTo: finalRedirectUrl,
           },
         });
 
-        router.replace(configuration.paths.appHome);
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          router.replace(configuration.paths.appHome);
+        }
       }}
       autoComplete="off"
     >

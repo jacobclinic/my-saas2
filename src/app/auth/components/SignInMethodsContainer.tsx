@@ -22,8 +22,12 @@ function SignInMethodsContainer({
   const router = useRouter();
 
   const onSignIn = useCallback(() => {
-    router.push(configuration.paths.appHome);
-  }, [router]);
+    if (redirectUrl) {
+      router.push(redirectUrl);
+    } else {
+      router.push(configuration.paths.appHome);
+    }
+  }, [router, redirectUrl]);
 
   return (
     <>
@@ -32,7 +36,7 @@ function SignInMethodsContainer({
       ) : (
         <>
           <If condition={configuration.auth.providers.oAuth.length}>
-            <OAuthProviders />
+            <OAuthProviders returnUrl={redirectUrl} />
 
             <div>
               <span className={'text-xs text-gray-400'}>
@@ -42,19 +46,29 @@ function SignInMethodsContainer({
           </If>
 
           <If condition={configuration.auth.providers.emailPassword}>
-            <EmailPasswordSignInContainer onSignIn={onSignIn} />
+            <EmailPasswordSignInContainer
+              onSignIn={onSignIn}
+              redirectUrl={redirectUrl}
+            />
           </If>
 
           <If condition={configuration.auth.providers.phoneNumber}>
-            <PhoneNumberSignInContainer onSuccess={onSignIn} mode={'signIn'} />
+            <PhoneNumberSignInContainer
+              onSuccess={onSignIn}
+              mode={'signIn'}
+              redirectUrl={redirectUrl}
+            />
           </If>
 
           <If condition={configuration.auth.providers.emailLink}>
-            <EmailLinkAuth />
+            <EmailLinkAuth redirectUrl={redirectUrl} />
           </If>
 
           <If condition={configuration.auth.providers.emailOtp}>
-            <EmailOtpContainer shouldCreateUser={false} />
+            <EmailOtpContainer
+              shouldCreateUser={false}
+              redirectUrl={redirectUrl}
+            />
           </If>
         </>
       )}

@@ -22,6 +22,7 @@ interface PastSessionData {
   time: string;
   zoom_meeting_id: string;
   classId: string;
+  subject: string | null;
   tutorId: string;
   attendance_marked: boolean;
   recordingUrl: string[];

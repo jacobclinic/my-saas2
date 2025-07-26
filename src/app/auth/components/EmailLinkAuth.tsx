@@ -11,7 +11,9 @@ import Alert from '~/core/ui/Alert';
 import useSignInWithOtp from '~/core/hooks/use-sign-in-with-otp';
 import configuration from '~/configuration';
 
-const EmailLinkAuth: React.FC = () => {
+const EmailLinkAuth: React.FC<{
+  redirectUrl?: string | null;
+}> = ({ redirectUrl }) => {
   const signInWithOtpMutation = useSignInWithOtp();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
@@ -23,12 +25,15 @@ const EmailLinkAuth: React.FC = () => {
       const email = data.get('email') as string;
 
       const origin = window.location.origin;
-      const redirectUrl = [origin, configuration.paths.authCallback].join('');
+      const callbackUrl = [origin, configuration.paths.authCallback].join('');
+      const finalRedirectUrl = redirectUrl
+        ? `${callbackUrl}?returnUrl=${encodeURIComponent(redirectUrl)}`
+        : callbackUrl;
 
       const promise = signInWithOtpMutation.trigger({
         email,
         options: {
-          emailRedirectTo: redirectUrl,
+          emailRedirectTo: finalRedirectUrl,
         },
       });
 
@@ -39,7 +44,7 @@ const EmailLinkAuth: React.FC = () => {
           again`,
       });
     },
-    [signInWithOtpMutation],
+    [signInWithOtpMutation, redirectUrl],
   );
 
   if (signInWithOtpMutation.data) {

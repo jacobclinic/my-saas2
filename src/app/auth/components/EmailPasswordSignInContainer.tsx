@@ -8,7 +8,8 @@ import EmailPasswordSignInForm from '~/app/auth/components/EmailPasswordSignInFo
 
 const EmailPasswordSignInContainer: React.FCC<{
   onSignIn: (userId?: string) => unknown;
-}> = ({ onSignIn }) => {
+  redirectUrl?: string | null;
+}> = ({ onSignIn, redirectUrl }) => {
   const signInMutation = useSignInWithEmailPassword();
   const isLoading = signInMutation.isMutating;
 
@@ -18,12 +19,17 @@ const EmailPasswordSignInContainer: React.FCC<{
         const data = await signInMutation.trigger(credentials);
         const userId = data?.user?.id;
 
-        onSignIn(userId);
+        // If we have a redirectUrl, use it directly instead of calling onSignIn
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          onSignIn(userId);
+        }
       } catch (e) {
         // wrong credentials, do nothing
       }
     },
-    [onSignIn, signInMutation]
+    [onSignIn, signInMutation, redirectUrl],
   );
 
   return (

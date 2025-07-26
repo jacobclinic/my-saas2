@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import PastSessions from './PastSessions';
 import { PastSession } from '~/lib/sessions/types/session-v2';
 import PaginationControls from '../PaginationControls';
-import { PastSessionData } from '~/lib/sessions/types/past-sessions';
 
 const PastSessionsClient = ({
   initialSessions,

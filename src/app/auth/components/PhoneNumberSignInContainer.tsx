@@ -21,7 +21,8 @@ enum Step {
 const PhoneNumberSignInContainer: React.FC<{
   onSuccess: () => unknown;
   mode: 'signIn' | 'signUp';
-}> = ({ onSuccess, mode }) => {
+  redirectUrl?: string | null;
+}> = ({ onSuccess, mode, redirectUrl }) => {
   const [step, setStep] = useState<Step>(Step.Phone);
   const [verificationCode, setVerificationCode] = useState('');
   const [phone, setPhone] = useState('');
@@ -49,7 +50,9 @@ const PhoneNumberSignInContainer: React.FC<{
     async (e) => {
       e.preventDefault();
 
-      const redirectTo = `${window.location.origin}${configuration.paths.appHome}`;
+      const redirectTo =
+        redirectUrl ||
+        `${window.location.origin}${configuration.paths.appHome}`;
 
       await verifyOtp.trigger({
         token: verificationCode,
@@ -60,11 +63,13 @@ const PhoneNumberSignInContainer: React.FC<{
         },
       });
 
-      if (onSuccess) {
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else if (onSuccess) {
         onSuccess();
       }
     },
-    [onSuccess, verificationCode, phone, verifyOtp],
+    [onSuccess, verificationCode, phone, verifyOtp, redirectUrl],
   );
 
   if (step === Step.Otp) {

@@ -3,9 +3,9 @@ export function getStudentInvitationToClass(params: {
   studentName: string;
   email: string;
   className: string;
-  loginUrl: string;
+  registrationUrl: string;
 }) {
-  const { studentName, email, className, loginUrl } = params;
+  const { studentName, email, className, registrationUrl } = params;
 
   const html = `
         <!DOCTYPE html>
@@ -63,7 +63,7 @@ export function getStudentInvitationToClass(params: {
                 <p>Please login using this eamil and password provided by you when registering to the class</p>
                 
                 <p style="text-align: center; margin: 30px 0;">
-                  <a href="${loginUrl}" style="background-color: #E84437; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                  <a href="${registrationUrl}" style="background-color: #E84437; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
                     Login to Your Account
                   </a>
                 </p>
@@ -87,9 +87,9 @@ export function getStudentInvitationToClass(params: {
     Email: ${email}
     
     Please login using this email and password provided by you.
-    
-    You can login at: ${loginUrl}
-    
+
+    You can login at: ${registrationUrl}
+
     If you have any questions or need assistance, please don't hesitate to contact your tutor.
     
     Best regards,
@@ -104,21 +104,10 @@ export function paymentReminderEmaiTemplate(params: {
   className: string;
   sessionDate: string;
   sessionMonth: string;
-  studentEmail: string;
-  classFee: number | null;
-  paymentUrl: string;
-  classId: string;
+  sessionId: string;
 }) {
-  const {
-    studentName,
-    className,
-    sessionDate,
-    sessionMonth,
-    studentEmail,
-    classFee,
-    paymentUrl,
-    classId,
-  } = params;
+  const { studentName, className, sessionDate, sessionMonth, sessionId } =
+    params;
 
   const html = `
     <!DOCTYPE html>
@@ -273,7 +262,7 @@ export function paymentReminderEmaiTemplate(params: {
                           </div>
                           
                           <div class="button-container">
-                            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Access Class</a>
+                            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}" class="button">Access Class</a>
                           </div>
                           
                           <p>If you've already made the payment, please disregard this email or ensure you have uploaded your receipt.</p>
@@ -319,7 +308,7 @@ export function paymentReminderEmaiTemplate(params: {
 
         To ensure your continued access to the class and materials, please complete your payment and submit your receipt through the link below:
         
-        Payment Url: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
+        Payment Url: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}
 
         You'll need to sign in with your Comma Education account if you haven't already.
 
@@ -565,12 +554,9 @@ export function getStudentNotifyAfterEmailTemplate(params: {
   studentName: string;
   className: string;
   sessionDate: string;
-  topic: string | null;
-  classId: string;
-  studentEmail: string;
+  sessionId: string;
 }) {
-  const { studentName, className, sessionDate, topic, classId, studentEmail } =
-    params;
+  const { studentName, className, sessionDate, sessionId } = params;
 
   const dateObj = new Date(sessionDate);
   const date = dateObj.toLocaleDateString('en-GB');
@@ -728,7 +714,7 @@ export function getStudentNotifyAfterEmailTemplate(params: {
                         </div>
                         
                         <div class="button-container">
-                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Access Class</a>
+                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}" class="button">Access Class</a>
                         </div>
                         
                         <p>This link will also give you access to other class materials</p>
@@ -777,7 +763,7 @@ export function getStudentNotifyAfterEmailTemplate(params: {
 
         The recording of the class is now available. You can access it using the link below to review the material or catch up if you missed anything:
 
-        Access Link: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
+        Access Link: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}
 
         This link will also give you access to other class materials.
 
@@ -796,19 +782,10 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
   className: string;
   sessionDate: string;
   sessionTime: string;
-  topic: string | null;
-  classId: string;
-  studentEmail: string;
+  sessionId: string;
 }) {
-  const {
-    studentName,
-    className,
-    sessionDate,
-    sessionTime,
-    topic,
-    classId,
-    studentEmail,
-  } = params;
+  const { studentName, className, sessionDate, sessionTime, sessionId } =
+    params;
 
   // No need to re-parse the date since we're already passing formatted strings
   const date = sessionDate;
@@ -967,7 +944,7 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
                         </div>
                         
                         <div class="button-container">
-                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Join Your Class</a>
+                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}" class="button">Join Your Class</a>
                         </div>
                         
                         <p>We recommend joining a few minutes early to ensure everything is working smoothly.</p>
@@ -1014,7 +991,7 @@ export function getStudentNotifyBeforeEmailTemplate(params: {
 
       You can join the class and access all your class materials using the single link below:
 
-      Access Link: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
+      Access Link: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}
 
       We recommend joining a few minutes early to ensure everything is working smoothly.
 
@@ -1034,19 +1011,10 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
   className: string;
   sessionDate: string;
   sessionTime: string;
-  topic: string | null;
-  classId: string;
-  studentEmail: string;
+  sessionId: string;
 }) {
-  const {
-    studentName,
-    className,
-    sessionDate,
-    sessionTime,
-    topic,
-    classId,
-    studentEmail,
-  } = params;
+  const { studentName, className, sessionDate, sessionTime, sessionId } =
+    params;
 
   // No need to re-parse the date since we're already passing formatted strings
   const date = sessionDate;
@@ -1205,7 +1173,7 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
                         </div>
                         
                         <div class="button-container">
-                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}" class="button">Join Your Class</a>
+                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}" class="button">Join Your Class</a>
                         </div>
                         
                         <p>See you shortly!</p>
@@ -1248,7 +1216,7 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
 
         Just a quick heads-up – your [Class Name] class is starting within 1 hour!
 
-        Click here to join: ${process.env.NEXT_PUBLIC_SITE_URL}/class/${classId}
+        Click here to join: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}
 
         See you shortly!
         Best regards,
@@ -1376,6 +1344,7 @@ export function getNotifyClassUpdateTemplate(params: {
   } = params;
 
   const html = `
+
   <!DOCTYPE html>
     <html lang="en">
     <head>
