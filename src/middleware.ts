@@ -18,6 +18,11 @@ export async function middleware(request: NextRequest) {
   const startTime = Date.now();
   console.log('Middleware called for path:', request.nextUrl.pathname);
 
+  // Redirect root path to sign-in page
+  if (request.nextUrl.pathname === '/') {
+    return NextResponse.redirect(new URL('/auth/sign-in', request.url));
+  }
+
   if (
     request.nextUrl.pathname.startsWith('/api/public') ||
     request.nextUrl.pathname.startsWith('/api/internal')
