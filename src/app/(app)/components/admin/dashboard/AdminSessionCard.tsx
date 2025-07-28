@@ -15,26 +15,19 @@ import {
 } from '../../base-v2/ui/Card';
 import { Button } from '../../base-v2/ui/Button';
 import { Badge } from '../../base-v2/ui/Badge';
-import { Textarea } from '../../base-v2/ui/Textarea';
-import { Input } from '../../base-v2/ui/Input';
 import { cn } from '../../../lib/utils';
 import {
-  Camera,
-  Copy,
   Check,
   Upload,
   Edit,
-  Plus,
   Link,
   Clock,
   File,
-  Save,
   Calendar,
   User,
   BookOpen,
   Users,
   PlusCircle,
-  ExternalLink,
 } from 'lucide-react';
 import MaterialUploadDialog from '../../upcoming-sessions/MaterialUploadDialog';
 import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
@@ -110,10 +103,13 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
     setShowLessonDetailsDialog(false);
   };
 
-  const handleCopyLink = async (link: string, type: 'student' | 'materials' | 'tutor',) => {
+  const handleCopyLink = async (
+    link: string,
+    type: 'student' | 'materials' | 'tutor',
+  ) => {
     const data = await createShortUrlAction({
       originalUrl: link,
-      csrfToken
+      csrfToken,
     });
     if (data.success && data.shortUrl) {
       navigator.clipboard.writeText(data.shortUrl);
@@ -135,7 +131,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         alert('Failed to generate join link');
       }
     });
-  }, [sessionData]);
+  }, [handleCopyLink, sessionData?.zoomMeetingId]);
   return (
     <>
       <Card className={cn('mb-6', isDashboard && '')}>
@@ -327,31 +323,6 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Class
               </Button>
-
-              {/* {sessionData.materials && sessionData.materials.length > 0 && (
-                <Button
-                  variant="outline"
-                  className="md:col-span-4"
-                  onClick={() => {
-                    const materialsText =
-                      `Class Materials for ${sessionData.name} - ${sessionData.date}\n\n` +
-                      (sessionData.materials || [])
-                        .map(
-                          (material, index) =>
-                            `${index + 1}. ${material.name}\nDownload: https://commaeducation.com/materials/${sessionData.id}/${material.id}\n`,
-                        )
-                        .join('\n');
-                    handleCopyLink(materialsText, 'materials');
-                  }}
-                >
-                  {linkCopied.materials ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <Copy className="h-4 w-4 mr-2" />
-                  )}
-                  {linkCopied.materials ? 'Materials Links Copied!' : 'Copy Materials Links'}
-                </Button>
-              )} */}
             </CardFooter>
           </div>
         </CardContent>

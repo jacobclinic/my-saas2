@@ -2,18 +2,21 @@
 
 import React, { useCallback, useState } from 'react';
 import type { PastSessionsCardProps } from '~/lib/sessions/types/past-sessions';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../base-v2/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '../base-v2/ui/Card';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
 import {
   Video,
   Users,
-  Copy,
   Check,
   Calendar,
   Clock,
-  Link2,
-  File,
   Link,
   UserCheck,
   BookOpen,
@@ -25,7 +28,14 @@ import {
 } from '~/lib/sessions/server-actions-v2';
 import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
 import { insertAttendanceAction } from '~/lib/attendance/server-actions';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base-v2/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../base-v2/ui/tooltip';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
@@ -37,16 +47,23 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     allMaterials?: boolean;
     student?: boolean;
   }>({});
+  const csrfToken = useCsrfToken();
 
-  const handleCopyLink = (
+  const handleCopyLink = async (
     link: string,
     type: 'recordings' | 'materials' | 'allMaterials' | 'student',
   ) => {
-    navigator.clipboard.writeText(link);
-    setLinkCopied({ ...linkCopied, [type]: true });
-    setTimeout(() => {
-      setLinkCopied({ ...linkCopied, [type]: false });
-    }, 2000);
+    const data = await createShortUrlAction({
+      originalUrl: link,
+      csrfToken,
+    });
+    if (data.success && data.shortUrl) {
+      navigator.clipboard.writeText(link);
+      setLinkCopied({ ...linkCopied, [type]: true });
+      setTimeout(() => {
+        setLinkCopied({ ...linkCopied, [type]: false });
+      }, 2000);
+    }
   };
 
   const getRecordingUrl = useCallback(
@@ -73,12 +90,10 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
       setAttendanceData(sessionData.attendance!);
       setShowAttendanceDialog(true);
       return;
-    }else if(attendanceMarked){
+    } else if (attendanceMarked) {
       setShowAttendanceDialog(true);
       return;
-    } 
-    
-    else {
+    } else {
       const result = await getAttendanceAction({
         zoomMeetingId,
         classId,
@@ -136,9 +151,14 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
                 <CardTitle className="text-lg font-semibold text-neutral-900">
                   {sessionData.name}
                 </CardTitle>
-                {sessionData.topic ? <Badge variant="outline" className="mt-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200">
-                  {sessionData.topic}
-                </Badge> : null}
+                {sessionData.topic ? (
+                  <Badge
+                    variant="outline"
+                    className="mt-1 bg-primary-blue-50 text-primary-blue-700 border-primary-blue-200"
+                  >
+                    {sessionData.topic}
+                  </Badge>
+                ) : null}
               </div>
             </div>
           </div>
@@ -149,7 +169,9 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
               <Calendar size={18} className="text-primary-blue-600" />
               <div>
-                <p className="text-sm font-medium text-neutral-900">{sessionData.date}</p>
+                <p className="text-sm font-medium text-neutral-900">
+                  {sessionData.date}
+                </p>
                 <p className="text-xs text-neutral-600">Date</p>
               </div>
             </div>
@@ -157,7 +179,9 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
               <Clock size={18} className="text-primary-blue-600" />
               <div>
-                <p className="text-sm font-medium text-neutral-900">{sessionData.time}</p>
+                <p className="text-sm font-medium text-neutral-900">
+                  {sessionData.time}
+                </p>
                 <p className="text-xs text-neutral-600">Time</p>
               </div>
             </div>
@@ -165,24 +189,36 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
               <Users size={18} className="text-primary-blue-600" />
               <div>
-                <p className="text-sm font-medium text-neutral-900">{sessionData.noOfStudents} Students</p>
+                <p className="text-sm font-medium text-neutral-900">
+                  {sessionData.noOfStudents} Students
+                </p>
                 <p className="text-xs text-neutral-600">Total</p>
               </div>
             </div>
 
-            {sessionData.noOfStudents > 0 && sessionData.attendance ? <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
-              <UserCheck size={18} className="text-primary-blue-600" />
-              <div>
-                <p className="text-sm font-medium text-neutral-900">{sessionData.attendance?.length} Attended</p>
-                <p className="text-xs text-neutral-600">{Math.round((sessionData.attendance?.length / sessionData.noOfStudents) * 100)}% Attendance</p>
+            {sessionData.noOfStudents > 0 && sessionData.attendance ? (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
+                <UserCheck size={18} className="text-primary-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-neutral-900">
+                    {sessionData.attendance?.length} Attended
+                  </p>
+                  <p className="text-xs text-neutral-600">
+                    {Math.round(
+                      (sessionData.attendance?.length /
+                        sessionData.noOfStudents) *
+                        100,
+                    )}
+                    % Attendance
+                  </p>
+                </div>
               </div>
-            </div> : null}
+            ) : null}
           </div>
         </CardContent>
 
         <CardFooter className="pt-3 grid grid-cols-2 md:grid-cols-3 gap-2 border-t border-neutral-100">
-          {sessionData.recordingUrl &&
-            sessionData.recordingUrl.length > 0 ? (
+          {sessionData.recordingUrl && sessionData.recordingUrl.length > 0 ? (
             sessionData.recordingUrl.map((fileName, index) => (
               <Button
                 key={index}
@@ -228,8 +264,6 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-
-
 
           <TooltipProvider>
             <Tooltip>

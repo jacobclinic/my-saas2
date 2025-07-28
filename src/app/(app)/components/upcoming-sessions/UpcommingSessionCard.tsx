@@ -41,6 +41,7 @@ import {
   TooltipTrigger,
 } from '../base-v2/ui/tooltip';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
@@ -64,16 +65,18 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [uploadedMaterials, setUploadedMaterials] = useState<
     UploadedMaterial[]
   >([]);
-  const [materialDescription, setMaterialDescription] = useState('');  const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
+  const [materialDescription, setMaterialDescription] = useState('');
+  const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
     title: sessionData?.sessionRawData?.title || '',
     description: sessionData?.sessionRawData?.description || '',
   });
 
   // Store original lesson details to track changes
-  const [originalLessonDetails, setOriginalLessonDetails] = useState<LessonDetails>({
-    title: sessionData?.sessionRawData?.title || '',
-    description: sessionData?.sessionRawData?.description || '',
-  });
+  const [originalLessonDetails, setOriginalLessonDetails] =
+    useState<LessonDetails>({
+      title: sessionData?.sessionRawData?.title || '',
+      description: sessionData?.sessionRawData?.description || '',
+    });
 
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
   const [editSessionLoading, setEditSessionLoading] = useState(false);
@@ -82,12 +85,21 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
   const csrfToken = useCsrfToken();
 
-  const handleCopyLink = (link: string, type: 'student' | 'materials') => {
-    navigator.clipboard.writeText(link);
-    setLinkCopied({ ...linkCopied, [type]: true });
-    setTimeout(() => {
-      setLinkCopied({ ...linkCopied, [type]: false });
-    }, 2000);
+  const handleCopyLink = async (
+    link: string,
+    type: 'student' | 'materials',
+  ) => {
+    const data = await createShortUrlAction({
+      originalUrl: link,
+      csrfToken,
+    });
+    if (data.success && data.shortUrl) {
+      navigator.clipboard.writeText(link);
+      setLinkCopied({ ...linkCopied, [type]: true });
+      setTimeout(() => {
+        setLinkCopied({ ...linkCopied, [type]: false });
+      }, 2000);
+    }
   };
 
   const joinMeetingAsTutor = useCallback(async () => {
@@ -102,7 +114,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       }
     });
   }, [sessionData]);
-  
+
   const saveLessonDetails = async () => {
     // Save lesson details logic here
     try {
@@ -110,9 +122,9 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       const result = await updateSessionAction({
         sessionId: sessionData.id,
         sessionData: lessonDetails,
-        csrfToken
+        csrfToken,
       });
-      
+
       if (result.success) {
         // Update original lesson details to reflect the saved state
         setOriginalLessonDetails({
@@ -335,33 +347,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 </Tooltip>
               </TooltipProvider>
             </CardFooter>
-            {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-6 pt-0">
-
-              {sessionData.materials && sessionData.materials.length > 0 && (
-                <Button
-                  variant="outline"
-                  className="md:col-span-4"
-                  onClick={() => {
-                    const materialsText =
-                      `Class Materials for ${sessionData.name} - ${sessionData.date}\n\n` +
-                      (sessionData.materials || [])
-                        .map(
-                          (material, index) =>
-                            `${index + 1}. ${material.name}\nDownload: https://commaeducation.com/materials/${sessionData.id}/${material.id}\n`,
-                        )
-                        .join('\n');
-                    handleCopyLink(materialsText, 'materials');
-                  }}
-                >
-                  {linkCopied.materials ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <Copy className="h-4 w-4 mr-2" />
-                  )}
-                  {linkCopied.materials ? 'Materials Links Copied!' : 'Copy Materials Links'}
-                </Button>
-              )}
-            </div> */}
           </div>
         </CardContent>
       </Card>
@@ -390,7 +375,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
           materials: sessionData.materials || [],
         }}
         loading={editSessionLoading}
-      />      
+      />
       <AddLessonDetailsDialog
         open={showLessonDetailsDialog}
         onClose={() => {
