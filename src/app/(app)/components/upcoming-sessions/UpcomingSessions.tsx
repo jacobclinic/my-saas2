@@ -2,9 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import type { UpcomingSessionTableData } from '~/lib/sessions/types/upcoming-sessions';
-import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Input } from '../base-v2/ui/Input';
-import { Info, Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import UpcommingSessionCard from './UpcommingSessionCard';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { DateRangePicker } from '@heroui/date-picker';
@@ -16,7 +15,6 @@ import {
   datePickerObjectToLocalDate,
   utcToLocalDate,
 } from '~/lib/utils/timezone-utils-filter';
-import TimezoneIndicator from '../TimezoneIndicator';
 
 interface DateRange {
   start?: {
@@ -73,6 +71,8 @@ const UpcomingSessions = ({
       subject: session?.class?.subject || '',
       date: formattedDate,
       time: formattedTime,
+      start_time: session.start_time || '',
+      end_time: session.end_time || '',
       registeredStudents: session?.class?.students?.length || 0,
       zoomMeetingId: session?.zoom_meeting_id || '',
       zoomLinkTutor: session?.meeting_url || '',

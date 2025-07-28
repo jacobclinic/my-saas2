@@ -48,10 +48,6 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     null,
   );
   const [copied, setCopied] = useState(false);
-  console.log(
-    '-----PaymentDialog-------sessionData:',
-    sessionData.sessionRawData?.start_time?.slice(0, 7),
-  );
 
   const bankDetails = {
     bankName: 'Hatton National Bank',

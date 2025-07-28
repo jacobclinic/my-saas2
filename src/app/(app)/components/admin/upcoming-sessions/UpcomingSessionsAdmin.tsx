@@ -2,10 +2,8 @@
 
 import { DateRangePicker } from '@heroui/date-picker';
 import { useEffect, useState } from 'react';
-import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
-import AttendanceDialog from '../../past-sessions/AttendanceDialog';
-import { SelectedSession } from '~/lib/sessions/types/past-sessions';
-import { Check, Delete, Link, Trash, Users } from 'lucide-react';
+import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { Check, Edit, Link, Trash } from 'lucide-react';
 import DeleteSessionDialog from '../past-session/DeleteSessionDialog';
 import { format } from 'date-fns';
 import {
@@ -13,6 +11,7 @@ import {
   getUserTimezone,
 } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../../TimezoneIndicator';
+import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
 
 interface DateRange {
   start?: { year: number; month: number; day: number } | null;
@@ -121,9 +120,7 @@ const UpcomingSessionsAdmin = ({
   });
 
   const handleCopyLink = (cls: (typeof classData)[0]) => {
-    const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&redirectUrl=${encodeURIComponent(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`,
-    )}`;
+    const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date?.split('T')[0]}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`;
     navigator.clipboard.writeText(link);
     setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
     setTimeout(() => {
@@ -132,6 +129,11 @@ const UpcomingSessionsAdmin = ({
   };
 
   const [deleteClassLoading, setDeleteClassLoading] = useState(false);
+
+  // Edit session dialog state
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editSessionId, setEditSessionId] = useState<string | null>(null);
+  const [editSessionData, setEditSessionData] = useState<any>(null);
 
   const handleDeleteClass = async (classId: string) => {
     try {
@@ -148,6 +150,24 @@ const UpcomingSessionsAdmin = ({
   const handleViewDeleteDialog = (sessionId: string) => {
     setSelectedSessionId(sessionId);
     setShowDeleteDialog(true);
+  };
+
+  // Handler to open edit dialog
+  const handleEditSession = (sessionId: string) => {
+    // Find the session data from upcomingSessionData
+    const session = upcomingSessionData.find((s) => s.id === sessionId);
+    if (!session) return;
+    // Pass the original UTC times to the dialog - it will handle conversion internally
+    setEditSessionData({
+      title: session.title || '',
+      description: session.description || '',
+      startTime: session.start_time,
+      endTime: session.end_time,
+      materials: session.materials || [],
+      meetingUrl: session.meeting_url || '',
+    });
+    setEditSessionId(sessionId);
+    setShowEditDialog(true);
   };
 
   return (
@@ -244,6 +264,19 @@ const UpcomingSessionsAdmin = ({
                         Copy student Link
                       </span>
                     </div>
+                    {/* Edit session button */}
+                    <div className="relative group inline-block">
+                      <button
+                        onClick={() => handleEditSession(cls.id)}
+                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                        aria-label="Edit"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                        Edit Session
+                      </span>
+                    </div>
                     <div className="relative group inline-block">
                       <button
                         className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
@@ -278,6 +311,15 @@ const UpcomingSessionsAdmin = ({
         sessionId={selectedSessionId!}
         loading={deleteClassLoading}
       />
+      {/* Edit Session Dialog */}
+      {showEditDialog && editSessionId && editSessionData && (
+        <EditSessionDialog
+          open={showEditDialog}
+          onClose={() => setShowEditDialog(false)}
+          sessionId={editSessionId}
+          sessionData={editSessionData}
+        />
+      )}
     </>
   );
 };

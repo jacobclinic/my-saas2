@@ -16,6 +16,7 @@ import Label from '~/core/ui/Label';
 import If from '~/core/ui/If';
 import IconButton from '~/core/ui/IconButton';
 import classNames from 'clsx';
+import Image from 'next/image';
 
 type Props = Omit<React.InputHTMLAttributes<unknown>, 'value'> & {
   image?: string | null;
@@ -155,7 +156,7 @@ const ImageUploadInput = forwardRef<React.ElementRef<'input'>, Props>(
             </If>
 
             <If condition={state.image}>
-              <img
+              <Image
                 loading={'lazy'}
                 style={{
                   width: IMAGE_SIZE,

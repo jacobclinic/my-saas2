@@ -2,6 +2,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '~/database.types';
 import { CLASSES_TABLE, USERS_TABLE } from '~/lib/db-tables';
 import UserType from '../types/user';
+import { CommaZoomUser, ZoomUser, ZoomUserType } from '~/lib/zoom/v2/types';
+
+export type UserTypeExtended = UserType & {
+  zoom_user: CommaZoomUser | null;
+};
 
 /**
  * @description Fetch user object data (not auth!) by ID {@link userId}
@@ -62,11 +67,17 @@ export async function fetchUserRole(
 export async function getAllUsersByUserRoleData(
   client: SupabaseClient<Database>,
   userRole: string,
-): Promise<UserType[] | []> {
+): Promise<UserTypeExtended[] | []> {
   try {
     const { data, error } = await client
       .from(USERS_TABLE)
-      .select()
+      .select(`*,
+        zoom_user:zoom_users(
+          zoom_user_id,
+          email,
+          account_type,
+          tutor_id
+        )`)
       .eq('user_role', userRole)
       .order('created_at', { ascending: false });
 
@@ -92,7 +103,8 @@ export async function getAllUsersByUserRoleData(
       biography: user.biography || undefined,
       is_approved: user.is_approved,
       subjects_teach: user.subjects_teach,
-    })) as UserType[];
+      zoom_user: Array.isArray(user.zoom_user) ? user.zoom_user[0] : user.zoom_user
+    })) as UserTypeExtended[];
   } catch (error) {
     console.error('Failed to fetch all users:', error);
     throw error;
@@ -190,7 +202,7 @@ export async function getTutorActiveClassesCount(
 export async function getAllTutorsWithDetails(
   client: SupabaseClient<Database>,
   userRole: string,
-): Promise<(UserType & { activeClassesCount: number })[]> {
+): Promise<(UserType & { activeClassesCount: number, zoom_user: CommaZoomUser | null })[]> {
   try {
     // First get all tutors
     const tutors = await getAllUsersByUserRoleData(client, userRole);

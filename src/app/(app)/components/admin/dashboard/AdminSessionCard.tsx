@@ -42,8 +42,8 @@ import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '~/app/(app)/lib/hooks/use-toast';
-import { convertTimeRangeToISO } from '~/lib/utils/date-utils';
 import AddLessonDetailsDialog from '../../upcoming-sessions/AddLessonDetailsDialog';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,
@@ -110,15 +110,18 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
     setShowLessonDetailsDialog(false);
   };
 
-  const handleCopyLink = (
-    link: string,
-    type: 'student' | 'materials' | 'tutor',
-  ) => {
-    navigator.clipboard.writeText(link);
-    setLinkCopied({ ...linkCopied, [type]: true });
-    setTimeout(() => {
-      setLinkCopied({ ...linkCopied, [type]: false });
-    }, 2000);
+  const handleCopyLink = async (link: string, type: 'student' | 'materials' | 'tutor',) => {
+    const data = await createShortUrlAction({
+      originalUrl: link,
+      csrfToken
+    });
+    if (data.success && data.shortUrl) {
+      navigator.clipboard.writeText(data.shortUrl);
+      setLinkCopied({ ...linkCopied, [type]: true });
+      setTimeout(() => {
+        setLinkCopied({ ...linkCopied, [type]: false });
+      }, 2000);
+    }
   };
 
   const copyTutorLink = useCallback(async () => {
@@ -290,7 +293,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 variant="ghost"
                 onClick={() =>
                   handleCopyLink(
-                    `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`)}`,
+                    `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`,
                     'student',
                   )
                 }
@@ -371,12 +374,8 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionData={{
           title: sessionData?.sessionRawData?.title || '',
           description: sessionData?.sessionRawData?.description || '',
-          startTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .startTime || '',
-          endTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .endTime || '',
+          startTime: sessionData.start_time || '',
+          endTime: sessionData.end_time || '',
           meetingUrl: sessionData?.sessionRawData?.meeting_url || '',
           materials: sessionData?.materials || [],
         }}
