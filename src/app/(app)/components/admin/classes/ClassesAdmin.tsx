@@ -26,6 +26,8 @@ import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
 import AppHeader from '../../AppHeader';
 import TimezoneIndicator from '../../TimezoneIndicator';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 const ClassesAdmin = ({
   classesData,
@@ -46,6 +48,7 @@ const ClassesAdmin = ({
   const [editLoading, setEditLoading] = useState(false);
   const [selectedEditClassData, setSelectedEditClassData] =
     useState<ClassListData>({} as ClassListData);
+  const csrfToken = useCsrfToken();
 
   const createSchedule = (cls: ClassWithTutorAndEnrollmentAdmin) => {
     return (
@@ -131,11 +134,17 @@ const ClassesAdmin = ({
     const registrationLink =
       await generateRegistrationLinkAction(registrationData);
 
-    navigator.clipboard.writeText(registrationLink);
-    setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
-    setTimeout(() => {
-      setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
-    }, 2000);
+    const shortlink = await createShortUrlAction({
+      originalUrl: registrationLink,
+      csrfToken,
+    });
+    if (shortlink.success && shortlink.shortUrl) {
+      navigator.clipboard.writeText(shortlink.shortUrl);
+      setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
+      setTimeout(() => {
+        setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
+      }, 2000);
+    }
   };
 
   const handleUpdateClass = async (

@@ -149,7 +149,7 @@ const PastSessionsAdmin = ({
     });
 
     if (data.success && data.shortUrl) {
-      navigator.clipboard.writeText(link);
+      navigator.clipboard.writeText(data.shortUrl);
       setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
       setTimeout(() => {
         setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));

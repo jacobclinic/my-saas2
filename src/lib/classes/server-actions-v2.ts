@@ -31,6 +31,7 @@ import {
   RecurrenceInput,
 } from '../utils/recurrence-utils';
 import { isEqual } from 'lodash';
+import { createShortUrlAction } from '../short-links/server-actions-v2';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -534,11 +535,16 @@ export const sendEmailMSGToStudentAction = withSession(
 
     const registrationLink =
       await generateRegistrationLinkAction(registrationData);
+
+    const shortLink = await createShortUrlAction({
+      originalUrl: registrationLink,
+      csrfToken: '', // CSRF token can be empty for server actions
+    });
     const emailContent = getStudentInvitationToClass({
       studentName: name,
       email: email,
       className: classData.name,
-      registrationUrl: registrationLink,
+      registrationUrl: shortLink.shortUrl || registrationLink,
     });
     const emailService = EmailService.getInstance();
     try {
@@ -554,7 +560,7 @@ export const sendEmailMSGToStudentAction = withSession(
         sendSingleSMS({
           phoneNumber: phoneNumber,
           message: `Welcome to ${classData.name}! Your are invited to join the class. Click on the link and Register with ${email}.
-                      \n${registrationLink}
+                      \n${shortLink.shortUrl}
                       \n-Comma Education`,
         }),
       ]);

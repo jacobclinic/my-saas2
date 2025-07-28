@@ -58,7 +58,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
       csrfToken,
     });
     if (data.success && data.shortUrl) {
-      navigator.clipboard.writeText(link);
+      navigator.clipboard.writeText( data.shortUrl);
       setLinkCopied({ ...linkCopied, [type]: true });
       setTimeout(() => {
         setLinkCopied({ ...linkCopied, [type]: false });

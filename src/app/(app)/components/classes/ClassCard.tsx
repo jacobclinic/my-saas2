@@ -29,6 +29,8 @@ import RegisteredStudentsDialog from './RegisteredStudentsDialog';
 import EditClassDialog from './EditClassDialog';
 import AddStudentDialog from './AddStudentDialog';
 import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 const ClassCard: React.FC<ClassCardProps> = ({
   classData,
@@ -42,6 +44,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
   const [addStudentLoading, setAddStudentLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const csrfToken = useCsrfToken();
 
   const handleCopyLink = async () => {
     const classId = classData.id;
@@ -57,11 +60,17 @@ const ClassCard: React.FC<ClassCardProps> = ({
     const registrationLink =
       await generateRegistrationLinkAction(registrationData);
 
-    navigator.clipboard.writeText(registrationLink);
-    setLinkCopied(true);
-    setTimeout(() => {
-      setLinkCopied(false);
-    }, 2000);
+    const shortLink = await createShortUrlAction({
+      originalUrl: registrationLink,
+      csrfToken,
+    });
+    if (shortLink.success && shortLink.shortUrl) {
+      navigator.clipboard.writeText(shortLink.shortUrl);
+      setLinkCopied(true);
+      setTimeout(() => {
+        setLinkCopied(false);
+      }, 2000);
+    }
   };
 
   const handleUpdateClass = async (
