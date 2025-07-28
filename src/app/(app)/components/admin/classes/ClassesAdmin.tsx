@@ -134,17 +134,11 @@ const ClassesAdmin = ({
     const registrationLink =
       await generateRegistrationLinkAction(registrationData);
 
-    const shortlink = await createShortUrlAction({
-      originalUrl: registrationLink,
-      csrfToken,
-    });
-    if (shortlink.success && shortlink.shortUrl) {
-      navigator.clipboard.writeText(shortlink.shortUrl);
-      setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
-      setTimeout(() => {
-        setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
-      }, 2000);
-    }
+    navigator.clipboard.writeText(registrationLink);
+    setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
+    setTimeout(() => {
+      setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
+    }, 2000);
   };
 
   const handleUpdateClass = async (

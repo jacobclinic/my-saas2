@@ -536,15 +536,11 @@ export const sendEmailMSGToStudentAction = withSession(
     const registrationLink =
       await generateRegistrationLinkAction(registrationData);
 
-    const shortLink = await createShortUrlAction({
-      originalUrl: registrationLink,
-      csrfToken: '', // CSRF token can be empty for server actions
-    });
     const emailContent = getStudentInvitationToClass({
       studentName: name,
       email: email,
       className: classData.name,
-      registrationUrl: shortLink.shortUrl || registrationLink,
+      registrationUrl: registrationLink,
     });
     const emailService = EmailService.getInstance();
     try {
@@ -560,7 +556,7 @@ export const sendEmailMSGToStudentAction = withSession(
         sendSingleSMS({
           phoneNumber: phoneNumber,
           message: `Welcome to ${classData.name}! Your are invited to join the class. Click on the link and Register with ${email}.
-                      \n${shortLink.shortUrl}
+                      \n${registrationLink}
                       \n-Comma Education`,
         }),
       ]);

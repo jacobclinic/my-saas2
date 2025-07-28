@@ -59,18 +59,11 @@ const ClassCard: React.FC<ClassCardProps> = ({
 
     const registrationLink =
       await generateRegistrationLinkAction(registrationData);
-
-    const shortLink = await createShortUrlAction({
-      originalUrl: registrationLink,
-      csrfToken,
-    });
-    if (shortLink.success && shortLink.shortUrl) {
-      navigator.clipboard.writeText(shortLink.shortUrl);
-      setLinkCopied(true);
-      setTimeout(() => {
-        setLinkCopied(false);
-      }, 2000);
-    }
+    navigator.clipboard.writeText(registrationLink);
+    setLinkCopied(true);
+    setTimeout(() => {
+      setLinkCopied(false);
+    }, 2000);
   };
 
   const handleUpdateClass = async (
