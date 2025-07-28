@@ -293,7 +293,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 variant="ghost"
                 onClick={() =>
                   handleCopyLink(
-                    `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`)}`,
+                    `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`,
                     'student',
                   )
                 }

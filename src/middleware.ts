@@ -241,7 +241,8 @@ async function roleBasedMiddleware(
   const isInAppPath =
     pathname.startsWith('/admin') ||
     pathname.startsWith('/tutor') ||
-    pathname.startsWith('/student');
+    pathname.startsWith('/student') ||
+    pathname.startsWith('/sessions');
 
   if (!isInAppPath) {
     return response;
@@ -250,9 +251,12 @@ async function roleBasedMiddleware(
   const supabase = createMiddlewareClient(request, response);
   const { data: user, error } = await supabase.auth.getUser();
 
-  // If the user is not authenticated, redirect to sign-in
+  // If the user is not authenticated, redirect to sign-in with the original URL
   if (error || !user?.user) {
-    return NextResponse.redirect(configuration.paths.signIn);
+    const signInUrl = new URL(configuration.paths.signIn, request.url);
+    const originalUrl = request.nextUrl.href;
+    signInUrl.searchParams.set('redirectUrl', originalUrl);
+    return NextResponse.redirect(signInUrl);
   }
 
   const userId = user.user?.id;
