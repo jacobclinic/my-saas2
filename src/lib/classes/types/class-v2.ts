@@ -237,3 +237,11 @@ export interface SelectedClassAdmin {
   grade: string | null;
   upcomingSession: string | null;
 }
+
+export interface ClassRegistrationData {
+  classId: string;
+  className: string;
+  nextSession: string;
+  time: string;
+  tutorName: string;
+}

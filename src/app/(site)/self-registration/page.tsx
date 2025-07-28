@@ -6,7 +6,7 @@ import getSupabaseServerComponentClient from '~/core/supabase/server-component-c
 import Logo from '~/core/ui/Logo';
 import { Calendar, Clock, Info, User } from 'lucide-react';
 import { Card, CardContent } from '~/app/(app)/components/base-v2/ui/Card';
-import { ClassRegistrationData } from '~/lib/registration-link';
+import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
 
 interface SearchParams {
   classId: string;
