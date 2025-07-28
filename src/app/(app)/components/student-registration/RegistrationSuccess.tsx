@@ -20,12 +20,12 @@ interface RegistrationSuccessProps {
   studentDetails: {
     username: string;
     email: string;
-    nextClass: {
+    nextClass?: {
       sessionId: string;
       date: string;
       time: string;
       zoomLink: string;
-    };
+    } | null;
     materials: {
       name: string;
       link: string;
@@ -33,7 +33,7 @@ interface RegistrationSuccessProps {
   };
 }
 
-const  RegistrationSuccess = ({ studentDetails }: RegistrationSuccessProps) => {
+const RegistrationSuccess = ({ studentDetails }: RegistrationSuccessProps) => {
   const [linkCopied, setLinkCopied] = React.useState<{
     [key: string]: boolean;
   }>({});
@@ -55,33 +55,47 @@ const  RegistrationSuccess = ({ studentDetails }: RegistrationSuccessProps) => {
           </h1>
 
           {/* Next Class Info */}
-          <div className="bg-green-50 p-4 rounded-lg space-y-3">
-            <h3 className="font-medium">Your Next Class</h3>
-            <div className="space-y-2">
-              <div className="flex items-center text-gray-600">
-                <Calendar className="h-4 w-4 mr-2" />
-                {studentDetails.nextClass.date}
+          {studentDetails.nextClass ? (
+            <div className="bg-green-50 p-4 rounded-lg space-y-3">
+              <h3 className="font-medium">Your Next Class</h3>
+              <div className="space-y-2">
+                <div className="flex items-center text-gray-600">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {studentDetails.nextClass.date}
+                </div>
+                <div className="flex items-center text-gray-600">
+                  <Clock className="h-4 w-4 mr-2" />
+                  {studentDetails.nextClass.time}
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() =>
+                    handleCopy(
+                      `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${studentDetails.nextClass?.sessionId}?type=upcoming`,
+                      'session',
+                    )
+                  }
+                >
+                  {linkCopied.session ? (
+                    <Check className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Link2 className="h-4 w-4 mr-2" />
+                  )}
+                  {linkCopied.session
+                    ? 'Session Link Copied!'
+                    : 'Copy Session Link'}
+                </Button>
               </div>
-              <div className="flex items-center text-gray-600">
-                <Clock className="h-4 w-4 mr-2" />
-                {studentDetails.nextClass.time}
-              </div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() =>
-                  handleCopy(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${studentDetails.nextClass.sessionId}?type=upcoming`, 'session')
-                }
-              >
-                {linkCopied.zoom ? (
-                  <Check className="h-4 w-4 mr-2" />
-                ) : (
-                  <Link2 className="h-4 w-4 mr-2" />
-                )}
-                {linkCopied.zoom ? 'Zoom Link Copied!' : 'Copy Session Link'}
-              </Button>
             </div>
-          </div>
+          ) : (
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h3 className="font-medium text-yellow-800">No Upcoming Class</h3>
+              <p className="text-sm text-yellow-700">
+                Your class schedule will be available soon.
+              </p>
+            </div>
+          )}
 
           {/* Portal Access */}
           <Card>
@@ -111,14 +125,13 @@ const  RegistrationSuccess = ({ studentDetails }: RegistrationSuccessProps) => {
                     )}
                   </Button>
                 </div>
-
               </div>
 
               <Alert className="bg-blue-50 border-blue-200">
                 <BookOpen className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-blue-700">
-                  Use this username and password provided by you to access class materials, recordings,
-                  and zoom links
+                  Use this username and password provided by you to access class
+                  materials, recordings, and zoom links
                 </AlertDescription>
               </Alert>
 

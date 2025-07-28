@@ -17,7 +17,7 @@ import verifyCsrfToken from '~/core/verify-csrf-token';
 import { getClassDataByIdwithNextSession } from './database/queries';
 import { getAllUpcommingSessionsData } from '../sessions/database/queries';
 
-import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
+import { createShortUrlAction } from '../short-links/server-actions-v2';
 import { format as dateFnsFormat } from 'date-fns';
 import { sendSingleSMS } from '../notifications/sms/sms.notification.service';
 import { EmailService } from '~/core/email/send-email-mailtrap';
@@ -31,7 +31,6 @@ import {
   RecurrenceInput,
 } from '../utils/recurrence-utils';
 import { isEqual } from 'lodash';
-import { createShortUrlAction } from '../short-links/server-actions-v2';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -533,8 +532,26 @@ export const sendEmailMSGToStudentAction = withSession(
         classData.tutor.first_name + ' ' + classData.tutor.last_name || 'Tutor',
     };
 
+    // Create URL with parameters
+    const urlParams = new URLSearchParams({
+      classId: registrationData.classId,
+      className: registrationData.className,
+      nextSession: registrationData.nextSession,
+      time: registrationData.time,
+      tutorName: registrationData.tutorName,
+    });
+
+    const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
+
+    const shortLinkResult = await createShortUrlAction({
+      originalUrl: registrationUrl,
+      csrfToken: '',
+    });
+
     const registrationLink =
-      await generateRegistrationLinkAction(registrationData);
+      shortLinkResult.success && shortLinkResult.shortUrl
+        ? shortLinkResult.shortUrl
+        : registrationUrl;
 
     const emailContent = getStudentInvitationToClass({
       studentName: name,
