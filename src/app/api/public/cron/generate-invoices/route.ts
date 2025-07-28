@@ -21,13 +21,10 @@ export async function POST(req: Request) {
       return new Response('Unauthorized', { status: 401 });
     } //get current year and next month
 
-    // Needs to handle the case when the current month is December
-    const currentDate = new Date();
-    const { year: studentYear, month: studentMonth } = getNextMonthPeriod(currentDate);
-    const { year: tutorYear, month: tutorMonth } = getLastMonthPeriod(currentDate);
+
 
     // Generate both student and tutor invoices
-    await generateMonthlyInvoices(supabase, currentYear, nextMonth);
+    await generateMonthlyInvoices(supabase);
     
 
 
