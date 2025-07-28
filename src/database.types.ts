@@ -760,6 +760,30 @@ export type Database = {
           },
         ];
       };
+      short_links: {
+        Row: {
+          id: number;
+          created_at: string;
+          original_url: string;
+          short_code: string;
+          is_valid: boolean;
+        };
+        Insert: {
+          id?: number;
+          created_at?: string;
+          original_url: string;
+          short_code: string;
+          is_valid: boolean;
+        };
+        Update: {
+          id?: number;
+          created_at?: string;
+          original_url?: string;
+          short_code?: string;
+          is_valid?: boolean;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

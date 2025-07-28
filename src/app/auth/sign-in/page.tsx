@@ -4,7 +4,6 @@ import Image from 'next/image';
 import Heading from '~/core/ui/Heading';
 import configuration from '~/configuration';
 import SignInMethodsContainer from '~/app/auth/components/SignInMethodsContainer';
-import { useSearchParams } from 'next/navigation';
 
 const SIGN_UP_PATH = configuration.paths.signUp;
 
@@ -41,8 +40,7 @@ function SignInPage({
         </p>
       </div>
 
-      <SignInMethodsContainer redirectUrl={redirectUrl!} />
-
+      <SignInMethodsContainer redirectUrl={redirectUrl || null} />
     </div>
   );
 }

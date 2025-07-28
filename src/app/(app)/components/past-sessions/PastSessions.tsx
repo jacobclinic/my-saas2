@@ -63,6 +63,7 @@ const PastSessions = ({
       topic: session?.title || '',
       zoom_meeting_id: session.zoom_meeting_id!,
       classId: session.class_id!,
+      subject: session.class?.subject || null,
       tutorId: session?.class?.tutor_id! || '',
       date: formattedDate,
       time: formattedTime,

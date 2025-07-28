@@ -84,7 +84,8 @@ export async function GET(request: NextRequest) {
   }
 
   // If user has completed profile, redirect to the intended destination
-  return redirect(returnUrl || configuration.paths.appHome);
+  const finalRedirectUrl = returnUrl || configuration.paths.appHome;
+  return redirect(finalRedirectUrl);
 }
 
 function onError({ error }: { error: string }) {

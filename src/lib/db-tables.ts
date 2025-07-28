@@ -23,3 +23,4 @@ export const INVOICES_TABLE = `invoices`;
 export const TUTOR_INVOICES_TABLE = `tutor_invoices`;
 export const ZOOM_USERS_TABLE = `zoom_users`;
 export const ZOOM_SESSIONS_TABLE = `zoom_sessions`;
+export const SHORT_LINKS_TABLE = `short_links`;

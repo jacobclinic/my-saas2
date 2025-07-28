@@ -64,17 +64,19 @@ export const createClassAction = withSession(
     const occurrences = [];
     const yearEndDate = new Date(new Date().getFullYear(), 11, 31)
       .toISOString()
-      .split('T')[0]
+      .split('T')[0];
 
     for (const slot of classData.timeSlots) {
       const recurrenceInputPayload: RecurrenceInput = {
         startDate: classData.startDate,
         endDate: yearEndDate,
         timeSlot: slot,
-        dayOfWeek: slot.day
-      }
+        dayOfWeek: slot.day,
+      };
       try {
-        const weeklyOccurences = generateWeeklyOccurrences(recurrenceInputPayload);
+        const weeklyOccurences = generateWeeklyOccurrences(
+          recurrenceInputPayload,
+        );
         occurrences.push(...weeklyOccurences);
       } catch (error) {
         console.error('Error generating weekly occurrences:', error);
@@ -128,9 +130,8 @@ export const createClassAction = withSession(
 
 export const updateClassAction = withSession(
   async (params: UpdateClassParams) => {
-
     const client = getSupabaseServerActionClient();
-    console.log("Update class action called", params);
+    console.log('Update class action called', params);
 
     // Get the current user's session
     const {
@@ -538,7 +539,7 @@ export const sendEmailMSGToStudentAction = withSession(
       studentName: name,
       email: email,
       className: classData.name,
-      loginUrl: registrationLink,
+      registrationUrl: registrationLink,
     });
     const emailService = EmailService.getInstance();
     try {
@@ -569,10 +570,14 @@ export const sendEmailMSGToStudentAction = withSession(
   },
 );
 
-
-function generateAllWeeklyOccurrencesForYear(classData: { startDate: string; timeSlots: TimeSlot[] }) {
+function generateAllWeeklyOccurrencesForYear(classData: {
+  startDate: string;
+  timeSlots: TimeSlot[];
+}) {
   const occurrences = [];
-  const yearEndDate = new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0];
+  const yearEndDate = new Date(new Date().getFullYear(), 11, 31)
+    .toISOString()
+    .split('T')[0];
 
   for (const slot of classData.timeSlots) {
     const recurrenceInputPayload: RecurrenceInput = {
@@ -583,10 +588,15 @@ function generateAllWeeklyOccurrencesForYear(classData: { startDate: string; tim
     };
 
     try {
-      const weeklyOccurrences = generateWeeklyOccurrences(recurrenceInputPayload);
+      const weeklyOccurrences = generateWeeklyOccurrences(
+        recurrenceInputPayload,
+      );
       occurrences.push(...weeklyOccurrences);
     } catch (error) {
-      console.error(`Error generating weekly occurrences for slot: ${JSON.stringify(slot)}`, error);
+      console.error(
+        `Error generating weekly occurrences for slot: ${JSON.stringify(slot)}`,
+        error,
+      );
       throw error;
     }
   }
