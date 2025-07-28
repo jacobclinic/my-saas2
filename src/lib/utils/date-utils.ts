@@ -288,3 +288,10 @@ export function getUpcomingOccurrencesForMonth(
 
   return occurrences;
 }
+
+export function getPaymentPeriodFromDate(date: Date): string {
+  const utcDate = new Date(date.toISOString());
+  const year = utcDate.getUTCFullYear();
+  const month = (utcDate.getUTCMonth() + 1).toString().padStart(2, '0');
+  return `${year}-${month}`;
+}

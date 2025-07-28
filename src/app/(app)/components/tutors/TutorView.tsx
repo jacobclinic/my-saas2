@@ -16,14 +16,18 @@ import {
   FileText,
   CheckCircle,
   XCircle,
+  Presentation,
+  ChartLine,
 } from 'lucide-react';
 import UserType from '~/lib/user/types/user';
 import { approveTutorAction } from '~/lib/user/actions/approve-tutor-action';
 import { toast } from 'sonner';
+import { CommaZoomUser } from '~/lib/zoom/v2/types';
 
 // Extended UserType to include additional tutor-specific fields
 interface ExtendedUserType extends UserType {
   activeClassesCount?: number;
+  zoom_user: CommaZoomUser | null;
 }
 
 interface TutorViewProps {
@@ -216,7 +220,8 @@ const TutorView: React.FC<TutorViewProps> = ({
 
         {/* Status Information */}
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-blue-600">
+          <h3 className="text-lg font-semibold mb-4 text-blue-600 flex items-center">
+            <ChartLine className="h-5 w-5 mr-2" />
             Status Information
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -229,6 +234,23 @@ const TutorView: React.FC<TutorViewProps> = ({
               <p className="font-medium">
                 {tutor.activeClassesCount || 0} classes
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Zoom User Information */}
+        <div>
+          <h3 className="text-lg font-semibold mb-4 text-blue-600 flex items-center">
+            <Presentation className="h-5 w-5 mr-2" />
+            Zoom User Information
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center space-x-3">
+              <Mail className="h-4 w-4 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-500">Zoom Email (Internal use only)</p>
+                <p className="font-medium">{tutor.zoom_user?.email || '-'}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -306,11 +328,10 @@ const TutorView: React.FC<TutorViewProps> = ({
           {/* Show current approval status */}
           {(tutor.status === 'ACTIVE' || tutor.status === 'REJECTED') && (
             <div
-              className={`border rounded-lg p-4 ${
-                tutor.status === 'ACTIVE'
-                  ? 'bg-green-50 border-green-200'
-                  : 'bg-red-50 border-red-200'
-              }`}
+              className={`border rounded-lg p-4 ${tutor.status === 'ACTIVE'
+                ? 'bg-green-50 border-green-200'
+                : 'bg-red-50 border-red-200'
+                }`}
             >
               <div className="flex items-center gap-2">
                 {tutor.status === 'ACTIVE' ? (
@@ -320,22 +341,20 @@ const TutorView: React.FC<TutorViewProps> = ({
                 )}
                 <div>
                   <p
-                    className={`text-sm font-medium ${
-                      tutor.status === 'ACTIVE'
-                        ? 'text-green-900'
-                        : 'text-red-900'
-                    }`}
+                    className={`text-sm font-medium ${tutor.status === 'ACTIVE'
+                      ? 'text-green-900'
+                      : 'text-red-900'
+                      }`}
                   >
                     {tutor.status === 'ACTIVE'
                       ? 'Tutor Approved'
                       : 'Tutor Rejected'}
                   </p>
                   <p
-                    className={`text-sm ${
-                      tutor.status === 'ACTIVE'
-                        ? 'text-green-700'
-                        : 'text-red-700'
-                    }`}
+                    className={`text-sm ${tutor.status === 'ACTIVE'
+                      ? 'text-green-700'
+                      : 'text-red-700'
+                      }`}
                   >
                     {tutor.status === 'ACTIVE'
                       ? 'This tutor has been approved and can start teaching'

@@ -21,6 +21,8 @@ import { Badge } from '../base-v2/ui/Badge';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
+import { useRouter } from 'next/navigation';
+
 
 interface StudentSessionDetailsProps {
   sessionData: UpcomingSession | PastSession;
@@ -42,32 +44,42 @@ const StudentSessionDetails = ({
     useState<SessionStudentTableData | null>(null);
   const [classTableData, setClassTableData] = useState<ClassData>();
   const userSession = useUserSession();
+  const router = useRouter();
 
   const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
-      try {
-        const result = await joinMeetingAsUser({
-          meetingId: sessionData?.zoomMeetingId,
-          studentData: {
-            first_name: userSession?.data?.first_name || '',
-            last_name: userSession?.data?.last_name || '',
-            email: userSession?.auth?.user?.email || '',
-          },
-        });
+      // try {
+      //   const result = await joinMeetingAsUser({
+      //     meetingId: sessionData?.zoomMeetingId,
+      //     studentData: {
+      //       first_name: userSession?.data?.first_name || '',
+      //       last_name: userSession?.data?.last_name || '',
+      //       email: userSession?.auth?.user?.email || '',
+      //     },
+      //   });
 
-        startTransition(() => {
-          if (result.success) {
-            window.open(result.start_url, '_blank');
-          } else {
-            alert('Failed to generate join link');
-          }
-        });
-      } catch (error) {
-        alert('An error occurred while joining the meeting');
-      }
+      //   startTransition(() => {
+      //     if (result.success) {
+      //       window.open(result.start_url, '_blank');
+      //     } else {
+      //       alert('Failed to generate join link');
+      //     }
+      //   });
+      // } catch (error) {
+      //   alert('An error occurred while joining the meeting');
+      // }
+      startTransition(() => {
+        if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
+          const classId = sessionData.sessionRawData.class.id;
+          const url = `/classes/${classId}/session/${sessionData.id}`;
+          router.push(url);
+        }
+      });
     },
     [userSession],
   );
+
+
   // Transform past sessions data
   useEffect(() => {
     if (sessionData) {
@@ -224,7 +236,7 @@ const StudentSessionDetails = ({
                   <div className="mt-2">
                     <Badge variant="blue">{'Subject'}</Badge>
                     {type !== 'past' &&
-                    formattedSessionData.paymentStatus ===
+                      formattedSessionData.paymentStatus ===
                       PAYMENT_STATUS.PENDING ? (
                       <Badge variant="yellow" className="ml-2">
                         Payment Required
@@ -240,7 +252,7 @@ const StudentSessionDetails = ({
 
                 {type !== 'past' &&
                   formattedSessionData.paymentStatus ===
-                    PAYMENT_STATUS.VERIFIED && (
+                  PAYMENT_STATUS.VERIFIED && (
                     <Button
                       variant="primary"
                       onClick={() =>
@@ -297,7 +309,7 @@ const StudentSessionDetails = ({
                     Class Materials
                   </h3>
                   {formattedSessionData.materials &&
-                  formattedSessionData.materials.length > 0 ? (
+                    formattedSessionData.materials.length > 0 ? (
                     <div className="space-y-3">
                       {formattedSessionData.materials.map((material) => (
                         <div
@@ -358,7 +370,7 @@ const StudentSessionDetails = ({
                         <Button
                           variant="outline"
                           size="sm"
-                          // onClick={() => window.open(recording.url, '_blank')}
+                        // onClick={() => window.open(recording.url, '_blank')}
                         >
                           Watch Recording
                         </Button>

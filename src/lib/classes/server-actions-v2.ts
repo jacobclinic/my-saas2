@@ -11,7 +11,6 @@ import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { ClassType, NewClassData, TimeSlot } from './types/class-v2';
 import { getUpcomingOccurrences } from '../utils/date-utils';
-import { zoomService } from '../zoom/zoom.service';
 import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
 import { getClassDataByIdwithNextSession } from './database/queries';
@@ -26,11 +25,9 @@ import { isAdminOrCLassTutor } from '../user/database/queries';
 import { createInvoiceForNewClass } from '../invoices/database/mutations';
 import { notifyStudentsAfterClassScheduleUpdate } from '../notifications/email/email.notification.service';
 import { notifyStudentsAfterClassScheduleUpdateSMS } from '../notifications/sms/sms.notification.service';
-import {
-  generateWeeklyOccurrences,
-  RecurrenceInput,
-} from '../utils/recurrence-utils';
-import { isEqual } from 'lodash';
+import { generateWeeklyOccurrences, RecurrenceInput } from '../utils/recurrence-utils';
+import { isEqual } from '../utils/lodash-utils';
+import { ZoomService } from '../zoom/v2/zoom.service';
 
 type CreateClassParams = {
   classData: NewClassData;
@@ -50,7 +47,6 @@ type DeleteClassParams = {
 
 export const createClassAction = withSession(
   async (params: CreateClassParams) => {
-    console.log('Create class action called', params);
 
     const { classData, csrfToken } = params;
     const client = getSupabaseServerActionClient();
@@ -88,10 +84,6 @@ export const createClassAction = withSession(
       }
     }
 
-    // TODO: Create a zoom meeting for the first occurrence.
-
-    //
-
     const sessions = occurrences.map((occurrence, index) => ({
       class_id: classResult?.id,
       start_time: new Date(occurrence.startTime).toISOString(),
@@ -120,6 +112,10 @@ export const createClassAction = withSession(
         // The invoice can be generated later with the monthly job
       }
     }
+
+    const zoomService = new ZoomService(client);
+    // Call this method to create zoom meetings for newly created classes.
+    await zoomService.createMeetingsForTomorrowSessions();
 
     // Revalidate paths
     revalidatePath('/classes');
@@ -299,6 +295,11 @@ export const updateClassAction = withSession(
       }
     }
 
+    const zoomService = new ZoomService(client);
+    // Call this method to create zoom meetings for newly created classes.
+    await zoomService.createMeetingsForTomorrowSessions();
+
+
     revalidatePath('/classes');
     revalidatePath(`/classes/${result?.id}`);
     revalidatePath('/(app)/classes');
@@ -359,98 +360,98 @@ export const deleteClassAction = withSession(
     };
   },
 );
-const createZoomMeetingsBatch = async (
-  classId: string,
-  classData: NewClassData,
-  occurrences: { startTime: Date; endTime: Date }[],
-) => {
-  const results = [];
+// const createZoomMeetingsBatch = async (
+//   classId: string,
+//   classData: NewClassData,
+//   occurrences: { startTime: Date; endTime: Date }[],
+// ) => {
+//   const results = [];
 
-  for (let i = 0; i < occurrences.length; i++) {
-    const occurrence = occurrences[i];
+//   for (let i = 0; i < occurrences.length; i++) {
+//     const occurrence = occurrences[i];
 
-    const start_time = occurrence.startTime.toISOString();
-    const end_time = occurrence.endTime.toISOString();
+//     const start_time = occurrence.startTime.toISOString();
+//     const end_time = occurrence.endTime.toISOString();
 
-    try {
-      // Create Zoom meeting
-      const zoomMeeting = await zoomService.createMeeting(
-        {
-          topic: `${classData.name}_${start_time}`,
-          start_time,
-          duration:
-            (new Date(occurrence.endTime).getTime() -
-              new Date(occurrence.startTime).getTime()) /
-            (1000 * 60),
-          timezone: 'Asia/Colombo',
-          type: 2,
-        },
-        '',
-      );
+//     try {
+//       // Create Zoom meeting
+//       const zoomMeeting = await zoomService.createMeeting(
+//         {
+//           topic: `${classData.name}_${start_time}`,
+//           start_time,
+//           duration:
+//             (new Date(occurrence.endTime).getTime() -
+//               new Date(occurrence.startTime).getTime()) /
+//             (1000 * 60),
+//           timezone: 'Asia/Colombo',
+//           type: 2,
+//         },
+//         '',
+//       );
 
-      if (!zoomMeeting) {
-        throw new Error('Failed to initialize Zoom session');
-      }
+//       if (!zoomMeeting) {
+//         throw new Error('Failed to initialize Zoom session');
+//       }
 
-      results.push({
-        class_id: classId,
-        start_time,
-        end_time,
-        zoom_meeting_id: zoomMeeting?.id,
-      });
+//       results.push({
+//         class_id: classId,
+//         start_time,
+//         end_time,
+//         zoom_meeting_id: zoomMeeting?.id,
+//       });
 
-      // Introduce a delay after every 9 requests
-      if ((i + 1) % 9 === 0) {
-        console.log('Rate limit reached, waiting for 1 second...');
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second delay
-      }
-    } catch (error) {
-      console.error(
-        `Error creating Zoom meeting for occurrence ${i + 1}:`,
-        error,
-      );
-    }
-  }
+//       // Introduce a delay after every 9 requests
+//       if ((i + 1) % 9 === 0) {
+//         console.log('Rate limit reached, waiting for 1 second...');
+//         await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second delay
+//       }
+//     } catch (error) {
+//       console.error(
+//         `Error creating Zoom meeting for occurrence ${i + 1}:`,
+//         error,
+//       );
+//     }
+//   }
 
-  return results;
-};
+//   return results;
+// };
 
-export const createZoomMeeting = async (
-  classId: string,
-  classData: NewClassData,
-  occurrence: { startTime: Date; endTime: Date },
-) => {
-  const start_time = occurrence.startTime.toISOString();
-  const end_time = occurrence.endTime.toISOString();
-  try {
-    // Create Zoom meeting
-    const zoomMeeting = await zoomService.createMeeting(
-      {
-        topic: `${classData.name}_${start_time}`,
-        start_time,
-        duration:
-          (new Date(occurrence.endTime).getTime() -
-            new Date(occurrence.startTime).getTime()) /
-          (1000 * 60),
-        timezone: 'Asia/Colombo',
-        type: 2,
-      },
-      '',
-    );
-    if (!zoomMeeting) {
-      throw new Error('Failed to initialize Zoom session');
-    }
-    return {
-      zoomMeeting: zoomMeeting,
-      class_id: classId,
-      start_time,
-      end_time,
-      zoom_meeting_id: zoomMeeting?.id,
-    };
-  } catch (error) {
-    console.error(`Error creating Zoom meeting`, error);
-  }
-};
+// export const createZoomMeeting = async (
+//   classId: string,
+//   classData: NewClassData,
+//   occurrence: { startTime: Date; endTime: Date },
+// ) => {
+//   const start_time = occurrence.startTime.toISOString();
+//   const end_time = occurrence.endTime.toISOString();
+//   try {
+//     // Create Zoom meeting
+//     const zoomMeeting = await zoomService.createMeeting(
+//       {
+//         topic: `${classData.name}_${start_time}`,
+//         start_time,
+//         duration:
+//           (new Date(occurrence.endTime).getTime() -
+//             new Date(occurrence.startTime).getTime()) /
+//           (1000 * 60),
+//         timezone: 'Asia/Colombo',
+//         type: 2,
+//       },
+//       '',
+//     );
+//     if (!zoomMeeting) {
+//       throw new Error('Failed to initialize Zoom session');
+//     }
+//     return {
+//       zoomMeeting: zoomMeeting,
+//       class_id: classId,
+//       start_time,
+//       end_time,
+//       zoom_meeting_id: zoomMeeting?.id,
+//     };
+//   } catch (error) {
+//     console.error(`Error creating Zoom meeting`, error);
+//   }
+// };
 
 export const getAllUpcominSessionsAdmin = withSession(async () => {
   const client = getSupabaseServerActionClient();
