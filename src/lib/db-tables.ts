@@ -21,4 +21,6 @@ export const STUDENT_PAYMENTS_TABLE = `student_payments`;
 export const TUTOR_PAYMENTS_TABLE = `tutor_payments`;
 export const INVOICES_TABLE = `invoices`;
 export const TUTOR_INVOICES_TABLE = `tutor_invoices`;
+export const ZOOM_USERS_TABLE = `zoom_users`;
+export const ZOOM_SESSIONS_TABLE = `zoom_sessions`;
 export const SHORT_LINKS_TABLE = `short_links`;

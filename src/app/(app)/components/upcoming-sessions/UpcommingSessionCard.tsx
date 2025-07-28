@@ -43,6 +43,8 @@ import {
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
+import { useRouter } from 'next/navigation';
+
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
   endTime: string; // e.g., "2025-05-03T06:22:00Z"
@@ -54,7 +56,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 }) => {
   const isDashboard = variant === 'dashboard';
   // console.log('sessionData in upcoming session:', sessionData);
-
+  const router = useRouter();
   const [linkCopied, setLinkCopied] = useState<{
     student?: boolean;
     materials?: boolean;
@@ -104,13 +106,10 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
   const joinMeetingAsTutor = useCallback(async () => {
     startTransition(async () => {
-      const result = await joinMeetingAsHost({
-        meetingId: sessionData?.zoomMeetingId,
-      });
-      if (result.success) {
-        window.open(result.start_url, '_blank');
-      } else {
-        alert('Failed to generate join link');
+      if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
+        const classId = sessionData.sessionRawData.class.id;
+        const url = `/classes/${classId}/session/${sessionData.id}`;
+        router.push(url);
       }
     });
   }, [sessionData]);
