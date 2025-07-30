@@ -38,6 +38,14 @@ export class ZoomService {
                 logger.warn(`Zoom user already exists for tutor ID: ${user.tutor_id}`);
                 return existingZoomUser;
             }
+            let userEmail = '';
+            if (user.user_info && user.user_info.email) {
+                userEmail = user.user_info.email;
+            } else {
+                userEmail = "johntest@commaeducation.lk"
+            }
+
+            user.user_info.email = userEmail;
 
             const zoomUser = await this.client.createUser(user);
 
