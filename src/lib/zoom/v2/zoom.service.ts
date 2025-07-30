@@ -197,7 +197,9 @@ export class ZoomService {
                 }
             }
             logger.info(`Successfully created ${successCount} zoom meetings for tomorrow sessions`);
-            logger.error(`Failed to create ${errorCount} zoom meetings for tomorrow sessions`);
+            if (errorCount > 0) {
+                logger.error(`Failed to create ${errorCount} zoom meetings for tomorrow sessions`);
+            }
             return tomorrowSessions;
         } catch (error) {
             throw new Error('Failed to create zoom meetings for tomorrow sessions. Please try again.');
