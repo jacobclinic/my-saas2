@@ -28,7 +28,8 @@ import {
 import RegisteredStudentsDialog from './RegisteredStudentsDialog';
 import EditClassDialog from './EditClassDialog';
 import AddStudentDialog from './AddStudentDialog';
-import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 const ClassCard: React.FC<ClassCardProps> = ({
   classData,
@@ -42,6 +43,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
   const [addStudentLoading, setAddStudentLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const csrfToken = useCsrfToken();
 
   const handleCopyLink = async () => {
     const classId = classData.id;
@@ -54,10 +56,28 @@ const ClassCard: React.FC<ClassCardProps> = ({
         classData.tutor?.firstName + ' ' + classData.tutor?.lastName || '',
     };
 
-    const registrationLink =
-      await generateRegistrationLinkAction(registrationData);
+    // Create URL with parameters
+    const urlParams = new URLSearchParams({
+      classId: registrationData.classId,
+      className: registrationData.className,
+      nextSession: registrationData.nextSession,
+      time: registrationData.time,
+      tutorName: registrationData.tutorName,
+    });
 
-    navigator.clipboard.writeText(registrationLink);
+    const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
+
+    const shortLinkResult = await createShortUrlAction({
+      originalUrl: registrationUrl,
+      csrfToken: csrfToken,
+    });
+
+    const finalLink =
+      shortLinkResult.success && shortLinkResult.shortUrl
+        ? shortLinkResult.shortUrl
+        : registrationUrl;
+
+    navigator.clipboard.writeText(finalLink);
     setLinkCopied(true);
     setTimeout(() => {
       setLinkCopied(false);

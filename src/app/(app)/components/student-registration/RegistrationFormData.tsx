@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../base-v2/ui/Checkbox';
 import { User, Mail, Phone, ArrowRight, Lock, Calendar, MapPin } from 'lucide-react';
 import { registerStudentAction } from '../../../actions/public/student-registration';
-import { ClassRegistrationData } from '~/lib/registration-link';
 import RegistrationSuccess from './RegistrationSuccess';
 import useSignUpWithEmailAndPasswordMutation from '~/core/hooks/use-sign-up-with-email-password';
 import StudentRegistrationViaLogin from './RegisterViaLogin';
@@ -20,6 +19,7 @@ import { getBirthdayDateLimits, validateBirthday } from '~/core/utils/validate-b
 import { validateEmail } from '../../../../core/utils/validate-email';
 import { validatePhoneNumber } from '~/core/utils/validate-phonenumber';
 import { validateName } from '~/core/utils/validate-name';
+import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 
@@ -47,7 +47,7 @@ interface FieldTouchedState {
   password?: boolean;
 }
 
-interface StudentRegistrationFormrops {
+interface StudentRegistrationFormProps {
   classData: ClassRegistrationData;
   nextSessionData: UpcomingSession;
 }
@@ -55,7 +55,7 @@ interface StudentRegistrationFormrops {
 const StudentRegistrationForm = ({
   classData,
   nextSessionData,
-}: StudentRegistrationFormrops) => {
+}: StudentRegistrationFormProps) => {
   const [formData, setFormData] = useState<RegistrationFormData>({
     firstName: '',
     lastName: '',
