@@ -187,13 +187,14 @@ export class ZoomService {
                         await createZoomSession(this.supabaseClient, createZoomSessionPayload);
                         // Wait for 50ms to avoid rate limiting
                         await new Promise(resolve => setTimeout(resolve, 50));
+                        successCount++;
                     } catch (error) {
                         const errorMessage = `Failed to create the zoom meeting for the session: ${session.id} for the user: ${zoomUserId}. Tutor ID: ${session.class.tutor.id}`;
                         logger.error(error, errorMessage);
                         errorCount++;
                         continue;
                     }
-                    successCount++;
+
                 }
             }
             logger.info(`Successfully created ${successCount} zoom meetings for tomorrow sessions`);
