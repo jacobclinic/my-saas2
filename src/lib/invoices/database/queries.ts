@@ -126,6 +126,10 @@ export async function getStudentInvoices(
           payments:${STUDENT_PAYMENTS_TABLE}!invoice_id (
             status,
             payment_proof_url
+          ),
+          student:${USERS_TABLE}!student_id (
+            first_name,
+            last_name
           )
         `,
       )
@@ -156,11 +160,15 @@ export async function getStudentInvoices(
       const payment = Array.isArray(invoice.payments)
         ? invoice.payments[0]
         : invoice.payments;
+      
+      const student = Array.isArray(invoice.student)
+        ? invoice.student[0]
+        : invoice.student;
 
       return {
         id: invoice.id,
         student_id: invoice.student_id,
-        student_name: '', // Not needed for student view
+        student_name: `${student.first_name || ''} ${student.last_name || ''}`.trim(),
         class_id: invoice.class_id,
         class_name: classData?.name || null,
         class_subject: classData?.subject || null,
@@ -330,7 +338,7 @@ export async function getTutorInvoicesByTutorId(
     if (!data) {
       return [];
     }
-    
+
     // For each tutor invoice, get the count of students who have paid
     const tutorInvoicesWithPaidCount = await Promise.all(
       data.map(async (invoice) => {
