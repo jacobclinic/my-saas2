@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import getLogger from '~/core/logger';
+const logger = getLogger()
 
 const ASSURANCE_LEVEL_2 = 'aal2';
 
@@ -11,15 +13,21 @@ const ASSURANCE_LEVEL_2 = 'aal2';
 async function checkSessionRequiresMultiFactorAuthentication(
   client: SupabaseClient
 ) {
-  const assuranceLevel = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+  try {
+    const assuranceLevel = await client.auth.mfa.getAuthenticatorAssuranceLevel();
 
-  if (assuranceLevel.error) {
-    throw new Error(assuranceLevel.error.message);
+    if (assuranceLevel.error) {
+      logger.error('MFA check error:', assuranceLevel.error);
+      throw new Error(assuranceLevel.error.message);
+    }
+
+    const { nextLevel, currentLevel } = assuranceLevel.data;
+
+    return nextLevel === ASSURANCE_LEVEL_2 && nextLevel !== currentLevel;
+  } catch (error) {
+    logger.error('MFA check error (expected for unauthenticated users):', error);
+    return false;
   }
-
-  const { nextLevel, currentLevel } = assuranceLevel.data;
-
-  return nextLevel === ASSURANCE_LEVEL_2 && nextLevel !== currentLevel;
 }
 
 export default checkSessionRequiresMultiFactorAuthentication;

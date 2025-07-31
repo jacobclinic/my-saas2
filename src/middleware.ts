@@ -4,9 +4,12 @@ import HttpStatusCode from '~/core/generic/http-status-code.enum';
 import configuration from '~/configuration';
 import createMiddlewareClient from '~/core/supabase/middleware-client';
 import GlobalRole from '~/core/session/types/global-role';
+import getLogger from './core/logger';
 
 const CSRF_SECRET_COOKIE = 'csrfSecret';
 const NEXT_ACTION_HEADER = 'next-action';
+
+const logger = getLogger()
 
 export const config = {
   matcher: [
@@ -36,15 +39,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next();
-  console.log('Starting CSRF middleware for:', request.nextUrl.pathname);
   const csrfResponse = await withCsrfMiddleware(request, response);
-  console.log(
-    'CSRF middleware completed in',
-    Date.now() - startTime,
-    'ms for:',
-    request.nextUrl.pathname,
-  );
-  console.log('Starting session middleware for:', request.nextUrl.pathname);
   const sessionResponse = await sessionMiddleware(request, csrfResponse);
   const onboardingResponse = await onboardingMiddleware(
     request,
@@ -56,18 +51,11 @@ export async function middleware(request: NextRequest) {
 
 async function sessionMiddleware(req: NextRequest, res: NextResponse) {
   const supabase = createMiddlewareClient(req, res);
-  console.log('Starting session retrieval for:', req.nextUrl.pathname);
-  const startTime = Date.now();
-  await supabase.auth.getSession();
-  const endTime = Date.now();
-  console.log(
-    'Session retrieval took:',
-    endTime - startTime,
-    'ms for:',
-    req.nextUrl.pathname,
-  );
-  // const user = await supabase.auth.getSession();
-  // console.log('-----1------User:', user);
+  try {
+    await supabase.auth.getSession();
+  } catch (error) {
+    logger.error('Error during session retrieval:', error);
+  }
 
   return res;
 }
@@ -86,7 +74,7 @@ async function withCsrfMiddleware(
     ignoreMethods: isServerAction(request)
       ? ['POST']
       : // always ignore GET, HEAD, and OPTIONS requests
-        ['GET', 'HEAD', 'OPTIONS'],
+      ['GET', 'HEAD', 'OPTIONS'],
   });
 
   const csrfError = await csrfMiddleware(request, response);
@@ -199,8 +187,7 @@ async function onboardingMiddleware(
       return NextResponse.redirect(waitingUrl);
     }
   } catch (error) {
-    console.error('Error during onboarding checks:', error);
-    // If there's any error checking onboarding status, allow through
+    logger.error('Error during onboarding checks:', error);
   }
 
   return response;
