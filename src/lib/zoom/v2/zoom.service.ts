@@ -242,6 +242,27 @@ export class ZoomService {
             throw new Error('Failed to get zoom meeting recordings. Please try again.');
         }
     }
+
+    async checkIfZoomUserValid(tutorId: string) {
+        try {
+            const tutorZoomUser = await getZoomUserByTutorId(this.supabaseClient, tutorId);
+            if (tutorZoomUser.data) {
+                const zoomUserExternalId = tutorZoomUser.data.zoom_user_id;
+                if (!zoomUserExternalId) {
+                    return false;
+                }
+                const zoomUser = await this.client.getUserById(zoomUserExternalId);
+                if (zoomUser && zoomUser.verified === 1) {
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        } catch (error) {
+            logger.error(error, "Failed to check if zoom user valid");
+            return false;
+        }
+    }
 }
 
 // export const zoomService = new ZoomService();

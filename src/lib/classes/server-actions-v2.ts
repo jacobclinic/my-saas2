@@ -13,7 +13,7 @@ import { ClassType, NewClassData, TimeSlot } from './types/class-v2';
 import { getUpcomingOccurrences } from '../utils/date-utils';
 import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
-import { getClassDataByIdwithNextSession } from './database/queries';
+import { getClassByIdWithTutor, getClassDataByIdwithNextSession } from './database/queries';
 import { getAllUpcommingSessionsData } from '../sessions/database/queries';
 
 import { createShortUrlAction } from '../short-links/server-actions-v2';
@@ -50,16 +50,25 @@ export const createClassAction = withSession(
 
     const { classData, csrfToken } = params;
     const client = getSupabaseServerActionClient();
+    const zoomService = new ZoomService(client);
+
+    try {
+      const isZoomUserValid = await zoomService.checkIfZoomUserValid(classData.tutorId);
+      if (!isZoomUserValid) {
+        return {
+          success: false,
+          error: 'Tutor user is not valid. Please contact support.',
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Failed to check if user is valid. Please try again. If the problem persists, please contact support.',
+      };
+    }
 
     // Create the class
     const classResult = await createClass(client, classData);
-
-    // Get tutor's email (for Zoom meeting setup)
-    const { data: tutorData } = await client
-      .from('users')
-      .select('email')
-      .eq('id', classData.tutorId)
-      .single(); // Generate initial sessions for the month and create one Zoom meeting per time slot
 
     const occurrences = [];
     const yearEndDate = new Date(new Date().getFullYear(), 11, 31)
@@ -113,7 +122,6 @@ export const createClassAction = withSession(
       }
     }
 
-    const zoomService = new ZoomService(client);
     // Call this method to create zoom meetings for newly created classes.
     await zoomService.createMeetingsForTomorrowSessions();
 
@@ -131,7 +139,30 @@ export const createClassAction = withSession(
 export const updateClassAction = withSession(
   async (params: UpdateClassParams) => {
     const client = getSupabaseServerActionClient();
-    console.log('Update class action called', params);
+    const zoomService = new ZoomService(client);
+    const classWithTutorData = await getClassByIdWithTutor(client, params.classId);
+    const tutorId = classWithTutorData?.tutor_id;
+    if (!tutorId) {
+      return {
+        success: false,
+        error: 'Cannot update class. Please contact support.',
+      };
+    }
+
+    try {
+      const isZoomUserValid = await zoomService.checkIfZoomUserValid(tutorId);
+      if (!isZoomUserValid) {
+        return {
+          success: false,
+          error: 'Tutor is not verfied properly. Please contact support.',
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Failed to check if user is valid. Please try again. If the problem persists, please contact support.',
+      };
+    }
 
     // Get the current user's session
     const {
@@ -295,7 +326,7 @@ export const updateClassAction = withSession(
       }
     }
 
-    const zoomService = new ZoomService(client);
+
     // Call this method to create zoom meetings for newly created classes.
     await zoomService.createMeetingsForTomorrowSessions();
 
