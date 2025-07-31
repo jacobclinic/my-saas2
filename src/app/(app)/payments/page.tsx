@@ -92,7 +92,7 @@ async function PaymentsPage({
         <>
           <AppHeader
             title="My Payments"
-            description="View and manage your class fee payments"
+            description=""
           />
           <PageBody>
             <Suspense

@@ -172,26 +172,32 @@ const StudentInvoiceCard: React.FC<StudentInvoiceCardProps> = ({ invoice }) => {
   return (
     <Card className="mb-4 hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
-        {' '}
+      
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg font-medium">
-              {currentInvoice.invoice_no ||
+              {`Invoice # ${currentInvoice.invoice_no}` ||
                 `Invoice #${currentInvoice.id.slice(0, 8)}`}
             </CardTitle>
             <p className="text-sm text-gray-600 mt-1">
               Period: {formatPeriod(currentInvoice.month)}
             </p>
           </div>
-          {getStatusBadge(currentInvoice.payment_status)}
+          <div className="flex flex-col items-end">
+            <div className="mb-2">
+              <p className="font-medium">
+                Rs. {(currentInvoice.amount ?? 0).toLocaleString()}
+              </p>
+            </div>
+            {getStatusBadge(currentInvoice.payment_status)}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
-            {' '}
-            <div className="flex items-center text-sm">
-              <Book className="h-4 w-4 text-blue-600 mr-2" />
+          <div className="space-y-3">         
+            <div className="flex items-center text-sm text-gray-600">
+              <Book className="h-4 w-4 mr-2" />
               <div>
                 <p className="font-medium">
                   {currentInvoice.class_name || 'Unknown Class'}
@@ -203,64 +209,52 @@ const StudentInvoiceCard: React.FC<StudentInvoiceCardProps> = ({ invoice }) => {
                 )}
               </div>
             </div>
-            <div className="flex items-center text-sm">
-              <Calendar className="h-4 w-4 text-orange-600 mr-2" />
+            <div className="flex items-center text-sm text-gray-600">
+              <Calendar size={16} className="mr-2" />
               <div>
                 <p className="font-medium">
-                  {formatDate(currentInvoice.due_date)}
+                  Due: {formatDate(currentInvoice.due_date)}
                 </p>
-                <p className="text-gray-600">Payment Due Date</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {' '}
-            <div className="flex items-center text-sm">
-              <DollarSign className="h-4 w-4 text-green-600 mr-2" />
-              <div>
-                {' '}
-                <p className="font-medium">
-                  Rs. {(currentInvoice.amount ?? 0).toLocaleString()}
-                </p>
-                <p className="text-gray-600">Class Fee</p>
               </div>
             </div>
           </div>
         </div>
-
-        <div className="flex flex-wrap gap-2 pt-3 border-t">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleViewInvoice()}
-            className="flex items-center gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            View Invoice
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleDownloadInvoice()}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Download Invoice
-          </Button>{' '}
-          {currentInvoice.payment_status !== 'completed' &&
-            currentInvoice.payment_status !== 'pending' && (
-              <Button
-                size="sm"
-                onClick={() => handlePayNow()}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-              >
-                <CreditCard className="h-4 w-4" />
-                Pay Now
-              </Button>
-            )}
+        <div className='flex justify-between items-center pt-3 border-t'>
+          <div className="flex flex-wrap gap-2 pt-3 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleViewInvoice()}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              View Invoice
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDownloadInvoice()}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download
+            </Button>
+          </div>
+          <div>
+            {currentInvoice.payment_status !== 'completed' &&
+              currentInvoice.payment_status !== 'pending' && (
+                <Button
+                  size="sm"
+                  onClick={() => handlePayNow()}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Pay Now
+                </Button>
+              )}
+          </div>
         </div>
-      </CardContent>{' '}
+      </CardContent>
       {/* Invoice Details Dialog */}
       <StudentInvoiceDialog
         open={showInvoiceDialog}
