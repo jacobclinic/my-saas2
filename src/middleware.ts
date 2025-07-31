@@ -9,7 +9,7 @@ import getLogger from './core/logger';
 const CSRF_SECRET_COOKIE = 'csrfSecret';
 const NEXT_ACTION_HEADER = 'next-action';
 
-const logger = getLogger()
+const logger = getLogger();
 
 export const config = {
   matcher: [

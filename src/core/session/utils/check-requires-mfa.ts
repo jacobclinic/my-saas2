@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import getLogger from '~/core/logger';
-const logger = getLogger()
+const logger = getLogger();
 
 const ASSURANCE_LEVEL_2 = 'aal2';
 
@@ -17,7 +17,7 @@ async function checkSessionRequiresMultiFactorAuthentication(
     const assuranceLevel = await client.auth.mfa.getAuthenticatorAssuranceLevel();
 
     if (assuranceLevel.error) {
-      logger.error('MFA check error:', assuranceLevel.error);
+      logger.info('MFA check error:', assuranceLevel.error);
       throw new Error(assuranceLevel.error.message);
     }
 
