@@ -8,10 +8,11 @@ import DeleteSessionDialog from '../past-session/DeleteSessionDialog';
 import { format } from 'date-fns';
 import {
   convertToLocalTime,
-  getUserTimezone,
 } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../../TimezoneIndicator';
 import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 interface DateRange {
   start?: { year: number; month: number; day: number } | null;
@@ -32,6 +33,7 @@ const UpcomingSessionsAdmin = ({
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
   const [selectedTutor, setSelectedTutor] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const csrfToken = useCsrfToken();
 
   const handleDateRangeChange = (value: any) => {
     setDateRange(value);
@@ -119,13 +121,19 @@ const UpcomingSessionsAdmin = ({
     );
   });
 
-  const handleCopyLink = (cls: (typeof classData)[0]) => {
+  const handleCopyLink = async (cls: (typeof classData)[0]) => {
     const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date?.split('T')[0]}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`;
-    navigator.clipboard.writeText(link);
-    setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
-    setTimeout(() => {
-      setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
-    }, 2000);
+    const data = await createShortUrlAction({
+      originalUrl: link,
+      csrfToken,
+    });
+    if (data.success && data.shortUrl) {
+      navigator.clipboard.writeText(data.shortUrl);
+      setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
+      setTimeout(() => {
+        setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
+      }, 2000);
+    }
   };
 
   const [deleteClassLoading, setDeleteClassLoading] = useState(false);

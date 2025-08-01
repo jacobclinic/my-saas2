@@ -7,10 +7,7 @@ async function SiteLayout(props: React.PropsWithChildren) {
 
   return (
     <>
-      <SiteHeaderSessionProvider data={data.session} />
-
       {props.children}
-
       {/* <Footer /> */}
     </>
   );

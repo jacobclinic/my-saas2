@@ -20,12 +20,13 @@ import {
 } from '../../base-v2/ui/Select';
 import { GRADES } from '~/lib/constants-v2';
 import { format, toZonedTime } from 'date-fns-tz';
-import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import DeleteClassDialog from '../../classes/DeleteClassDialog';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
 import AppHeader from '../../AppHeader';
 import TimezoneIndicator from '../../TimezoneIndicator';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 const ClassesAdmin = ({
   classesData,
@@ -46,6 +47,7 @@ const ClassesAdmin = ({
   const [editLoading, setEditLoading] = useState(false);
   const [selectedEditClassData, setSelectedEditClassData] =
     useState<ClassListData>({} as ClassListData);
+  const csrfToken = useCsrfToken();
 
   const createSchedule = (cls: ClassWithTutorAndEnrollmentAdmin) => {
     return (
@@ -120,6 +122,7 @@ const ClassesAdmin = ({
         },
         '',
       ) || 'No schedule available';
+
     const registrationData = {
       classId: cls.id,
       className: cls.name || '',
@@ -128,10 +131,28 @@ const ClassesAdmin = ({
       tutorName: cls.tutorName || '',
     };
 
-    const registrationLink =
-      await generateRegistrationLinkAction(registrationData);
+    // Create URL with parameters
+    const urlParams = new URLSearchParams({
+      classId: registrationData.classId,
+      className: registrationData.className,
+      nextSession: registrationData.nextSession,
+      time: registrationData.time,
+      tutorName: registrationData.tutorName,
+    });
 
-    navigator.clipboard.writeText(registrationLink);
+    const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
+
+    const shortLinkResult = await createShortUrlAction({
+      originalUrl: registrationUrl,
+      csrfToken: csrfToken,
+    });
+
+    const finalLink =
+      shortLinkResult.success && shortLinkResult.shortUrl
+        ? shortLinkResult.shortUrl
+        : registrationUrl;
+
+    navigator.clipboard.writeText(finalLink);
     setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
     setTimeout(() => {
       setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));

@@ -132,6 +132,8 @@ export class ZoomService {
             const tomorrowSessions = await getSessionsTillTomorrowWithZoomUser(this.supabaseClient);
             const sessionIds = tomorrowSessions.map(session => session.id);
             const existingZoomSessionIds = await this.getExistingZoomSessionsIds(sessionIds);
+            let successCount = 0;
+            let errorCount = 0;
             for (const session of tomorrowSessions) {
                 logger.info(`Processing session: ${session.id}`);
                 if (existingZoomSessionIds.includes(session.id)) {
@@ -145,56 +147,76 @@ export class ZoomService {
                 }
                 const zoomUserId = session.class.tutor.zoom_user[0].zoom_user_id;
                 if (zoomUserId) {
-                    const meetingTitle = session.title || session.class.name;
-                    const sessionStartTime = new Date(session.start_time!);
-                    const sessionEndTime = new Date(session.end_time!);
-                    const meetingDurationMinutes = Math.round((sessionEndTime.getTime() - sessionStartTime.getTime()) / (1000 * 60));
 
-                    const meeting = await this.createZoomUserMeeting({
-                        userId: zoomUserId,
-                        body: {
-                            topic: meetingTitle!,
-                            agenda: session.description!,
-                            default_password: false,
-                            duration: meetingDurationMinutes,
-                            password: "123456",
-                            pre_schedule: false,
+                    try {
+
+                        const meetingTitle = session.title || session.class.name;
+                        const sessionStartTime = new Date(session.start_time!);
+                        const sessionEndTime = new Date(session.end_time!);
+                        const meetingDurationMinutes = Math.round((sessionEndTime.getTime() - sessionStartTime.getTime()) / (1000 * 60));
+
+                        const meeting = await this.createZoomUserMeeting({
+                            userId: zoomUserId,
+                            body: {
+                                topic: meetingTitle!,
+                                agenda: session.description!,
+                                default_password: false,
+                                duration: meetingDurationMinutes,
+                                password: "123456",
+                                pre_schedule: false,
+                                start_time: sessionStartTime.toISOString(),
+                                type: 2,
+                                timezone: "UTC",
+                                auto_recording: 'cloud',
+                                email_notification: false,
+                                join_before_host: true,
+                                jbh_time: 15,
+                            }
+                        });
+
+                        const createZoomSessionPayload = {
+                            session_id: session.id,
+                            meeting_uuid: meeting.uuid,
+                            meeting_id: meeting.id!.toString(),
+                            host_id: zoomUserId,
+                            host_user_id: session.class.tutor.id,
+                            type: meeting.type,
+                            status: meeting.status,
                             start_time: sessionStartTime.toISOString(),
-                            type: 2,
+                            duration: meetingDurationMinutes,
                             timezone: "UTC",
-                            auto_recording: 'cloud',
-                            email_notification: false,
-                            join_before_host: true,
-                            jbh_time: 15,
+                            join_url: meeting.join_url,
+                            start_url: meeting.start_url,
+                            password: "123456",
+                            settings_json: meeting.settings,
+                            creation_source: meeting.creation_source,
                         }
-                    });
 
-                    const createZoomSessionPayload = {
-                        session_id: session.id,
-                        meeting_uuid: meeting.uuid,
-                        meeting_id: meeting.id!.toString(),
-                        host_id: zoomUserId,
-                        host_user_id: session.class.tutor.id,
-                        type: meeting.type,
-                        status: meeting.status,
-                        start_time: sessionStartTime.toISOString(),
-                        duration: meetingDurationMinutes,
-                        timezone: "UTC",
-                        join_url: meeting.join_url,
-                        start_url: meeting.start_url,
-                        password: "123456",
-                        settings_json: meeting.settings,
-                        creation_source: meeting.creation_source,
+                        await createZoomSession(this.supabaseClient, createZoomSessionPayload);
+                        // Wait for 50ms to avoid rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                        successCount++;
+                    } catch (error) {
+                        const errorMessage = `Failed to create the zoom meeting for the session: ${session.id} for the user: ${zoomUserId}. Tutor ID: ${session.class.tutor.id}`;
+                        logger.error(error, errorMessage);
+                        errorCount++;
+                        continue;
                     }
 
-                    const zoomSession = await createZoomSession(this.supabaseClient, createZoomSessionPayload);
-                    // Wait for 50ms to avoid rate limiting
-                    await new Promise(resolve => setTimeout(resolve, 50));
                 }
             }
-            return tomorrowSessions;
+
+            if (errorCount > 0) {
+                logger.error(`Failed to create ${errorCount} zoom meetings for tomorrow sessions`);
+            }
+
+            if (successCount > 0) {
+                logger.info(`Successfully created ${successCount} zoom meetings for tomorrow sessions`);
+                return tomorrowSessions;
+            }
+
+            throw new Error('Failed to create zoom meetings for tomorrow sessions. Please try again.');
         } catch (error) {
-            logger.error(error, "Failed to create the zoom meetings for tomorrow sessions");
             throw new Error('Failed to create zoom meetings for tomorrow sessions. Please try again.');
         }
     }
