@@ -198,9 +198,7 @@ export const generateInvoicePDF = (invoiceData: {
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.text(invoiceData.student_name, 20, yPos);
-  yPos += 5;
-  doc.text(`Student ID: ${invoiceData.student_id}`, 20, yPos);
+  doc.text(`Student Name: ${invoiceData.student_name}`, 20, yPos);
   yPos += 5;
   doc.text(`Class: ${invoiceData.class_name || 'Unknown Class'}`, 20, yPos);
   if (invoiceData.class_subject) {
