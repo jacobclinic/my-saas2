@@ -9,6 +9,11 @@ const useSessionTimeValidation = (startTime: string) => {
     useEffect(() => {
         const checkTimeWindow = () => {
             try {
+
+                if (!startTime) {
+                    setIsWithinJoinWindow(false);
+                    return;
+                }
                 const now = new Date();
                 const sessionStart = new Date(startTime);
 
