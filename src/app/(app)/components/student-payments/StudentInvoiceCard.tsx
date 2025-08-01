@@ -219,7 +219,7 @@ const StudentInvoiceCard: React.FC<StudentInvoiceCardProps> = ({ invoice }) => {
             </div>
           </div>
         </div>
-        <div className='flex justify-between items-center pt-3 border-t'>
+        <div className="flex justify-between items-center pt-3 border-t">
           <div className="flex flex-wrap gap-2 pt-3 border-t">
             <Button
               variant="outline"
