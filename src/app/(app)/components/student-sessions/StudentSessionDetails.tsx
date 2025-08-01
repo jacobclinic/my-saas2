@@ -47,7 +47,9 @@ const StudentSessionDetails = ({
   const userSession = useUserSession();
   const router = useRouter();
 
-  const isWithinJoinWindow = useSessionTimeValidation(sessionData.start_time!);
+  const isWithinJoinWindow = sessionData.start_time
+    ? useSessionTimeValidation(sessionData.start_time)
+    : false;
 
   const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
