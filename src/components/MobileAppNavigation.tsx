@@ -12,7 +12,7 @@ import useSignOut from '~/core/hooks/use-sign-out';
 import useUserRole from '~/lib/user/hooks/use-userRole';
 import { LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
-import { cn } from '~/app/(app)/lib/utils';
+import { cn } from '~/core/generic/shadcn-utils';
 import { usePathname } from 'next/navigation';
 import Logo from '~/core/ui/Logo';
 

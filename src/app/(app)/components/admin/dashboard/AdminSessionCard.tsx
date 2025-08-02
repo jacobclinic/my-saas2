@@ -15,7 +15,7 @@ import {
 } from '../../base-v2/ui/Card';
 import { Button } from '../../base-v2/ui/Button';
 import { Badge } from '../../base-v2/ui/Badge';
-import { cn } from '../../../lib/utils';
+import { cn } from '~/core/generic/shadcn-utils';
 import {
   Check,
   Upload,

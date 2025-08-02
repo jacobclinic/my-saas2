@@ -1,4 +1,3 @@
-import React from 'react';
 import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
 
 interface AttendanceRecord {
@@ -26,7 +25,7 @@ interface PastSessionData {
   tutorId: string;
   attendance_marked: boolean;
   recordingUrl: string[];
-  attendance?:  Attendance[];
+  attendance?: Attendance[];
   materials: Material[];
   noOfStudents: number;
 }
