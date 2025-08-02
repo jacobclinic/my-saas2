@@ -10,7 +10,7 @@ import {
 
 import { format, parseISO } from 'date-fns';
 import getLogger from '~/core/logger';
-import { EmailService } from '~/core/email/send-email-mailtrap';
+import { EmailService } from '~/core/email/send-email';
 import {
   getStudentNotifyAfterEmailTemplate,
   getStudentNotifyBefore1HrEmailTemplate,

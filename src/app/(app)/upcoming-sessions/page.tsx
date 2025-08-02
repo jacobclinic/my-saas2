@@ -9,7 +9,7 @@ import UpcomingSessionClient from '../components/upcoming-sessions/UpcomingSessi
 import { redirect } from 'next/navigation';
 import StudentUpcomingSessionClient from '../components/upcoming-sessions-student/StudentUpcomingSessionClient';
 import UpcomingSessionsAdmin from '../components/admin/upcoming-sessions/UpcomingSessionsAdmin';
-import { getAllUpcominSessionsAdmin } from '~/lib/classes/server-actions-v2';
+import { getAllUpcominSessionsAdmin } from '~/lib/classes/server-actions';
 import TimezoneIndicator from '../components/TimezoneIndicator';
 
 export const metadata = {

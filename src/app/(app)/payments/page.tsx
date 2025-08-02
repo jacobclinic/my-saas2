@@ -11,7 +11,7 @@ import {
 import { Info } from 'lucide-react';
 import AdminPaymentsPanel from '~/app/(app)/components/admin-payments/AdminPaymentsPanel';
 import StudentPaymentsView from '~/app/(app)/components/student-payments/StudentPaymentsView';
-import { getPaymentSummaryForPage } from '~/lib/payments/admin-payment-actions';
+import { getPaymentSummaryForPage } from '~/lib/payments/server-actions';
 
 export const metadata = {
   title: 'Payments Management',
@@ -64,7 +64,7 @@ async function PaymentsPage({
                   </div>
                 }
               >
-                <AdminPaymentsPanel/>
+                <AdminPaymentsPanel />
               </Suspense>
             </PageBody>
           </>

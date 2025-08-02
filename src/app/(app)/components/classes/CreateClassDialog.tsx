@@ -13,7 +13,7 @@ import {
 import TimezoneIndicator from '../TimezoneIndicator';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { createClassAction } from '~/lib/classes/server-actions-v2';
+import { createClassAction } from '~/lib/classes/server-actions';
 import { useToast } from '../../lib/hooks/use-toast';
 import BaseDialog from '../base-v2/BaseDialog';
 import { NewClassData, TimeSlot } from '~/lib/classes/types/class-v2';

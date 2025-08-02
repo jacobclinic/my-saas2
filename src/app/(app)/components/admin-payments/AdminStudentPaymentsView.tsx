@@ -16,7 +16,7 @@ import {
   approveStudentPaymentAction,
   getPaymentsForPeriod,
   rejectStudentPaymentAction,
-} from '~/lib/payments/admin-payment-actions';
+} from '~/lib/payments/server-actions';
 import DataTable from '~/core/ui/DataTable';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';
 import SearchBar from '../base-v2/ui/SearchBar';

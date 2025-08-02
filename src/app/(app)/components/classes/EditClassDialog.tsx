@@ -22,7 +22,7 @@ import {
 import { Button } from '../base-v2/ui/Button';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { updateClassAction } from '~/lib/classes/server-actions-v2';
+import { updateClassAction } from '~/lib/classes/server-actions';
 import { useToast } from '../../lib/hooks/use-toast';
 import DeleteClassDialog from './DeleteClassDialog';
 
