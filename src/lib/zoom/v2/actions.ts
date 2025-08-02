@@ -1,6 +1,10 @@
 'use server';
 
 import { KJUR } from 'jsrsasign'
+import { ZoomService } from './zoom.service';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
 
 export async function generateZoomSdkSignature(
   meetingNumber: string,
@@ -26,5 +30,21 @@ export async function generateZoomSdkSignature(
   const sPayload = JSON.stringify(oPayload)
   const sdkJWT = KJUR.jws.JWS.sign('HS256', sHeader, sPayload, process.env.ZOOM_SDK_SECRET);
   return sdkJWT;
+
+}
+
+export async function getAllZoomUsersAction() {
+  const zoomService = new ZoomService();
+  return await zoomService.getAllZoomUsers();
+}
+
+export async function createUnassignedZoomUserAction(email: string) {
+  try {
+    const zoomService = new ZoomService();
+    return await zoomService.createUnassignedZoomUser(email);
+  } catch (error) {
+    logger.error(error, "Failed to create unassigned zoom user");
+    throw new Error("Failed to create unassigned zoom user. Please try again.");
+  }
 
 }
