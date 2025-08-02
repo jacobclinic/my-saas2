@@ -1,22 +1,14 @@
 'use client'
 import React, { useEffect, useState } from 'react'
-import {
-    Table,
-    TableHeader,
-    TableBody,
-    TableHead,
-    TableRow,
-    TableCell,
-} from '~/core/ui/Table'
-import Button from '~/core/ui/Button'
-import TextField, { TextFieldLabel, TextFieldInput } from '~/core/ui/TextField'
+import { Button } from '../components/base-v2/ui/Button'
+import { Input } from '../components/base-v2/ui/Input'
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from '~/core/ui/Dialog'
+} from '../components/base-v2/ui/Dialog'
 import { createUnassignedZoomUserAction, getAllZoomUsersAction } from '~/lib/zoom/v2/actions'
 
 const AdminZoomUserManagement = () => {
@@ -79,32 +71,46 @@ const AdminZoomUserManagement = () => {
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Zoom User ID</TableHead>
-                            <TableHead>Zoom Email</TableHead>
-                            <TableHead>Tutor Name</TableHead>
-                            <TableHead>Assigned</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {zoomUsers.map((user, index) => (
-                            <TableRow key={index}>
-                                <TableCell className="font-mono text-sm">
-                                    {user.zoom_user_id}
-                                </TableCell>
-                                <TableCell>{user.email}</TableCell>
-                                <TableCell>{user.users?.display_name ?? "No tutor assigned"}</TableCell>
-                                <TableCell>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${user.is_assigned ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
-                                        {user.is_assigned ? 'Yes' : 'No'}
-                                    </span>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                <div className="w-full overflow-auto">
+                    <table className="w-full caption-bottom text-sm">
+                        <thead className="[&_tr]:border-b border-gray-50 dark:border-dark-800">
+                            <tr className="border-b border-gray-50 dark:border-dark-800 transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                <th className="h-12 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
+                                    Zoom User ID
+                                </th>
+                                <th className="h-12 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
+                                    Zoom Email
+                                </th>
+                                <th className="h-12 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
+                                    Tutor Name
+                                </th>
+                                <th className="h-12 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
+                                    Assigned
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="[&_tr:last-child]:border-0">
+                            {zoomUsers.map((user, index) => (
+                                <tr key={index} className="border-b border-gray-50 dark:border-dark-800 transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                    <td className="py-2.5 px-4 align-middle [&:has([role=checkbox])]:pr-0 font-mono text-sm">
+                                        {user.zoom_user_id}
+                                    </td>
+                                    <td className="py-2.5 px-4 align-middle [&:has([role=checkbox])]:pr-0">
+                                        {user.email}
+                                    </td>
+                                    <td className="py-2.5 px-4 align-middle [&:has([role=checkbox])]:pr-0">
+                                        {user.users?.display_name ?? "No tutor assigned"}
+                                    </td>
+                                    <td className="py-2.5 px-4 align-middle [&:has([role=checkbox])]:pr-0">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${user.is_assigned ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                                            {user.is_assigned ? 'Yes' : 'No'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -115,7 +121,7 @@ const AdminZoomUserManagement = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-3">
-                            <TextField>
+                            <div className="flex flex-col space-y-1">
                                 <div className="mt-2 mb-8">
                                     <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                                         Make sure you have set up an alias or separate email for this address.
@@ -124,8 +130,10 @@ const AdminZoomUserManagement = () => {
                                         Verification emails will be sent here.
                                     </p>
                                 </div>
-                                <TextFieldLabel >Comma Email</TextFieldLabel>
-                                <TextFieldInput
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    Comma Email
+                                </label>
+                                <Input
                                     type="email"
                                     value={zoomEmail}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setZoomEmail(e.target.value)}
@@ -133,7 +141,7 @@ const AdminZoomUserManagement = () => {
                                     required
                                     disabled={isLoading}
                                 />
-                            </TextField>
+                            </div>
                             
                             {error && (
                                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">

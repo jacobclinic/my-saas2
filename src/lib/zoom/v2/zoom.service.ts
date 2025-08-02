@@ -40,8 +40,8 @@ export class ZoomService {
             }
             const allUnassignedZoomUsers = await getAllUnassignedZoomUsers(this.supabaseClient);
 
-            if (allUnassignedZoomUsers.length <= 0) {
-                throw new Error('No unassigned zoom users found. Please create a new zoom user.');
+            if (!allUnassignedZoomUsers || allUnassignedZoomUsers.length === 0) {
+                throw new Error('No unassigned Zoom users are available to assign.');
             }
 
             const randomUnassignedZoomUser = allUnassignedZoomUsers[0];
