@@ -22,6 +22,7 @@ import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
 import { useRouter } from 'next/navigation';
+import useSessionTimeValidation from '~/core/hooks/use-session-time-validation';
 
 
 interface StudentSessionDetailsProps {
@@ -46,28 +47,10 @@ const StudentSessionDetails = ({
   const userSession = useUserSession();
   const router = useRouter();
 
+  const isWithinJoinWindow = useSessionTimeValidation(sessionData.start_time ?? "");
+
   const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
-      // try {
-      //   const result = await joinMeetingAsUser({
-      //     meetingId: sessionData?.zoomMeetingId,
-      //     studentData: {
-      //       first_name: userSession?.data?.first_name || '',
-      //       last_name: userSession?.data?.last_name || '',
-      //       email: userSession?.auth?.user?.email || '',
-      //     },
-      //   });
-
-      //   startTransition(() => {
-      //     if (result.success) {
-      //       window.open(result.start_url, '_blank');
-      //     } else {
-      //       alert('Failed to generate join link');
-      //     }
-      //   });
-      // } catch (error) {
-      //   alert('An error occurred while joining the meeting');
-      // }
       startTransition(() => {
         if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
           const classId = sessionData.sessionRawData.class.id;
@@ -211,6 +194,7 @@ const StudentSessionDetails = ({
 
             {type !== 'past' && (
               <Button
+                disabled={!isWithinJoinWindow}
                 variant="primary"
                 onClick={() => joinMeetingAsStudentUser(formattedSessionData)}
               >
@@ -254,6 +238,7 @@ const StudentSessionDetails = ({
                   formattedSessionData.paymentStatus ===
                   PAYMENT_STATUS.VERIFIED && (
                     <Button
+                      disabled={!isWithinJoinWindow}
                       variant="primary"
                       onClick={() =>
                         joinMeetingAsStudentUser(formattedSessionData)

@@ -44,6 +44,7 @@ import AddLessonDetailsDialog from './AddLessonDetailsDialog';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 import { useRouter } from 'next/navigation';
+import useSessionTimeValidation from '~/core/hooks/use-session-time-validation';
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
@@ -86,6 +87,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [loading, setLoading] = useState(false);
 
   const csrfToken = useCsrfToken();
+  const isWithinJoinWindow = useSessionTimeValidation(sessionData.start_time);
 
   const handleCopyLink = async (
     link: string,
@@ -264,18 +266,23 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full bg-primary-blue-50 text-primary-blue-700 hover:bg-primary-blue-100 border border-primary-blue-100 group-hover:bg-primary-blue-100"
-                      onClick={joinMeetingAsTutor}
-                      disabled={isPending}
-                    >
-                      <ExternalLink size={16} className="mr-2" />
-                      <span>Join Class</span>
-                    </Button>
+                    <div className="w-full">
+                      <Button
+                        variant="ghost"
+                        className="w-full bg-primary-blue-50 text-primary-blue-700 hover:bg-primary-blue-100 border border-primary-blue-100 group-hover:bg-primary-blue-100"
+                        onClick={joinMeetingAsTutor}
+                        disabled={isPending || !isWithinJoinWindow}
+                      >
+                        <ExternalLink size={16} className="mr-2" />
+                        <span>Join Class</span>
+                      </Button>
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Join the class as a tutor</p>
+                    {!isWithinJoinWindow
+                      ? <p>Join button will be available 1 hour before class starts</p>
+                      : <p>Join the class as a tutor</p>
+                    }
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

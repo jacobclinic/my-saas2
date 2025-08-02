@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomCreateUserResponse, ZoomMeetingRecordingResponse, ZoomMeetingResponse } from "./types";
+import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomCreateUserResponse, ZoomMeetingRecordingResponse, ZoomMeetingResponse, ZoomUserResponse } from "./types";
 
 export class ZoomClient {
     private axiosClient: AxiosInstance;
@@ -90,6 +90,11 @@ export class ZoomClient {
             ? encodeURIComponent(encodeURIComponent(meetingId))
             : meetingId;
         const response = await this.axiosClient.get(`/meetings/${encodedMeetingId}/recordings`);
+        return response.data;
+    }
+
+    async getUserById(userId: string): Promise<ZoomUserResponse> {
+        const response = await this.axiosClient.get(`/users/${userId}`);
         return response.data;
     }
 

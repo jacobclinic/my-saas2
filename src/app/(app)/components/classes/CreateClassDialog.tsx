@@ -133,9 +133,10 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           tutorId,
         });
       } else {
+        const errorMessage = result.error || 'Failed to create class, Please try again. If the problem persists, please contact support.';
         toast({
           title: 'Error',
-          description: 'Failed to create class',
+          description: errorMessage,
           variant: 'destructive',
         });
       }
