@@ -134,14 +134,11 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
 
     // Create Zoom user if not already created
     const zoomDisplayName = `${currentUserData.first_name} ${currentUserData.last_name}`;
-    const randomString = Math.random().toString(36).substring(2, 8);
-    const commaEducationEmail = `${zoomDisplayName.replace(/\s/g, '').toLowerCase()}.${randomString}@commaeducation.lk`;
-    logger.info(`Creating Zoom user for email: ${commaEducationEmail}`);
+    logger.info(`Creating Zoom user for email: ${zoomDisplayName}`);
     const zoomService = new ZoomService(client);
     await zoomService.createZoomUser({
       action: 'create',
       user_info: {
-        email: commaEducationEmail,
         first_name: currentUserData.first_name || '',
         last_name: currentUserData.last_name || '',
         display_name: zoomDisplayName,

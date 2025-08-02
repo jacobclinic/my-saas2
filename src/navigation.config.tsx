@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   LogOut,
+  Video,
 } from 'lucide-react';
 
 type Divider = {
@@ -81,6 +82,7 @@ const NAVIGATION_CONFIG: NavigationConfig = {
       end: true,
       userRole: ['admin'],
     },
+
     // {
     //   label: 'Students',
     //   path: '/students',
@@ -125,6 +127,15 @@ const NAVIGATION_CONFIG: NavigationConfig = {
       },
       end: true,
       userRole: ['admin', 'tutor', 'student'],
+    },
+    {
+      label: 'Zoom',
+      path: '/zoom-user-management',
+      Icon: () => {
+        return <Video size={20} />;
+      },
+      end: true,
+      userRole: ['admin'],
     },
     { divider: true },
     {

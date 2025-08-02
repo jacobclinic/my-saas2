@@ -1,14 +1,14 @@
 import { zoomClient, ZoomClient } from "./client";
 import getLogger from "~/core/logger";
-import { createZoomUser } from "./database/mutations";
+import { createUnassignedZoomUser, updateZoomUser } from "./database/mutations";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "~/database.types";
 import getSupabaseServerActionClient from "~/core/supabase/action-client";
-import { getSessionsTillTomorrowWithZoomUser, getTomorrowsSessionsWithZoomUser } from "~/lib/sessions/database/queries";
+import { getSessionsTillTomorrowWithZoomUser } from "~/lib/sessions/database/queries";
 import { createZoomSession } from "~/lib/zoom_sessions/database/mutations";
 import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomMeetingRecordingUrl } from "./types";
 import { ZOOM_SESSIONS_TABLE } from "~/lib/db-tables";
-import { getZoomUserByTutorId } from "./database/queries";
+import { getAllUnassignedZoomUsers, getAllZoomUsersWithTutor, getZoomUserByTutorId } from "./database/queries";
 
 
 const logger = getLogger();
@@ -38,13 +38,22 @@ export class ZoomService {
                 logger.warn(`Zoom user already exists for tutor ID: ${user.tutor_id}`);
                 return existingZoomUser;
             }
+            const allUnassignedZoomUsers = await getAllUnassignedZoomUsers(this.supabaseClient);
+
+            if (!allUnassignedZoomUsers || allUnassignedZoomUsers.length === 0) {
+                throw new Error('No unassigned Zoom users are available to assign.');
+            }
+
+            const randomUnassignedZoomUser = allUnassignedZoomUsers[0];
+            user.user_info.email = randomUnassignedZoomUser.email;
 
             const zoomUser = await this.client.createUser(user);
 
-            await createZoomUser(this.supabaseClient, {
+            await updateZoomUser(this.supabaseClient, randomUnassignedZoomUser.id, {
                 ...zoomUser,
                 tutor_id: user.tutor_id,
             });
+
         } catch (error) {
             logger.error('Error creating zoom user:', error);
             throw new Error('Failed to create zoom user. Please try again.');
@@ -263,6 +272,24 @@ export class ZoomService {
             return false;
         }
     }
-}
 
-// export const zoomService = new ZoomService();
+    async getAllZoomUsers() {
+        try {
+            const zoomUsers = await getAllZoomUsersWithTutor(this.supabaseClient);
+            return zoomUsers;
+        } catch (error) {
+            logger.error(error, "Failed to get all zoom users");
+            return [];
+        }
+    }
+
+    async createUnassignedZoomUser(email: string) {
+        try {
+            const zoomUser = await createUnassignedZoomUser(this.supabaseClient, email);
+            return zoomUser;
+        } catch (error) {
+            logger.error(error, "Failed to create unassigned zoom user");
+            throw error;
+        }
+    }
+}

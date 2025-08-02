@@ -17,8 +17,12 @@ export async function approveTutorAction(
   try {
     const client = getSupabaseServerActionClient();
 
+    const getTutorStatus = (approve: boolean): 'ACTIVE' | 'REJECTED' => {
+      return approve ? 'ACTIVE' : 'REJECTED';
+    };
+
     const updateData = {
-      status: approve ? 'ACTIVE' : 'REJECTED',
+      status: getTutorStatus(approve),
       is_approved: approve,
     };
 
