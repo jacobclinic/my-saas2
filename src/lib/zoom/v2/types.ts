@@ -47,7 +47,7 @@ export type ZoomUserFeature = {
 }
 
 export type ZoomUserRequestInfo = {
-    email: string;
+    email?: string;
     first_name?: string;
     last_name?: string;
     display_name?: string;

@@ -56,6 +56,11 @@ const TutorView: React.FC<TutorViewProps> = ({
   const handleApproveReject = async (approve: boolean) => {
     if (!tutor.id) return;
 
+    if (!tutor.zoom_user) {
+      toast.error("Cannot approve a tutor without a associated zoom account");
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const result = await approveTutorAction(tutor.id, approve);
