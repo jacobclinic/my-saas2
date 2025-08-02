@@ -98,9 +98,9 @@ export async function getClassDataByIdwithNextSession(
     )
     .eq('id', classId)
     .maybeSingle()) as {
-      data: ClassWithTutorAndEnrollmentRawData | null;
-      error: unknown;
-    };
+    data: ClassWithTutorAndEnrollmentRawData | null;
+    error: unknown;
+  };
 
   if (result.error) {
     console.error('Error fetching class data:', result.error);
@@ -134,49 +134,6 @@ export async function getClassDataByIdwithNextSession(
 
   return transformedData;
 }
-
-// export async function getClassDataByIdWithTutorData(
-//   client: SupabaseClient<Database>,
-//   classId: string,
-// ): Promise<ClassWithTutorDetails | null> {
-//   const result = (await client
-//     .from(CLASSES_TABLE)
-//     .select(
-//       `
-//         id,
-//         name,
-//         description,
-//         subject,
-//         tutor_id,
-//         tutor:${USERS_TABLE}!tutor_id (
-//           id,
-//           first_name,
-//           last_name
-//         ),
-//         fee,
-//         status,
-//         time_slots,
-//         noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
-//       `,
-//       { count: 'exact' },
-//     )
-//     .eq('id', classId)
-//     .maybeSingle()) as {
-//     data: ClassWithTutorAndEnrollmentRawData | null;
-//     error: unknown;
-//   };
-
-//   if (result.error) {
-//     console.error('Error fetching class data:', result.error);
-//     return null;
-//   }
-
-//   if (!result.data) {
-//     console.error('No class data found for ID:', classId);
-//     return null;
-//   }
-
-// }
 
 export async function getAllClassesData(
   client: SupabaseClient<Database>,
@@ -604,10 +561,10 @@ export async function getAllClassesByStudentIdData(
             tutor_id: classData.tutor_id || null,
             tutor: tutorData
               ? {
-                id: tutorData.id || null,
-                first_name: tutorData.first_name || null,
-                last_name: tutorData.last_name || null,
-              }
+                  id: tutorData.id || null,
+                  first_name: tutorData.first_name || null,
+                  last_name: tutorData.last_name || null,
+                }
               : null,
             time_slots: timeSlots,
             fee: classData.fee || null,
@@ -628,13 +585,15 @@ export async function getAllClassesByStudentIdData(
   }
 }
 
-
 export async function getClassDataByClassId(
   client: SupabaseClient<Database>,
   classId: string,
 ): Promise<ClassType | null> {
-  try{
-   const {data, error} = await client.from(CLASSES_TABLE).select(`
+  try {
+    const { data, error } = await client
+      .from(CLASSES_TABLE)
+      .select(
+        `
         id,
         created_at,
         name,
@@ -646,9 +605,12 @@ export async function getClassDataByClassId(
         time_slots,
         starting_date,
         grade,
-        end_date`).eq('id', classId).maybeSingle();
+        end_date`,
+      )
+      .eq('id', classId)
+      .maybeSingle();
 
-    if(error){
+    if (error) {
       console.error('Error fetching class data:', error);
       throw new Error(
         `Error fetching class data: ${(error as PostgrestError).message}`,
@@ -656,10 +618,8 @@ export async function getClassDataByClassId(
     }
 
     return data as ClassType | null;
-
-  }catch(error){
+  } catch (error) {
     console.error('Failed to fetch class data:', error);
     throw error;
   }
-  
 }

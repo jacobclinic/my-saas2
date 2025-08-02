@@ -8,9 +8,8 @@ import {
   USERS_TABLE,
   RESOURCE_MATERIALS_TABLE,
   STUDENT_PAYMENTS_TABLE,
-  ZOOM_USERS_TABLE
+  ZOOM_USERS_TABLE,
 } from '~/lib/db-tables';
-import { SessionsWithTableData } from '../types/session';
 import {
   PastSession,
   pastSessionsForAttendance,
@@ -18,202 +17,6 @@ import {
 } from '../types/session-v2';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
-
-// /**
-//  * @description Fetch session object data (not auth!) by ID {@link sessionId}
-//  */
-// export async function getSessionDataById(
-//   client: SupabaseClient<Database>,
-//   sessionId: string,
-// ): Promise<SessionsWithTableData | null>  {
-//   try {
-//     const { data } = await client
-//       .from(SESSIONS_TABLE)
-//       .select(
-//         `
-//           id,
-//           classId,
-//           recordingUrls,
-//           status,
-//           startTime,
-//           endTime,
-//           recurringSessionId,
-//           title,
-//           description,
-//           updatedAt,
-//             class:${CLASSES_TABLE}!classId (
-//               id,
-//               name,
-//               tutorId,
-//               tutor:${USERS_TABLE}!tutorId (
-//                 id,
-//                 firstName,
-//                 lastName
-//               ),
-//               noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
-//             ),
-//             noOfAtendedStudents:${STUDENT_SESSION_ATTENDANCE_TABLE}!id(count)
-//         `,
-//         { count: 'exact' }
-//       )
-//       .eq('id', sessionId)
-//       .maybeSingle() as { data: SessionsWithTableDataRawData | null };
-
-//     console.log("getAllSessionsData", data)
-
-//     if (!data) {
-//       return null;
-//     }
-
-//     // Transform the data to get the count directly
-//     const transformedData: SessionsWithTableData = {
-//       ...data,
-//       class: {
-//         ...data.class,
-//         noOfStudents: data?.class?.noOfStudents[0]?.count || 0,
-//       },
-//       noOfAtendedStudents: data?.noOfAtendedStudents[0]?.count || 0,
-//     };
-
-//     console.log("getAllSessionsData-2", transformedData)
-
-//     return transformedData;
-//   } catch (error) {
-//     console.error('Failed to fetch session by id:', error);
-//     throw error;
-//   }
-// }
-
-// export async function getAllSessionsData(
-//   client: SupabaseClient<Database>,
-// ): Promise<SessionsWithTableData[] | []> {
-//   try {
-//     const { data, error } = await client
-//       .from(SESSIONS_TABLE)
-//       .select(
-//         `
-//           id,
-//           classId,
-//           recordingUrls,
-//           status,
-//           startTime,
-//           endTime,
-//           recurringSessionId,
-//           title,
-//           description,
-//           updatedAt,
-//           class:${CLASSES_TABLE}!classId (
-//             id,
-//             name,
-//             tutorId,
-//             tutor:${USERS_TABLE}!tutorId (
-//               id,
-//               firstName,
-//               lastName
-//             ),
-//             noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
-//           ),
-//           noOfAtendedStudents:${STUDENT_SESSION_ATTENDANCE_TABLE}!id(count)
-//         `,
-//       )
-//       .returns<SessionsWithTableDataRawData[]>();
-
-//     console.log("getAllSessionsData", data)
-
-//     if (error) {
-//       throw new Error(`Error fetching sessions: ${error.message}`);
-//     }
-
-//     if (!data) {
-//       return [];
-//     }
-
-//     // Transform the data to get the count directly
-//     const transformedData: SessionsWithTableData[] = data?.map((sessionData) => ({
-//       ...sessionData,
-//       class: {
-//         ...sessionData?.class,
-//         noOfStudents: sessionData?.class?.noOfStudents[0]?.count || 0,
-//       },
-//       noOfAtendedStudents: sessionData?.noOfAtendedStudents[0]?.count || 0,
-//     }));
-
-//     console.log("getAllSessionsData-2", transformedData)
-
-//     return transformedData;
-
-//   } catch (error) {
-//     console.error('Failed to fetch sessions:', error);
-//     throw error;
-//   }
-// }
-
-// export async function getAllSessionsByClassIdData(
-//   client: SupabaseClient<Database>,
-//   classId: string
-// ): Promise<SessionsWithTableData[] | []> {
-//   try {
-//     const { data, error } = await client
-//       .from(SESSIONS_TABLE)
-//       .select(
-//         `
-//           id,
-//           classId,
-//           recordingUrls,
-//           status,
-//           startTime,
-//           endTime,
-//           recurringSessionId,
-//           title,
-//           description,
-//           updatedAt,
-//           class:${CLASSES_TABLE}!classId (
-//             id,
-//             name,
-//             tutorId,
-//             tutor:${USERS_TABLE}!tutorId (
-//               id,
-//               firstName,
-//               lastName
-//             ),
-//             noOfStudents:${STUDENT_CLASS_ENROLLMENTS_TABLE}!id(count)
-//           ),
-//           noOfAtendedStudents:${STUDENT_SESSION_ATTENDANCE_TABLE}!id(count)
-//         `,
-//       )
-//       .eq('classId', classId)
-//       // .maybeSingle() as { data: SessionsWithTableDataRawData | null };
-//       .returns<SessionsWithTableDataRawData[]>();
-
-//     console.log("getAllSessionsData", data)
-
-//     if (error) {
-//       throw new Error(`Error fetching sessions: ${error.message}`);
-//     }
-
-//     if (!data) {
-//       return [];
-//     }
-
-//     // Transform the data to get the count directly
-//     const transformedData: SessionsWithTableData[] = data?.map((sessionData) => ({
-//       ...sessionData,
-//       class: {
-//         ...sessionData?.class,
-//         noOfStudents: sessionData?.class?.noOfStudents[0]?.count || 0,
-//       },
-//       noOfAtendedStudents: sessionData?.noOfAtendedStudents[0]?.count || 0,
-//     }));
-
-//     console.log("getAllSessionsData-2", transformedData)
-
-//     return transformedData;
-
-//   } catch (error) {
-//     console.error('Failed to fetch sessions:', error);
-//     throw error;
-//   }
-// }
 
 // ------------------version 2----------------
 
@@ -344,15 +147,15 @@ export async function getAllUpcommingSessionsData(
         ...sessionData,
         class: classTemp
           ? {
-            id: classTemp.id,
-            name: classTemp.name,
-            subject: classTemp.subject,
-            tutor_id: classTemp.tutor_id,
-            tutor: Array.isArray(classTemp.tutor)
-              ? classTemp.tutor[0]
-              : classTemp.tutor || undefined,
-            students: classTemp.students,
-          }
+              id: classTemp.id,
+              name: classTemp.name,
+              subject: classTemp.subject,
+              tutor_id: classTemp.tutor_id,
+              tutor: Array.isArray(classTemp.tutor)
+                ? classTemp.tutor[0]
+                : classTemp.tutor || undefined,
+              students: classTemp.students,
+            }
           : undefined,
       };
     });
@@ -437,15 +240,15 @@ export async function getTodaysAllUpcommingSessionsData(
         ...sessionData,
         class: classTemp
           ? {
-            id: classTemp.id,
-            name: classTemp.name,
-            subject: classTemp.subject,
-            tutor_id: classTemp.tutor_id,
-            tutor: Array.isArray(classTemp.tutor)
-              ? classTemp.tutor[0]
-              : classTemp.tutor || undefined,
-            students: classTemp.students,
-          }
+              id: classTemp.id,
+              name: classTemp.name,
+              subject: classTemp.subject,
+              tutor_id: classTemp.tutor_id,
+              tutor: Array.isArray(classTemp.tutor)
+                ? classTemp.tutor[0]
+                : classTemp.tutor || undefined,
+              students: classTemp.students,
+            }
           : undefined,
       };
     });
@@ -1052,15 +855,15 @@ export async function getAllPastSessionsDataAdmin(
         ...sessionData,
         class: classTemp
           ? {
-            id: classTemp.id,
-            name: classTemp.name,
-            subject: classTemp.subject,
-            tutor_id: classTemp.tutor_id,
-            tutor: Array.isArray(classTemp.tutor)
-              ? classTemp.tutor[0]
-              : classTemp.tutor || undefined,
-            students: classTemp.students,
-          }
+              id: classTemp.id,
+              name: classTemp.name,
+              subject: classTemp.subject,
+              tutor_id: classTemp.tutor_id,
+              tutor: Array.isArray(classTemp.tutor)
+                ? classTemp.tutor[0]
+                : classTemp.tutor || undefined,
+              students: classTemp.students,
+            }
           : undefined,
         attendance: attendanceTemp ?? [],
       };
@@ -1495,15 +1298,15 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
         ...sessionData,
         class: classTemp
           ? {
-            id: classTemp.id,
-            name: classTemp.name,
-            subject: classTemp.subject,
-            tutor_id: classTemp.tutor_id,
-            fee: classTemp.fee,
-            tutor: Array.isArray(classTemp.tutor)
-              ? classTemp.tutor[0]
-              : classTemp.tutor || undefined,
-          }
+              id: classTemp.id,
+              name: classTemp.name,
+              subject: classTemp.subject,
+              tutor_id: classTemp.tutor_id,
+              fee: classTemp.fee,
+              tutor: Array.isArray(classTemp.tutor)
+                ? classTemp.tutor[0]
+                : classTemp.tutor || undefined,
+            }
           : undefined,
         materials: transformedMaterials || [],
         payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
@@ -1972,23 +1775,29 @@ type UpcomingSessionWithZoomUser = UpcomingSession & {
 };
 
 export async function getSessionsTillTomorrowWithZoomUser(
-  client: SupabaseClient<Database>
+  client: SupabaseClient<Database>,
 ): Promise<UpcomingSessionWithZoomUser[] | []> {
   try {
     // Current time in UTC
     const now = new Date();
 
     // End of tomorrow in UTC (23:59:59.999)
-    const tomorrowEndUTC = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      23, 59, 59, 999
-    ));
+    const tomorrowEndUTC = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+        23,
+        59,
+        59,
+        999,
+      ),
+    );
 
     const { data, error } = await client
       .from(SESSIONS_TABLE)
-      .select(`
+      .select(
+        `
         id,
         created_at,
         class_id,
@@ -2016,7 +1825,9 @@ export async function getSessionsTillTomorrowWithZoomUser(
             )
           )
         )
-      `, { count: 'exact' })
+      `,
+        { count: 'exact' },
+      )
       .gt('start_time', now.toISOString())
       .lte('start_time', tomorrowEndUTC.toISOString())
       .order('start_time', { ascending: true });
@@ -2025,38 +1836,49 @@ export async function getSessionsTillTomorrowWithZoomUser(
       throw error;
     }
 
-    return data as unknown as UpcomingSessionWithZoomUser[] || [];
+    return (data as unknown as UpcomingSessionWithZoomUser[]) || [];
   } catch (error) {
     throw error;
   }
 }
 
 export async function getTomorrowsSessionsWithZoomUser(
-  client: SupabaseClient<Database>
+  client: SupabaseClient<Database>,
 ): Promise<UpcomingSessionWithZoomUser[] | []> {
   try {
     // Current time in UTC
     const now = new Date();
 
     // Start of tomorrow in UTC (00:00:00)
-    const tomorrowStartUTC = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      0, 0, 0, 0
-    ));
+    const tomorrowStartUTC = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
 
     // End of tomorrow in UTC (23:59:59.999)
-    const tomorrowEndUTC = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      23, 59, 59, 999
-    ));
+    const tomorrowEndUTC = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+        23,
+        59,
+        59,
+        999,
+      ),
+    );
 
     const { data, error } = await client
       .from(SESSIONS_TABLE)
-      .select(`
+      .select(
+        `
         id,
         created_at,
         class_id,
@@ -2084,7 +1906,9 @@ export async function getTomorrowsSessionsWithZoomUser(
             )
           )
         )
-      `, { count: 'exact' })
+      `,
+        { count: 'exact' },
+      )
       .gte('start_time', tomorrowStartUTC.toISOString())
       .lte('start_time', tomorrowEndUTC.toISOString())
       .order('start_time', { ascending: true });
@@ -2093,13 +1917,16 @@ export async function getTomorrowsSessionsWithZoomUser(
       throw error;
     }
 
-    return data as unknown as UpcomingSessionWithZoomUser[] || [];
+    return (data as unknown as UpcomingSessionWithZoomUser[]) || [];
   } catch (error) {
     throw error;
   }
 }
 
-export async function getSessionById( client: SupabaseClient<Database>,  session_id: string) {
+export async function getSessionById(
+  client: SupabaseClient<Database>,
+  session_id: string,
+) {
   try {
     const { data, error } = await client
       .from(SESSIONS_TABLE)

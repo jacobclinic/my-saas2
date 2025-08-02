@@ -153,54 +153,6 @@ export async function deleteSession(client: Client, sessionId: string) {
   }
 }
 
-
-// export async function updateRecordingUrl(
-//   client: Client,
-//   zoomMeetingId: string,
-//   recordingUrl: string,
-// ) {
-//   try {
-//     // Step 1: Fetch the existing recording_urls array
-//     const { data: session, error: fetchError } = await client
-//       .from(SESSIONS_TABLE)
-//       .select('recording_urls')
-//       .eq('zoom_meeting_id', zoomMeetingId)
-//       .single();
-
-//     if (fetchError) {
-//       logger.error('Error fetching session data:', fetchError);
-//     }
-
-//     if (fetchError) throw fetchError;
-//     logger.info('Fetched session data:', session);
-//     if (!session) {
-//       throw new Error(
-//         `Session with Zoom Meeting ID ${zoomMeetingId} not found.`,
-//       );
-//     }
-//     logger.info('Fetched session data:', session.recording_urls);
-
-//     // Step 2: Append the new URL to the array
-//     const updatedUrls = [...(session.recording_urls ?? []), recordingUrl];
-
-//     // Step 3: Update the row with the new array
-//     const { data, error: updateError } = await client
-//       .from(SESSIONS_TABLE)
-//       .update({ recording_urls: updatedUrls })
-//       .eq('zoom_meeting_id', zoomMeetingId)
-//       .throwOnError()
-//       .single();
-
-//     if (updateError) throw updateError;
-
-//     return data;
-//   } catch (error) {
-//     logger.error('Error updating recording URL:', error);
-//     console.error('Error updating recording URL:', error);
-//     throw new Error('Failed to update recording URL. Please try again.');
-//   }
-// }
-
 export async function updateRecordingUrl(
   client: Client, // Adjust type based on your `getSupabaseServerActionClient` return type
   zoomMeetingId: string,

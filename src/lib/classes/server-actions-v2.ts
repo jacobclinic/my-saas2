@@ -25,7 +25,10 @@ import { isAdminOrCLassTutor } from '../user/database/queries';
 import { createInvoiceForNewClass } from '../invoices/database/mutations';
 import { notifyStudentsAfterClassScheduleUpdate } from '../notifications/email/email.notification.service';
 import { notifyStudentsAfterClassScheduleUpdateSMS } from '../notifications/sms/sms.notification.service';
-import { generateWeeklyOccurrences, RecurrenceInput } from '../utils/recurrence-utils';
+import {
+  generateWeeklyOccurrences,
+  RecurrenceInput,
+} from '../utils/recurrence-utils';
 import { isEqual } from '../utils/lodash-utils';
 import { ZoomService } from '../zoom/v2/zoom.service';
 
@@ -47,7 +50,6 @@ type DeleteClassParams = {
 
 export const createClassAction = withSession(
   async (params: CreateClassParams) => {
-
     const { classData, csrfToken } = params;
     const client = getSupabaseServerActionClient();
 
@@ -299,7 +301,6 @@ export const updateClassAction = withSession(
     // Call this method to create zoom meetings for newly created classes.
     await zoomService.createMeetingsForTomorrowSessions();
 
-
     revalidatePath('/classes');
     revalidatePath(`/classes/${result?.id}`);
     revalidatePath('/(app)/classes');
@@ -414,43 +415,6 @@ export const deleteClassAction = withSession(
 //   }
 
 //   return results;
-// };
-
-// export const createZoomMeeting = async (
-//   classId: string,
-//   classData: NewClassData,
-//   occurrence: { startTime: Date; endTime: Date },
-// ) => {
-//   const start_time = occurrence.startTime.toISOString();
-//   const end_time = occurrence.endTime.toISOString();
-//   try {
-//     // Create Zoom meeting
-//     const zoomMeeting = await zoomService.createMeeting(
-//       {
-//         topic: `${classData.name}_${start_time}`,
-//         start_time,
-//         duration:
-//           (new Date(occurrence.endTime).getTime() -
-//             new Date(occurrence.startTime).getTime()) /
-//           (1000 * 60),
-//         timezone: 'Asia/Colombo',
-//         type: 2,
-//       },
-//       '',
-//     );
-//     if (!zoomMeeting) {
-//       throw new Error('Failed to initialize Zoom session');
-//     }
-//     return {
-//       zoomMeeting: zoomMeeting,
-//       class_id: classId,
-//       start_time,
-//       end_time,
-//       zoom_meeting_id: zoomMeeting?.id,
-//     };
-//   } catch (error) {
-//     console.error(`Error creating Zoom meeting`, error);
-//   }
 // };
 
 export const getAllUpcominSessionsAdmin = withSession(async () => {

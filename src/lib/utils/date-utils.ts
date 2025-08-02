@@ -2,7 +2,6 @@ import { addDays, startOfWeek, endOfYear, endOfMonth } from 'date-fns';
 import { TimeSlot } from '../classes/types/class-v2';
 import { dayMap } from '../constants-v2';
 import { parse, format } from 'date-fns';
-// export function getNextNOccurrences(timeSlot: TimeSlot, startDate: string, count: number): Date[] {
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
