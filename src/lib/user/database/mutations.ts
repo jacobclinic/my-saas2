@@ -12,7 +12,7 @@ export interface UpdateTutorData {
   education_level: string;
   subjects_teach: string[];
   class_size: string;
-  status: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'REJECTED';
 }
 
 export interface UpdateUserData {

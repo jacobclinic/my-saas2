@@ -191,7 +191,7 @@ function ApprovedTutorsTable({
         subjects_teach:
           updatedData.subjects_teach || selectedTutor.subjects_teach || [],
         class_size: updatedData.class_size || selectedTutor.class_size || '',
-        status: updatedData.status || selectedTutor.status || 'ACTIVE',
+        status: (updatedData.status || selectedTutor.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'REJECTED',
       };
 
       const result = await updateTutorAction(updateData);
@@ -478,7 +478,7 @@ function PendingTutorsTable({
         subjects_teach:
           updatedData.subjects_teach || selectedTutor.subjects_teach || [],
         class_size: updatedData.class_size || selectedTutor.class_size || '',
-        status: updatedData.status || selectedTutor.status || 'ACTIVE',
+        status: (updatedData.status || selectedTutor.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'REJECTED',
       };
 
       const result = await updateTutorAction(updateData);
