@@ -191,9 +191,10 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
             variant: 'success',
           });
         } else {
+          const errorMessage = result.error || 'Failed to edit class, Please try again. If the problem persists, please contact support.';
           toast({
             title: 'Error',
-            description: 'Failed to edit class',
+            description: errorMessage,
             variant: 'destructive',
           });
         }
