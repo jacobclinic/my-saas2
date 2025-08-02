@@ -7,8 +7,6 @@ export async function insertAttendance(
   client: SupabaseClient,
   attendance: AttendanceWithSessionId[],
 ): Promise<AttendanceWithSessionId[] | null> {
-
-
   // Validate each attendance record
   for (let index = 0; index < attendance.length; index++) {
     const record = attendance[index];

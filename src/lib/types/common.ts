@@ -1,5 +1,5 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "~/database.types";
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '~/database.types';
 
 /**
  * Common Supabase client type used across the application

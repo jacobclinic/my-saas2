@@ -102,7 +102,11 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
   const joinMeetingAsTutor = useCallback(async () => {
     startTransition(async () => {
-      if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
+      if (
+        sessionData.sessionRawData &&
+        sessionData.sessionRawData.class &&
+        sessionData.sessionRawData.class.id
+      ) {
         const classId = sessionData.sessionRawData.class.id;
         const url = `/classes/${classId}/session/${sessionData.id}`;
         router.push(url);

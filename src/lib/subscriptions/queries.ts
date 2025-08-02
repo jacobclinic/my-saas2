@@ -34,7 +34,7 @@ export async function getUserSubscription(client: Client, userId: string) {
           trialStartsAt: trial_starts_at,
           trialEndsAt: trial_ends_at
         )
-      `
+      `,
     )
     .eq('user_id', userId)
     .throwOnError()
@@ -48,7 +48,7 @@ export async function getUserSubscription(client: Client, userId: string) {
  */
 export async function getOrganizationSubscriptionActive(
   client: Client,
-  userId: string
+  userId: string,
 ) {
   const { data } = await getUserSubscription(client, userId);
 

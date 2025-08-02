@@ -15,7 +15,11 @@ export interface CSVGeneratorOptions {
 /**
  * Legacy function maintained for backward compatibility
  */
-export const generateStudentCSV = (students: any[], classDataName: string, headerData?: HeaderData) => {
+export const generateStudentCSV = (
+  students: any[],
+  classDataName: string,
+  headerData?: HeaderData,
+) => {
   return generateCustomCSV({
     data: students,
     columnNames: ['Name', 'Email', 'Phone Number', 'Address'],

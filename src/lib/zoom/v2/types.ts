@@ -1,5 +1,5 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '~/database.types';
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "~/database.types";
 
 export type ZoomWebhookPayload = {
   event: string;
@@ -35,15 +35,15 @@ interface ZoomMeetingEndedPayload {
 }
 
 export type ZoomWebhookEvent =
-  | BaseZoomWebhookPayload<'meeting.ended', ZoomMeetingEndedPayload>
-  | BaseZoomWebhookPayload<'endpoint.url_validation', ZoomUrlValidationPayload>;
+  | BaseZoomWebhookPayload<"meeting.ended", ZoomMeetingEndedPayload>
+  | BaseZoomWebhookPayload<"endpoint.url_validation", ZoomUrlValidationPayload>;
 
 export type ZoomUserType = 1 | 2 | 3; // 1=Basic, 2=Licensed, 3=On-prem
 export type ZoomCreateUserAction =
-  | 'create'
-  | 'autoCreate'
-  | 'custCreate'
-  | 'ssoCreate';
+  | "create"
+  | "autoCreate"
+  | "custCreate"
+  | "ssoCreate";
 
 export type ZoomUserFeature = {
   zoom_phone: boolean;
@@ -77,7 +77,7 @@ export type ZoomUser = {
 
 export type CommaZoomUser = Omit<
   ZoomUser,
-  'first_name' | 'last_name' | 'type'
+  "first_name" | "last_name" | "type"
 > & {
   zoom_user_id: string;
   account_type: ZoomUserType;
@@ -101,7 +101,7 @@ export type ZoomCreateUserMeetingRequest = {
     start_time: string;
     timezone?: string;
     type?: ZoomMeetingType;
-    auto_recording: 'local' | 'cloud' | 'none';
+    auto_recording: "local" | "cloud" | "none";
     email_notification?: boolean;
     join_before_host?: boolean;
     jbh_time?: 0 | 5 | 10 | 15;
@@ -128,7 +128,7 @@ export type ZoomMeetingResponse = {
   encrypted_password?: string;
   registration_url?: string;
   pmi?: string;
-  creation_source?: 'other' | 'open_api' | 'web_portal';
+  creation_source?: "other" | "open_api" | "web_portal";
   settings?: {
     host_video?: boolean;
     participant_video?: boolean;
@@ -136,8 +136,8 @@ export type ZoomMeetingResponse = {
     mute_upon_entry?: boolean;
     use_pmi?: boolean;
     approval_type?: 0 | 1 | 2;
-    audio?: 'both' | 'telephony' | 'voip' | 'thirdParty';
-    auto_recording?: 'local' | 'cloud' | 'none';
+    audio?: "both" | "telephony" | "voip" | "thirdParty";
+    auto_recording?: "local" | "cloud" | "none";
     alternative_hosts?: string;
     waiting_room?: boolean;
     meeting_authentication?: boolean;
@@ -192,8 +192,6 @@ export type ZoomMeetingRecordingResponse = {
   password?: string;
   participant_audio_files?: ZoomParticipantAudioFile[];
 };
-
-
 
 export type ZoomMeetingRecordingUrl = {
   play_url: string;

@@ -1,4 +1,4 @@
-import { Attendance, ZoomParticipant } from '~/lib/zoom/v2/types';
+import { Attendance, ZoomParticipant } from "~/lib/zoom/v2/types";
 
 interface AttendanceRecord {
   name: string;
