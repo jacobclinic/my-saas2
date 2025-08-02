@@ -135,6 +135,12 @@ export class ZoomService {
             const existingZoomSessionIds = await this.getExistingZoomSessionsIds(sessionIds);
             let successCount = 0;
             let errorCount = 0;
+
+            if (tomorrowSessions.length === 0) {
+                logger.info("No sessions to create zoom meetings for tomorrow");
+                return;
+            }
+
             for (const session of tomorrowSessions) {
                 logger.info(`Processing session: ${session.id}`);
                 if (existingZoomSessionIds.includes(session.id)) {
@@ -214,9 +220,10 @@ export class ZoomService {
             if (successCount > 0) {
                 logger.info(`Successfully created ${successCount} zoom meetings for tomorrow sessions`);
                 return tomorrowSessions;
+            } else {
+                logger.info('No new zoom meetings were created (all sessions may have existing zoom meetings or invalid tutors)');
             }
-
-            throw new Error('Failed to create zoom meetings for tomorrow sessions. Please try again.');
+            return [];
         } catch (error) {
             throw new Error('Failed to create zoom meetings for tomorrow sessions. Please try again.');
         }
@@ -245,6 +252,26 @@ export class ZoomService {
         }
     }
 
+    async checkIfZoomUserValid(tutorId: string) {
+        try {
+            const tutorZoomUser = await getZoomUserByTutorId(this.supabaseClient, tutorId);
+            if (tutorZoomUser.data) {
+                const zoomUserExternalId = tutorZoomUser.data.zoom_user_id;
+                if (!zoomUserExternalId) {
+                    return false;
+                }
+                const zoomUser = await this.client.getUserById(zoomUserExternalId);
+                if (zoomUser && zoomUser.verified === 1) {
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        } catch (error) {
+            logger.error(error, "Failed to check if zoom user valid");
+            return false;
+        }
+    }
 
     async getAllZoomUsers() {
         try {

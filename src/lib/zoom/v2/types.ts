@@ -79,6 +79,65 @@ export type CommaZoomUser = Omit<ZoomUser, 'first_name' | 'last_name' | 'type'> 
 
 export type ZoomCreateUserResponse = ZoomUser;
 
+export type ZoomUserResponse = {
+    id: string;
+    type: 1 | 2 | 4 | 99; // 1=Basic, 2=Licensed, 4=Unassigned without Meetings Basic, 99=None
+
+    created_at?: string;
+    dept?: string;
+    email?: string;
+    first_name?: string;
+    last_client_version?: string;
+    last_login_time?: string;
+    last_name?: string;
+    pmi?: number;
+    role_name?: string;
+    timezone?: string;
+    use_pmi?: boolean;
+    display_name?: string;
+
+    account_id?: string;
+    account_number?: number;
+    cms_user_id?: string;
+    company?: string;
+    user_created_at?: string;
+    custom_attributes?: Array<{
+        key: string;
+        name: string;
+        value: string;
+    }>;
+    employee_unique_id?: string;
+    group_ids?: string[];
+    im_group_ids?: string[];
+    jid?: string;
+    job_title?: string;
+    cost_center?: string;
+    language?: string;
+    location?: string;
+    login_types?: Array<0 | 1 | 11 | 21 | 23 | 24 | 27 | 97 | 98 | 99 | 100 | 101>;
+    manager?: string;
+    personal_meeting_url?: string;
+    phone_country?: string; // deprecated
+    phone_number?: string; // deprecated
+    phone_numbers?: Array<{
+        code: string;
+        country: string;
+        label: 'Mobile' | 'Office' | 'Home' | 'Fax';
+        number: string;
+        verified: boolean;
+    }>;
+    pic_url?: string;
+    plan_united_type?: '1' | '2' | '4' | '8' | '16' | '32' | '64' | '128' | '256' | '512' | '1024' | '2048' | '4096' | '8192' | '16384' | '32768' | '65536' | '131072';
+    pronouns?: string;
+    pronouns_option?: 1 | 2 | 3;
+    role_id?: string;
+    status?: 'pending' | 'active' | 'inactive';
+    vanity_url?: string;
+    verified?: number; // 1=verified, 0=not verified
+    cluster?: string;
+    zoom_one_type?: number;
+}
+
 // Can extend this.
 // https://developers.zoom.us/docs/api/meetings/#tag/meetings/POST/users/{userId}/meetings
 export type ZoomMeetingType = 1 | 2 | 3 | 8 | 10;
