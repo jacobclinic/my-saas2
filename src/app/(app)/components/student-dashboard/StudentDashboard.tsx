@@ -8,7 +8,7 @@ import React, {
   useTransition,
 } from 'react';
 import { Calendar, Info, MonitorPlay } from 'lucide-react';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import PaymentDialog from '../student-payments/PaymentDialog';
 import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
@@ -143,7 +143,11 @@ const StudentDashboard = ({
   const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
       startTransition(async () => {
-        if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
+        if (
+          sessionData.sessionRawData &&
+          sessionData.sessionRawData.class &&
+          sessionData.sessionRawData.class.id
+        ) {
           const classId = sessionData.sessionRawData.class.id;
           const url = `/classes/${classId}/session/${sessionData.id}`;
           router.push(url);
@@ -168,12 +172,12 @@ const StudentDashboard = ({
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-       
-
         {/* Next Session */}
-        <div className='lg:col-span-1 order-1'>
-          <h2 className="text-lg font-semibold text-gray-900 p-4">Next Class</h2>
-          <div className='p-4'>
+        <div className="lg:col-span-1 order-1">
+          <h2 className="text-lg font-semibold text-gray-900 p-4">
+            Next Class
+          </h2>
+          <div className="p-4">
             {nextSession && (
               <StudentNextSessionCard
                 key={nextSession.id}
@@ -191,9 +195,11 @@ const StudentDashboard = ({
         {upcomingSessions.length > 0 && (
           <div className="lg:col-span-2 order-2 bg-white rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-purple-50 border-none shadow-lg">
             <div className="flex items-center p-4">
-              <h2 className="text-lg font-semibold text-gray-900">This Week&apos;s Classes</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                This Week&apos;s Classes
+              </h2>
             </div>
-            <div className='p-4'>
+            <div className="p-4">
               {currentUpcomingSessions.map((sessionData) => (
                 <StudentSessionCard
                   key={sessionData.id}
@@ -213,7 +219,6 @@ const StudentDashboard = ({
                   onPageChange={handleUpcomingPageChange}
                 />
               )}
-
             </div>
           </div>
         )}

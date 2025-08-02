@@ -32,7 +32,7 @@ import {
 import MaterialUploadDialog from './MaterialUploadDialog';
 import EditSessionDialog from './EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
-import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
+import { updateSessionAction } from '~/lib/sessions/server-actions';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
   Tooltip,
@@ -41,7 +41,7 @@ import {
   TooltipTrigger,
 } from '../base-v2/ui/tooltip';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
-import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import { createShortUrlAction } from '~/lib/short-links/server-actions';
 
 import { useRouter } from 'next/navigation';
 import { TimeRange } from '~/lib/types/common';

@@ -25,7 +25,7 @@ import AttendanceDialog from './AttendanceDialog';
 import {
   getAttendanceAction,
   updateAttendanceMarkedAction,
-} from '~/lib/sessions/server-actions-v2';
+} from '~/lib/sessions/server-actions';
 import { Attendance, ZoomParticipant } from '~/lib/zoom/v2/types';
 import { insertAttendanceAction } from '~/lib/attendance/server-actions';
 import {
@@ -35,7 +35,7 @@ import {
   TooltipTrigger,
 } from '../base-v2/ui/tooltip';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import { createShortUrlAction } from '~/lib/short-links/server-actions';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);

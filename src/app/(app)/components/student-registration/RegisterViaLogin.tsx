@@ -5,7 +5,7 @@ import { Button } from '../base-v2/ui/Button';
 import { User, Mail, Phone, ArrowRight, Lock } from 'lucide-react';
 import RegistrationSuccess from './RegistrationSuccess';
 import { registerStudentViaLoginAction } from '~/app/actions/public/student-class-register';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
@@ -24,7 +24,7 @@ interface StudentRegistrationFormProps {
 const StudentRegistrationViaLogin = ({
   classData,
   nextSessionData,
-  setIsRegisterViaLogin
+  setIsRegisterViaLogin,
 }: StudentRegistrationFormProps) => {
   const [formData, setFormData] = useState<RegistrationViaLoginFormData>({
     email: '',
@@ -86,8 +86,10 @@ const StudentRegistrationViaLogin = ({
   return (
     <div className="flex items-center justify-center">
       <Card className="w-full max-w-2xl rounded-2xl shadow-lg">
-        <CardContent className='p-6'>
-          <h2 className='text-2xl font-bold mb-6 text-gray-900'>Log in to your account</h2>
+        <CardContent className="p-6">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">
+            Log in to your account
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information */}
             <div className="space-y-4">
@@ -124,9 +126,7 @@ const StudentRegistrationViaLogin = ({
               </div>
             </div>
 
-            <Button 
-              type="submit" 
-              variant={"darkBlue"}>
+            <Button type="submit" variant={'darkBlue'}>
               <div className="flex items-center justify-center gap-2">
                 Complete Registration
                 {/* lets add right arrow icon */}
@@ -135,9 +135,14 @@ const StudentRegistrationViaLogin = ({
             </Button>
           </form>
           <p className="text-sm text-gray-600 mt-4 text-center">
-            Don&apos;t have an account? <a onClick={() => setIsRegisterViaLogin(false)} className="text-blue-600 font-medium hover:underline transition-all cursor-pointer">Sign up</a>
+            Don&apos;t have an account?{' '}
+            <a
+              onClick={() => setIsRegisterViaLogin(false)}
+              className="text-blue-600 font-medium hover:underline transition-all cursor-pointer"
+            >
+              Sign up
+            </a>
           </p>
-
         </CardContent>
       </Card>
     </div>

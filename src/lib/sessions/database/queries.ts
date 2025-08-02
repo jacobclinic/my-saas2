@@ -14,7 +14,7 @@ import {
   PastSession,
   pastSessionsForAttendance,
   UpcomingSession,
-} from '../types/session-v2';
+} from '../types/session';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 

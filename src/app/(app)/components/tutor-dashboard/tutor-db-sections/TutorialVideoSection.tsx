@@ -1,9 +1,14 @@
-'use client'
+'use client';
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "../../base-v2/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../base-v2/ui/Card';
 import { ClassType } from '~/lib/classes/types/class-v2';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 
 const TutorialVideoSection = () => {
   return (

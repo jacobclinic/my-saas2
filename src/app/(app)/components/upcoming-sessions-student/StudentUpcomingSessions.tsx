@@ -1,23 +1,17 @@
 'use client';
 
 import React, { useCallback, useEffect, useState, useTransition } from 'react';
-import type {
-  SessionStudentTableData,
-} from '~/lib/sessions/types/upcoming-sessions';
+import type { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { Input } from '../base-v2/ui/Input';
 import { Search } from 'lucide-react';
-import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { PastSession, UpcomingSession } from '~/lib/sessions/types/session';
 import { DateRangePicker } from '@heroui/date-picker';
 import StudentSessionCard from '../student-dashboard/StudentSessionCard';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import useUserSession from '~/core/hooks/use-user-session';
 import PaymentDialog from '../student-payments/PaymentDialog';
-import {
-  formatDateTimeRange,
-} from '~/lib/utils/timezone-utils';
-import {
-  datePickerObjectToLocalDate,
-} from '~/lib/utils/timezone-utils-filter';
+import { formatDateTimeRange } from '~/lib/utils/timezone-utils';
+import { datePickerObjectToLocalDate } from '~/lib/utils/timezone-utils-filter';
 import { useRouter } from 'next/navigation';
 
 interface DateRange {
@@ -126,7 +120,11 @@ const StudentUpcomingSessions = ({
       //   }
       // });
       startTransition(() => {
-        if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
+        if (
+          sessionData.sessionRawData &&
+          sessionData.sessionRawData.class &&
+          sessionData.sessionRawData.class.id
+        ) {
           const classId = sessionData.sessionRawData.class.id;
           const url = `/classes/${classId}/session/${sessionData.id}`;
           router.push(url);
@@ -142,8 +140,8 @@ const StudentUpcomingSessions = ({
       // Apply search term filter
       const matchesSearchTerm = searchTerm
         ? (session?.class?.name || '')
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
         : true;
 
       // Apply date range filter if dateRange is selected

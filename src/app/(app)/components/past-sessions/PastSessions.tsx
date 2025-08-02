@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Input } from '../base-v2/ui/Input';
 import { Info, Search, X } from 'lucide-react';
 import PastSessionCard from './PastSessionCard';
-import { PastSession } from '~/lib/sessions/types/session-v2';
+import { PastSession } from '~/lib/sessions/types/session';
 import { DateRangePicker } from '@heroui/date-picker';
 import { formatDateTimeRange } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../TimezoneIndicator';
@@ -43,8 +43,8 @@ const PastSessions = ({
 
   useEffect(() => {
     if (pastSessionsData) {
-      const formattedData: PastSessionData[] = pastSessionsData.map(
-        (session) => formatSessionData(session),
+      const formattedData: PastSessionData[] = pastSessionsData.map((session) =>
+        formatSessionData(session),
       );
       setPastSessionTableData(formattedData);
     }

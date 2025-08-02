@@ -2,16 +2,14 @@
 
 import { DateRangePicker } from '@heroui/date-picker';
 import { useEffect, useState } from 'react';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 import { Check, Edit, Link, Trash } from 'lucide-react';
 import DeleteSessionDialog from '../past-session/DeleteSessionDialog';
 import { format } from 'date-fns';
-import {
-  convertToLocalTime,
-} from '~/lib/utils/timezone-utils';
+import { convertToLocalTime } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../../TimezoneIndicator';
 import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
-import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import { createShortUrlAction } from '~/lib/short-links/server-actions';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 interface DateRange {

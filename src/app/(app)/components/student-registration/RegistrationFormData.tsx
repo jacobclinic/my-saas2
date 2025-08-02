@@ -4,18 +4,35 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../base-v2/ui/Card';
 import { Input } from '../base-v2/ui/Input';
 import { Button } from '../base-v2/ui/Button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base-v2/ui/Select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../base-v2/ui/Select';
 import { Checkbox } from '../base-v2/ui/Checkbox';
-import { User, Mail, Phone, ArrowRight, Lock, Calendar, MapPin } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Phone,
+  ArrowRight,
+  Lock,
+  Calendar,
+  MapPin,
+} from 'lucide-react';
 import { registerStudentAction } from '../../../actions/public/student-registration';
 import RegistrationSuccess from './RegistrationSuccess';
 import useSignUpWithEmailAndPasswordMutation from '~/core/hooks/use-sign-up-with-email-password';
 import StudentRegistrationViaLogin from './RegisterViaLogin';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
 import { SRI_LANKA_DISTRICTS } from '~/lib/constants/sri-lanka-districts';
 import { validatePassword } from '~/core/utils/validate-password';
-import { getBirthdayDateLimits, validateBirthday } from '~/core/utils/validate-birthday';
+import {
+  getBirthdayDateLimits,
+  validateBirthday,
+} from '~/core/utils/validate-birthday';
 import { validateEmail } from '../../../../core/utils/validate-email';
 import { validatePhoneNumber } from '~/core/utils/validate-phonenumber';
 import { validateName } from '~/core/utils/validate-name';
@@ -81,7 +98,10 @@ const StudentRegistrationForm = ({
   const birthdayLimits = getBirthdayDateLimits();
 
   // Simplified validation function
-  const validateFormField = (fieldName: keyof RegistrationFormData, value: string) => {
+  const validateFormField = (
+    fieldName: keyof RegistrationFormData,
+    value: string,
+  ) => {
     const newErrors = { ...errors };
 
     switch (fieldName) {
@@ -215,7 +235,7 @@ const StudentRegistrationForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isFormValid()) {
       return;
     }
@@ -415,7 +435,9 @@ const StudentRegistrationForm = ({
                     value={formData.birthday}
                     min={birthdayLimits.min}
                     max={birthdayLimits.max}
-                    onChange={(e) => handleFieldChange('birthday', e.target.value)}
+                    onChange={(e) =>
+                      handleFieldChange('birthday', e.target.value)
+                    }
                     onBlur={() => {
                       setFieldTouched({ ...fieldTouched, birthday: true });
                       validateFormField('birthday', formData.birthday);
@@ -423,7 +445,9 @@ const StudentRegistrationForm = ({
                     icon={<Calendar className="h-4 w-4 text-gray-500" />}
                   />
                   {errors.birthday && (
-                    <p className="text-red-500 text-sm mt-1">{errors.birthday}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.birthday}
+                    </p>
                   )}
                 </div>
               </div>
@@ -467,7 +491,9 @@ const StudentRegistrationForm = ({
                   <label className="text-sm font-medium">District</label>
                   <Select
                     value={formData.district}
-                    onValueChange={(value) => handleFieldChange('district', value)}
+                    onValueChange={(value) =>
+                      handleFieldChange('district', value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select district" />
@@ -481,7 +507,9 @@ const StudentRegistrationForm = ({
                     </SelectContent>
                   </Select>
                   {errors.district && (
-                    <p className="text-red-500 text-sm mt-1">{errors.district}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.district}
+                    </p>
                   )}
                 </div>
               </div>
@@ -523,27 +551,29 @@ const StudentRegistrationForm = ({
 
             {/* Terms and Conditions */}
             <div className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id="terms"
                 checked={agreeToTerms}
-                onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+                onCheckedChange={(checked) =>
+                  setAgreeToTerms(checked as boolean)
+                }
               />
-              <label 
-                htmlFor="terms" 
+              <label
+                htmlFor="terms"
                 className="text-sm text-gray-600 cursor-pointer"
               >
                 I agree to the{' '}
-                <a 
-                  href="/terms" 
-                  target="_blank" 
+                <a
+                  href="/terms"
+                  target="_blank"
                   className="text-blue-600 hover:underline"
                 >
                   Terms of Service
-                </a>
-                {' '}and{' '}
-                <a 
-                  href="/privacy" 
-                  target="_blank" 
+                </a>{' '}
+                and{' '}
+                <a
+                  href="/privacy"
+                  target="_blank"
                   className="text-blue-600 hover:underline"
                 >
                   Privacy Policy

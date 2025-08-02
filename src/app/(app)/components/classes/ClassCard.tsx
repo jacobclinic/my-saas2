@@ -28,7 +28,7 @@ import {
 import RegisteredStudentsDialog from './RegisteredStudentsDialog';
 import EditClassDialog from './EditClassDialog';
 import AddStudentDialog from './AddStudentDialog';
-import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import { createShortUrlAction } from '~/lib/short-links/server-actions';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 const ClassCard: React.FC<ClassCardProps> = ({

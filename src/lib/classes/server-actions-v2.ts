@@ -16,7 +16,7 @@ import verifyCsrfToken from '~/core/verify-csrf-token';
 import { getClassDataByIdwithNextSession } from './database/queries';
 import { getAllUpcommingSessionsData } from '../sessions/database/queries';
 
-import { createShortUrlAction } from '../short-links/server-actions-v2';
+import { createShortUrlAction } from '../short-links/server-actions';
 import { format as dateFnsFormat } from 'date-fns';
 import { sendSingleSMS } from '../notifications/sms/sms.notification.service';
 import { EmailService } from '~/core/email/send-email-mailtrap';

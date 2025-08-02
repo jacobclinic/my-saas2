@@ -23,4 +23,3 @@ interface UserType {
 }
 
 export default UserType;
-// export type { SessionsWithTableData, SessionTableData };

@@ -25,7 +25,7 @@ import {
   ClassType,
   NewStudentData,
 } from '~/lib/classes/types/class-v2';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 import { format as dateFnsFormat } from 'date-fns';
 
 const TutorDashboard = ({

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import PastSessions from './PastSessions';
-import { PastSession } from '~/lib/sessions/types/session-v2';
+import { PastSession } from '~/lib/sessions/types/session';
 import PaginationControls from '../PaginationControls';
 
 const PastSessionsClient = ({
@@ -12,9 +12,8 @@ const PastSessionsClient = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1); // Current page number
   const itemsPerPage = 5; // Items per page
-  const [filteredData, setFilteredData] = useState<PastSession[]>(
-    initialSessions,
-  );
+  const [filteredData, setFilteredData] =
+    useState<PastSession[]>(initialSessions);
 
   // Calculate the total number of pages
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);

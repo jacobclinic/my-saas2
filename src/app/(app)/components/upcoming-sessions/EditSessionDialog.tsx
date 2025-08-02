@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import BaseDialog from '../base-v2/BaseDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { Button } from '../base-v2/ui/Button';
-import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
+import { updateSessionAction } from '~/lib/sessions/server-actions';
 import { useToast } from '../../lib/hooks/use-toast';
 import { convertToLocalTime } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../TimezoneIndicator';

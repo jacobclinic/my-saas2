@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 import UpcomingSessions from './UpcomingSessions';
 import PaginationControls from '../PaginationControls';
 
@@ -12,7 +12,8 @@ const UpcomingSessionClient = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const [filteredData, setFilteredData] = useState<UpcomingSession[]>(upcomingSessionData);
+  const [filteredData, setFilteredData] =
+    useState<UpcomingSession[]>(upcomingSessionData);
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   // Calculate current page data
@@ -23,9 +24,12 @@ const UpcomingSessionClient = ({
   // Handler for when filters are applied in the child component
   const handleFilterChange = (newFilteredData: UpcomingSession[]) => {
     setFilteredData(newFilteredData);
-    
+
     // Reset to first page when filters change
-    if (currentPage > Math.ceil(newFilteredData.length / itemsPerPage) && newFilteredData.length > 0) {
+    if (
+      currentPage > Math.ceil(newFilteredData.length / itemsPerPage) &&
+      newFilteredData.length > 0
+    ) {
       setCurrentPage(1);
     }
   };
@@ -40,8 +44,8 @@ const UpcomingSessionClient = ({
   return (
     <>
       {/* Render the UpcomingSessions component */}
-      <UpcomingSessions 
-        upcomingSessionData={currentSessions} 
+      <UpcomingSessions
+        upcomingSessionData={currentSessions}
         onFilterChange={handleFilterChange}
         allSessionData={upcomingSessionData}
       />
