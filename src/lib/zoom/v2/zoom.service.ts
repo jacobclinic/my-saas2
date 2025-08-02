@@ -1,14 +1,14 @@
 import { zoomClient, ZoomClient } from "./client";
 import getLogger from "~/core/logger";
-import { createUnassignedZoomUser, createZoomUser, updateZoomUser } from "./database/mutations";
+import { createUnassignedZoomUser, updateZoomUser } from "./database/mutations";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "~/database.types";
 import getSupabaseServerActionClient from "~/core/supabase/action-client";
-import { getSessionsTillTomorrowWithZoomUser, getTomorrowsSessionsWithZoomUser } from "~/lib/sessions/database/queries";
+import { getSessionsTillTomorrowWithZoomUser } from "~/lib/sessions/database/queries";
 import { createZoomSession } from "~/lib/zoom_sessions/database/mutations";
-import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomMeetingRecordingUrl, ZoomUser } from "./types";
+import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomMeetingRecordingUrl } from "./types";
 import { ZOOM_SESSIONS_TABLE } from "~/lib/db-tables";
-import { getAllUnassignedZoomUsers, getAllZoomUsers, getAllZoomUsersWithTutor, getZoomUserByTutorId } from "./database/queries";
+import { getAllUnassignedZoomUsers, getAllZoomUsersWithTutor, getZoomUserByTutorId } from "./database/queries";
 
 
 const logger = getLogger();
