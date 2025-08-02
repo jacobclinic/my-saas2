@@ -15,7 +15,7 @@ export async function getZoomUserByEmail(client: Client, email: string) {
         .select('*')
         .eq('email', email)
         .maybeSingle();
-    
+
     if (error) {
         throw new Error(`Failed to fetch zoom user by email: ${error.message}`);
     }
@@ -55,7 +55,7 @@ export async function getAllZoomUsersWithTutor(client: Client) {
                 email,
                 display_name
             )
-        `)
+        `);
     if (error) {
         throw new Error(`Failed to fetch zoom users: ${error.message}`);
     }

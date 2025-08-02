@@ -39,6 +39,11 @@ export class ZoomService {
                 return existingZoomUser;
             }
             const allUnassignedZoomUsers = await getAllUnassignedZoomUsers(this.supabaseClient);
+
+            if (allUnassignedZoomUsers.length <= 0) {
+                throw new Error('No unassigned zoom users found. Please create a new zoom user.');
+            }
+
             const randomUnassignedZoomUser = allUnassignedZoomUsers[0];
             user.user_info.email = randomUnassignedZoomUser.email;
 
