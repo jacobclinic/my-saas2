@@ -1,22 +1,15 @@
+import { CSVHeaderData } from '../types/generator';
+
 // Define types for better type safety
-export interface HeaderData {
-  className: string;
-  tutorName?: string;
-  subject?: string;
-  grade?: string;
-  classDate?: string;
-  classTime?: string;
-  numberOfStudents: number;
-  downloadDate?: string;
-}
+export type HeaderData = CSVHeaderData; // Re-export for backward compatibility
 
 export interface CSVGeneratorOptions {
   data: any[]; // The data to display in the CSV
   columnNames?: string[]; // Custom column names
   columnKeys?: string[]; // Keys to extract from data objects
-  filename?: string; // Custom filename
+  fileName?: string; // File name for download
   headerData?: HeaderData; // Optional header data
-  includeMetadata?: boolean; // Whether to include metadata at the top
+  includeMetadata?: boolean; // Whether to include metadata header
 }
 
 /**
@@ -27,7 +20,7 @@ export const generateStudentCSV = (students: any[], classDataName: string, heade
     data: students,
     columnNames: ['Name', 'Email', 'Phone Number', 'Address'],
     columnKeys: ['name', 'email', 'phone_number', 'address'],
-    filename: `Students_List_${classDataName}`,
+    fileName: `Students_List_${classDataName}`,
     headerData: headerData || {
       className: classDataName,
       numberOfStudents: students.length,
@@ -44,7 +37,7 @@ export const generateCustomCSV = (options: CSVGeneratorOptions) => {
     data,
     columnNames = ['Name', 'Email', 'Phone Number', 'Address'],
     columnKeys = ['name', 'email', 'phone_number', 'address'],
-    filename = 'Generated_Report',
+    fileName = 'Generated_Report',
     headerData,
     includeMetadata = false,
   } = options;
@@ -109,7 +102,7 @@ export const generateCustomCSV = (options: CSVGeneratorOptions) => {
   });
 
   // Create and download the CSV file
-  downloadCSV(csvContent, `${filename}_${currentDate}.csv`);
+  downloadCSV(csvContent, `${fileName}_${currentDate}.csv`);
 
   return csvContent; // Return CSV content for potential further manipulation
 };
@@ -254,7 +247,7 @@ export const generateInvoiceCSV = (invoiceData: {
       'due_date',
       'export_date',
     ],
-    filename: `Invoice_${invoiceData.invoice_no || invoiceData.id.slice(0, 8)}`,
+    fileName: `Invoice_${invoiceData.invoice_no || invoiceData.id.slice(0, 8)}`,
     includeMetadata: false,
   });
 };

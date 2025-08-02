@@ -1,8 +1,6 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '~/database.types';
-
-type Client = SupabaseClient<Database>;
-
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '~/database.types';
+import { Client } from '~/lib/types/common';
 import { SESSIONS_TABLE } from '~/lib/db-tables';
 import SessionType from '../types/session';
 import getLogger from '~/core/logger';

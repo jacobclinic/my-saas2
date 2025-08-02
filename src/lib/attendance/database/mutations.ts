@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '~/database.types';
 import { STUDENT_SESSION_ATTENDANCE_TABLE } from '~/lib/db-tables';
-import { AttendanceWithSessionId } from '~/lib/zoom/types/zoom.types';
+import { AttendanceWithSessionId } from '~/lib/zoom/v2/types';
 
 export async function insertAttendance(
   client: SupabaseClient,

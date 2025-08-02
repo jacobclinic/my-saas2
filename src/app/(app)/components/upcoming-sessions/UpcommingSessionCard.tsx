@@ -44,11 +44,7 @@ import AddLessonDetailsDialog from './AddLessonDetailsDialog';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 import { useRouter } from 'next/navigation';
-
-interface TimeRange {
-  startTime: string; // e.g., "2025-05-03T06:13:00Z"
-  endTime: string; // e.g., "2025-05-03T06:22:00Z"
-}
+import { TimeRange } from '~/lib/types/common';
 
 const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,

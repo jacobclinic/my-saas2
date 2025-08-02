@@ -9,7 +9,7 @@ import { Check, Link, Trash, Users } from 'lucide-react';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DeleteSessionDialog from './DeleteSessionDialog';
 import { format } from 'date-fns';
-import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
+import { Attendance, ZoomParticipant } from '~/lib/zoom/v2/types';
 import {
   getAttendanceAction,
   updateAttendanceMarkedAction,

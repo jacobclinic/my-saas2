@@ -26,7 +26,7 @@ import {
   getAttendanceAction,
   updateAttendanceMarkedAction,
 } from '~/lib/sessions/server-actions-v2';
-import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
+import { Attendance, ZoomParticipant } from '~/lib/zoom/v2/types';
 import { insertAttendanceAction } from '~/lib/attendance/server-actions';
 import {
   Tooltip,

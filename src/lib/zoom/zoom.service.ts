@@ -1,8 +1,8 @@
 import {
   CreateZoomMeetingRequest,
-  ZoomMeetingResponse,
+  LegacyZoomMeetingResponse as ZoomMeetingResponse,
   ZoomTokenResponse,
-} from './types/zoom.types';
+} from './v2/types';
 
 class ZoomService {
   private zoomClientId: string;

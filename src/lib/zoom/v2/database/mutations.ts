@@ -3,8 +3,7 @@ import type { Database } from '~/database.types';
 import getLogger from '~/core/logger';
 import { ZOOM_USERS_TABLE } from '~/lib/db-tables';
 import { ZoomUser } from '../types';
-
-type Client = SupabaseClient<Database>;
+import { Client } from '~/lib/types/common';
 
 const logger = getLogger();
 

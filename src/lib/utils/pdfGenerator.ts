@@ -1,13 +1,9 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { PDFHeaderData } from '../types/generator';
 
 // Define types for better type safety
-export interface HeaderData {
-  className: string;
-  classDate: string;
-  classTime: string;
-  numberOfStudents: number;
-}
+export type HeaderData = PDFHeaderData; // Re-export for backward compatibility
 
 export interface PDFGeneratorOptions {
   data: any[]; // The data to display in the table

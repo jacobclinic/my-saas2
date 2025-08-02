@@ -1,7 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '~/database.types';
-
-type Client = SupabaseClient<Database>;
+import { Client } from '~/lib/types/common';
 
 export interface UpdateTutorData {
   first_name: string;
