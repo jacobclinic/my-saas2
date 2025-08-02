@@ -9,7 +9,7 @@ import {
   generateAllInvoicesAction,
   getTutorInvoicesForPeriod,
   getAllStudentPaymentsAction,
-} from '~/lib/payments/admin-payment-actions';
+} from '~/lib/payments/server-actions';
 import AdminStudentPaymentsView from './AdminStudentPaymentsView';
 import AdminTutorPaymentsView from './AdminTutorPaymentsView';
 import { PaymentWithDetails } from '~/lib/payments/types/admin-payments';

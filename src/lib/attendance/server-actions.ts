@@ -1,6 +1,6 @@
 'use server';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Attendance, AttendanceWithSessionId } from '../zoom/types/zoom.types';
+import { Attendance, AttendanceWithSessionId } from '../zoom/v2/types';
 import { insertAttendance } from './database/mutations';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { getAllPastSessionsDataWithinLastHour } from '../sessions/database/queries';

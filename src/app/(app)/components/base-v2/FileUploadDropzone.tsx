@@ -2,7 +2,7 @@
 import React, { useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload } from 'lucide-react'
-import { cn } from "../../lib/utils"
+import { cn } from '~/core/generic/shadcn-utils';
 
 interface FileUploadDropzoneProps {
   onFilesAdded: (files: File[]) => void

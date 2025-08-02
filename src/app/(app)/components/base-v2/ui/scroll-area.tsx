@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
-import { cn } from '~/app/(app)/lib/utils';
+import { cn } from '~/core/generic/shadcn-utils';
 
 
 const ScrollArea = React.forwardRef<

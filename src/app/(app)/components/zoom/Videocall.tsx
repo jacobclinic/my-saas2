@@ -9,7 +9,7 @@ import ZoomVideo, {
 import { CameraButton, MicButton } from "./MuteButtons";
 // import { WorkAroundForSafari } from "@/lib/utils";
 import { PhoneOff } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "../base-v2/ui/Button";
 import { WorkAroundForSafari } from "~/lib/utils/media-sdk-change-safari-utils";
 
 const Videocall = (props: { slug: string; JWT: string }) => {

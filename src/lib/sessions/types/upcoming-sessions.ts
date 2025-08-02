@@ -1,5 +1,5 @@
 import React from 'react';
-import { PastSession, UpcomingSession } from './session-v2';
+import { PastSession, UpcomingSession } from './session';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 
 interface Material {
@@ -71,7 +71,9 @@ interface MaterialUploadDialogProps {
   showMaterialDialog: boolean;
   setShowMaterialDialog: (show: boolean) => void;
   uploadedMaterials: UploadedMaterial[];
-  setUploadedMaterials: React.Dispatch<React.SetStateAction<UploadedMaterial[]>>;
+  setUploadedMaterials: React.Dispatch<
+    React.SetStateAction<UploadedMaterial[]>
+  >;
   materialDescription: string;
   setMaterialDescription: (description: string) => void;
   sessionId: string;
@@ -93,5 +95,5 @@ export type {
   LessonDetailsState,
   LessonDetails,
   MaterialUploadDialogProps,
-  UpcommingSessionCardProps
+  UpcommingSessionCardProps,
 };

@@ -1,8 +1,7 @@
 import useSupabase from '~/core/hooks/use-supabase';
 import useSWRMutation from 'swr/mutation';
-import configuration from '~/configuration';
 import { useRouter } from 'next/navigation';
-import sendEmail from '~/core/email/send-email';
+
 
 interface AdminUserCreationParams {
   email: string;

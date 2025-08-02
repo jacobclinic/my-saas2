@@ -32,7 +32,6 @@ import { InvoiceView } from './InvoiceDialog';
 import { Button } from '../base-v2/ui/Button';
 import useUserSession from '~/core/hooks/use-user-session';
 import useUserId from '~/core/hooks/use-user-id';
-import { getTutorInvoicesAction } from '~/lib/invoices/tutor-invoice-actions';
 import type { TutorInvoice } from '~/lib/invoices/types/types';
 import {
   generateMonthOptions,
@@ -46,6 +45,7 @@ import {
   TutorPaymentData,
   TutorPaymentStats,
 } from '~/lib/payments/types/tutor-payments';
+import { getTutorInvoicesAction } from '~/lib/invoices/server-action';
 
 export default function Payments() {
   const [searchTerm, setSearchTerm] = useState('');

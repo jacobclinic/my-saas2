@@ -8,7 +8,7 @@ import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import renderAccountDeleteEmail from '~/lib/emails/account-delete';
 
 import type { Database } from '~/database.types';
-import { EmailService } from '~/core/email/send-email-mailtrap';
+import { EmailService } from '~/core/email/send-email';
 
 type Params = {
   client: SupabaseClient<Database>;

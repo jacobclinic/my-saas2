@@ -15,7 +15,7 @@ import {
 } from '../base-v2/ui/Card';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
-import { cn } from '../../lib/utils';
+import { cn } from '~/core/generic/shadcn-utils';
 import {
   Check,
   Upload,
@@ -32,7 +32,7 @@ import {
 import MaterialUploadDialog from './MaterialUploadDialog';
 import EditSessionDialog from './EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
-import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
+import { updateSessionAction } from '~/lib/sessions/server-actions';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
   Tooltip,
@@ -41,14 +41,10 @@ import {
   TooltipTrigger,
 } from '../base-v2/ui/tooltip';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
-import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import { createShortUrlAction } from '~/lib/short-links/server-actions';
 
 import { useRouter } from 'next/navigation';
-
-interface TimeRange {
-  startTime: string; // e.g., "2025-05-03T06:13:00Z"
-  endTime: string; // e.g., "2025-05-03T06:22:00Z"
-}
+import { TimeRange } from '~/lib/types/common';
 
 const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,
@@ -106,7 +102,11 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
   const joinMeetingAsTutor = useCallback(async () => {
     startTransition(async () => {
-      if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
+      if (
+        sessionData.sessionRawData &&
+        sessionData.sessionRawData.class &&
+        sessionData.sessionRawData.class.id
+      ) {
         const classId = sessionData.sessionRawData.class.id;
         const url = `/classes/${classId}/session/${sessionData.id}`;
         router.push(url);

@@ -8,7 +8,7 @@ import BaseDialog from '../base-v2/BaseDialog';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '../../lib/hooks/use-toast';
-import { sendEmailMSGToStudentAction } from '~/lib/classes/server-actions-v2';
+import { sendEmailMSGToStudentAction } from '~/lib/classes/server-actions';
 import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
 import { validateEmail } from '../../../../core/utils/validate-email';
 import { validateName } from '~/core/utils/validate-name';

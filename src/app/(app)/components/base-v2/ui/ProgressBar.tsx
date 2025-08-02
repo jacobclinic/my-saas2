@@ -1,7 +1,7 @@
 // components/base-v2/ui/ProgressBar.tsx
 import * as React from "react"
 import * as ProgressPrimitive from "@radix-ui/react-progress"
-import { cn } from "../../../lib/utils"
+import { cn } from '~/core/generic/shadcn-utils';
 
 const ProgressBar = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,

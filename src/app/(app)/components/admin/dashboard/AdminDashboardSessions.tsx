@@ -4,11 +4,9 @@ import React, { useEffect, useState } from 'react';
 import type { UpcomingSessionTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { Input } from '../../base-v2/ui/Input';
 import { Search } from 'lucide-react';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 import AdminSessionCard from './AdminSessionCard';
-import {
-  formatDateTimeRange,
-} from '~/lib/utils/timezone-utils';
+import { formatDateTimeRange } from '~/lib/utils/timezone-utils';
 
 import TimezoneIndicator from '../../TimezoneIndicator';
 

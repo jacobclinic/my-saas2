@@ -19,64 +19,6 @@ type Client = SupabaseClient<Database>;
  * @description Fetch all student payments with related data
  * @param client - Supabase client instance
  */
-// export async function getAllStudentPayments(client: Client): Promise<Payment[]> {
-//   try {
-//     // Fetch payments with related data
-//     const { data, error } = await client
-//       .from(STUDENT_PAYMENTS_TABLE)
-//       .select(`
-//         *,
-//         student:${USERS_TABLE}!student_id (
-//           id,
-//           first_name,
-//           last_name,
-//           email
-//         ),
-//         class:${CLASSES_TABLE}!class_id (
-//           id,
-//           name,
-//           tutor_id,
-//           tutor:${USERS_TABLE}!tutor_id (
-//             id,
-//             first_name,
-//             last_name
-//           )
-//         )
-//       `)
-//       .order('created_at', { ascending: false });
-
-//     if (error) throw error;
-
-//     // Transform data for frontend
-//     const formattedPayments = data.map(payment => {
-//       // Handle possible array returns from Supabase joins
-//       const student = Array.isArray(payment.student) ? payment.student[0] : payment.student;
-//       const classData = Array.isArray(payment.class) ? payment.class[0] : payment.class;
-//       const tutor = classData?.tutor && (Array.isArray(classData.tutor) ? classData.tutor[0] : classData.tutor);
-
-//       return {
-//         id: payment.id,
-//         studentId: payment.student_id ?? '',
-//         studentName: student ? `${student.first_name} ${student.last_name}` : 'Unknown Student',
-//         classId: payment.class_id ?? '',
-//         className: classData?.name ?? 'Unknown Class',
-//         tutorId: classData?.tutor_id ?? '',
-//         tutorName: tutor ? `${tutor.first_name} ${tutor.last_name}` : 'Unknown Tutor',
-//         amount: payment.amount || 0,
-//         period: payment.payment_period || '',
-//         submittedDate: payment.created_at,
-//         status: payment.status as PaymentStatus,
-//         paymentProofUrl: payment.payment_proof_url ?? '',
-//       };
-//     });
-
-//     return formattedPayments;
-//   } catch (error) {
-//     console.error('Error fetching student payments:', error);
-//     throw new Error('Failed to fetch student payments. Please try again.');
-//   }
-// }
-
 export async function getAllStudentPayments(
   client: SupabaseClient,
   invoicePeriod?: string,
@@ -379,26 +321,27 @@ export async function getStudentPaymentsByPeriod(
   client: Client,
   studentId: string,
   classId: string,
-  paymentPeriod: string
+  paymentPeriod: string,
 ) {
   try {
     const { data, error } = await client
       .from(STUDENT_PAYMENTS_TABLE)
-      .select(`*,
+      .select(
+        `*,
         invoice:${INVOICES_TABLE}!fk_student_payments_invoice_id (
           id,
           invoice_no,
           invoice_period,
           status,
           amount
-        )`)
+        )`,
+      )
       .eq('class_id', classId)
       .eq('student_id', studentId)
       .eq('payment_period', paymentPeriod);
 
     if (error) throw error;
     return data;
-
   } catch (error) {
     console.error('Error fetching student payments:', error);
     return [];

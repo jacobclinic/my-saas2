@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 import UpcomingClassesSection from './tutor-db-sections/UpcomingClasses';
 import PaginationControls from '../PaginationControls';
 import { Users, BookOpen, Calendar, Clock } from 'lucide-react';

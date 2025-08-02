@@ -2,8 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '~/database.types';
 import { CUSTOMERS_SUBSCRIPTIONS_TABLE } from '~/lib/db-tables';
 import Subscription from '~/lib/subscriptions/subscription';
-
-type Client = SupabaseClient<Database>;
+import { Client } from '~/lib/types/common';
 
 /**
  * @name getUserSubscription
@@ -35,7 +34,7 @@ export async function getUserSubscription(client: Client, userId: string) {
           trialStartsAt: trial_starts_at,
           trialEndsAt: trial_ends_at
         )
-      `
+      `,
     )
     .eq('user_id', userId)
     .throwOnError()
@@ -49,7 +48,7 @@ export async function getUserSubscription(client: Client, userId: string) {
  */
 export async function getOrganizationSubscriptionActive(
   client: Client,
-  userId: string
+  userId: string,
 ) {
   const { data } = await getUserSubscription(client, userId);
 

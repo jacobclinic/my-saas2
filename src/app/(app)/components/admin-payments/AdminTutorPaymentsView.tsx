@@ -7,7 +7,7 @@ import { Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { TutorInvoice } from '~/lib/invoices/types/types';
-import { getTutorInvoicesForPeriod } from '~/lib/payments/admin-payment-actions';
+import { getTutorInvoicesForPeriod } from '~/lib/payments/server-actions';
 import { formatPeriod, generateMonthOptions } from '~/lib/utils/month-utils';
 import DataTable from '~/core/ui/DataTable';
 import { useTablePagination } from '~/core/hooks/use-table-pagination';

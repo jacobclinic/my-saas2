@@ -15,7 +15,7 @@ import {
 } from '../../base-v2/ui/Card';
 import { Button } from '../../base-v2/ui/Button';
 import { Badge } from '../../base-v2/ui/Badge';
-import { cn } from '../../../lib/utils';
+import { cn } from '~/core/generic/shadcn-utils';
 import {
   Check,
   Upload,
@@ -32,11 +32,11 @@ import {
 import MaterialUploadDialog from '../../upcoming-sessions/MaterialUploadDialog';
 import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
-import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
+import { updateSessionAction } from '~/lib/sessions/server-actions';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '~/app/(app)/lib/hooks/use-toast';
 import AddLessonDetailsDialog from '../../upcoming-sessions/AddLessonDetailsDialog';
-import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import { createShortUrlAction } from '~/lib/short-links/server-actions';
 
 const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,

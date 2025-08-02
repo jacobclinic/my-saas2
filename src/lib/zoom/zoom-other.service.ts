@@ -6,7 +6,7 @@ import {
   ZoomRecordingResponse,
   ZoomTokenResponse,
   ZoomUserRecordingsResponse,
-} from './types/zoom.types';
+} from './v2/types';
 import getLogger from '~/core/logger';
 import { createClient } from '@supabase/supabase-js';
 import { updateRecordingUrl } from '../sessions/database/mutations';

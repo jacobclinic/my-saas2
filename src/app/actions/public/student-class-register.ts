@@ -6,7 +6,7 @@ import getSupabaseServerActionClient from '../../../core/supabase/action-client'
 import { USERS_TABLE } from '~/lib/db-tables';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
-import { EmailService } from '~/core/email/send-email-mailtrap';
+import { EmailService } from '~/core/email/send-email';
 import { getStudentRegistrationEmailTemplate } from '~/core/email/templates/emailTemplate';
 
 const registrationSchema = z.object({

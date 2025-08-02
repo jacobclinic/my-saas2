@@ -4,10 +4,9 @@ import React, { useTransition } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import BaseDialog from '../base-v2/BaseDialog';
-import { ClassListData } from '~/lib/classes/types/class-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '../../lib/hooks/use-toast';
-import { deleteClassAction } from '~/lib/classes/server-actions-v2';
+import { deleteClassAction } from '~/lib/classes/server-actions';
 
 interface DeleteClassDialogProps {
   open: boolean;

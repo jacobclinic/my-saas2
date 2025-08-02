@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PastSession } from '~/lib/sessions/types/session-v2';
+import { PastSession } from '~/lib/sessions/types/session';
 import PaginationControls from '../PaginationControls';
 import StudentPastSessions from './StudentPastSessions';
 
@@ -14,7 +14,8 @@ const StudentPastSessionClient = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const [filteredData, setFilteredData] = useState<PastSession[]>(pastSessionData);
+  const [filteredData, setFilteredData] =
+    useState<PastSession[]>(pastSessionData);
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   // Calculate current page data
@@ -24,9 +25,12 @@ const StudentPastSessionClient = ({
   // Handler for when filters are applied in the child component
   const handleFilterChange = (newFilteredData: PastSession[]) => {
     setFilteredData(newFilteredData);
-    
+
     // Reset to first page when filters change
-    if (currentPage > Math.ceil(newFilteredData.length / itemsPerPage) && newFilteredData.length > 0) {
+    if (
+      currentPage > Math.ceil(newFilteredData.length / itemsPerPage) &&
+      newFilteredData.length > 0
+    ) {
       setCurrentPage(1);
     }
   };
@@ -42,7 +46,7 @@ const StudentPastSessionClient = ({
     <>
       {/* Render the UpcomingSessions component */}
       <StudentPastSessions
-        pastSessionData={currentSessions} 
+        pastSessionData={currentSessions}
         onFilterChange={handleFilterChange}
         allSessionData={pastSessionData}
         userId={userId}

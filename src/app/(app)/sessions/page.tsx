@@ -3,22 +3,13 @@ import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
 
-const SessionsList = loadDynamic(
-  () => import('~/app/(app)/components/sessions/SessionsList'),
-  {
-    ssr: false,
-  },
-);
-
 export const metadata = {
   title: 'Sessions',
 };
 
 async function SessionsPage() {
   const client = getSupabaseServerComponentClient();
-  // const sessionData = await getAllSessionsData(client) as SessionsWithTableData[];
-  // console.log("sessionData-server-component------", sessionData);
-  
+
   return (
     <>
       <AppHeader
@@ -29,7 +20,7 @@ async function SessionsPage() {
       />
 
       <PageBody>
-        {/* <SessionsList sessionData={sessionData}/> */}
+
       </PageBody>
     </>
   );

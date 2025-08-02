@@ -7,8 +7,8 @@ import {
   DialogFooter,
 } from './ui/Dialog';
 import { Button } from './ui/Button';
-import { cn } from '../../lib/utils';
 import { Trash } from 'lucide-react';
+import { cn } from '~/core/generic/shadcn-utils';
 
 export interface BaseDialogProps {
   open: boolean;

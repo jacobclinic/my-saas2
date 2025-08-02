@@ -5,7 +5,7 @@ import type { UpcomingSessionTableData } from '~/lib/sessions/types/upcoming-ses
 import { Input } from '../base-v2/ui/Input';
 import { Search } from 'lucide-react';
 import UpcommingSessionCard from './UpcommingSessionCard';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 import { DateRangePicker } from '@heroui/date-picker';
 import {
   formatDateTimeRange,
@@ -125,8 +125,11 @@ const UpcomingSessions = ({
           const startDateInUserTZ = utcToLocalDate(startDate, userTimezone);
           const endDateInUserTZ = utcToLocalDate(endDate, userTimezone);
 
-          matchesDateRange = 
-            !!sessionStartInUserTZ && !!startDateInUserTZ && !!sessionEndInUserTZ && !!endDateInUserTZ &&
+          matchesDateRange =
+            !!sessionStartInUserTZ &&
+            !!startDateInUserTZ &&
+            !!sessionEndInUserTZ &&
+            !!endDateInUserTZ &&
             sessionStartInUserTZ >= startDateInUserTZ &&
             sessionEndInUserTZ <= endDateInUserTZ;
         }
@@ -150,7 +153,6 @@ const UpcomingSessions = ({
       {' '}
       {/* Header & Search */}
       <div className="space-y-4">
-
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />

@@ -1,8 +1,8 @@
 import {
   CreateZoomMeetingRequest,
-  ZoomMeetingResponse,
+  LegacyZoomMeetingResponse as ZoomMeetingResponse,
   ZoomTokenResponse,
-} from './types/zoom.types';
+} from './v2/types';
 
 class ZoomService {
   private zoomClientId: string;
@@ -102,7 +102,7 @@ class ZoomService {
 
       if (!response.ok) {
         const responseText = await response.text();
-        
+
         let errorMessage = response.statusText;
         if (responseText) {
           try {
@@ -112,22 +112,26 @@ class ZoomService {
             errorMessage = responseText || errorMessage;
           }
         }
-        
+
         throw new Error(`Failed to create Zoom meeting: ${errorMessage}`);
       }
 
       // Safely handle the response
       const responseText = await response.text();
-      
+
       if (!responseText || responseText.trim() === '') {
-        throw new Error('Zoom API returned an empty response when creating meeting');
+        throw new Error(
+          'Zoom API returned an empty response when creating meeting',
+        );
       }
-      
+
       try {
         return JSON.parse(responseText) as ZoomMeetingResponse;
       } catch (parseError) {
         console.error('Error parsing Zoom create response:', parseError);
-        throw new Error('Failed to parse Zoom API response when creating meeting');
+        throw new Error(
+          'Failed to parse Zoom API response when creating meeting',
+        );
       }
     } catch (error: any) {
       console.error('Error creating Zoom meeting:', error);
@@ -158,7 +162,7 @@ class ZoomService {
       if (!response.ok) {
         // First check if there's content in the response
         const responseText = await response.text();
-        
+
         let errorMessage = response.statusText;
         if (responseText) {
           try {
@@ -170,18 +174,18 @@ class ZoomService {
             errorMessage = responseText || errorMessage;
           }
         }
-        
+
         throw new Error(`Failed to update Zoom meeting: ${errorMessage}`);
       }
-      
+
       // Safely parse the response to handle empty responses
       const responseText = await response.text();
-      
+
       if (!responseText || responseText.trim() === '') {
         // Some APIs return empty responses on success for PATCH operations
         return { id: meetingId } as ZoomMeetingResponse;
       }
-      
+
       try {
         return JSON.parse(responseText) as ZoomMeetingResponse;
       } catch (parseError) {
@@ -228,7 +232,7 @@ class ZoomService {
 
       // Safely handle the response
       const responseText = await response.text();
-      
+
       if (!responseText || responseText.trim() === '') {
         throw new Error(
           `Zoom API returned an empty response for meeting ${meetingId}`,

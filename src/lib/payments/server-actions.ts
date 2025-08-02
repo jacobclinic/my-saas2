@@ -10,7 +10,6 @@ import {
   generateMonthlyInvoicesStudents,
   generateMonthlyInvoicesTutor,
 } from '../invoices/database/mutations';
-import _ from 'cypress/types/lodash';
 import { isAdmin as isUserAdmin } from '../user/actions.server';
 import { getAllStudentPayments } from './database/queries';
 import {

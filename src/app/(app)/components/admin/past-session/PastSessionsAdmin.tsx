@@ -2,22 +2,22 @@
 
 import { DateRangePicker } from '@heroui/date-picker';
 import { useEffect, useState } from 'react';
-import { PastSession } from '~/lib/sessions/types/session-v2';
+import { PastSession } from '~/lib/sessions/types/session';
 import AttendanceDialog from '../../past-sessions/AttendanceDialog';
 import { PastSessionData } from '~/lib/sessions/types/past-sessions';
 import { Check, Link, Trash, Users } from 'lucide-react';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DeleteSessionDialog from './DeleteSessionDialog';
 import { format } from 'date-fns';
-import { Attendance, ZoomParticipant } from '~/lib/zoom/types/zoom.types';
+import { Attendance, ZoomParticipant } from '~/lib/zoom/v2/types';
 import {
   getAttendanceAction,
   updateAttendanceMarkedAction,
-} from '~/lib/sessions/server-actions-v2';
+} from '~/lib/sessions/server-actions';
 import { insertAttendanceAction } from '~/lib/attendance/server-actions';
 import { convertToLocalTime } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../../TimezoneIndicator';
-import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import { createShortUrlAction } from '~/lib/short-links/server-actions';
 
 interface DateRange {
   start?: {

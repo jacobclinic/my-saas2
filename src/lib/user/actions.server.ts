@@ -16,7 +16,7 @@ import { withSession } from '~/core/generic/actions-utils';
 import { fetchUserRole } from './database/queries';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getUserCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
-import { EmailService } from '~/core/email/send-email-mailtrap';
+import { EmailService } from '~/core/email/send-email';
 
 const emailService = EmailService.getInstance();
 
@@ -110,7 +110,7 @@ export const createUserByAdminAction = async (
         userRole: userRole,
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
       });
-      
+
       await emailService.sendEmail({
         from: configuration.email.fromAddress || 'noreply@yourinstitute.com',
         to: email || '',
@@ -272,9 +272,11 @@ export async function createStudentAction({
       });
 
       // Send welcome email with credentials
-      const { EmailService } = await import('~/core/email/send-email-mailtrap');
-      const { getStudentRegistrationEmailTemplate } = await import('~/core/email/templates/emailTemplate');
-      
+      const { EmailService } = await import('~/core/email/send-email');
+      const { getStudentRegistrationEmailTemplate } = await import(
+        '~/core/email/templates/emailTemplate'
+      );
+
       const { html, text } = getStudentRegistrationEmailTemplate({
         studentName: `${firstName} ${lastName}`,
         email,
@@ -385,6 +387,3 @@ export const isAdmin = withSession(
     return userRole === USER_ROLES.ADMIN;
   },
 );
-
-
-

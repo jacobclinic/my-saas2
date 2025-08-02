@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { UpcomingSessionTableData } from '~/lib/sessions/types/upcoming-sessions';
 import UpcommingSessionClassCard from '../../upcoming-sessions/UpcommingSessionCard';
-import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { UpcomingSession } from '~/lib/sessions/types/session';
 import { formatToLocalTime } from '~/lib/utils/timezone-utils';
 
 const UpcomingClassesSection = ({

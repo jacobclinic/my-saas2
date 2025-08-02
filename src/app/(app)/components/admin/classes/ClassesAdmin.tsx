@@ -20,7 +20,7 @@ import {
 } from '../../base-v2/ui/Select';
 import { GRADES } from '~/lib/constants-v2';
 import { format, toZonedTime } from 'date-fns-tz';
-import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import { createShortUrlAction } from '~/lib/short-links/server-actions';
 import DeleteClassDialog from '../../classes/DeleteClassDialog';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
