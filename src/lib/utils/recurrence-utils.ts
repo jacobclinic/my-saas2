@@ -1,6 +1,6 @@
 import { RRule, Weekday } from 'rrule';
 import { TimeSlot } from '../classes/types/class-v2';
-import { format } from 'date-fns';
+import { format } from './date-utils';
 
 export type RecurrenceInput = {
     startDate: string;
