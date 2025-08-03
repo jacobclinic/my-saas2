@@ -24,7 +24,7 @@ type ClassSessionPageProps = {
 const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
   const [zoomSession, setZoomSession] = useState<any | null>(null);
   const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const userSession = useUserSession();
   const { data: role } = useUserRole();
 
@@ -78,6 +78,16 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
 
     validatePayment();
   }, [params.sessionId, params.classId, userSession]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="max-w-md p-6 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+          <h2 className="text-lg font-medium text-yellow-700 mb-2">Loading...</h2>
+        </div>
+      </div>
+    );
+  }
 
 
   if (!zoomSession) {
