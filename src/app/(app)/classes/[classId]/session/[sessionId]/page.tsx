@@ -4,6 +4,8 @@ import { fetchZoomSessionBySessionIdAction, validateStudentPaymentForSessionActi
 import useUserSession from '~/core/hooks/use-user-session';
 import dynamic from 'next/dynamic';
 import useUserRole from '~/lib/user/hooks/use-userRole';
+import { isFirstWeekOfMonth } from '~/lib/utils/date-utils';
+
 
 // Zoom meeting is a client side only component
 // Top level imports will not ensure it.
@@ -22,6 +24,7 @@ type ClassSessionPageProps = {
 const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
   const [zoomSession, setZoomSession] = useState<any | null>(null);
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(true);
   const userSession = useUserSession();
   const { data: role } = useUserRole();
 
@@ -45,27 +48,46 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
       }
     };
     const validatePayment = async () => {
-      if (!userSession) return;
-
-      if (isHost) {
-        fetchZoomSession();
-        setError("");
-        return;
-      }
-
-      // Validate student payment for the session
-      const isValid = await validateStudentPaymentForSessionAction(params.sessionId, params.classId, userSession.auth.user.id);
-      if (!isValid) {
-        setError("You must complete the payment to access this session.");
-      } else {
-        // Only set zoom session if payment is valid
-        fetchZoomSession();
-        setError("");
+      try {
+        if (!userSession) return;
+        if (isHost) {
+          fetchZoomSession();
+          setError("");
+          return;
+        }
+        const isFirstWeek = isFirstWeekOfMonth(new Date());
+        if (isFirstWeek) {
+          fetchZoomSession();
+          setError("");
+          return;
+        }
+        const isValid = await validateStudentPaymentForSessionAction(params.sessionId, params.classId, userSession.auth.user.id);
+        
+        if (!isValid) {
+          setError("You must complete the payment to access this session.");
+        } else {
+          fetchZoomSession();
+          setError("");
+        }
+      } catch (error) {
+        setError("Something went wrong while validating the payment. Please try again and contact admin if the problem persists.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     validatePayment();
   }, [params.sessionId, params.classId, userSession]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="max-w-md p-6 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+          <h2 className="text-lg font-medium text-yellow-700 mb-2">Loading...</h2>
+        </div>
+      </div>
+    );
+  }
 
 
   if (!zoomSession) {
