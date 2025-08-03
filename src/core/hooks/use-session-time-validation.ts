@@ -23,7 +23,7 @@ const useSessionTimeValidation = (startTime: string) => {
                 }
 
                 const oneHourBefore = new Date(sessionStart.getTime() - 60 * 60 * 1000);
-                const isWithinWindow = now >= oneHourBefore && now <= sessionStart;
+                const isWithinWindow = now >= oneHourBefore;
 
                 setIsWithinJoinWindow(isWithinWindow);
             } catch (error) {
