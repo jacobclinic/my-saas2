@@ -297,3 +297,9 @@ export function getPaymentPeriodFromDate(date: Date): string {
   const month = (utcDate.getUTCMonth() + 1).toString().padStart(2, '0');
   return `${year}-${month}`;
 }
+
+export function isFirstWeekOfMonth(checkDate: string | Date): boolean {
+  const date = new Date(checkDate);
+  const dayOfMonth = date.getDate();
+  return dayOfMonth <= 7;
+}

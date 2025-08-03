@@ -15,16 +15,17 @@ import {
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { useRouter } from 'next/navigation';
+import { isFirstWeekOfMonth } from '~/lib/utils/date-utils';
 
 interface StudentNextSessionCardProps {
-    sessionData: SessionStudentTableData;
-    isPending: boolean;
-    setSelectedSession: (session: SessionStudentTableData) => void;
-    setShowPaymentDialog: (show: boolean) => void;
-    joinMeetingAsStudent: (sessionData: any) => void;
+  sessionData: SessionStudentTableData;
+  isPending: boolean;
+  setSelectedSession: (session: SessionStudentTableData) => void;
+  setShowPaymentDialog: (show: boolean) => void;
+  joinMeetingAsStudent: (sessionData: any) => void;
 }
 
-const StudentNextSessionCard = ({ 
+const StudentNextSessionCard = ({
   sessionData,
   isPending,
   setSelectedSession,
@@ -32,7 +33,7 @@ const StudentNextSessionCard = ({
   joinMeetingAsStudent,
 }: StudentNextSessionCardProps) => {
   const router = useRouter();
-  
+
   return (
     <Card className="transform transition-all hover:scale-[1.02]">
       <CardHeader className="pb-2">
@@ -65,7 +66,7 @@ const StudentNextSessionCard = ({
           </div>
           <div className="flex items-center text-sm text-gray-600">
             <User size={16} className="mr-2" />
-            <span>{sessionData.sessionRawData?.class?.tutor?.first_name+' '+sessionData.sessionRawData?.class?.tutor?.last_name}</span>
+            <span>{sessionData.sessionRawData?.class?.tutor?.first_name + ' ' + sessionData.sessionRawData?.class?.tutor?.last_name}</span>
           </div>
         </div>
         {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
@@ -100,6 +101,15 @@ const StudentNextSessionCard = ({
       </CardContent>
       <CardFooter className="border-t border-gray-200 bg-gray-50 p-4">
         <div className="flex justify-between gap-2 w-full">
+          {isFirstWeekOfMonth(sessionData.date) && (
+            <Button
+              variant={"primary"}
+              className="w-full flex-1"
+              onClick={() => joinMeetingAsStudent(sessionData)} disabled={isPending}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Join Class
+            </Button>
+          )}
           {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
             <Button
               variant={"primary"}
@@ -115,20 +125,20 @@ const StudentNextSessionCard = ({
           ) : sessionData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
             null
           ) : (
-            <Button 
+            <Button
               variant={"primary"}
-              className="w-full flex-1" 
+              className="w-full flex-1"
               onClick={() => joinMeetingAsStudent(sessionData)} disabled={isPending}>
               <ExternalLink className="h-4 w-4 mr-2" />
               Join Class
             </Button>
           )}
-          <Button 
+          <Button
             variant="outline"
             className='w-full flex-1 gap-1'
             onClick={() =>
               router.push(`/sessions/student/${sessionData.id}?type=next`)
-          }>
+            }>
             <FileText size={16} />
             View Class
           </Button>
