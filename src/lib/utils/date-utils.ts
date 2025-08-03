@@ -4,6 +4,8 @@ import { dayMap } from '../constants-v2';
 import { parse, format } from 'date-fns';
 // export function getNextNOccurrences(timeSlot: TimeSlot, startDate: string, count: number): Date[] {
 
+export { format, parse };
+
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
   endTime: string; // e.g., "2025-05-03T06:22:00Z"

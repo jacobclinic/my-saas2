@@ -1,17 +1,18 @@
-import { RRule, Weekday } from 'rrule'
+import { RRule, Weekday } from 'rrule';
 import { TimeSlot } from '../classes/types/class-v2';
+import { format } from './date-utils';
 
 export type RecurrenceInput = {
     startDate: string;
     endDate: string;
     timeSlot: TimeSlot;
     dayOfWeek?: string;
-}
+};
 
 type RecurrenceRecord = {
     startTime: string;
     endTime: string;
-}
+};
 
 type RecurrenceOutput = RecurrenceRecord[];
 
@@ -36,57 +37,56 @@ function getDayOfWeek(day: string): Weekday {
     }
 }
 
+function localTimeToUTC(date: Date, timeString: string, timezone: string): Date {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const localDateTimeStr = `${dateStr}T${timeString}`;
+    const utcDate = new Date(`${localDateTimeStr}Z`);
+    const targetDate = new Date(localDateTimeStr);
+    const utcTime = new Date(targetDate.toLocaleString('en-US', { timeZone: 'UTC' }));
+    const targetTime = new Date(targetDate.toLocaleString('en-US', { timeZone: timezone }));
+    const offset = targetTime.getTime() - utcTime.getTime();
+    return new Date(utcDate.getTime() - offset);
+}
+
 export function generateWeeklyOccurrences(data: RecurrenceInput): RecurrenceOutput {
     try {
         if (!data.timeSlot) {
             throw new Error('Time slot is required');
         }
 
-        const userTimezone = data.timeSlot.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (!data.timeSlot.timezone) {
+            throw new Error('Timezone is required');
+        }
 
-        const startDate = new Date(data.startDate);
-        if (isNaN(startDate.getTime())) {
+        const userTimezone = data.timeSlot.timezone;
+
+        const startDateUTC = new Date(data.startDate);
+        if (isNaN(startDateUTC.getTime())) {
             throw new Error('Invalid startDate format');
         }
 
         const rrule = new RRule({
             freq: RRule.WEEKLY,
             byweekday: data.dayOfWeek ? [getDayOfWeek(data.dayOfWeek)] : undefined,
-            dtstart: startDate,
-            until: new Date(data.endDate),
-        })
+            dtstart: startDateUTC,
+            until: new Date(data.endDate)
+        });
 
         const allOccurrences = rrule.all();
-        return allOccurrences.map((occurrence) => {
 
-            // Use your working function for timezone conversion
-            const utcStart = userLocalTimeToUTC(data.timeSlot.startTime, userTimezone);
-            const utcEnd = userLocalTimeToUTC(data.timeSlot.endTime, userTimezone);
-
-            // Set the correct date for each occurrence
-            const startDate = new Date(occurrence);
-            startDate.setHours(utcStart.getHours(), utcStart.getMinutes(), 0, 0);
-            const endDate = new Date(occurrence);
-            endDate.setHours(utcEnd.getHours(), utcEnd.getMinutes(), 0, 0);
+        let values = allOccurrences.map((occurrence) => {       
+            const utcStart = localTimeToUTC(occurrence, data.timeSlot.startTime, userTimezone);
+            const utcEnd = localTimeToUTC(occurrence, data.timeSlot.endTime, userTimezone);
 
             return {
-                startTime: startDate.toISOString(),
-                endTime: endDate.toISOString()
+                startTime: utcStart.toISOString(),
+                endTime: utcEnd.toISOString(),
             };
         });
+        
+        return values;
     } catch (error) {
         console.error('Error generating weekly occurrences:', error);
         throw error;
     }
-}
-
-function userLocalTimeToUTC(timeString: string, timeZone: string): Date {
-    const [hours, minutes] = timeString.split(':').map(Number);
-
-    const dateString = new Date().toLocaleString('en-US', { timeZone });
-    const localDate = new Date(dateString);
-
-    localDate.setHours(hours, minutes, 0, 0);
-
-    return new Date(localDate.toISOString());
 }
