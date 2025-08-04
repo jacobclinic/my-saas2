@@ -11,6 +11,7 @@ import {
 } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../../TimezoneIndicator';
 import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
+import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 
@@ -128,7 +129,7 @@ const UpcomingSessionsAdmin = ({
       csrfToken,
     });
     if (data.success && data.shortUrl) {
-      navigator.clipboard.writeText(data.shortUrl);
+      await copyToClipboard(data.shortUrl);
       setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
       setTimeout(() => {
         setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));

@@ -36,6 +36,7 @@ import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '~/app/(app)/lib/hooks/use-toast';
 import AddLessonDetailsDialog from '../../upcoming-sessions/AddLessonDetailsDialog';
+import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
@@ -112,7 +113,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
       csrfToken,
     });
     if (data.success && data.shortUrl) {
-      navigator.clipboard.writeText(data.shortUrl);
+      await copyToClipboard(data.shortUrl);
       setLinkCopied({ ...linkCopied, [type]: true });
       setTimeout(() => {
         setLinkCopied({ ...linkCopied, [type]: false });

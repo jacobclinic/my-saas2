@@ -41,6 +41,7 @@ import {
   TooltipTrigger,
 } from '../base-v2/ui/tooltip';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
+import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 import { useRouter } from 'next/navigation';
@@ -98,7 +99,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       csrfToken,
     });
     if (data.success && data.shortUrl) {
-      navigator.clipboard.writeText(data.shortUrl);
+      await copyToClipboard(data.shortUrl);
       setLinkCopied({ ...linkCopied, [type]: true });
       setTimeout(() => {
         setLinkCopied({ ...linkCopied, [type]: false });
