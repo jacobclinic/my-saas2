@@ -73,7 +73,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   const handleAddTimeSlot = () => {
     setNewClass((prev) => ({
       ...prev,
-      timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '' }],
+      timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '', timezone: userTimezone }],
     }));
   };
 
