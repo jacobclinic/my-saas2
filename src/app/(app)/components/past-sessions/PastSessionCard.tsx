@@ -35,6 +35,7 @@ import {
   TooltipTrigger,
 } from '../base-v2/ui/tooltip';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
@@ -58,7 +59,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
       csrfToken,
     });
     if (data.success && data.shortUrl) {
-      navigator.clipboard.writeText( data.shortUrl);
+      await copyToClipboard(data.shortUrl);
       setLinkCopied({ ...linkCopied, [type]: true });
       setTimeout(() => {
         setLinkCopied({ ...linkCopied, [type]: false });

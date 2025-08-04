@@ -20,6 +20,7 @@ import {
 } from '../../base-v2/ui/Select';
 import { GRADES } from '~/lib/constants-v2';
 import { format, toZonedTime } from 'date-fns-tz';
+import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import DeleteClassDialog from '../../classes/DeleteClassDialog';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
@@ -152,7 +153,7 @@ const ClassesAdmin = ({
         ? shortLinkResult.shortUrl
         : registrationUrl;
 
-    navigator.clipboard.writeText(finalLink);
+    await copyToClipboard(finalLink);
     setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
     setTimeout(() => {
       setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));

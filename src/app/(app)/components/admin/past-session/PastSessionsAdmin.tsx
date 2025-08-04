@@ -17,6 +17,7 @@ import {
 import { insertAttendanceAction } from '~/lib/attendance/server-actions';
 import { convertToLocalTime } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../../TimezoneIndicator';
+import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 interface DateRange {
@@ -149,7 +150,7 @@ const PastSessionsAdmin = ({
     });
 
     if (data.success && data.shortUrl) {
-      navigator.clipboard.writeText(data.shortUrl);
+      await copyToClipboard(data.shortUrl);
       setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
       setTimeout(() => {
         setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
