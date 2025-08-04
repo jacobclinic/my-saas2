@@ -102,7 +102,7 @@ export const createClassAction = withSession(
 
     // Create an invoice for the newly created class
     if (classResult?.id) {
-      const invoiceId = await createInvoiceForNewClass(client, classResult.id);
+      const invoiceId = await createInvoiceForNewClass(client, classResult.id, params.classData.tutorId);
       if (!invoiceId) {
         console.error(
           'Failed to create invoice for new class:',

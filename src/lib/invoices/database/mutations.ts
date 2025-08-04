@@ -267,7 +267,7 @@ export async function generateMonthlyInvoicesTutor(
         const totalRevenue = numberOfPaidInvoices * classFee;
         const tutorPayment = totalRevenue * TUTOR_PAYOUT_RATE;
 
-        // Create invoice number with exactly 12 characters: YY + MM + 4 chars from tutorId + 4 chars from classId
+        // Create invoice number with exactly 16 characters: YY + MM + 6 chars from tutorId + 6 chars from classId
         const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${tutorId.substring(0, 6)}${classData.id.substring(0, 6)}`;
 
         if (existingTutorInvoice) {
@@ -323,6 +323,7 @@ export async function generateMonthlyInvoicesTutor(
 export async function createInvoiceForNewClass(
   client: SupabaseClient,
   classId: string,
+  tutorId: string,
 ): Promise<string | null> {
   try {
     // Get the current date and use it for invoice generation
@@ -331,55 +332,20 @@ export async function createInvoiceForNewClass(
     const month = now.getMonth() + 1; // JavaScript months are 0-indexed
 
     // Format month as 'YYYY-MM'
-    const invoicePeriod = `${year}-${month.toString().padStart(2, '0')}`;
-    const invoiceDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const paymentPeriod = `${year}-${month.toString().padStart(2, '0')}`;
 
-    // Set due date to 15 days from now
-    const dueDate = new Date(now);
-    dueDate.setDate(dueDate.getDate() + 15);
-    const dueDateStr = dueDate.toISOString().split('T')[0];
+    // Create invoice number with exactly 16 characters: YY + MM + 6 chars from tutorId + 6 chars from classId
+    const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${tutorId.substring(0, 6)}${classId.substring(0, 6)}`;
 
-    // Get class details to determine the fee and other info
-    const { data: classData, error: classError } = await client
-      .from(CLASSES_TABLE)
-      .select('fee, name')
-      .eq('id', classId)
-      .single();
-
-    if (classError) {
-      console.error('Error fetching class data:', classError.message);
-      return null;
-    }
-
-    // Check if an invoice already exists for this class-period combination
-    // For class-level invoices, we'll use a special student_id of null or empty
-    const { data: existingInvoice } = await client
-      .from(INVOICES_TABLE)
-      .select('id')
-      .is('student_id', null) // Class-level invoice has no specific student
-      .eq('class_id', classId)
-      .eq('invoice_period', invoicePeriod)
-      .single();
-
-    // If invoice already exists, return its ID
-    if (existingInvoice) {
-      return existingInvoice.id;
-    }
-
-    // Create invoice number with exactly 12 characters: YY + MM + 8 chars from classId
-    const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${classId.substring(0, 12)}`;
-
-    // Create the invoice with amount 0 initially (no students enrolled yet)
+    // Create the tutor invoice with amount 0 initially (no students enrolled yet)
     const { data: invoice, error: insertError } = await client
-      .from(INVOICES_TABLE)
+      .from(TUTOR_INVOICES_TABLE)
       .insert({
-        student_id: null, // Class-level invoice, not tied to specific student
+        tutor_id: tutorId,
         class_id: classId,
         invoice_no: invoiceNo,
-        invoice_period: invoicePeriod,
+        payment_period: paymentPeriod,
         amount: 0, // Start with 0 since no students are enrolled yet
-        invoice_date: invoiceDate,
-        due_date: dueDateStr,
         status: 'issued', // Initial status of the invoice
       })
       .select('id')
@@ -389,7 +355,6 @@ export async function createInvoiceForNewClass(
       console.error('Error creating class invoice:', insertError.message);
       return null;
     }
-
     console.log(`Class invoice created successfully for class ${classId}`);
     return invoice.id;
   } catch (error) {
