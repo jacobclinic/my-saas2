@@ -279,6 +279,16 @@ export const updateClassFailure = (error: string, code?: string): UpdateClassRes
   code
 });
 
+export const deleteClassSuccess = (): DeleteClassResponse => ({
+  success: true
+});
+
+export const deleteClassFailure = (error: string, code?: string): DeleteClassResponse => ({
+  success: false,
+  error,
+  code
+});
+
 // DB Types
 export type InsertClassData = Database['public']['Tables']['classes']['Insert'];
 export type UpdateClassData = Database['public']['Tables']['classes']['Update'];

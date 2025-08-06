@@ -10,7 +10,7 @@ import {
 } from '~/lib/classes/database/mutations-v2';
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import { ClassType, createClassFailure, CreateClassParams, CreateClassResponse, createClassSuccess, TimeSlot, UpdateClassData, updateClassFailure, UpdateClassParams, updateClassSuccess } from './types/class-v2';
+import { ClassType, createClassFailure, CreateClassParams, CreateClassResponse, createClassSuccess, TimeSlot, UpdateClassData, updateClassFailure, UpdateClassParams, updateClassSuccess, deleteClassSuccess, deleteClassFailure, DeleteClassResponse } from './types/class-v2';
 import { getUpcomingOccurrences } from '../utils/date-utils';
 import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
@@ -258,146 +258,42 @@ export const updateClassAction = withSession(
 );
 
 export const deleteClassAction = withSession(
-  async (params: DeleteClassParams) => {
+  async (params: DeleteClassParams): Promise<DeleteClassResponse> => {
     const { classId, csrfToken } = params;
     const client = getSupabaseServerActionClient();
+    const logger = getLogger();
+    const classService = new ClassService(client, logger);
+    
+    try {
+      await verifyCsrfToken(csrfToken);
+      
+      // Get the current user's session
+      const {
+        data: { session },
+        error: sessionError,
+      } = await client.auth.getSession();
+      if (sessionError || !session?.user) {
+        return deleteClassFailure('User not authenticated', ErrorCodes.UNAUTHORIZED);
+      }
 
-    await verifyCsrfToken(csrfToken);
-
-    // Get the current user's session
-    const {
-      data: { session },
-      error: sessionError,
-    } = await client.auth.getSession();
-    if (sessionError || !session?.user) {
-      return {
-        success: false,
-        error: 'User not authenticated',
-      };
+      const userId = session.user.id;
+      
+      logger.info('Deleting class', { classId, userId });
+      
+      const result = await classService.deleteClass(classId, userId);
+      if (!result.success) {
+        return deleteClassFailure(result.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+      }
+      
+      revalidatePath('/classes');
+      revalidatePath('/(app)/classes');
+      return deleteClassSuccess();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return deleteClassFailure(errorMessage, ErrorCodes.INTERNAL_SERVER_ERROR);
     }
-
-    const userId = session.user.id;
-
-    // Check user role and permissions
-    const havePermission = await isAdminOrCLassTutor(client, userId, classId);
-    console.log('havePermission', havePermission);
-    if (!havePermission) {
-      return {
-        success: false,
-        error: `You don't have permissions to delete the class`,
-      };
-    }
-    //Proceed with class deletion
-    const result = await deleteClass(client, classId);
-    if (!result) {
-      return {
-        success: false,
-        error: 'Failed to delete class',
-      };
-    }
-
-    //Revalidate paths
-    revalidatePath('/classes');
-    revalidatePath('/(app)/classes');
-
-    return {
-      success: true,
-      classId: result,
-    };
-  },
+  }
 );
-// const createZoomMeetingsBatch = async (
-//   classId: string,
-//   classData: NewClassData,
-//   occurrences: { startTime: Date; endTime: Date }[],
-// ) => {
-//   const results = [];
-
-//   for (let i = 0; i < occurrences.length; i++) {
-//     const occurrence = occurrences[i];
-
-//     const start_time = occurrence.startTime.toISOString();
-//     const end_time = occurrence.endTime.toISOString();
-
-//     try {
-//       // Create Zoom meeting
-//       const zoomMeeting = await zoomService.createMeeting(
-//         {
-//           topic: `${classData.name}_${start_time}`,
-//           start_time,
-//           duration:
-//             (new Date(occurrence.endTime).getTime() -
-//               new Date(occurrence.startTime).getTime()) /
-//             (1000 * 60),
-//           timezone: 'Asia/Colombo',
-//           type: 2,
-//         },
-//         '',
-//       );
-
-//       if (!zoomMeeting) {
-//         throw new Error('Failed to initialize Zoom session');
-//       }
-
-//       results.push({
-//         class_id: classId,
-//         start_time,
-//         end_time,
-//         zoom_meeting_id: zoomMeeting?.id,
-//       });
-
-//       // Introduce a delay after every 9 requests
-//       if ((i + 1) % 9 === 0) {
-//         console.log('Rate limit reached, waiting for 1 second...');
-//         await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second delay
-//       }
-//     } catch (error) {
-//       console.error(
-//         `Error creating Zoom meeting for occurrence ${i + 1}:`,
-//         error,
-//       );
-//     }
-//   }
-
-//   return results;
-// };
-
-// export const createZoomMeeting = async (
-//   classId: string,
-//   classData: NewClassData,
-//   occurrence: { startTime: Date; endTime: Date },
-// ) => {
-//   const start_time = occurrence.startTime.toISOString();
-//   const end_time = occurrence.endTime.toISOString();
-//   try {
-//     // Create Zoom meeting
-//     const zoomMeeting = await zoomService.createMeeting(
-//       {
-//         topic: `${classData.name}_${start_time}`,
-//         start_time,
-//         duration:
-//           (new Date(occurrence.endTime).getTime() -
-//             new Date(occurrence.startTime).getTime()) /
-//           (1000 * 60),
-//         timezone: 'Asia/Colombo',
-//         type: 2,
-//       },
-//       '',
-//     );
-//     if (!zoomMeeting) {
-//       throw new Error('Failed to initialize Zoom session');
-//     }
-//     return {
-//       zoomMeeting: zoomMeeting,
-//       class_id: classId,
-//       start_time,
-//       end_time,
-//       zoom_meeting_id: zoomMeeting?.id,
-//     };
-//   } catch (error) {
-//     console.error(`Error creating Zoom meeting`, error);
-//   }
-// };
 
 export const getAllUpcominSessionsAdmin = withSession(async () => {
   const client = getSupabaseServerActionClient();

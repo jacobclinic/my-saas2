@@ -1,0 +1,185 @@
+# Core Interaction Guidelines
+
+## File Modification Rules
+
+### 1. Permission-Based Changes
+- **Never update files without explicit user permission**
+- **Always ask for confirmation before making any code changes**
+- **Respect user preferences for code modifications**
+
+### 2. Action Plan Requirement
+When a user requests changes, follow this structured approach:
+
+#### Step 1: Analysis
+- Analyze the current codebase structure
+- Identify affected files and dependencies
+- Understand the user's requirements
+
+#### Step 2: Create Detailed Action Plan
+- **List all files that need modification**
+- **Provide specific code samples for each change**
+- **Explain the reasoning behind each modification**
+- **Include potential risks or considerations**
+- **Suggest alternative approaches if applicable**
+
+#### Step 3: Present Plan to User
+```
+## Action Plan: [Brief Description]
+
+### Files to Modify:
+1. `path/to/file1.ts` - [Reason for change]
+2. `path/to/file2.ts` - [Reason for change]
+
+### Proposed Changes:
+
+#### File 1: `path/to/file1.ts`
+```typescript
+// Current code
+export function oldFunction() {
+  // existing implementation
+}
+
+// Proposed change
+export function newFunction() {
+  // new implementation with improvements
+}
+```
+
+#### File 2: `path/to/file2.ts`
+```typescript
+// Add new functionality
+export const newFeature = {
+  // implementation details
+}
+```
+
+### Benefits:
+- [List specific benefits]
+- [Performance improvements]
+- [Code quality enhancements]
+
+### Risks/Considerations:
+- [Any potential issues]
+- [Breaking changes]
+- [Migration steps if needed]
+
+### Alternative Approaches:
+- [Other ways to achieve the goal]
+- [Trade-offs between approaches]
+```
+
+#### Step 4: Wait for Approval
+- **Only proceed after user explicitly approves the plan**
+- **Ask clarifying questions if the plan needs refinement**
+- **Provide additional details if requested**
+
+### 3. Code Quality Standards
+When creating action plans, ensure:
+
+#### Code Samples Include:
+- **Complete function/class implementations**
+- **Proper TypeScript types**
+- **Error handling patterns**
+- **Consistent naming conventions**
+- **Follow existing architecture patterns**
+
+#### Documentation:
+- **Clear comments explaining the changes**
+- **JSDoc for new functions**
+- **Context for why changes are needed**
+
+### 4. Communication Guidelines
+
+#### Be Specific:
+- **Use exact file paths**
+- **Include line numbers when referencing existing code**
+- **Provide complete code blocks, not snippets**
+
+#### Be Transparent:
+- **Explain the impact of changes**
+- **Mention any dependencies or prerequisites**
+- **Highlight any breaking changes**
+
+#### Be Helpful:
+- **Suggest improvements beyond the immediate request**
+- **Point out potential issues or optimizations**
+- **Offer alternative solutions when appropriate**
+
+### 5. Error Prevention
+- **Double-check file paths and imports**
+- **Verify TypeScript types are correct**
+- **Ensure consistency with existing patterns**
+- **Test logic before suggesting changes**
+
+### 6. Follow-Up
+- **Ask if the user needs help implementing the plan**
+- **Offer to explain any part of the proposed changes**
+- **Provide additional context if needed**
+
+## Example Interaction Flow
+
+**User Request:** "I need to add error handling to the invoice creation function"
+
+**AI Response:**
+```
+## Action Plan: Add Error Handling to Invoice Creation
+
+### Files to Modify:
+1. `src/lib/invoices/database/mutations.ts` - Add comprehensive error handling
+2. `src/lib/invoices/services/invoice.service.ts` - Update service layer error handling
+3. `src/lib/invoices/server-actions-v2.ts` - Improve action-level error handling
+
+### Proposed Changes:
+
+#### File 1: `src/lib/invoices/database/mutations.ts`
+```typescript
+export async function createInvoice(
+  client: Client, 
+  data: InsertInvoiceData
+): Promise<Result<Invoice, DatabaseError>> {
+  try {
+    const { data: invoice, error } = await client
+      .from(INVOICES_TABLE)
+      .insert(data)
+      .select()
+      .throwOnError()
+      .single();
+
+    if (error) {
+      logger.error('Failed to create invoice', error);
+      return failure(new DatabaseError('Failed to create invoice'));
+    }
+
+    return success(invoice);
+  } catch (error) {
+    logger.error('Something went wrong while creating invoice', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+    });
+    return failure(new DatabaseError('Something went wrong while creating invoice'));
+  }
+}
+```
+
+### Benefits:
+- Consistent error handling across the application
+- Better debugging with detailed error logs
+- Improved user experience with meaningful error messages
+
+### Risks/Considerations:
+- Existing code calling these functions may need updates
+- Error messages should be user-friendly but informative
+
+**Would you like me to proceed with implementing these changes?**
+```
+
+This approach ensures:
+- **Clear communication**
+- **User control over changes**
+- **Comprehensive planning**
+- **Quality code suggestions**
+- **Transparent decision-making**
+- Never update the files without the user permission.
+- When user ask to do something, first come up with a action plan on how to do the changes. This should include the necessary code samples as well.
+- Only update the files after the user approval.

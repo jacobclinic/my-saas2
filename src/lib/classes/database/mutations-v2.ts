@@ -135,29 +135,47 @@ export async function updateClass(client: Client, classId: string, data: UpdateC
 //   }
 // }
 
-export async function deleteClass(client: Client, classId: string) {
+export async function deleteClass(client: Client, classId: string): Promise<Result<string, DatabaseError>> {
   try {
     const currentTime = new Date().toISOString();
 
-    const { error } = await client
+    const { error: sessionDeleteError } = await client
       .from(SESSIONS_TABLE)
       .delete()
       .eq('class_id', classId)
       .gt('start_time', currentTime);
 
-    if (error) throw error;
+    if (sessionDeleteError) {
+      logger.error('Failed to delete future sessions for class', { 
+        classId, 
+        error: sessionDeleteError 
+      });
+      return failure(new DatabaseError('Failed to delete future sessions for class'));
+    }
 
-    const result = await client
+    const { error: classUpdateError } = await client
       .from(CLASSES_TABLE)
       .update({ status: 'canceled' })
       .eq('id', classId);
 
-    if (result.error) throw result.error;
+    if (classUpdateError) {
+      logger.error('Failed to update class status to canceled', { 
+        classId, 
+        error: classUpdateError 
+      });
+      return failure(new DatabaseError('Failed to update class status to canceled'));
+    }
 
-    return classId;
+    logger.info('Class deleted successfully', { classId });
+    return success(classId);
   } catch (error) {
-    console.error("Error deleting class sessions:", error);
-    throw new Error("Failed to delete class sessions. Please try again.");
+    logger.error('Something went wrong while deleting class', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      classId,
+    });
+    return failure(new DatabaseError('Something went wrong while deleting class'));
   }
 }
 

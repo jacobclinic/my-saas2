@@ -1,11 +1,12 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "~/database.types";
 import { CreateClassPayload, DbClassType, UpdateClassData } from "./types/class-v2";
-import { createClass, updateClass } from "./database/mutations-v2";
+import { createClass, updateClass, deleteClass } from "./database/mutations-v2";
 import { failure, success } from "../shared/result";
 import { Logger } from "pino";
 import { ServiceError } from "../shared/errors";
 import { getClassById } from "./database/queries";
+import { isAdminOrCLassTutor } from "../user/database/queries";
 export class ClassService {
 
     private supabaseClient: SupabaseClient<Database>;
@@ -103,7 +104,41 @@ export class ClassService {
                 stack: error instanceof Error ? error.stack : undefined,
                 name: error instanceof Error ? error.name : undefined,
             });
-            return failure(new ServiceError("Something went wrong while getting the class from the database"));
+                    return failure(new ServiceError("Something went wrong while getting the class from the database"));
+        }
+    }
+
+    async deleteClass(classId: string, userId: string) {
+        try {
+            // Check user role and permissions
+            const havePermission = await isAdminOrCLassTutor(this.supabaseClient, userId, classId);
+            if (!havePermission) {
+                this.logger.error('User does not have permission to delete class', { userId, classId });
+                return failure(new ServiceError('You don\'t have permissions to delete the class'));
+            }
+            
+            const result = await deleteClass(this.supabaseClient, classId);
+            
+            if (!result.success) {
+                this.logger.error('Failed to delete class', { 
+                    error: result.error instanceof Error ? result.error.message : String(result.error),
+                    stack: result.error instanceof Error ? result.error.stack : undefined,
+                    name: result.error instanceof Error ? result.error.name : undefined,
+                    classId 
+                });
+                return failure(new ServiceError(result.error.message));
+            }
+            
+            this.logger.info('Class deleted successfully', { classId: result.data });
+            return success(result.data);
+        } catch (error) {
+            this.logger.error('Service error while deleting class', { 
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+                name: error instanceof Error ? error.name : undefined,
+                classId 
+            });
+            return failure(new ServiceError('Failed to delete class'));
         }
     }
 }
