@@ -4,7 +4,38 @@ import type { Database } from '~/database.types';
 type Client = SupabaseClient<Database>;
 
 import { CLASSES_TABLE, SESSIONS_TABLE } from '~/lib/db-tables';
-import { ClassType, NewClassData } from '../types/class-v2';
+import { DbClassType, InsertClassData, UpdateClassData } from '../types/class-v2';
+import { DatabaseError } from '~/lib/shared/errors';
+import { failure, Result, success } from '~/lib/shared/result';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
+
+export async function createClass(client: Client, data: InsertClassData): Promise<Result<DbClassType, DatabaseError>> {
+  try {
+    const { data: insertedClass, error } = await client
+      .from(CLASSES_TABLE)
+      .insert(data)
+      .select()
+      .throwOnError()
+      .single();
+
+    if (error) {
+      logger.error("Failed to create the class in the database", error);
+      return failure(new DatabaseError("Failed to create the class in the database"));
+    }
+
+    return success(insertedClass);
+
+  } catch (error) {
+    logger.error("Something went wrong while creating the class", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+    });
+    return failure(new DatabaseError("Something went wrong while creating the class"));
+  }
+}
 
 export async function getClassById(client: Client, classId: string) {
   try {
@@ -23,59 +54,86 @@ export async function getClassById(client: Client, classId: string) {
   }
 }
 
-export async function createClass(client: Client, data: NewClassData) {
-  try {
-    const { data: insertedClass, error } = await client
-      .from(CLASSES_TABLE)
-      .insert({
-        name: data.name,
-        subject: data.subject,
-        description: data.description,
-        grade: data.yearGrade,
-        fee: parseInt(data.monthlyFee),
-        starting_date: data.startDate,
-        time_slots: data.timeSlots.map((slot) => ({
-          day: slot.day,
-          startTime: slot.startTime,
-          endTime: slot.endTime,
-          timezone: slot.timezone 
-        })),
-        status: 'active',
-        tutor_id: data.tutorId
-      })
-      .select()
-      .throwOnError()
-      .single();
-
-    if (error) throw error;
-
-    console.log("Class created successfully:", insertedClass);
-
-    return insertedClass;
-  } catch (error) {
-    console.error("Error creating class:", error);
-    throw new Error("Failed to create class. Please try again.");
-  }
-}
-
-export async function updateClass(client: Client, classId: string, data: Partial<Omit<ClassType, 'id'>>) {
+export async function updateClass(client: Client, classId: string, data: UpdateClassData): Promise<Result<DbClassType, DatabaseError>> {
   try {
     const { data: updatedClass, error } = await client
       .from(CLASSES_TABLE)
       .update(data)
       .eq('id', classId)
-      .select('id')
+      .select()
       .throwOnError()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      logger.error("Failed to update the class in the database", error);
+      return failure(new DatabaseError("Failed to update the class in the database"));
+    }
 
-    return updatedClass;
+    return success(updatedClass);
+
   } catch (error) {
-    console.error("Error updating class:", error);
-    throw new Error("Failed to update class. Please check the input fields and try again.");
+    logger.error("Something went wrong while updating the class", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+    });
+    return failure(new DatabaseError("Something went wrong while updating the class"));
   }
 }
+
+// export async function createClass(client: Client, data: NewClassData) {
+//   try {
+//     const { data: insertedClass, error } = await client
+//       .from(CLASSES_TABLE)
+//       .insert({
+//         name: data.name,
+//         subject: data.subject,
+//         description: data.description,
+//         grade: data.yearGrade,
+//         fee: parseInt(data.monthlyFee),
+//         starting_date: data.startDate,
+//         time_slots: data.timeSlots.map((slot) => ({
+//           day: slot.day,
+//           startTime: slot.startTime,
+//           endTime: slot.endTime,
+//           timezone: slot.timezone 
+//         })),
+//         status: 'active',
+//         tutor_id: data.tutorId
+//       })
+//       .select()
+//       .throwOnError()
+//       .single();
+
+//     if (error) throw error;
+
+//     console.log("Class created successfully:", insertedClass);
+
+//     return insertedClass;
+//   } catch (error) {
+//     console.error("Error creating class:", error);
+//     throw new Error("Failed to create class. Please try again.");
+//   }
+// }
+
+// export async function updateClass(client: Client, classId: string, data: Partial<Omit<ClassType, 'id'>>) {
+//   try {
+//     const { data: updatedClass, error } = await client
+//       .from(CLASSES_TABLE)
+//       .update(data)
+//       .eq('id', classId)
+//       .select('id')
+//       .throwOnError()
+//       .single();
+
+//     if (error) throw error;
+
+//     return updatedClass;
+//   } catch (error) {
+//     console.error("Error updating class:", error);
+//     throw new Error("Failed to update class. Please check the input fields and try again.");
+//   }
+// }
 
 export async function deleteClass(client: Client, classId: string) {
   try {

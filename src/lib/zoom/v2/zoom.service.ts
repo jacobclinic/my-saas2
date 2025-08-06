@@ -9,6 +9,8 @@ import { createZoomSession } from "~/lib/zoom_sessions/database/mutations";
 import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomMeetingRecordingUrl } from "./types";
 import { ZOOM_SESSIONS_TABLE } from "~/lib/db-tables";
 import { getAllUnassignedZoomUsers, getAllZoomUsersWithTutor, getZoomUserByTutorId } from "./database/queries";
+import { ZoomError } from "~/lib/shared/errors";
+import { failure, Result, success } from "~/lib/shared/result";
 
 
 const logger = getLogger();
@@ -252,24 +254,23 @@ export class ZoomService {
         }
     }
 
-    async checkIfZoomUserValid(tutorId: string) {
+    async checkIfZoomUserValid(tutorId: string) : Promise<Result<boolean, ZoomError>>{
         try {
             const tutorZoomUser = await getZoomUserByTutorId(this.supabaseClient, tutorId);
             if (tutorZoomUser.data) {
                 const zoomUserExternalId = tutorZoomUser.data.zoom_user_id;
                 if (!zoomUserExternalId) {
-                    return false;
+                    return failure(new ZoomError('Zoom portal user is not yet created.'));
                 }
                 const zoomUser = await this.client.getUserById(zoomUserExternalId);
                 if (zoomUser && zoomUser.verified === 1) {
-                    return true;
+                    return success(true);
                 }
-                return false;
             }
-            return false;
+            return failure(new ZoomError('Zoom portal user is not yet created.'));
         } catch (error) {
             logger.error(error, "Failed to check if zoom user valid");
-            return false;
+            return failure(new ZoomError('Failed to check if zoom user valid.'));
         }
     }
 

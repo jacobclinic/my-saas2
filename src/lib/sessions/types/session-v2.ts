@@ -1,3 +1,5 @@
+import { Database } from "~/database.types";
+
 interface Session {
   id: string;
   created_at: string;
@@ -69,3 +71,6 @@ interface pastSessionsForAttendance {
 }
 
 export type { Session, UpcomingSession, PastSession, pastSessionsForAttendance };
+
+
+export type InsertSessionData = Database['public']['Tables']['sessions']['Insert'];

@@ -19,42 +19,42 @@ export type Database = {
           created_at: string
           description: string | null
           end_date: string | null
-          fee: number | null
-          grade: string | null
+          fee: number
+          grade: string
           id: string
-          name: string | null
-          starting_date: string | null
-          status: string | null
-          subject: string | null
-          time_slots: Json[] | null
+          name: string
+          starting_date: string
+          status: string
+          subject: string
+          time_slots: Json[]
           tutor_id: string
         }
         Insert: {
           created_at?: string
           description?: string | null
           end_date?: string | null
-          fee?: number | null
-          grade?: string | null
+          fee: number
+          grade: string
           id?: string
-          name?: string | null
-          starting_date?: string | null
-          status?: string | null
-          subject?: string | null
-          time_slots?: Json[] | null
+          name: string
+          starting_date: string
+          status: string
+          subject: string
+          time_slots: Json[]
           tutor_id: string
         }
         Update: {
           created_at?: string
           description?: string | null
           end_date?: string | null
-          fee?: number | null
-          grade?: string | null
+          fee?: number
+          grade?: string
           id?: string
-          name?: string | null
-          starting_date?: string | null
-          status?: string | null
-          subject?: string | null
-          time_slots?: Json[] | null
+          name?: string
+          starting_date?: string
+          status?: string
+          subject?: string
+          time_slots?: Json[]
           tutor_id?: string
         }
         Relationships: [
