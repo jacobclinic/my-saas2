@@ -78,39 +78,39 @@ export default function CreateClassModal() {
     }
     // console.log("newClass-1",newClass);
 
-    startTransition(async () => {
-      const createdClass = await createClassAction({ classData: newClass, csrfToken });
-      // console.log("createdClass-1",createdClass);
-      if (createdClass.success && createdClass?.class?.id) {
-        // console.log("createdClass-2",filteredTimeSlots,timeSlots);
+    // startTransition(async () => {
+    //   const createdClass = await createClassAction({ classData: newClass, csrfToken });
+    //   // console.log("createdClass-1",createdClass);
+    //   if (createdClass.success && createdClass?.class?.id) {
+    //     // console.log("createdClass-2",filteredTimeSlots,timeSlots);
 
-        if (filteredTimeSlots.length > 0) {
-          let newSessions: Omit<SessionsType, 'id'>[] = []
-          filteredTimeSlots.forEach((timeSlot) => {
-            const input = {
-              day: timeSlot.day,
-              time: timeSlot.time,
-              duration: timeSlot.duration, // Duration as a string
-              recurringPattern: "weekly",
-            };
+    //     if (filteredTimeSlots.length > 0) {
+    //       let newSessions: Omit<SessionsType, 'id'>[] = []
+    //       filteredTimeSlots.forEach((timeSlot) => {
+    //         const input = {
+    //           day: timeSlot.day,
+    //           time: timeSlot.time,
+    //           duration: timeSlot.duration, // Duration as a string
+    //           recurringPattern: "weekly",
+    //         };
             
-            const sessionsTimes = calculateSessionsTimes(input);
-            sessionsTimes.forEach(element => {
-              newSessions.push({
-                classId: createdClass?.class?.id,
-                startTime: element.startTime,
-                endTime: element?.endTime,
-              })
+    //         const sessionsTimes = calculateSessionsTimes(input);
+    //         sessionsTimes.forEach(element => {
+    //           newSessions.push({
+    //             classId: createdClass?.class?.id,
+    //             startTime: element.startTime,
+    //             endTime: element?.endTime,
+    //           })
               
-            });
-          });
-          // console.log("newSession-1",newSessions);
-          await createSessionsAction({ sessionsData: newSessions, csrfToken });
-        }
+    //         });
+    //       });
+    //       // console.log("newSession-1",newSessions);
+    //       await createSessionsAction({ sessionsData: newSessions, csrfToken });
+    //     }
 
-      }
-      revalidateClassesDataFetch();
-    });
+    //   }
+    //   revalidateClassesDataFetch();
+    // });
 
     // // create task
     // await createClassMutation.trigger(newClass);

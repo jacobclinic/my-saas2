@@ -1,9 +1,12 @@
 'use server';
 
+import { withSession } from '~/core/generic/actions-utils';
+import getSupabaseServerActionClient from '~/core/supabase/action-client';
+import getLogger from '~/core/logger';
+import { SessionService } from './session.service';
+import { ErrorCodes } from '~/lib/shared/error-codes';
 import { revalidatePath } from 'next/cache';
 import { zoomService } from '../zoom/zoom.service';
-import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import { withSession } from '~/core/generic/actions-utils';
 import {
   deleteMaterialFromStorage,
   uploadMaterialToStorage,
@@ -340,3 +343,27 @@ export async function updateAttendanceMarkedAction(
     return { success: false, error: 'Failed to update attendance marked' };
   }
 }
+
+export const getNextSessionByClassIdAction = withSession(
+  async ({ classId }: { classId: string }) => {
+    const client = getSupabaseServerActionClient();
+    const logger = getLogger();
+    const service = new SessionService(client, logger);
+
+    try {
+      if (!classId) {
+        return { success: false, error: 'Invalid classId', code: ErrorCodes.VALIDATION_ERROR };
+      }
+
+      const result = await service.getNextSessionByClassId(classId);
+      if (!result.success) {
+        return { success: false, error: result.error.message, code: ErrorCodes.SERVICE_LEVEL_ERROR };
+      }
+
+      return { success: true, data: result.data };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, error: message, code: ErrorCodes.INTERNAL_SERVER_ERROR };
+    }
+  }
+);

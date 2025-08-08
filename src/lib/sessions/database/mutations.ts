@@ -6,6 +6,9 @@ type Client = SupabaseClient<Database>;
 import { SESSIONS_TABLE } from '~/lib/db-tables';
 import SessionType from '../types/session';
 import getLogger from '~/core/logger';
+import { InsertSessionData } from '../types/session-v2';
+import { DatabaseError } from '~/lib/shared/errors';
+import { failure, Result, success } from '~/lib/shared/result';
 
 const logger = getLogger();
 
@@ -297,5 +300,47 @@ export async function updateAttendanceMarked(
       sessionId,
     });
     throw new Error('Failed to update attendance_marked. Please try again.');
+  }
+}
+
+// Refactored functions
+
+
+
+export async function createMultipleRecurringSessions(client: Client, sessions: InsertSessionData[]) : Promise<Result<InsertSessionData[], DatabaseError>> {
+  try {
+    const { data: insertedSessions, error } = await client
+      .from(SESSIONS_TABLE)
+      .insert(sessions.flat())
+      .select('id')
+      .throwOnError();
+
+    if (error) {
+      logger.error("Failed to create the recurring sessions in the database", error);
+      return failure(new DatabaseError("Failed to create the recurring sessions in the database"));
+    }
+    return success(insertedSessions);
+  } catch (error) {
+    logger.error("Something went wrong while creating the recurring sessions", error);
+    return failure(new DatabaseError("Something went wrong while creating the recurring sessions"));
+  }
+}
+
+export async function deleteSessions(client: Client, classId: string, startDate: string) : Promise<Result<void, DatabaseError>> {
+  try {
+    const { error: deleteSessionsError } = await client
+      .from(SESSIONS_TABLE)
+      .delete()
+      .eq('class_id', classId)
+      .gt('start_time', startDate);
+
+    if (deleteSessionsError) {
+      logger.error("Failed to delete the recurring sessions in the database", deleteSessionsError);
+      return failure(new DatabaseError("Failed to delete the recurring sessions in the database"));
+    }
+    return success(undefined);
+  } catch (error) {
+    logger.error("Something went wrong while deleting the recurring sessions", error);
+    return failure(new DatabaseError("Something went wrong while deleting the recurring sessions"));
   }
 }

@@ -16,7 +16,14 @@ import {
   ClassType,
   ClassWithTutorAndEnrollmentAdmin,
   ClassWithTutorAndEnrollmentAdminRawData,
+  DbClassType,
 } from '../types/class-v2';
+import { DatabaseError } from '~/lib/shared/errors';
+import { failure, Result, success } from '~/lib/shared/result';
+import getLogger from '~/core/logger';
+
+
+const logger = getLogger();
 
 interface ClassWithTutorAndEnrollmentRawData
   extends Omit<ClassWithTutorAndEnrollment, 'noOfStudents'> {
@@ -342,6 +349,7 @@ export async function getAllClassesByTutorIdData(
           time_slots,
           starting_date,
           grade,
+          short_url_code,
           tutor:${USERS_TABLE}!tutor_id (
             first_name,
             last_name
@@ -714,5 +722,37 @@ export async function getClassByIdWithTutor(client: SupabaseClient<Database>, cl
   } catch (error) {
     console.error("Error getting class by ID with tutor:", error);
     throw new Error("Failed to get class by ID with tutor. Please try again.");
+  }
+}
+
+export async function getClassById(client: SupabaseClient<Database>, classId: string): Promise<Result<DbClassType, DatabaseError>> {
+  try {
+    const { data: classData, error } = await client
+      .from(CLASSES_TABLE)
+      .select()
+      .eq('id', classId)
+      .throwOnError()
+      .single();
+
+    if (error) {
+      logger.error("Failed to fetch class from database", error);
+      return failure(new DatabaseError("Failed to fetch class from database"));
+    }
+
+    if (!classData) {
+      logger.warn("Class not found", { classId });
+      return failure(new DatabaseError("Class not found"));
+    }
+
+    return success(classData);
+
+  } catch (error) {
+    logger.error("Something went wrong while fetching the class", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      classId
+    });
+    return failure(new DatabaseError("Something went wrong while fetching the class"));
   }
 }

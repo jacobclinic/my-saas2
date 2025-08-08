@@ -49,12 +49,16 @@ interface FieldTouchedState {
 
 interface StudentRegistrationFormProps {
   classData: ClassRegistrationData;
-  nextSessionData: UpcomingSession;
-}
+  nextSessionId: string;
+  formattedDate?: string;
+  formattedTime?: string;
+} 
 
 const StudentRegistrationForm = ({
   classData,
-  nextSessionData,
+  nextSessionId,
+  formattedDate,
+  formattedTime,
 }: StudentRegistrationFormProps) => {
   const [formData, setFormData] = useState<RegistrationFormData>({
     firstName: '',
@@ -239,8 +243,7 @@ const StudentRegistrationForm = ({
 
     const result = await registerStudentAction({
       ...formData,
-      classId: classData.classId || '',
-      nameOfClass: classData.className,
+      classId: classData.classId || ''
     });
 
     if (result.success) {
@@ -251,9 +254,9 @@ const StudentRegistrationForm = ({
         username: result.userData?.email,
         email: result.userData?.email,
         nextClass: {
-          sessionId: nextSessionData.id,
-          date: classData.nextSession,
-          time: classData.time,
+          sessionId: nextSessionId,
+          date: formattedDate || classData.nextSession,
+          time: formattedTime || classData.time,
           zoomLink: '',
         },
         materials: [],
@@ -267,8 +270,10 @@ const StudentRegistrationForm = ({
     return (
       <StudentRegistrationViaLogin
         classData={classData}
-        nextSessionData={nextSessionData}
+        nextSessionId={nextSessionId}
         setIsRegisterViaLogin={setIsRegisterViaLogin}
+        formattedDate={formattedDate}
+        formattedTime={formattedTime}
       />
     );
   }

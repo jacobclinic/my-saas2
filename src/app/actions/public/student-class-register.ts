@@ -13,7 +13,6 @@ const registrationSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   classId: z.string().uuid(),
-  className: z.string().min(1),
 });
 
 export async function registerStudentViaLoginAction(
@@ -105,10 +104,20 @@ export async function registerStudentViaLoginAction(
         .eq('id', userId)
         .single();
 
+      const { data: classData, error: classError } = await client
+        .from('classes')
+        .select('*')
+        .eq('id', validated.classId)
+        .single();
+
+      if (classError) {
+        console.error('Error fetching class data:', classError);
+      }
+
       const { html, text } = getStudentRegistrationEmailTemplate({
         studentName: `${userDetails?.first_name} ${userDetails?.last_name}`,
         email: validated.email,
-        className: formData.className,
+        className: classData?.name || 'Your Class',
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
         classId: validated.classId,
       });
@@ -118,14 +127,14 @@ export async function registerStudentViaLoginAction(
         emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: validated.email,
-          subject: `Welcome to ${formData.className}! Access Your Student Portal`,
+          subject: `Welcome to ${classData?.name || 'Your Class'}! Access Your Student Portal`,
           html,
           text,
         }),
         // send welcome sms
         sendSingleSMS({
           phoneNumber: userDetails?.phone_number!,
-          message: `Welcome to ${formData.className}! Access your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
+          message: `Welcome to ${classData?.name || 'Your Class'}! Access your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
                 \nLogin with your registration email/password.
                 \n-Comma Education`,
         }),

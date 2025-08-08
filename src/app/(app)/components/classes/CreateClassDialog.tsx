@@ -16,9 +16,10 @@ import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { createClassAction } from '~/lib/classes/server-actions-v2';
 import { useToast } from '../../lib/hooks/use-toast';
 import BaseDialog from '../base-v2/BaseDialog';
-import { NewClassData, TimeSlot } from '~/lib/classes/types/class-v2';
+import { CreateClassPayload, NewClassData, TimeSlot } from '~/lib/classes/types/class-v2';
 import Button from '~/core/ui/Button';
 import { Plus, X } from 'lucide-react';
+import { Json } from '~/database.types';
 
 interface CreateClassDialogProps {
   open: boolean;
@@ -103,13 +104,21 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 
   const handleSubmit = () => {
     const startDate = new Date(newClass.startDate).toISOString();
-    const payload = {
-      ...newClass,
-      startDate,
-    };
+    const classDataPayload: CreateClassPayload ={
+      fee: Number(newClass.monthlyFee),
+      grade: newClass.yearGrade,
+      name: newClass.name,
+      description: newClass.description,
+      starting_date: startDate,
+      status: 'active',
+      subject: newClass.subject,
+      time_slots: newClass.timeSlots as unknown as Json[],
+      tutor_id: newClass.tutorId
+    }
+
     startTransition(async () => {
       const result = await createClassAction({
-        classData: payload,
+        data: classDataPayload,
         csrfToken,
       });
 
@@ -289,17 +298,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
-          {/* <div>
-            <label className="text-sm font-medium">End Date</label>
-            <Input
-              type="date"
-              value={newClass.endDate}
-              onChange={(e) =>
-                setNewClass({ ...newClass, endDate: e.target.value })
-              }
-              min={new Date().toISOString().split('T')[0]}
-            />
-          </div> */}{' '}
         </div>
 
         {/* Class Schedule with Timezone Indicator */}
@@ -324,39 +322,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
               <label className="text-sm font-medium">Start Time</label>
               <label className="text-sm font-medium">End Time</label>
             </div>
-            {/* <div className="flex gap-2 items-start">
-              <Select
-                value={newClass.timeSlot.day}
-                onValueChange={(value) => updateTimeSlot('day', value)}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select day" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DAYS_OF_WEEK.map(day => (
-                    <SelectItem key={day} value={day.toLowerCase()}>
-                      {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="flex gap-2">
-                <Input
-                  type="time"
-                  value={newClass.timeSlots.startTime}
-                  onChange={(e) => updateTimeSlot('startTime', e.target.value)}
-                  placeholder="Start time"
-                />
-
-                <Input
-                  type="time"
-                  value={newClass.timeSlot.endTime}
-                  onChange={(e) => updateTimeSlot('endTime', e.target.value)}
-                  placeholder="End time"
-                />
-              </div>
-            </div> */}
             {newClass.timeSlots.map((slot, index) => (
               <div key={index} className="flex gap-2 items-start">
                 <Select

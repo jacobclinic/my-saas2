@@ -1842,18 +1842,21 @@ export async function getNextSessionByClassID(
       .select(
         `
           id,
-          created_at,
           class_id,
-          recording_urls,
-          status,
           start_time,
           end_time,
-          recurring_session_id,
           title,
           description,
           updated_at,
-          meeting_url,
-          zoom_meeting_id
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor:${USERS_TABLE}!tutor_id(
+              first_name,
+              last_name
+            )
+          )
         `,
         { count: 'exact' },
       )
@@ -1870,7 +1873,28 @@ export async function getNextSessionByClassID(
       return null;
     }
 
-    return data[0];
+    // Normalize joined class/tutor structures that may return arrays
+    const session = data[0] as unknown as UpcomingSession & {
+      class?: any;
+    };
+    let classTemp: any = undefined;
+    let tutorTemp: any = undefined;
+    if (session?.class) {
+      classTemp = Array.isArray(session.class) ? session.class[0] : session.class;
+    }
+    if (classTemp?.tutor) {
+      tutorTemp = Array.isArray(classTemp.tutor) ? classTemp.tutor[0] : classTemp.tutor;
+    }
+
+    return {
+      ...session,
+      class: classTemp
+        ? {
+            ...classTemp,
+            tutor: tutorTemp,
+          }
+        : undefined,
+    } as UpcomingSession;
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
     throw error;

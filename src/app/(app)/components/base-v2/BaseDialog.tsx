@@ -121,6 +121,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
                   onClick={onConfirm}
                   variant={confirmButtonVariant}
                   disabled={loading || confirmButtonDisabled}
+                  loading={loading}
                 >
                   {confirmButtonText}
                 </Button>

@@ -6,10 +6,11 @@ import {
   deleteClass,
   getClassById,
   updateClass,
+  // updateClass,
 } from '~/lib/classes/database/mutations-v2';
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import { ClassType, NewClassData, TimeSlot } from './types/class-v2';
+import { ClassType, createClassFailure, CreateClassParams, CreateClassResponse, createClassSuccess, TimeSlot, UpdateClassData, updateClassFailure, UpdateClassParams, updateClassSuccess, deleteClassSuccess, deleteClassFailure, DeleteClassResponse } from './types/class-v2';
 import { getUpcomingOccurrences } from '../utils/date-utils';
 import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
@@ -26,19 +27,13 @@ import { createInvoiceForNewClass } from '../invoices/database/mutations';
 import { notifyStudentsAfterClassScheduleUpdate } from '../notifications/email/email.notification.service';
 import { notifyStudentsAfterClassScheduleUpdateSMS } from '../notifications/sms/sms.notification.service';
 import { generateWeeklyOccurrences, RecurrenceInput } from '../utils/recurrence-utils';
-import { isEqual } from '../utils/lodash-utils';
 import { ZoomService } from '../zoom/v2/zoom.service';
+import { ErrorCodes } from '../shared/error-codes';
+import { ClassService } from './class.service';
+import getLogger from '~/core/logger';
+import { SessionService } from '../sessions/session.service';
+import { isEqual } from '../utils/lodash-utils';
 
-type CreateClassParams = {
-  classData: NewClassData;
-  csrfToken: string;
-};
-
-type UpdateClassParams = {
-  classId: string;
-  classData: Partial<Omit<ClassType, 'id'>>;
-  csrfToken: string;
-};
 
 type DeleteClassParams = {
   classId: string;
@@ -46,443 +41,284 @@ type DeleteClassParams = {
 };
 
 export const createClassAction = withSession(
-  async (params: CreateClassParams) => {
+  async (params: CreateClassParams): Promise<CreateClassResponse> => {
 
-    const { classData, csrfToken } = params;
+    const { data, csrfToken } = params;
     const client = getSupabaseServerActionClient();
+    const logger = getLogger();
     const zoomService = new ZoomService(client);
-
+    const classService = new ClassService(client, logger);
+    const sessionService = new SessionService(client, logger);
     try {
-      const isZoomUserValid = await zoomService.checkIfZoomUserValid(classData.tutorId);
-      if (!isZoomUserValid) {
-        return {
-          success: false,
-          error: 'Tutor user is not valid. Please contact support.',
-        };
+
+      await verifyCsrfToken(csrfToken);
+
+      logger.info("Creating class", { classData: data });
+
+      const zoomUserValidity = await zoomService.checkIfZoomUserValid(data.tutor_id);
+      if (!zoomUserValidity.success) {
+        return createClassFailure(zoomUserValidity.error.message, ErrorCodes.ZOOM_ERROR);
       }
+
+      const classResult = await classService.createClass(params.data);
+
+      if (!classResult.success) {
+        return createClassFailure(classResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+      }
+
+      const classUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?classId=${classResult.data.id}`;
+      const shortUrlResult = await createShortUrlAction({
+        originalUrl: classUrl,
+        csrfToken: csrfToken,
+      });
+
+      if (shortUrlResult.success && shortUrlResult.shortCode) {
+        const updateShortUrlResult = await classService.updateClassShortUrl(
+          classResult.data.id,
+          shortUrlResult.shortCode
+        );
+
+        if (!updateShortUrlResult.success) {
+          logger.warn('Failed to update class with short URL, but class was created', {
+            classId: classResult.data.id,
+            shortCode: shortUrlResult.shortCode,
+            error: updateShortUrlResult.error.message
+          });
+        }
+      } else {
+        logger.warn('Short URL creation failed, but class was created', {
+          classId: classResult.data.id,
+          error: shortUrlResult.error
+        });
+      }
+
+      const timeSlots = data.time_slots as unknown as TimeSlot[];
+      const sessionResult = await sessionService.createRecurringSessions(classResult.data.id, timeSlots, data.starting_date);
+      if (!sessionResult.success) {
+        return createClassFailure(sessionResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+      }
+
+      if (classResult?.data.id) {
+        const invoiceId = await createInvoiceForNewClass(client, classResult.data.id, params.data.tutor_id);
+        if (!invoiceId) {
+          console.error(
+            'Failed to create invoice for new class:',
+            classResult.data.id,
+          );
+          // Continue with class creation even if invoice creation fails
+          // The invoice can be generated later with the monthly job
+        }
+      }
+      await zoomService.createMeetingsForTomorrowSessions();
+
+      // Revalidate paths
+      revalidatePath('/classes');
+      revalidatePath('/(app)/classes');
+      return createClassSuccess();
     } catch (error) {
-      return {
-        success: false,
-        error: 'Failed to check if user is valid. Please try again. If the problem persists, please contact support.',
-      };
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error('Unexpected error in createClassAction', { error: errorMessage });
+      return createClassFailure(errorMessage, ErrorCodes.INTERNAL_SERVER_ERROR);
     }
-
-    // Create the class
-    const classResult = await createClass(client, classData);
-
-    const occurrences = [];
-    const yearEndDate = new Date(new Date().getFullYear(), 11, 31)
-      .toISOString()
-      .split('T')[0];
-
-    for (const slot of classData.timeSlots) {
-      const recurrenceInputPayload: RecurrenceInput = {
-        startDate: classData.startDate,
-        endDate: yearEndDate,
-        timeSlot: slot,
-        dayOfWeek: slot.day,
-      };
-      try {
-        const weeklyOccurences = generateWeeklyOccurrences(
-          recurrenceInputPayload,
-        );
-        occurrences.push(...weeklyOccurences);
-      } catch (error) {
-        console.error('Error generating weekly occurrences:', error);
-        throw error;
-      }
-    }
-
-    const sessions = occurrences.map((occurrence, index) => ({
-      class_id: classResult?.id,
-      start_time: new Date(occurrence.startTime).toISOString(),
-      end_time: new Date(occurrence.endTime).toISOString(),
-      meeting_url: '',
-      zoom_meeting_id: '',
-      status: 'scheduled',
-      created_at: new Date().toISOString(),
-    }));
-
-    const { error: sessionError } = await client
-      .from(SESSIONS_TABLE)
-      .insert(sessions.flat());
-
-    if (sessionError) throw sessionError;
-
-    // Create an invoice for the newly created class
-    if (classResult?.id) {
-      const invoiceId = await createInvoiceForNewClass(client, classResult.id, params.classData.tutorId);
-      if (!invoiceId) {
-        console.error(
-          'Failed to create invoice for new class:',
-          classResult.id,
-        );
-        // Continue with class creation even if invoice creation fails
-        // The invoice can be generated later with the monthly job
-      }
-    }
-
-    // Call this method to create zoom meetings for newly created classes.
-    await zoomService.createMeetingsForTomorrowSessions();
-
-    // Revalidate paths
-    revalidatePath('/classes');
-    revalidatePath('/(app)/classes');
-
-    return {
-      success: true,
-      class: classResult,
-    };
   },
 );
 
 export const updateClassAction = withSession(
   async (params: UpdateClassParams) => {
     const client = getSupabaseServerActionClient();
+    const logger = getLogger();
     const zoomService = new ZoomService(client);
-    const classWithTutorData = await getClassByIdWithTutor(client, params.classId);
-    const tutorId = classWithTutorData?.tutor_id;
-    if (!tutorId) {
-      return {
-        success: false,
-        error: 'Cannot update class. Please contact support.',
-      };
-    }
-
+    const classService = new ClassService(client, logger);
+    const sessionService = new SessionService(client, logger);
     try {
-      const isZoomUserValid = await zoomService.checkIfZoomUserValid(tutorId);
-      if (!isZoomUserValid) {
-        return {
-          success: false,
-          error: 'Tutor is not verfied properly. Please contact support.',
-        };
+      const classWithTutorData = await getClassByIdWithTutor(client, params.classId);
+      const tutorId = classWithTutorData?.tutor_id;
+      const zoomUserValidity = await zoomService.checkIfZoomUserValid(tutorId!);
+      if (!zoomUserValidity.success) {
+        return updateClassFailure(zoomUserValidity.error.message, ErrorCodes.ZOOM_ERROR);
       }
+      // Get the current user's session
+      const {
+        data: { session },
+        error: sessionError,
+      } = await client.auth.getSession();
+      if (sessionError || !session?.user) {
+        return updateClassFailure('User not authenticated', ErrorCodes.UNAUTHORIZED);
+      }
+
+      const userId = session.user.id;
+
+      // Check if the user has permission to update this class
+      const hasPermission = await isAdminOrCLassTutor(
+        client,
+        userId,
+        params.classId,
+      );
+      if (!hasPermission) {
+        return updateClassFailure("You don't have permissions to update this class", ErrorCodes.FORBIDDEN);
+      }
+
+      const originalClassResult = await classService.getClassById(params.classId);
+      if (!originalClassResult.success) {
+        return updateClassFailure(originalClassResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+      }
+
+      const updateClassResult = await classService.updateClass(params.classId, params.classData, originalClassResult.data)
+
+      if (!updateClassResult.success) {
+        return updateClassFailure(updateClassResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+      }
+
+      if (!isEqual(originalClassResult.data.time_slots, params.classData.time_slots)) {
+        const deleteSessionsResult = await sessionService.deleteSessions(params.classId, originalClassResult.data.starting_date);
+        if (!deleteSessionsResult.success) {
+          return updateClassFailure(deleteSessionsResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+        }
+        const createSessionsResult = await sessionService.createRecurringSessions(params.classId, params.classData.time_slots as unknown as TimeSlot[], params.classData.starting_date!);
+        if (!createSessionsResult.success) {
+          return updateClassFailure(createSessionsResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+        }
+
+        await zoomService.createMeetingsForTomorrowSessions();
+
+        // Todo : Refactor the notification service.
+        if (!isEqual(originalClassResult.data.time_slots, params.classData.time_slots)) {
+          try {
+            // Helper function to get the next occurrence of a specific day
+            const getNextOccurrenceOfDay = (dayName: string): Date => {
+              const daysOfWeek = [
+                'sunday',
+                'monday',
+                'tuesday',
+                'wednesday',
+                'thursday',
+                'friday',
+                'saturday',
+              ];
+              const targetDayIndex = daysOfWeek.indexOf(dayName.toLowerCase());
+
+              if (targetDayIndex === -1) {
+                throw new Error(`Invalid day name: ${dayName}`);
+              }
+
+              const today = new Date();
+              const currentDayIndex = today.getDay();
+
+              // Calculate days until the target day
+              let daysUntilTarget = targetDayIndex - currentDayIndex;
+
+              // If the target day is today or has passed this week, get it for next week
+              if (daysUntilTarget <= 0) {
+                daysUntilTarget += 7;
+              }
+
+              // Create the next occurrence date
+              const nextOccurrence = new Date(today);
+              nextOccurrence.setDate(today.getDate() + daysUntilTarget);
+
+              return nextOccurrence;
+            };
+
+            // Format the time slots for notification - combine multiple slots if they exist
+            const timeSlots = params.classData.time_slots as unknown as TimeSlot[];
+            const scheduleInfo = timeSlots
+              .map((slot) => `${slot.day} ${slot.startTime}-${slot.endTime}`)
+              .join(', ');
+
+            // Use the first time slot's day and combined time for the template
+            const firstTimeSlot = timeSlots[0];
+
+            // Calculate the next occurrence of the updated class day
+            const nextSessionDate = getNextOccurrenceOfDay(
+              firstTimeSlot.day,
+            ).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            });
+
+            await Promise.all([
+              notifyStudentsAfterClassScheduleUpdate(client, {
+                classId: params.classId,
+                className: updateClassResult.data.name,
+                updatedClassDay: firstTimeSlot.day,
+                updatedStartTime: firstTimeSlot.startTime,
+                updatedEndTime: scheduleInfo.includes(',')
+                  ? scheduleInfo
+                  : firstTimeSlot.endTime,
+                nextClassDate: nextSessionDate,
+              }),
+              notifyStudentsAfterClassScheduleUpdateSMS(client, {
+                classId: params.classId,
+                className: updateClassResult.data.name,
+                updatedClassDay: firstTimeSlot.day,
+                updatedStartTime: firstTimeSlot.startTime,
+                updatedEndTime: scheduleInfo.includes(',')
+                  ? scheduleInfo
+                  : firstTimeSlot.endTime,
+                nextClassDate: nextSessionDate,
+              }),
+            ]);
+            console.log(
+              'Successfully sent schedule update notifications (email and SMS) to students',
+            );
+          } catch (notificationError) {
+            console.error(
+              'Failed to send schedule update notifications:',
+              notificationError,
+            );
+            // Don't throw here - we don't want to fail the entire update if notifications fail
+          }
+        }
+      }
+      revalidatePath('/classes');
+      revalidatePath(`/classes/${params.classId}`);
+      revalidatePath('/(app)/classes');
+      return updateClassSuccess();
     } catch (error) {
-      return {
-        success: false,
-        error: 'Failed to check if user is valid. Please try again. If the problem persists, please contact support.',
-      };
+      return updateClassFailure(error instanceof Error ? error.message : String(error), ErrorCodes.INTERNAL_SERVER_ERROR);
     }
-
-    // Get the current user's session
-    const {
-      data: { session },
-      error: sessionError,
-    } = await client.auth.getSession();
-    if (sessionError || !session?.user) {
-      return {
-        success: false,
-        error: 'User not authenticated',
-      };
-    }
-
-    const userId = session.user.id;
-
-    // Check if the user has permission to update this class
-    const hasPermission = await isAdminOrCLassTutor(
-      client,
-      userId,
-      params.classId,
-    );
-    if (!hasPermission) {
-      return {
-        success: false,
-        error: "You don't have permissions to update this class",
-      };
-    }
-
-    const originalClass = await getClassById(client, params.classId);
-    // Update the class data
-    const result = await updateClass(client, params.classId, params.classData);
-
-    if (!result) {
-      return {
-        success: false,
-        error: 'There was an error updating the class. Please try again',
-      };
-    }
-
-    // Compare to check if the original slots have been changed.
-    if (!isEqual(originalClass.time_slots, params.classData.time_slots)) {
-      // Slots have been changed and needs to generate the new occurrences.
-      const currentTime = new Date().toISOString();
-      const { error: deleteSessionsError } = await client
-        .from(SESSIONS_TABLE)
-        .delete()
-        .eq('class_id', params.classId)
-        .gt('start_time', currentTime);
-
-      if (deleteSessionsError) {
-        throw deleteSessionsError;
-      }
-
-      const nextOccurrences = generateAllWeeklyOccurrencesForYear({
-        startDate: new Date().toISOString().split('T')[0],
-        timeSlots: params.classData.time_slots as TimeSlot[],
-      });
-
-      const sessions = nextOccurrences.map((occurrence, index) => ({
-        class_id: params.classId,
-        start_time: new Date(occurrence.startTime).toISOString(),
-        end_time: new Date(occurrence.endTime).toISOString(),
-        meeting_url: '',
-        zoom_meeting_id: '',
-        status: 'scheduled',
-        created_at: new Date().toISOString(),
-      }));
-
-      const { error: sessionError } = await client
-        .from(SESSIONS_TABLE)
-        .insert(sessions.flat());
-
-      if (sessionError) throw sessionError;
-      // Notify students about the schedule update
-      try {
-        // Helper function to get the next occurrence of a specific day
-        const getNextOccurrenceOfDay = (dayName: string): Date => {
-          const daysOfWeek = [
-            'sunday',
-            'monday',
-            'tuesday',
-            'wednesday',
-            'thursday',
-            'friday',
-            'saturday',
-          ];
-          const targetDayIndex = daysOfWeek.indexOf(dayName.toLowerCase());
-
-          if (targetDayIndex === -1) {
-            throw new Error(`Invalid day name: ${dayName}`);
-          }
-
-          const today = new Date();
-          const currentDayIndex = today.getDay();
-
-          // Calculate days until the target day
-          let daysUntilTarget = targetDayIndex - currentDayIndex;
-
-          // If the target day is today or has passed this week, get it for next week
-          if (daysUntilTarget <= 0) {
-            daysUntilTarget += 7;
-          }
-
-          // Create the next occurrence date
-          const nextOccurrence = new Date(today);
-          nextOccurrence.setDate(today.getDate() + daysUntilTarget);
-
-          return nextOccurrence;
-        };
-
-        // Format the time slots for notification - combine multiple slots if they exist
-        const timeSlots = params.classData.time_slots as unknown as TimeSlot[];
-        const scheduleInfo = timeSlots
-          .map((slot) => `${slot.day} ${slot.startTime}-${slot.endTime}`)
-          .join(', ');
-
-        // Use the first time slot's day and combined time for the template
-        const firstTimeSlot = timeSlots[0];
-
-        // Calculate the next occurrence of the updated class day
-        const nextSessionDate = getNextOccurrenceOfDay(
-          firstTimeSlot.day,
-        ).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-
-        await Promise.all([
-          notifyStudentsAfterClassScheduleUpdate(client, {
-            classId: params.classId,
-            className: originalClass.name || 'Your Class',
-            updatedClassDay: firstTimeSlot.day,
-            updatedStartTime: firstTimeSlot.startTime,
-            updatedEndTime: scheduleInfo.includes(',')
-              ? scheduleInfo
-              : firstTimeSlot.endTime,
-            nextClassDate: nextSessionDate,
-          }),
-          notifyStudentsAfterClassScheduleUpdateSMS(client, {
-            classId: params.classId,
-            className: originalClass.name || 'Your Class',
-            updatedClassDay: firstTimeSlot.day,
-            updatedStartTime: firstTimeSlot.startTime,
-            updatedEndTime: scheduleInfo.includes(',')
-              ? scheduleInfo
-              : firstTimeSlot.endTime,
-            nextClassDate: nextSessionDate,
-          }),
-        ]);
-        console.log(
-          'Successfully sent schedule update notifications (email and SMS) to students',
-        );
-      } catch (notificationError) {
-        console.error(
-          'Failed to send schedule update notifications:',
-          notificationError,
-        );
-        // Don't throw here - we don't want to fail the entire update if notifications fail
-      }
-    }
-
-
-    // Call this method to create zoom meetings for newly created classes.
-    await zoomService.createMeetingsForTomorrowSessions();
-
-
-    revalidatePath('/classes');
-    revalidatePath(`/classes/${result?.id}`);
-    revalidatePath('/(app)/classes');
-
-    return {
-      success: true,
-      class: result,
-    };
   },
 );
 
 export const deleteClassAction = withSession(
-  async (params: DeleteClassParams) => {
+  async (params: DeleteClassParams): Promise<DeleteClassResponse> => {
     const { classId, csrfToken } = params;
     const client = getSupabaseServerActionClient();
+    const logger = getLogger();
+    const classService = new ClassService(client, logger);
 
-    await verifyCsrfToken(csrfToken);
+    try {
+      await verifyCsrfToken(csrfToken);
 
-    // Get the current user's session
-    const {
-      data: { session },
-      error: sessionError,
-    } = await client.auth.getSession();
-    if (sessionError || !session?.user) {
-      return {
-        success: false,
-        error: 'User not authenticated',
-      };
+      // Get the current user's session
+      const {
+        data: { session },
+        error: sessionError,
+      } = await client.auth.getSession();
+      if (sessionError || !session?.user) {
+        return deleteClassFailure('User not authenticated', ErrorCodes.UNAUTHORIZED);
+      }
+
+      const userId = session.user.id;
+
+      logger.info('Deleting class', { classId, userId });
+
+      const result = await classService.deleteClass(classId, userId);
+      if (!result.success) {
+        return deleteClassFailure(result.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+      }
+
+      revalidatePath('/classes');
+      revalidatePath('/(app)/classes');
+      return deleteClassSuccess();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return deleteClassFailure(errorMessage, ErrorCodes.INTERNAL_SERVER_ERROR);
     }
-
-    const userId = session.user.id;
-
-    // Check user role and permissions
-    const havePermission = await isAdminOrCLassTutor(client, userId, classId);
-    console.log('havePermission', havePermission);
-    if (!havePermission) {
-      return {
-        success: false,
-        error: `You don't have permissions to delete the class`,
-      };
-    }
-    //Proceed with class deletion
-    const result = await deleteClass(client, classId);
-    if (!result) {
-      return {
-        success: false,
-        error: 'Failed to delete class',
-      };
-    }
-
-    //Revalidate paths
-    revalidatePath('/classes');
-    revalidatePath('/(app)/classes');
-
-    return {
-      success: true,
-      classId: result,
-    };
-  },
+  }
 );
-// const createZoomMeetingsBatch = async (
-//   classId: string,
-//   classData: NewClassData,
-//   occurrences: { startTime: Date; endTime: Date }[],
-// ) => {
-//   const results = [];
-
-//   for (let i = 0; i < occurrences.length; i++) {
-//     const occurrence = occurrences[i];
-
-//     const start_time = occurrence.startTime.toISOString();
-//     const end_time = occurrence.endTime.toISOString();
-
-//     try {
-//       // Create Zoom meeting
-//       const zoomMeeting = await zoomService.createMeeting(
-//         {
-//           topic: `${classData.name}_${start_time}`,
-//           start_time,
-//           duration:
-//             (new Date(occurrence.endTime).getTime() -
-//               new Date(occurrence.startTime).getTime()) /
-//             (1000 * 60),
-//           timezone: 'Asia/Colombo',
-//           type: 2,
-//         },
-//         '',
-//       );
-
-//       if (!zoomMeeting) {
-//         throw new Error('Failed to initialize Zoom session');
-//       }
-
-//       results.push({
-//         class_id: classId,
-//         start_time,
-//         end_time,
-//         zoom_meeting_id: zoomMeeting?.id,
-//       });
-
-//       // Introduce a delay after every 9 requests
-//       if ((i + 1) % 9 === 0) {
-//         console.log('Rate limit reached, waiting for 1 second...');
-//         await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second delay
-//       }
-//     } catch (error) {
-//       console.error(
-//         `Error creating Zoom meeting for occurrence ${i + 1}:`,
-//         error,
-//       );
-//     }
-//   }
-
-//   return results;
-// };
-
-// export const createZoomMeeting = async (
-//   classId: string,
-//   classData: NewClassData,
-//   occurrence: { startTime: Date; endTime: Date },
-// ) => {
-//   const start_time = occurrence.startTime.toISOString();
-//   const end_time = occurrence.endTime.toISOString();
-//   try {
-//     // Create Zoom meeting
-//     const zoomMeeting = await zoomService.createMeeting(
-//       {
-//         topic: `${classData.name}_${start_time}`,
-//         start_time,
-//         duration:
-//           (new Date(occurrence.endTime).getTime() -
-//             new Date(occurrence.startTime).getTime()) /
-//           (1000 * 60),
-//         timezone: 'Asia/Colombo',
-//         type: 2,
-//       },
-//       '',
-//     );
-//     if (!zoomMeeting) {
-//       throw new Error('Failed to initialize Zoom session');
-//     }
-//     return {
-//       zoomMeeting: zoomMeeting,
-//       class_id: classId,
-//       start_time,
-//       end_time,
-//       zoom_meeting_id: zoomMeeting?.id,
-//     };
-//   } catch (error) {
-//     console.error(`Error creating Zoom meeting`, error);
-//   }
-// };
 
 export const getAllUpcominSessionsAdmin = withSession(async () => {
   const client = getSupabaseServerActionClient();
