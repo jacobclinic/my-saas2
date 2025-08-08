@@ -57,7 +57,7 @@ export async function generateMonthlyInvoicesStudents(
 
     // Get all existing invoices for this period in bulk
     const { data: existingInvoices, error: existingError } = await client
-      .from('invoices')
+      .from(INVOICES_TABLE)
       .select('student_id, class_id')
       .eq('invoice_period', invoicePeriod);
 
@@ -127,7 +127,7 @@ export async function generateMonthlyInvoicesStudents(
       for (let i = 0; i < invoicesToInsert.length; i += INSERT_BATCH_SIZE) {
         const insertBatch = invoicesToInsert.slice(i, i + INSERT_BATCH_SIZE);
         const { error: insertError } = await client
-          .from('invoices')
+          .from(INVOICES_TABLE)
           .insert(insertBatch);
 
         if (insertError) {
