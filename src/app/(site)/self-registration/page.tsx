@@ -7,6 +7,7 @@ import Logo from '~/core/ui/Logo';
 import { Calendar, Clock, Info, User } from 'lucide-react';
 import { Card, CardContent } from '~/app/(app)/components/base-v2/ui/Card';
 import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
+import { capitalizeDayNames } from '~/lib/utils/text-utils';
 
 interface SearchParams {
   classId: string;
@@ -88,7 +89,7 @@ export default async function RegisterPage({
 
               <div className="flex items-center text-gray-600">
                 <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                {classData.time}
+                {capitalizeDayNames(classData.time)}
               </div>
 
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">

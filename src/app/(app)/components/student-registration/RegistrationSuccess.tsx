@@ -15,6 +15,7 @@ import {
   BookOpen,
   Check,
 } from 'lucide-react';
+import { capitalizeDayNames } from '~/lib/utils/text-utils';
 
 interface RegistrationSuccessProps {
   studentDetails: {
@@ -65,7 +66,7 @@ const RegistrationSuccess = ({ studentDetails }: RegistrationSuccessProps) => {
                 </div>
                 <div className="flex items-center text-gray-600">
                   <Clock className="h-4 w-4 mr-2" />
-                  {studentDetails.nextClass.time}
+                  {capitalizeDayNames(studentDetails.nextClass.time)}
                 </div>
                 <Button
                   variant="outline"

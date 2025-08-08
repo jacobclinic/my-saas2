@@ -30,6 +30,7 @@ import EditClassDialog from './EditClassDialog';
 import AddStudentDialog from './AddStudentDialog';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import { capitalizeDayNames } from '~/lib/utils/text-utils';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 const ClassCard: React.FC<ClassCardProps> = ({
@@ -168,10 +169,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
               <div>
                 <div className="flex items-center text-sm text-gray-600">
                   <CalendarDays className="h-4 w-4 mr-2 text-primary-blue-600" />
-
-                  {classData.schedule?.replace(/\b([a-z])/, (match) =>
-                    match.toUpperCase(),
-                  )}
+                  {capitalizeDayNames(classData.schedule || '')}
                 </div>
                 {'nextClass' in classData && (
                   <div className="flex items-center text-sm text-gray-600">
