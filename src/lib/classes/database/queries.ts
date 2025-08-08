@@ -349,6 +349,7 @@ export async function getAllClassesByTutorIdData(
           time_slots,
           starting_date,
           grade,
+          short_url_code,
           tutor:${USERS_TABLE}!tutor_id (
             first_name,
             last_name

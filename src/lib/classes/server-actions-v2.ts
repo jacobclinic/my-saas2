@@ -66,6 +66,32 @@ export const createClassAction = withSession(
         return createClassFailure(classResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
       }
 
+      const classUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?classId=${classResult.data.id}`;
+      const shortUrlResult = await createShortUrlAction({
+        originalUrl: classUrl,
+        csrfToken: csrfToken,
+      });
+
+      if (shortUrlResult.success && shortUrlResult.shortCode) {
+        const updateShortUrlResult = await classService.updateClassShortUrl(
+          classResult.data.id,
+          shortUrlResult.shortCode
+        );
+
+        if (!updateShortUrlResult.success) {
+          logger.warn('Failed to update class with short URL, but class was created', {
+            classId: classResult.data.id,
+            shortCode: shortUrlResult.shortCode,
+            error: updateShortUrlResult.error.message
+          });
+        }
+      } else {
+        logger.warn('Short URL creation failed, but class was created', {
+          classId: classResult.data.id,
+          error: shortUrlResult.error
+        });
+      }
+
       const timeSlots = data.time_slots as unknown as TimeSlot[];
       const sessionResult = await sessionService.createRecurringSessions(classResult.data.id, timeSlots, data.starting_date);
       if (!sessionResult.success) {
@@ -91,6 +117,7 @@ export const createClassAction = withSession(
       return createClassSuccess();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error('Unexpected error in createClassAction', { error: errorMessage });
       return createClassFailure(errorMessage, ErrorCodes.INTERNAL_SERVER_ERROR);
     }
   },
@@ -153,6 +180,97 @@ export const updateClassAction = withSession(
         }
 
         await zoomService.createMeetingsForTomorrowSessions();
+
+        // Todo : Refactor the notification service.
+        if (!isEqual(originalClassResult.data.time_slots, params.classData.time_slots)) {
+          try {
+            // Helper function to get the next occurrence of a specific day
+            const getNextOccurrenceOfDay = (dayName: string): Date => {
+              const daysOfWeek = [
+                'sunday',
+                'monday',
+                'tuesday',
+                'wednesday',
+                'thursday',
+                'friday',
+                'saturday',
+              ];
+              const targetDayIndex = daysOfWeek.indexOf(dayName.toLowerCase());
+
+              if (targetDayIndex === -1) {
+                throw new Error(`Invalid day name: ${dayName}`);
+              }
+
+              const today = new Date();
+              const currentDayIndex = today.getDay();
+
+              // Calculate days until the target day
+              let daysUntilTarget = targetDayIndex - currentDayIndex;
+
+              // If the target day is today or has passed this week, get it for next week
+              if (daysUntilTarget <= 0) {
+                daysUntilTarget += 7;
+              }
+
+              // Create the next occurrence date
+              const nextOccurrence = new Date(today);
+              nextOccurrence.setDate(today.getDate() + daysUntilTarget);
+
+              return nextOccurrence;
+            };
+
+            // Format the time slots for notification - combine multiple slots if they exist
+            const timeSlots = params.classData.time_slots as unknown as TimeSlot[];
+            const scheduleInfo = timeSlots
+              .map((slot) => `${slot.day} ${slot.startTime}-${slot.endTime}`)
+              .join(', ');
+
+            // Use the first time slot's day and combined time for the template
+            const firstTimeSlot = timeSlots[0];
+
+            // Calculate the next occurrence of the updated class day
+            const nextSessionDate = getNextOccurrenceOfDay(
+              firstTimeSlot.day,
+            ).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            });
+
+            await Promise.all([
+              notifyStudentsAfterClassScheduleUpdate(client, {
+                classId: params.classId,
+                className: updateClassResult.data.name,
+                updatedClassDay: firstTimeSlot.day,
+                updatedStartTime: firstTimeSlot.startTime,
+                updatedEndTime: scheduleInfo.includes(',')
+                  ? scheduleInfo
+                  : firstTimeSlot.endTime,
+                nextClassDate: nextSessionDate,
+              }),
+              notifyStudentsAfterClassScheduleUpdateSMS(client, {
+                classId: params.classId,
+                className: updateClassResult.data.name,
+                updatedClassDay: firstTimeSlot.day,
+                updatedStartTime: firstTimeSlot.startTime,
+                updatedEndTime: scheduleInfo.includes(',')
+                  ? scheduleInfo
+                  : firstTimeSlot.endTime,
+                nextClassDate: nextSessionDate,
+              }),
+            ]);
+            console.log(
+              'Successfully sent schedule update notifications (email and SMS) to students',
+            );
+          } catch (notificationError) {
+            console.error(
+              'Failed to send schedule update notifications:',
+              notificationError,
+            );
+            // Don't throw here - we don't want to fail the entire update if notifications fail
+          }
+        }
       }
       revalidatePath('/classes');
       revalidatePath(`/classes/${params.classId}`);
@@ -161,99 +279,6 @@ export const updateClassAction = withSession(
     } catch (error) {
       return updateClassFailure(error instanceof Error ? error.message : String(error), ErrorCodes.INTERNAL_SERVER_ERROR);
     }
-
-    // TODO: Notify students about the schedule update
-    // // Compare to check if the original slots have been changed.
-    // if (!isEqual(originalClass.time_slots, params.classData.time_slots)) {
-    //   try {
-    //     // Helper function to get the next occurrence of a specific day
-    //     const getNextOccurrenceOfDay = (dayName: string): Date => {
-    //       const daysOfWeek = [
-    //         'sunday',
-    //         'monday',
-    //         'tuesday',
-    //         'wednesday',
-    //         'thursday',
-    //         'friday',
-    //         'saturday',
-    //       ];
-    //       const targetDayIndex = daysOfWeek.indexOf(dayName.toLowerCase());
-
-    //       if (targetDayIndex === -1) {
-    //         throw new Error(`Invalid day name: ${dayName}`);
-    //       }
-
-    //       const today = new Date();
-    //       const currentDayIndex = today.getDay();
-
-    //       // Calculate days until the target day
-    //       let daysUntilTarget = targetDayIndex - currentDayIndex;
-
-    //       // If the target day is today or has passed this week, get it for next week
-    //       if (daysUntilTarget <= 0) {
-    //         daysUntilTarget += 7;
-    //       }
-
-    //       // Create the next occurrence date
-    //       const nextOccurrence = new Date(today);
-    //       nextOccurrence.setDate(today.getDate() + daysUntilTarget);
-
-    //       return nextOccurrence;
-    //     };
-
-    //     // Format the time slots for notification - combine multiple slots if they exist
-    //     const timeSlots = params.classData.time_slots as unknown as TimeSlot[];
-    //     const scheduleInfo = timeSlots
-    //       .map((slot) => `${slot.day} ${slot.startTime}-${slot.endTime}`)
-    //       .join(', ');
-
-    //     // Use the first time slot's day and combined time for the template
-    //     const firstTimeSlot = timeSlots[0];
-
-    //     // Calculate the next occurrence of the updated class day
-    //     const nextSessionDate = getNextOccurrenceOfDay(
-    //       firstTimeSlot.day,
-    //     ).toLocaleDateString('en-US', {
-    //       weekday: 'long',
-    //       year: 'numeric',
-    //       month: 'long',
-    //       day: 'numeric',
-    //     });
-
-    //     await Promise.all([
-    //       notifyStudentsAfterClassScheduleUpdate(client, {
-    //         classId: params.classId,
-    //         className: originalClass.name || 'Your Class',
-    //         updatedClassDay: firstTimeSlot.day,
-    //         updatedStartTime: firstTimeSlot.startTime,
-    //         updatedEndTime: scheduleInfo.includes(',')
-    //           ? scheduleInfo
-    //           : firstTimeSlot.endTime,
-    //         nextClassDate: nextSessionDate,
-    //       }),
-    //       notifyStudentsAfterClassScheduleUpdateSMS(client, {
-    //         classId: params.classId,
-    //         className: originalClass.name || 'Your Class',
-    //         updatedClassDay: firstTimeSlot.day,
-    //         updatedStartTime: firstTimeSlot.startTime,
-    //         updatedEndTime: scheduleInfo.includes(',')
-    //           ? scheduleInfo
-    //           : firstTimeSlot.endTime,
-    //         nextClassDate: nextSessionDate,
-    //       }),
-    //     ]);
-    //     console.log(
-    //       'Successfully sent schedule update notifications (email and SMS) to students',
-    //     );
-    //   } catch (notificationError) {
-    //     console.error(
-    //       'Failed to send schedule update notifications:',
-    //       notificationError,
-    //     );
-    //     // Don't throw here - we don't want to fail the entire update if notifications fail
-    //   }
-    // }
-
   },
 );
 
@@ -263,10 +288,10 @@ export const deleteClassAction = withSession(
     const client = getSupabaseServerActionClient();
     const logger = getLogger();
     const classService = new ClassService(client, logger);
-    
+
     try {
       await verifyCsrfToken(csrfToken);
-      
+
       // Get the current user's session
       const {
         data: { session },
@@ -277,14 +302,14 @@ export const deleteClassAction = withSession(
       }
 
       const userId = session.user.id;
-      
+
       logger.info('Deleting class', { classId, userId });
-      
+
       const result = await classService.deleteClass(classId, userId);
       if (!result.success) {
         return deleteClassFailure(result.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
       }
-      
+
       revalidatePath('/classes');
       revalidatePath('/(app)/classes');
       return deleteClassSuccess();

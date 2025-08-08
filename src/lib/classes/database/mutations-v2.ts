@@ -81,6 +81,33 @@ export async function updateClass(client: Client, classId: string, data: UpdateC
   }
 }
 
+export async function updateClassShortUrl(
+  client: Client, 
+  classId: string, 
+  shortUrlCode: string
+): Promise<Result<void, DatabaseError>> {
+  try {
+    const { error } = await client
+      .from(CLASSES_TABLE)
+      .update({ short_url_code: shortUrlCode })
+      .eq('id', classId);
+
+    if (error) {
+      logger.error('Failed to update class short URL', error);
+      return failure(new DatabaseError('Failed to update class short URL'));
+    }
+
+    return success(undefined);
+  } catch (error) {
+    logger.error('Something went wrong while updating class short URL', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+    });
+    return failure(new DatabaseError('Something went wrong while updating class short URL'));
+  }
+}
+
 // export async function createClass(client: Client, data: NewClassData) {
 //   try {
 //     const { data: insertedClass, error } = await client

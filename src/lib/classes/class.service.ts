@@ -7,6 +7,9 @@ import { Logger } from "pino";
 import { ServiceError } from "../shared/errors";
 import { getClassById } from "./database/queries";
 import { isAdminOrCLassTutor } from "../user/database/queries";
+import { updateClassShortUrl } from "./database/mutations-v2";
+import { Result } from "../shared/result";
+
 export class ClassService {
 
     private supabaseClient: SupabaseClient<Database>;
@@ -139,6 +142,30 @@ export class ClassService {
                 classId 
             });
             return failure(new ServiceError('Failed to delete class'));
+        }
+    }
+
+    async updateClassShortUrl(classId: string, shortUrlCode: string): Promise<Result<void>> {
+        try {
+            const result = await updateClassShortUrl(this.supabaseClient, classId, shortUrlCode);
+            if (!result.success) {
+                this.logger.error('Failed to update class short URL', { 
+                    classId, 
+                    shortUrlCode,
+                    error: result.error instanceof Error ? result.error.message : String(result.error)
+                });
+                return failure(new ServiceError(result.error.message));
+            }
+            
+            this.logger.info('Class short URL updated successfully', { classId, shortUrlCode });
+            return success(undefined);
+        } catch (error) {
+            this.logger.error('Error updating class short URL', { 
+                error: error instanceof Error ? error.message : String(error),
+                classId,
+                shortUrlCode
+            });
+            return failure(new ServiceError('Error updating class short URL'));
         }
     }
 }

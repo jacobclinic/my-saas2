@@ -23,6 +23,7 @@ export type Database = {
           grade: string
           id: string
           name: string
+          short_url_code: string | null
           starting_date: string
           status: string
           subject: string
@@ -37,6 +38,7 @@ export type Database = {
           grade: string
           id?: string
           name: string
+          short_url_code?: string | null
           starting_date: string
           status: string
           subject: string
@@ -51,6 +53,7 @@ export type Database = {
           grade?: string
           id?: string
           name?: string
+          short_url_code?: string | null
           starting_date?: string
           status?: string
           subject?: string

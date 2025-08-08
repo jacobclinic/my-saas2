@@ -303,3 +303,11 @@ export function isFirstWeekOfMonth(checkDate: string | Date): boolean {
   const dayOfMonth = date.getDate();
   return dayOfMonth <= 7;
 }
+
+export function formatToLocalHHmmAMPM(date: string | Date): string {
+  return format(new Date(date), 'hh:mm aaa');
+}
+
+export function formatToHumanReadableDate(date: string | Date): string {
+  return format(new Date(date), 'EEEE, MMMM dd, yyyy');
+}

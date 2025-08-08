@@ -8,6 +8,8 @@ import { TimeSlot } from "../classes/types/class-v2";
 import { createMultipleRecurringSessions, deleteSessions } from "./database/mutations";
 import { InsertSessionData } from "./types/session-v2";
 import { SESSIONS_TABLE } from "../db-tables";
+import { getNextSessionByClassID } from "./database/queries";
+import type { UpcomingSession } from "./types/session-v2";
 
 type Client = SupabaseClient<Database>;
 
@@ -89,6 +91,23 @@ export class SessionService {
                 name: error instanceof Error ? error.name : undefined,
             });
             return failure(new ServiceError("Something went wrong while deleting the recurring sessions"));
+        }
+    }
+
+    async getNextSessionByClassId(classId: string): Promise<Result<UpcomingSession | null, DatabaseError>> {
+        try {
+            if (!classId) {
+                this.logger.error("Invalid classId for getNextSessionByClassId", { classId });
+                return failure(new ServiceError("Invalid classId"));
+            }
+            const data = await getNextSessionByClassID(this.supabaseClient, classId);
+            return success(data ?? null);
+        } catch (error) {
+            this.logger.error("Failed to get next session by classId", {
+                error: error instanceof Error ? error.message : String(error),
+                classId,
+            });
+            return failure(new ServiceError("Failed to fetch next session"));
         }
     }
 }

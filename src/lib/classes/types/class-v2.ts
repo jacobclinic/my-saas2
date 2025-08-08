@@ -24,32 +24,6 @@ interface NextSession {
   start_time: string;
 }
 
-export interface ClassType {
-  id: string;
-  created_at?: string;
-  name?: string | null;
-  description: string | null;
-  subject: string | null;
-  tutor_id: string;
-  fee: number | null;
-  status: string | null;
-  tutor?: {
-    first_name: string | null;
-    last_name: string | null;
-  };
-  time_slots:
-  | {
-    day: string;
-    startTime: string;
-    endTime: string;
-  }[]
-  | null;
-  grade: string | null;
-  starting_date: string | null;
-  students?: ClassListStudent[] | [];
-  upcomingSession: string | null;
-}
-
 export interface ClassForStudentType {
   id: string | null;
   class_id: string | null;
@@ -111,6 +85,7 @@ export interface ClassListData {
   description?: string;
   timeSlots?: { day: string; time: string }[];
   classRawData?: ClassType;
+  shortUrl?: string | null;
   tutor?: {
     id: string;
     firstName: string | null;
@@ -245,6 +220,33 @@ export interface ClassRegistrationData {
   nextSession: string;
   time: string;
   tutorName: string;
+}
+
+export interface ClassType {
+  id: string;
+  created_at?: string;
+  name?: string | null;
+  description: string | null;
+  subject: string | null;
+  tutor_id: string;
+  fee: number | null;
+  status: string | null;
+  tutor?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
+  time_slots:
+  | {
+    day: string;
+    startTime: string;
+    endTime: string;
+  }[]
+  | null;
+  grade: string | null;
+  starting_date: string | null;
+  students?: ClassListStudent[] | [];
+  upcomingSession: string | null;
+  short_url_code?: string | null;
 }
 
 export interface CreateClassResponse extends ApiResponse<Class> {
