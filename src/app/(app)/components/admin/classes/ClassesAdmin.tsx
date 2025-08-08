@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../base-v2/ui/Select';
+import { Badge } from '../../base-v2/ui/Badge';
 import { GRADES } from '~/lib/constants-v2';
 import { format, toZonedTime } from 'date-fns-tz';
 import { copyToClipboard } from '~/lib/utils/clipboard';
@@ -28,6 +29,41 @@ import EditClassDialog from '../../classes/EditClassDialog';
 import AppHeader from '../../AppHeader';
 import TimezoneIndicator from '../../TimezoneIndicator';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
+import DataTable from '~/core/ui/DataTable';
+import { useMemo } from 'react';
+
+// Helper function to get status badge variant
+const getStatusBadgeVariant = (status: string) => {
+  switch (status?.toUpperCase()) {
+    case 'ACTIVE':
+      return 'green';
+    case 'CANCELED':
+      return 'red';
+    default:
+      return 'gray';
+  }
+};
+
+// Column widths configuration
+const columnWidths = {
+  tutorName: '200px',
+  className: '250px',
+  day: '100px',
+  timeSlot: '150px',
+  status: '120px',
+  actions: '200px',
+};
+
+// Table data type for DataTable
+type ClassTableData = {
+  id: string;
+  tutorName: string;
+  className: string;
+  day: string;
+  timeSlot: string;
+  status: string;
+  actions: string;
+};
 
 const ClassesAdmin = ({
   classesData,
@@ -37,6 +73,7 @@ const ClassesAdmin = ({
   const [selectedTutor, setSelectedTutor] = useState('');
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
   const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [showStudentsDialog, setShowStudentsDialog] = useState(false);
   const [selectedClassName, setSelectedClassName] = useState<string | null>(
     null,
@@ -107,7 +144,11 @@ const ClassesAdmin = ({
       : true;
     const yearMatch =
       selectedYear !== 'all' ? cls.grade === selectedYear : true;
-    return nameMatch && yearMatch;
+    const statusMatch =
+      selectedStatus !== 'all'
+        ? cls.status?.toUpperCase() === selectedStatus.toUpperCase()
+        : true;
+    return nameMatch && yearMatch && statusMatch;
   });
 
   const handleCopyLink = async (cls: (typeof classData)[0]) => {
@@ -192,6 +233,129 @@ const ClassesAdmin = ({
     setSelectedEditClassData(() => formatDataForEditCls(cls));
   };
 
+  // Define columns for DataTable
+  const columns = useMemo(
+    () => [
+      {
+        header: 'Tutor Name',
+        accessorKey: 'tutorName',
+      },
+      {
+        header: 'Class Name',
+        accessorKey: 'className',
+      },
+      {
+        header: 'Day',
+        accessorKey: 'day',
+      },
+      {
+        header: 'Time Slot',
+        accessorKey: 'timeSlot',
+      },
+      {
+        header: 'Status',
+        accessorKey: 'status',
+        cell: ({ row }: { row: { original: ClassTableData } }) => {
+          const classId = row.original.id;
+          const cls = filteredData.find((c) => c.id === classId);
+
+          return (
+            <Badge
+              variant={getStatusBadgeVariant(cls?.status || '')}
+              className="text-xs"
+            >
+              {cls?.status?.toUpperCase() || 'Unknown'}
+            </Badge>
+          );
+        },
+      },
+      {
+        header: 'Actions',
+        accessorKey: 'actions',
+        cell: ({ row }: { row: { original: ClassTableData } }) => {
+          const classId = row.original.id;
+          const cls = filteredData.find((c) => c.id === classId);
+
+          if (!cls) return null;
+
+          return (
+            <div className="space-x-2">
+              {/* View students Button */}
+              <div className="relative group inline-block">
+                <button
+                  onClick={() => {
+                    setShowStudentsDialog(true);
+                    setSelectedClassName(cls.name);
+                    cls.students
+                      ? setSelectedClassStudents(cls.students)
+                      : null;
+                  }}
+                  className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                  aria-label="Attendance"
+                >
+                  <Users className="h-4 w-4" />
+                </button>
+                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                  View Students
+                </span>
+              </div>
+              {/* Copy Link Button */}
+              <div className="relative group inline-block">
+                <button
+                  onClick={() => handleCopyLink(cls)}
+                  className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                  aria-label="Copy Link"
+                >
+                  {copiedLinks[cls.id] ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Link className="h-4 w-4" />
+                  )}
+                </button>
+                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                  Copy Registration Link
+                </span>
+              </div>
+              {/* Edit class button */}
+              <div className="relative group inline-block">
+                <button
+                  onClick={() => {
+                    setShowEditDialog(true);
+                    handleSetEditClassData(cls);
+                  }}
+                  className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                  aria-label="Edit"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                  Edit Class
+                </span>
+              </div>
+            </div>
+          );
+        },
+      },
+    ],
+    [filteredData, copiedLinks],
+  );
+
+  // Prepare table data for DataTable
+  const tableData: ClassTableData[] = useMemo(() => {
+    return filteredData.map((cls) => ({
+      id: cls.id,
+      tutorName: cls.tutorName,
+      className: cls.name,
+      day: cls.time?.day || '-',
+      timeSlot:
+        cls.classRawData.time_slots && cls.time_slots?.[0]
+          ? `${cls.time_slots[0].startTime} - ${cls.time_slots[0].endTime}`
+          : '-',
+      status: cls.status || 'Unknown',
+      actions: 'Actions',
+    }));
+  }, [filteredData]);
+
   return (
     <>
       <div className="max-w-7xl p-6">
@@ -230,125 +394,35 @@ const ClassesAdmin = ({
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status Filter
+              </label>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="canceled">Canceled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div>
             <TimezoneIndicator />
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Tutor Name
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Class Name
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Day
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Time slot
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredData.map((cls) => (
-                <tr key={cls.id}>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {cls.tutorName}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">{cls.name}</td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {cls.time?.day}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {/* {formatTimeSlotForDisplay(cls.time?.startTime, cls.time?.endTime)} */}
-                    {cls.classRawData.time_slots ? (
-                      <>
-                        {cls.time_slots![0]?.startTime} -
-                        {cls.time_slots![0]?.endTime}
-                      </>
-                    ) : (
-                      <>-</>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">{cls.status}</td>
-                  <td className="px-5 py-4 whitespace-nowrap space-x-2">
-                    {/* View students Button */}
-                    <div className="relative group inline-block">
-                      <button
-                        onClick={() => {
-                          setShowStudentsDialog(true);
-                          setSelectedClassName(cls.name);
-                          cls.students
-                            ? setSelectedClassStudents(cls.students)
-                            : null;
-                        }}
-                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                        aria-label="Attendance"
-                      >
-                        <Users className="h-4 w-4" />
-                      </button>
-                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        View Students
-                      </span>
-                    </div>
-                    {/* Copy Link Button */}
-                    <div className="relative group inline-block">
-                      <button
-                        onClick={() => handleCopyLink(cls)}
-                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                        aria-label="Copy Link"
-                      >
-                        {copiedLinks[cls.id] ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Link className="h-4 w-4" />
-                        )}
-                      </button>
-                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        Copy Registration Link
-                      </span>
-                    </div>
-                    {/* Edit class button */}
-                    <div className="relative group inline-block">
-                      <button
-                        onClick={() => {
-                          setShowEditDialog(true);
-                          handleSetEditClassData(cls);
-                        }}
-                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                        aria-label="Edit"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        Edit Class
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredData.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="text-center text-gray-500 py-4">
-                    No classes found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/* DataTable */}
+        <DataTable
+          data={tableData}
+          columns={columns}
+          columnWidths={columnWidths}
+          pageSize={10}
+          pageCount={Math.ceil(tableData.length / 10)}
+        />
       </div>
 
       <RegisteredStudentsDialog
