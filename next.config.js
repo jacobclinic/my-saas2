@@ -8,6 +8,7 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '5mb',
+      timeout: 120000, // 2 minutes timeout for server actions
     },
   },
   images: {
