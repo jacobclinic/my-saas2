@@ -127,7 +127,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         const zoomDeepLink = `zoommtg://zoom.us/join?action=join&confno=${session.meeting_id}`;
         window.open(zoomDeepLink, '_blank');
       }
-      console.log("Zoom session data:", session);
     });
   }, [sessionData]);
 
