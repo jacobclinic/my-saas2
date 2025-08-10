@@ -48,6 +48,8 @@ import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import { useRouter } from 'next/navigation';
 import useSessionTimeValidation from '~/core/hooks/use-session-time-validation';
 import { fetchZoomSessionBySessionIdAction } from '~/lib/zoom_sessions/server-actions-v2';
+import { useToast } from '../../lib/hooks/use-toast';
+import { isIPadOS } from '~/lib/utils/device-utils';
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
@@ -59,7 +61,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   variant = 'default',
 }) => {
   const isDashboard = variant === 'dashboard';
-  // console.log('sessionData in upcoming session:', sessionData);
+  console.log('sessionData in upcoming session:', sessionData);
   const router = useRouter();
   const [linkCopied, setLinkCopied] = useState<{
     student?: boolean;
@@ -76,6 +78,8 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
     title: sessionData?.sessionRawData?.title || '',
     description: sessionData?.sessionRawData?.description || '',
   });
+
+  const { toast } = useToast();
 
   // Store original lesson details to track changes
   const [originalLessonDetails, setOriginalLessonDetails] =
@@ -123,9 +127,23 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
     startTransition(async () => {
       const sessionId = sessionData.id
       const session = await fetchZoomSessionBySessionIdAction(sessionId);
-      if (session && session.start_url) {
+      if (session && session.start_url && session.meeting_id) {
         const zoomDeepLink = `zoommtg://zoom.us/join?action=join&confno=${session.meeting_id}`;
-        window.open(zoomDeepLink, '_blank');
+        const deepLink = isIPadOS()
+          ? `zoomus://zoom.us/join?confno=${session.meeting_id}` // iPad (iOS app)
+          : zoomDeepLink;
+        window.location.assign(deepLink);
+
+        // Fallback to open in browser if deep link fails
+        setTimeout(() => {
+          window.open(zoomDeepLink, '_blank');
+        }, 1500);
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Something wrong with the class, Please contact admin',
+          variant: 'destructive',
+        });
       }
     });
   }, [sessionData]);
@@ -276,8 +294,9 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 </div>
               </div>
             )}
-            <CardFooter className="pt-3 grid grid-cols-2 md:grid-cols-5 gap-2 border-t border-neutral-100">
-              <TooltipProvider>
+            <CardFooter className="pt-3 grid grid-cols-2 md:grid-cols-4 gap-2 border-t border-neutral-100">
+              {/* Keep this as it is, In future we want to let the tutors join from the web. */}
+              {/* <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="w-full">
@@ -299,7 +318,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     }
                   </TooltipContent>
                 </Tooltip>
-              </TooltipProvider>
+              </TooltipProvider> */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -308,10 +327,10 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                         variant="ghost"
                         className="w-full bg-primary-blue-50 text-primary-blue-700 hover:bg-primary-blue-100 border border-primary-blue-100 group-hover:bg-primary-blue-100"
                         onClick={joinInZoomDesktopClient}
-                      disabled={isPending || !isWithinJoinWindow}
+                        disabled={isPending || !isWithinJoinWindow}
                       >
                         <ScreenShare size={16} className="mr-2" />
-                        <span>Open in Zoom Desktop</span>
+                        <span>Open with Zoom</span>
                       </Button>
                     </div>
                   </TooltipTrigger>
