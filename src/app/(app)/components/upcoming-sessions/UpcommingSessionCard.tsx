@@ -136,7 +136,8 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
         // Fallback to open in browser if deep link fails
         setTimeout(() => {
-          window.open(zoomDeepLink, '_blank');
+          const zoomWebLink = `https://zoom.us/j/${session.meeting_id}`;
+          window.open(zoomWebLink, '_blank');
         }, 1500);
       } else {
         toast({
