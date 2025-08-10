@@ -134,6 +134,8 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
           : zoomDeepLink;
         window.location.assign(deepLink);
 
+        alert(deepLink);
+
         // Fallback to open in browser if deep link fails
         setTimeout(() => {
           const zoomWebLink = `https://zoom.us/j/${session.meeting_id}`;
