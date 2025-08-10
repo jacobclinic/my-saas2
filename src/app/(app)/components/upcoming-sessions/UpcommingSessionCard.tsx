@@ -123,17 +123,30 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
     });
   }, [sessionData]);
 
-  const joinInZoomDesktopClient = useCallback(async () => {
+  const joinInZoomDesktopClient = useCallback(() => {
+    const newTab = window.open('', '_blank');
     startTransition(async () => {
-      const sessionId = sessionData.id
-      const session = await fetchZoomSessionBySessionIdAction(sessionId);
-      if (session && session.password && session.meeting_id) {  
-       const zoomLink = `https://zoom.us/j/${session.meeting_id}?pwd=${encodeURIComponent(session.password)}`;
-       window.location.assign(zoomLink);
+      const session = await fetchZoomSessionBySessionIdAction(sessionData.id);
+
+      if (session && session.meeting_id) {
+        const id = String(session.meeting_id).replace(/\D/g, '');
+        const pwd = session.password? `?pwd=${encodeURIComponent(session.password)}`: '';
+        const url = `https://zoom.us/j/${id}${pwd}`;
+
+        if (newTab) {
+          newTab.location.href = url;
+          try {
+            newTab.focus();
+          } catch {
+            console.log('Failed to focus on the new tab');
+          }
+        } else {
+          window.location.assign(url);
+        }
       } else {
         toast({
           title: 'Error',
-          description: 'Something wrong with the class, Please contact admin',
+          description:'Something wrong with the class, Please contact admin',
           variant: 'destructive',
         });
       }
