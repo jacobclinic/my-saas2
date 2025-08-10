@@ -127,20 +127,9 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
     startTransition(async () => {
       const sessionId = sessionData.id
       const session = await fetchZoomSessionBySessionIdAction(sessionId);
-      if (session && session.start_url && session.meeting_id) {
-        const zoomDeepLink = `zoommtg://zoom.us/join?action=join&confno=${session.meeting_id}`;
-        const deepLink = isIPadOS()
-          ? `zoomus://zoom.us/join?confno=${session.meeting_id}` // iPad (iOS app)
-          : zoomDeepLink;
-        window.location.assign(deepLink);
-
-        alert(deepLink);
-
-        // Fallback to open in browser if deep link fails
-        setTimeout(() => {
-          const zoomWebLink = `https://zoom.us/j/${session.meeting_id}`;
-          window.open(zoomWebLink, '_blank');
-        }, 1500);
+      if (session && session.password && session.meeting_id) {  
+       const zoomLink = `https://zoom.us/j/${session.meeting_id}?pwd=${encodeURIComponent(session.password)}`;
+       window.location.assign(zoomLink);
       } else {
         toast({
           title: 'Error',
