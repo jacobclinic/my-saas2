@@ -61,7 +61,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   variant = 'default',
 }) => {
   const isDashboard = variant === 'dashboard';
-  console.log('sessionData in upcoming session:', sessionData);
   const router = useRouter();
   const [linkCopied, setLinkCopied] = useState<{
     student?: boolean;

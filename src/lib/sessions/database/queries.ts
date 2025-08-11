@@ -318,7 +318,7 @@ export async function getAllUpcommingSessionsData(
         `,
         { count: 'exact' },
       )
-      .gt('start_time', new Date().toISOString())
+      .gt('end_time', new Date().toISOString())
       .order('start_time', { ascending: true });
 
     // console.log("getAllSessionsData", data)
@@ -553,6 +553,9 @@ export async function getAllUpcommingSessionsByTutorIdData(
       return [];
     }
 
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
     // Create base query
     let query = client
       .from(SESSIONS_TABLE)
@@ -587,7 +590,7 @@ export async function getAllUpcommingSessionsByTutorIdData(
         `,
         { count: 'exact' },
       )
-      .gt('start_time', new Date().toISOString())
+      .gt('end_time', new Date().toISOString())
       .in('class_id', classIds)
       .order('start_time', { ascending: true });
 
@@ -658,6 +661,9 @@ export async function getAllUpcommingSessionsByTutorIdDataPerWeek(
       return [];
     }
 
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
     // Create base query
     let query = client
       .from(SESSIONS_TABLE)
@@ -692,11 +698,8 @@ export async function getAllUpcommingSessionsByTutorIdDataPerWeek(
         `,
         { count: 'exact' },
       )
-      .gt('start_time', new Date().toISOString())
-      .lt(
-        'start_time',
-        new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000).toISOString(),
-      )
+      .gt('end_time', new Date().toISOString())
+      .lt('start_time', sevenDaysFromNow.toISOString())
       .in('class_id', classIds)
       .order('start_time', { ascending: true });
 
@@ -1427,7 +1430,7 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
         `,
         { count: 'exact' },
       )
-      .gt('start_time', new Date().toISOString())
+      .gt('end_time', new Date().toISOString())
       .lt(
         'start_time',
         new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000).toISOString(),
@@ -1446,8 +1449,6 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
       { data: upcomingSessions, error: upcomingSessionError },
       { data: upcomingPayments, error: upcomingPaymentError },
     ] = await Promise.all([queryForSessionData, queryForPaymentData]);
-
-    // console.log('getAllSessionsData', upcomingSessions);
 
     if (upcomingSessionError) {
       throw new Error(
@@ -1604,7 +1605,6 @@ export async function getAllPastSessionsByStudentIdData(
       { data: pastPayments, error: pastPaymentError },
     ] = await Promise.all([queryForSessionData, queryForPaymentData]);
 
-    // console.log("getAllSessionsData", pastSessions)
 
     if (pastSessionError) {
       throw new Error(`Error fetching sessions: ${pastSessionError.message}`);
