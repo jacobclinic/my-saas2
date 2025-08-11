@@ -72,7 +72,7 @@ export const columnWidthsAdminTutor = {
   status: '120px',
 };
 
-export const CLASS_SIZE_OPTIONS = ['10-100', '501-1000', '1001-1500', '1500+'];
+export const CLASS_SIZE_OPTIONS = ['10-100', '101-500', '501-1000', '1001-1500', '1500+'];
 
 
 // % of the total revenue that goes to the tutor
