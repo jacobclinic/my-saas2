@@ -48,6 +48,10 @@ function ImageUploader(
 
   const handleCropComplete = useCallback(
     (croppedFile: File) => {
+      // Revoke previous image object URL to prevent memory leaks
+      if (typeof image === 'string' && image) {
+        URL.revokeObjectURL(image);
+      }
       // Create URL for the cropped file to display
       const croppedImageUrl = URL.createObjectURL(croppedFile);
       setImage(croppedImageUrl);
