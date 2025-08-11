@@ -110,7 +110,7 @@ const AdminDashboardSessions = ({
       {/* Header & Search */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold">Today's Classes</h1>
+          <h1 className="text-xl font-bold">Today&apos;s Classes</h1>
           <TimezoneIndicator />
         </div>
         <div className="flex flex-col sm:flex-row gap-4">
