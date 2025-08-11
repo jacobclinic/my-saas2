@@ -361,7 +361,7 @@ export const ImageCropDialog: React.FC<ImageCropDialogProps> = ({
     cropCanvas.toBlob(
       (blob) => {
         if (blob) {
-          const file = new File([blob], 'cropped-profile.jpg', {
+          const file = new File([blob], 'profile-picture.jpg', {
             type: 'image/jpeg',
             lastModified: Date.now(),
           });
