@@ -144,8 +144,7 @@ const ClassesAdmin = ({
     const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
 
     const shortLinkResult = await createShortUrlAction({
-      originalUrl: registrationUrl,
-      csrfToken: csrfToken,
+      originalUrl: registrationUrl
     });
 
     const finalLink =

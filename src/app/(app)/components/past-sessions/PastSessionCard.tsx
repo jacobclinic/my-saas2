@@ -55,8 +55,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     type: 'recordings' | 'materials' | 'allMaterials' | 'student',
   ) => {
     const data = await createShortUrlAction({
-      originalUrl: link,
-      csrfToken,
+      originalUrl: link
     });
     if (data.success && data.shortUrl) {
       await copyToClipboard(data.shortUrl);
