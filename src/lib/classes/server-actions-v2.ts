@@ -1,18 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import {
-  createClass,
-  deleteClass,
-  getClassById,
-  updateClass,
-  // updateClass,
-} from '~/lib/classes/database/mutations-v2';
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import { ClassType, createClassFailure, CreateClassParams, CreateClassResponse, createClassSuccess, TimeSlot, UpdateClassData, updateClassFailure, UpdateClassParams, updateClassSuccess, deleteClassSuccess, deleteClassFailure, DeleteClassResponse } from './types/class-v2';
-import { getUpcomingOccurrences } from '../utils/date-utils';
-import { CLASSES_TABLE, SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
+import { createClassFailure, CreateClassParams, CreateClassResponse, createClassSuccess, TimeSlot, updateClassFailure, UpdateClassParams, updateClassSuccess, deleteClassSuccess, deleteClassFailure, DeleteClassResponse, ClassCreatedEvent } from './types/class-v2';
+import { USERS_TABLE } from '../db-tables';
 import verifyCsrfToken from '~/core/verify-csrf-token';
 import { getClassByIdWithTutor, getClassDataByIdwithNextSession } from './database/queries';
 import { getAllUpcommingSessionsData } from '../sessions/database/queries';
@@ -23,7 +15,6 @@ import { sendSingleSMS } from '../notifications/sms/sms.notification.service';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentInvitationToClass } from '~/core/email/templates/emailTemplate';
 import { isAdminOrCLassTutor } from '../user/database/queries';
-import { createInvoiceForNewClass } from '../invoices/database/mutations';
 import { notifyStudentsAfterClassScheduleUpdate } from '../notifications/email/email.notification.service';
 import { notifyStudentsAfterClassScheduleUpdateSMS } from '../notifications/sms/sms.notification.service';
 import { generateWeeklyOccurrences, RecurrenceInput } from '../utils/recurrence-utils';
@@ -33,6 +24,7 @@ import { ClassService } from './class.service';
 import getLogger from '~/core/logger';
 import { SessionService } from '../sessions/session.service';
 import { isEqual } from '../utils/lodash-utils';
+import { UpstashService } from '../upstash/upstash.service';
 
 
 type DeleteClassParams = {
@@ -66,50 +58,19 @@ export const createClassAction = withSession(
         return createClassFailure(classResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
       }
 
-      const classUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?classId=${classResult.data.id}`;
-      const shortUrlResult = await createShortUrlAction({
-        originalUrl: classUrl,
-        csrfToken: csrfToken,
-      });
-
-      if (shortUrlResult.success && shortUrlResult.shortCode) {
-        const updateShortUrlResult = await classService.updateClassShortUrl(
-          classResult.data.id,
-          shortUrlResult.shortCode
-        );
-
-        if (!updateShortUrlResult.success) {
-          logger.warn('Failed to update class with short URL, but class was created', {
-            classId: classResult.data.id,
-            shortCode: shortUrlResult.shortCode,
-            error: updateShortUrlResult.error.message
-          });
-        }
-      } else {
-        logger.warn('Short URL creation failed, but class was created', {
+      const upstashService = UpstashService.getInstance(logger);
+      const result = await upstashService.publishToUpstash<ClassCreatedEvent>({
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/public/class/async-create`,
+        body: {
           classId: classResult.data.id,
-          error: shortUrlResult.error
-        });
+          timeSlots: data.time_slots as unknown as TimeSlot[],
+          tutorId: data.tutor_id,
+          startDate: data.starting_date,
+        },
+      });
+      if (!result.success) {
+        return createClassFailure(result.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
       }
-
-      const timeSlots = data.time_slots as unknown as TimeSlot[];
-      const sessionResult = await sessionService.createRecurringSessions(classResult.data.id, timeSlots, data.starting_date);
-      if (!sessionResult.success) {
-        return createClassFailure(sessionResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
-      }
-
-      if (classResult?.data.id) {
-        const invoiceId = await createInvoiceForNewClass(client, classResult.data.id, params.data.tutor_id);
-        if (!invoiceId) {
-          console.error(
-            'Failed to create invoice for new class:',
-            classResult.data.id,
-          );
-          // Continue with class creation even if invoice creation fails
-          // The invoice can be generated later with the monthly job
-        }
-      }
-      await zoomService.createMeetingsForTomorrowSessions();
 
       // Revalidate paths
       revalidatePath('/classes');
@@ -412,8 +373,7 @@ export const sendEmailMSGToStudentAction = withSession(
     const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
 
     const shortLinkResult = await createShortUrlAction({
-      originalUrl: registrationUrl,
-      csrfToken: '',
+      originalUrl: registrationUrl
     });
 
     const registrationLink =

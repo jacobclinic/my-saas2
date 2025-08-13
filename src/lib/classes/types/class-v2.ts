@@ -309,3 +309,11 @@ export type UpdateClassParams = {
   classData: UpdateClassData;
   csrfToken: string;
 }
+
+
+export type ClassCreatedEvent = {
+  classId: string;
+  timeSlots: TimeSlot[];
+  tutorId: string;
+  startDate: string;
+}

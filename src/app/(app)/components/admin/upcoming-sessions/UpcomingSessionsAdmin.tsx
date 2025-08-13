@@ -125,8 +125,7 @@ const UpcomingSessionsAdmin = ({
   const handleCopyLink = async (cls: (typeof classData)[0]) => {
     const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date?.split('T')[0]}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`;
     const data = await createShortUrlAction({
-      originalUrl: link,
-      csrfToken,
+      originalUrl: link
     });
     if (data.success && data.shortUrl) {
       await copyToClipboard(data.shortUrl);

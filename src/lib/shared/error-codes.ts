@@ -2,6 +2,7 @@ export const ErrorCodes = {
     // Validation errors
     VALIDATION_ERROR: 'VALIDATION_ERROR',
     INVALID_INPUT: 'INVALID_INPUT',
+    INVALID_URL: 'INVALID_URL',
 
     // Authentication errors
     UNAUTHORIZED: 'UNAUTHORIZED',

@@ -100,8 +100,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
     type: 'student' | 'materials',
   ) => {
     const data = await createShortUrlAction({
-      originalUrl: link,
-      csrfToken,
+      originalUrl: link
     });
     if (data.success && data.shortUrl) {
       await copyToClipboard(data.shortUrl);
