@@ -5,7 +5,6 @@ import { ClassService } from '~/lib/classes/class.service';
 import { ClassCreatedEvent, TimeSlot } from '~/lib/classes/types/class-v2';
 import { createInvoiceForNewClass } from '~/lib/invoices/database/mutations';
 import { SessionService } from '~/lib/sessions/session.service';
-import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import { ShortLinksService } from '~/lib/short-links/short-links-service';
 import { ZoomService } from '~/lib/zoom/v2/zoom.service';
 

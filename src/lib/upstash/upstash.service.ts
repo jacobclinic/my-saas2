@@ -60,10 +60,10 @@ export class UpstashService {
         }
     }
 
-    async publishDelayedMessage<T>(params: Omit<PublishMessage<T>, 'delay'>,delayInSeconds: number): Promise<Result<PublishResult>> {
+    async publishDelayedMessage<T>(params: Omit<PublishMessage<T>, 'delay'>, delayInSeconds: number): Promise<Result<PublishResult>> {
         return this.publishToUpstash({
             ...params,
-            delay: delayInSeconds,
+            delay: delayInSeconds
         });
     }
 
@@ -71,7 +71,7 @@ export class UpstashService {
     async publishWithRetries<T>(params: Omit<PublishMessage<T>, 'retries'>, maxRetries: number): Promise<Result<PublishResult>> {
         return this.publishToUpstash({
             ...params,
-            retries: maxRetries,
+            retries: maxRetries
         });
     }
 }

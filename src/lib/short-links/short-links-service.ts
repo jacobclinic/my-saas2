@@ -7,9 +7,6 @@ import { Logger } from 'pino';
 import { failure, Result, success } from '../shared/result';
 import { AppError } from '../shared/errors';
 import { ErrorCodes } from '../shared/error-codes';
-
-const logger = getLogger();
-
 export class ShortLinksService {
     private static instance: ShortLinksService;
 
@@ -88,6 +85,7 @@ function isValidUrl(url: string): boolean {
 // Legacy standalone functions for backward compatibility
 // These internally use the singleton service for consistency
 export async function createShortUrl(client: Client, originalUrl: string): Promise<ShortLink> {
+    const logger = getLogger();
     const service = ShortLinksService.getInstance(client, logger);
     const result = await service.createShortUrl(originalUrl);
     
@@ -99,6 +97,7 @@ export async function createShortUrl(client: Client, originalUrl: string): Promi
 }
 
 export async function getOriginalUrl(client: Client, shortCode: string): Promise<string> {
+    const logger = getLogger();
     const service = ShortLinksService.getInstance(client, logger);
     const result = await service.getOriginalUrl(shortCode);
     
