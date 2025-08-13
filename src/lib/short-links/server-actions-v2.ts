@@ -7,7 +7,7 @@ import { headers } from 'next/headers';
 import { COMMA_EDU_DOMAIN } from '../constants-v2';
 
 export const createShortUrlAction = withSession(
-    async ({ originalUrl, csrfToken }: { originalUrl: string; csrfToken: string }) => {
+    async ({ originalUrl }: { originalUrl: string; }) => {
         const client = getSupabaseServerActionClient();
         try {
             const urlInfo = await createShortUrl(client, originalUrl);

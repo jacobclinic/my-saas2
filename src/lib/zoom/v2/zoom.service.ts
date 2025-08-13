@@ -227,6 +227,11 @@ export class ZoomService {
             }
             return [];
         } catch (error) {
+            logger.error('Failed to create zoom meetings for tomorrow sessions', {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+                name: error instanceof Error ? error.name : undefined,
+            });
             throw new Error('Failed to create zoom meetings for tomorrow sessions. Please try again.');
         }
     }
