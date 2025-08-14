@@ -98,13 +98,14 @@ const StudentSessionCard = ({
   return (
     <Card className="mb-4">
       <CardContent className="p-5">
-        <div className="flex items-start">
-          <div className="mr-4 p-2 bg-blue-100 rounded-lg">
-            <Book className="h-5 w-5 text-blue-600" />
-          </div>
+        <div className="flex items-start justify-between">
+          <div className="flex items-start">
+            <div className="mr-4 p-2 bg-blue-100 rounded-lg">
+              <Book className="h-5 w-5 text-blue-600" />
+            </div>
 
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900">{sessionData.name}</h3>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">{sessionData.name}</h3>
             {sessionData.topic ? (
               <p className="text-sm text-gray-600 mt-1">{sessionData.topic}</p>
             ) : (
@@ -138,7 +139,21 @@ const StudentSessionCard = ({
                   Payment pending verification
                 </Badge>
               )}
+            </div>
           </div>
+          
+          {/* Payment Due Date - shown in right corner when payment is pending */}
+          {(sessionData.paymentStatus === PAYMENT_STATUS.PENDING || 
+            sessionData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ||
+            sessionData.paymentStatus === PAYMENT_STATUS.REJECTED ||
+            sessionData.paymentStatus === PaymentStatus.NOT_PAID) && 
+            sessionData.paymentDueDate && type === 'upcoming' && (
+            <div className="text-right">
+              <Badge variant="red">
+                Due: {sessionData.paymentDueDate}
+              </Badge>
+            </div>
+          )}
         </div>
       </CardContent>
       <CardContent className="p-4 space-y-4">

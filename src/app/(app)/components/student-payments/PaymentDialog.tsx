@@ -346,11 +346,13 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
               <div className="text-lg font-medium">
                 Rs. {sessionData.paymentAmount}
               </div>
-              <div>
-                <p className="text-xs text-amber-600">
-                  Payment Due: 8 {monthName} {year}
-                </p>
-              </div>
+              {sessionData.paymentDueDate && (
+                <div>
+                  <p className="text-xs text-amber-600">
+                    Payment Due: {sessionData.paymentDueDate}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
