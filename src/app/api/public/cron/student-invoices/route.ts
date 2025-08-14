@@ -34,7 +34,9 @@ export async function POST(req: Request) {
 
         return new Response('Invoices generated successfully', { status: 200 });
     } catch (error) {
-        console.error('Error in GET /api/public/generate-invoice:', error);
+        logger.error('Error in GET /api/public/cron/student-invoices:', {
+            error: error,
+        });
         return new Response('Internal Server Error', { status: 500 });
     }
 }

@@ -138,7 +138,10 @@ export async function registerStudentAction(
       );
 
       if (!invoiceResult.success) {
-        console.error('Failed to create invoice for student:', userId);
+        logger.error('Failed to create invoice for student:', {
+          userId: userId,
+          classId: validated.classId,
+        });
         // Continue with registration even if invoice creation fails
         // The system can generate missing invoices later with the monthly job
       }

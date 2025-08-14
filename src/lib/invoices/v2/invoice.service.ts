@@ -4,20 +4,18 @@ import { failure, Result, success } from '~/lib/shared/result';
 import { AppError } from '~/lib/shared/errors';
 import { ErrorCodes } from '~/lib/shared/error-codes';
 import { getAllEnrollmentsWithClass } from '~/lib/class-enrollments/database/queries';
-import { getInvoicesByPeriod } from './database/queries';
-import { createInvoices } from './database/mutations';
+import { getInvoicesByPeriod, getInvoiceByDetails } from './database/queries';
+import { createInvoices, createSingleInvoice } from './database/mutations';
 import { checkUpcomingSessionAvailabilityForClass } from '~/lib/sessions/database/queries';
 import { Invoice } from './types/invoice';
 import {
   getInvoicePeriodUTC,
   getFullDateUTC,
   getDueDateUTC,
-  getShortYearMonthUTC,
   getPaymentPeriodFromDate,
 } from '~/lib/utils/date-utils';
 import { getClassFeeById } from '~/lib/classes/database/queries';
-import { getInvoiceByDetails } from './database/queries';
-import { createSingleInvoice } from './database/mutations';
+import { generateId } from '~/lib/utils/nanoid-utils';
 
 export class InvoiceService {
   private static instance: InvoiceService;
@@ -39,6 +37,11 @@ export class InvoiceService {
     return InvoiceService.instance;
   }
 
+  private _generateInvoiceNumber(invoicePeriod: string): string {
+    const randomPart = generateId(8);
+    return `${invoicePeriod}-${randomPart}`;
+  }
+
   async generateMonthlyStudentInvoices(): Promise<Result<void, AppError>> {
     try {
       this.logger.info('Starting monthly student invoice generation.');
@@ -47,7 +50,6 @@ export class InvoiceService {
       const invoicePeriod = getInvoicePeriodUTC(now);
       const invoiceDate = getFullDateUTC(now);
       const dueDate = getDueDateUTC(now);
-      const shortYearMonth = getShortYearMonthUTC(now);
 
       const [enrollmentsResult, existingInvoicesResult] = await Promise.all([
         getAllEnrollmentsWithClass(this.supabaseClient, this.logger),
@@ -85,7 +87,7 @@ export class InvoiceService {
             invoicesToInsert.push({
               student_id,
               class_id,
-              invoice_no: `${shortYearMonth}${student_id.substring(0,6)}${class_id.substring(0, 6)}`,
+              invoice_no: this._generateInvoiceNumber(invoicePeriod),
               invoice_period: invoicePeriod,
               amount: classData.fee ?? 0,
               invoice_date: invoiceDate,
@@ -142,12 +144,11 @@ export class InvoiceService {
       
       const invoiceDate = getFullDateUTC(now);
       const dueDate = getDueDateUTC(now);
-      const shortYearMonth = getShortYearMonthUTC(now);
       
       const newInvoiceData = {
           student_id: studentId,
           class_id: classId,
-          invoice_no: `${shortYearMonth}${studentId.substring(0, 6)}${classId.substring(0, 6)}`,
+          invoice_no: this._generateInvoiceNumber(invoicePeriod),
           invoice_period: invoicePeriod,
           amount: classFeeResult.data,
           invoice_date: invoiceDate,
