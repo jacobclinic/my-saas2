@@ -58,13 +58,11 @@ interface EditingLessonState {
 interface LessonDetailsState {
   [key: number]: {
     title: string;
-    description: string;
   };
 }
 
 interface LessonDetails {
   title: string;
-  description: string;
 }
 
 interface MaterialUploadDialogProps {

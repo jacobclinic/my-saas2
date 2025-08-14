@@ -75,7 +75,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [materialDescription, setMaterialDescription] = useState('');
   const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
     title: sessionData?.sessionRawData?.title || '',
-    description: sessionData?.sessionRawData?.description || '',
   });
 
   const { toast } = useToast();
@@ -84,7 +83,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [originalLessonDetails, setOriginalLessonDetails] =
     useState<LessonDetails>({
       title: sessionData?.sessionRawData?.title || '',
-      description: sessionData?.sessionRawData?.description || '',
     });
 
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
@@ -165,7 +163,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         // Update original lesson details to reflect the saved state
         setOriginalLessonDetails({
           title: lessonDetails.title,
-          description: lessonDetails.description,
         });
       }
     } catch (error) {
@@ -253,9 +250,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 ) : (
                   <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
                     <h3 className="font-medium">{lessonDetails.title}</h3>
-                    <p className="text-gray-600 text-sm">
-                      {lessonDetails.description}
-                    </p>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -433,13 +427,25 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionId={sessionData.id}
         sessionData={{
           title: sessionData.lessonTitle || '',
-          description: sessionData.lessonDescription || '',
           startTime: sessionData.start_time || '',
           endTime: sessionData.end_time || '',
           meetingUrl: sessionData.zoomLinkStudent || '',
           materials: sessionData.materials || [],
         }}
         loading={editSessionLoading}
+        onSuccess={(updatedData) => {
+          // Update local lesson details state when title changes
+          if (updatedData.title !== undefined) {
+            setLessonDetails(prev => ({
+              ...prev,
+              title: updatedData.title!
+            }));
+            setOriginalLessonDetails(prev => ({
+              ...prev,
+              title: updatedData.title!
+            }));
+          }
+        }}
       />
       <AddLessonDetailsDialog
         open={showLessonDetailsDialog}
@@ -447,7 +453,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
           // Reset to the last saved state, not the original session data
           setLessonDetails({
             title: originalLessonDetails.title,
-            description: originalLessonDetails.description,
           });
           setShowLessonDetailsDialog(false);
         }}
