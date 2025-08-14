@@ -47,5 +47,11 @@ function getCookiesStrategy() {
     get: (name: string) => {
       return cookieStore.get(name)?.value;
     },
+    set: () => {
+      // Server components can't set cookies
+    },
+    remove: () => {
+      // Server components can't remove cookies
+    },
   };
 }
