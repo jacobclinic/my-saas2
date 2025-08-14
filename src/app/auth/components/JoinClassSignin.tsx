@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import configuration from '~/configuration';
 import { useForm } from 'react-hook-form';
 import useSignInWithEmailPassword from '~/core/hooks/use-sign-in-with-email-password';
+import { getSessionStatus } from '~/lib/utils/date-utils';
 
 function JoinClassSignin() {
   // Get the query parameters
@@ -19,7 +20,7 @@ function JoinClassSignin() {
   const sessionParams = {
     sessionId: decodedUrl.match(/sessionId=([^&]+)/)?.[1],
     className: decodedUrl.match(/className=([^&]+)/)?.[1]?.replace(/\+/g, ' '),
-    sessionDate: decodedUrl.match(/sessionDate=([^&]+)/)?.[1],
+    sessionDate: decodedUrl.match(/sessionDate=([^&]+)/)?.[1]?.replace(/\+/g, ' '),
     sessionTime: decodedUrl
       .match(/sessionTime=([^&]+)/)?.[1]
       ?.replace(/\+/g, ' '),
@@ -30,6 +31,35 @@ function JoinClassSignin() {
       .match(/sessionTitle=([^&]+)/)?.[1]
       ?.replace(/\+/g, ' '),
   };
+
+  // Calculate session status based on current time
+  const getStatusForSession = () => {
+    if (!sessionParams.sessionDate || !sessionParams.sessionTime) {
+      return 'Upcoming';
+    }
+    
+    // Construct ISO datetime string from date and time
+    // Assuming sessionDate is in format like "Thursday, August 14, 2025"
+    // and sessionTime is in format like "4:30 PM - 9:30 PM"
+    try {
+      // Extract start time from session time range
+      const timeRange = sessionParams.sessionTime.split(' - ');
+      const startTime = timeRange[0];
+      
+      // Convert date string to Date object and combine with time
+      const sessionDateTime = new Date(`${sessionParams.sessionDate} ${startTime}`);
+      
+      if (!isNaN(sessionDateTime.getTime())) {
+        return getSessionStatus(sessionDateTime.toISOString());
+      }
+    } catch (error) {
+      console.error('Error parsing session date/time:', error);
+    }
+    
+    return 'Upcoming';
+  };
+
+  const sessionStatus = getStatusForSession();
 
   const signInMutation = useSignInWithEmailPassword();
   const isLoading = signInMutation.isMutating;
@@ -93,9 +123,21 @@ function JoinClassSignin() {
         <h2 className="text-center text-2xl font-semibold text-gray-800 flex justify-start mb-0">
           <b>Join Class</b>
         </h2>
-        <div className="bg-amber-100 h-6 border rounded-md pl-2 pr-2">
-          <p className="text-amber-700 text-sm bold">
-            <b>Starting soon</b>
+        <div className={`h-6 border rounded-md pl-2 pr-2 ${
+          sessionStatus === 'Ongoing' 
+            ? 'bg-green-100' 
+            : sessionStatus === 'Starting soon' 
+            ? 'bg-amber-100' 
+            : 'bg-blue-100'
+        }`}>
+          <p className={`text-sm bold ${
+            sessionStatus === 'Ongoing' 
+              ? 'text-green-700' 
+              : sessionStatus === 'Starting soon' 
+              ? 'text-amber-700' 
+              : 'text-blue-700'
+          }`}>
+            <b>{sessionStatus}</b>
           </p>
         </div>
       </div>
