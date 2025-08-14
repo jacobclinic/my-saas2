@@ -47,6 +47,7 @@ interface UpcomingSession extends Session {
   materials?: SessionMaterial[];
   payment_status?: string;
   payment_amount?: number | null;
+  payment_due_date?: string | null;
 }
 
 interface PastSessionAttendanceStudent {

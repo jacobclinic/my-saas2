@@ -125,6 +125,7 @@ const StudentDashboard = ({
         (sessionData.payment_status as PaymentStatus) || PaymentStatus.PENDING,
       paymentAmount:
         Number(sessionData.payment_amount) || sessionData.class?.fee || 0,
+      paymentDueDate: sessionData.payment_due_date || undefined,
       zoomLink: sessionData.meeting_url || undefined,
       zoomMeetingId: sessionData.zoom_meeting_id || '',
       recordingUrl: sessionData.recording_urls || [],
