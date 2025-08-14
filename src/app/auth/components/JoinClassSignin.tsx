@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import configuration from '~/configuration';
 import { useForm } from 'react-hook-form';
 import useSignInWithEmailPassword from '~/core/hooks/use-sign-in-with-email-password';
 import { getSessionStatus } from '~/lib/utils/date-utils';
+import useUserSession from '~/core/hooks/use-user-session';
 
 function JoinClassSignin() {
   // Get the query parameters
@@ -14,8 +15,32 @@ function JoinClassSignin() {
   // Decode and extract parameters
   const decodedUrl = redirectUrl ? decodeURIComponent(redirectUrl) : '';
 
+  // Check if user is already authenticated
+  const userSession = useUserSession();
+  const router = useRouter();
+
   // State for auth error messages
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Auto-redirect if user is already logged in
+  useEffect(() => {
+    if (userSession?.auth?.user?.id) {
+      setIsRedirecting(true);
+      // User is already authenticated, redirect to the session
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        // Extract sessionId from URL parameters
+        const sessionId = decodedUrl.match(/sessionId=([^&]+)/)?.[1];
+        if (sessionId) {
+          router.push(
+            `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}?type=upcoming`,
+          );
+        }
+      }
+    }
+  }, [userSession, redirectUrl, decodedUrl, router]);
 
   const sessionParams = {
     sessionId: decodedUrl.match(/sessionId=([^&]+)/)?.[1],
@@ -63,8 +88,6 @@ function JoinClassSignin() {
 
   const signInMutation = useSignInWithEmailPassword();
   const isLoading = signInMutation.isMutating;
-
-  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -116,6 +139,20 @@ function JoinClassSignin() {
       signInMutation,
     ],
   );
+
+  // Show loading state while redirecting
+  if (isRedirecting) {
+    return (
+      <div className="w-full mx-auto p-1 font-sans rounded-lg">
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Redirecting to class...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full mx-auto p-1 font-sans rounded-lg">
