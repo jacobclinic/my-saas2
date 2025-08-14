@@ -5,7 +5,7 @@ import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import Button from '~/core/ui/Button';
 import TextField from '~/core/ui/TextField';
-import ImageUploader from '~/core/ui/ImageUploader';
+import ProfileImageUploader from '~/core/ui/ProfileImageUploader';
 import Logo from '~/core/ui/Logo';
 import useSupabase from '~/core/hooks/use-supabase';
 import { CLASS_SIZE_OPTIONS, SUBJECTS } from '~/lib/constants-v2';
@@ -14,6 +14,7 @@ import {
   updateOnboardingDetailsAction,
   uploadIdentityProofAction,
 } from '../sign-up/moredetails/actions';
+import MultiSelectDropdown from '~/core/ui/MultiSelectDropdown';
 
 interface MoreDetailsFormProps {
   user: User;
@@ -203,7 +204,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
           <form onSubmit={handleSubmit} className="space-y-2 px-1">
             <div className="flex flex-col items-center justify-center pt-4">
               <div className="w-full">
-                <ImageUploader
+                <ProfileImageUploader
                   value={photoUrl}
                   onValueChange={uploadProfilePhoto}
                 >
@@ -217,7 +218,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                       Choose an image for your profile (optional)
                     </span>
                   </div>
-                </ImageUploader>
+                </ProfileImageUploader>
               </div>
             </div>
 
@@ -319,57 +320,13 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                     <p className="text-xs text-gray-500">
                       Select the subjects you teach (choose multiple)
                     </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {SUBJECTS.map((subject) => (
-                        <label
-                          key={subject}
-                          className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            value={subject}
-                            checked={selectedSubjects.includes(subject)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedSubjects([...selectedSubjects, subject]);
-                              } else {
-                                setSelectedSubjects(
-                                  selectedSubjects.filter((s) => s !== subject)
-                                );
-                              }
-                            }}
-                            className="rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <span className="text-sm">{subject}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {selectedSubjects.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs text-gray-500">Selected subjects:</p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {selectedSubjects.map((subject) => (
-                            <span
-                              key={subject}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800"
-                            >
-                              {subject}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setSelectedSubjects(
-                                    selectedSubjects.filter((s) => s !== subject)
-                                  )
-                                }
-                                className="ml-1 text-blue-600 hover:text-blue-800"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <MultiSelectDropdown
+                      options={SUBJECTS}
+                      selectedValues={selectedSubjects}
+                      onSelectionChange={setSelectedSubjects}
+                      placeholder="Select subjects you teach..."
+                      error={formErrors.subjects}
+                    />
                   </div>
                 </TextField.Label>
               </TextField>

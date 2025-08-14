@@ -13,7 +13,7 @@ import If from '~/core/ui/If';
 import { refreshSessionAction } from '../actions';
 
 import configuration from '~/configuration';
-import ProfileDangerZone from '~/app/(app)/settings/profile/components/ProfileDangerZone';
+// import ProfileDangerZone from '~/app/(app)/settings/profile/components/ProfileDangerZone';
 
 function UpdateProfileFormContainer() {
   const { userSession, setUserSession } = useContext(UserSessionContext);
@@ -66,6 +66,7 @@ function UpdateProfileFormContainer() {
         </SettingsTile>
       </If>
 
+      {/* Danger Zone disabled for now
       <If condition={configuration.features.enableAccountDeletion}>
         <SettingsTile
           heading={`Danger Zone`}
@@ -74,6 +75,7 @@ function UpdateProfileFormContainer() {
           <ProfileDangerZone />
         </SettingsTile>
       </If>
+      */}
     </div>
   );
 }
