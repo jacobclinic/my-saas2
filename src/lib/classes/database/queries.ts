@@ -756,3 +756,24 @@ export async function getClassById(client: SupabaseClient<Database>, classId: st
     return failure(new DatabaseError("Something went wrong while fetching the class"));
   }
 }
+
+export async function getClassFeeById(
+  client: SupabaseClient,
+  classId: string
+): Promise<Result<number | null, DatabaseError>> {
+  try {
+    const { data: classData, error: classError } = await client
+      .from(CLASSES_TABLE)
+      .select('fee')
+      .eq('id', classId)
+      .single();
+
+    if (classError) {
+      return failure(new DatabaseError('Failed to fetch class fee.'));
+    }
+
+    return success(classData?.fee ?? null);
+  } catch (error) {
+    return failure(new DatabaseError('An unexpected error occurred while fetching class fee.'));
+  }
+}

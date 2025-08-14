@@ -98,6 +98,7 @@ export async function generateMonthlyInvoicesStudents(
  * @param studentId ID of the student
  * @param classId ID of the class the student registered for
  * @returns The created invoice ID or null if creation failed
+ * @deprecated Use InvoiceService.createInvoiceForNewEnrollment instead.
  */
 export async function createInvoiceForNewStudent(
   client: SupabaseClient,
