@@ -24,7 +24,8 @@ const userDetailsSchema = z.object({
 const onboardingSchema = z.object({
   dob: z.string().min(1, 'Date of birth is required'),
   education: z.string().min(1, 'Education level is required'),
-  subjects: z.string().min(3, 'Subjects are required'),
+  bio: z.string().min(10, 'Bio must be at least 10 characters'),
+  subjects: z.array(z.string()).min(1, 'At least one subject is required'),
   classSize: z.string().min(1, 'Class size is required'),
 });
 
@@ -78,14 +79,24 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
     // Get form data
     const dob = formData.get('dob') as string;
     const education = formData.get('education') as string;
-    const subjects = formData.get('subjects') as string;
+    const bio = formData.get('bio') as string;
+    const subjectsString = formData.get('subjects') as string;
     const classSize = formData.get('classSize') as string;
     const identityUrl = formData.get('identityUrl') as string; // Get from uploaded result
+
+    // Parse subjects from JSON string
+    let subjects: string[] = [];
+    try {
+      subjects = JSON.parse(subjectsString);
+    } catch (error) {
+      throw new Error('Invalid subjects format');
+    }
 
     // Validate form data
     const validatedData = onboardingSchema.parse({
       dob,
       education,
+      bio,
       subjects,
       classSize,
     });
@@ -107,15 +118,11 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
     }
 
     // Update user profile in Supabase database with all onboarding fields
-    const subjectsArray = validatedData.subjects
-      .split(/[,\s]+/) // Split by commas and/or spaces
-      .map((subject) => subject.trim()) // Trim whitespace
-      .filter((subject) => subject.length > 0); // Remove empty strings
-
     const updateData = {
       birthday: validatedData.dob,
       education_level: validatedData.education,
-      subjects_teach: subjectsArray, // Store as properly split array
+      biography: validatedData.bio,
+      subjects_teach: validatedData.subjects, // Store subjects array directly
       class_size: validatedData.classSize,
       identity_url: identityUrl,
     };
