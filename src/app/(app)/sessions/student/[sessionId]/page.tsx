@@ -74,9 +74,9 @@ export default async function SessionViewPage({ params }: Params) {
     sessionData.class_id!,
   );
 
-  // Determine session type based on start time
+  // Determine session type based on end time
   const sessionType =
-    new Date(sessionData.start_time || '') > new Date() ? 'upcoming' : 'past';
+    new Date(sessionData.end_time || '') > new Date() ? 'upcoming' : 'past';
 
   return (
     <>
