@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Input } from '../base-v2/ui/Input';
-import { Info, Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import PastSessionCard from './PastSessionCard';
 import { PastSession } from '~/lib/sessions/types/session-v2';
 import { DateRangePicker } from '@heroui/date-picker';
@@ -34,7 +33,6 @@ const PastSessions = ({
   allSessionData: PastSession[];
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAlertVisible, setIsAlertVisible] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | null>(null); // Default range is null
 
   const [pastSessionTableData, setPastSessionTableData] = useState<
@@ -170,29 +168,6 @@ const PastSessions = ({
               Clear
             </button>
           </div>
-        </div>
-
-        <div>
-          {/* Alert with a close button */}
-          <Alert
-            className="bg-blue-50 border-blue-200 relative"
-            hidden={!isAlertVisible} // Hide the alert based on state
-          >
-            <div className="flex items-center">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-700 ml-2">
-                Recordings are available for 30 days after the class. Make sure
-                to download important recordings.
-              </AlertDescription>
-            </div>
-            {/* Close button */}
-            <button
-              onClick={() => setIsAlertVisible(false)} // Hide the alert on click
-              className="absolute top-2 right-2 p-1 rounded-full hover:bg-blue-100 transition-colors"
-            >
-              <X className="h-4 w-4 text-blue-600" /> {/* "X" icon */}
-            </button>
-          </Alert>
         </div>
       </div>
       {/* Sessions List */}
