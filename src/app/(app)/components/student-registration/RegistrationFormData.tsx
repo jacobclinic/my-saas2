@@ -20,6 +20,8 @@ import { validateEmail } from '../../../../core/utils/validate-email';
 import { validatePhoneNumber } from '~/core/utils/validate-phonenumber';
 import { validateName } from '~/core/utils/validate-name';
 import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
+import SignedInRegistration from './SignedInRegistration';
+import type { User as AuthUser } from '@supabase/supabase-js';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 
@@ -47,11 +49,22 @@ interface FieldTouchedState {
   password?: boolean;
 }
 
+interface UserData {
+  id: string;
+  displayName?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone_number?: string | null;
+  address?: string | null;
+}
+
 interface StudentRegistrationFormProps {
   classData: ClassRegistrationData;
   nextSessionId: string;
   formattedDate?: string;
   formattedTime?: string;
+  authUser?: AuthUser | null;
+  userData?: UserData | null;
 } 
 
 const StudentRegistrationForm = ({
@@ -59,7 +72,23 @@ const StudentRegistrationForm = ({
   nextSessionId,
   formattedDate,
   formattedTime,
+  authUser,
+  userData,
 }: StudentRegistrationFormProps) => {
+  // If user is signed in, show simplified registration form
+  if (authUser && userData) {
+    return (
+      <SignedInRegistration
+        classData={classData}
+        nextSessionId={nextSessionId}
+        formattedDate={formattedDate}
+        formattedTime={formattedTime}
+        authUser={authUser}
+        userData={userData}
+      />
+    );
+  }
+
   const [formData, setFormData] = useState<RegistrationFormData>({
     firstName: '',
     lastName: '',
