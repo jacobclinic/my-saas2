@@ -1,10 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import configuration from '~/configuration';
 import { useForm } from 'react-hook-form';
 import useSignInWithEmailPassword from '~/core/hooks/use-sign-in-with-email-password';
+import { getSessionStatus } from '~/lib/utils/date-utils';
+import useUserSession from '~/core/hooks/use-user-session';
 
 function JoinClassSignin() {
   // Get the query parameters
@@ -13,13 +15,37 @@ function JoinClassSignin() {
   // Decode and extract parameters
   const decodedUrl = redirectUrl ? decodeURIComponent(redirectUrl) : '';
 
+  // Check if user is already authenticated
+  const userSession = useUserSession();
+  const router = useRouter();
+
   // State for auth error messages
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Auto-redirect if user is already logged in
+  useEffect(() => {
+    if (userSession?.auth?.user?.id) {
+      setIsRedirecting(true);
+      // User is already authenticated, redirect to the session
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        // Extract sessionId from URL parameters
+        const sessionId = decodedUrl.match(/sessionId=([^&]+)/)?.[1];
+        if (sessionId) {
+          router.push(
+            `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}?type=upcoming`,
+          );
+        }
+      }
+    }
+  }, [userSession, redirectUrl, decodedUrl, router]);
 
   const sessionParams = {
     sessionId: decodedUrl.match(/sessionId=([^&]+)/)?.[1],
     className: decodedUrl.match(/className=([^&]+)/)?.[1]?.replace(/\+/g, ' '),
-    sessionDate: decodedUrl.match(/sessionDate=([^&]+)/)?.[1],
+    sessionDate: decodedUrl.match(/sessionDate=([^&]+)/)?.[1]?.replace(/\+/g, ' '),
     sessionTime: decodedUrl
       .match(/sessionTime=([^&]+)/)?.[1]
       ?.replace(/\+/g, ' '),
@@ -31,10 +57,37 @@ function JoinClassSignin() {
       ?.replace(/\+/g, ' '),
   };
 
+  // Calculate session status based on current time
+  const getStatusForSession = () => {
+    if (!sessionParams.sessionDate || !sessionParams.sessionTime) {
+      return 'Upcoming';
+    }
+    
+    // Construct ISO datetime string from date and time
+    // Assuming sessionDate is in format like "Thursday, August 14, 2025"
+    // and sessionTime is in format like "4:30 PM - 9:30 PM"
+    try {
+      // Extract start time from session time range
+      const timeRange = sessionParams.sessionTime.split(' - ');
+      const startTime = timeRange[0];
+      
+      // Convert date string to Date object and combine with time
+      const sessionDateTime = new Date(`${sessionParams.sessionDate} ${startTime}`);
+      
+      if (!isNaN(sessionDateTime.getTime())) {
+        return getSessionStatus(sessionDateTime.toISOString());
+      }
+    } catch (error) {
+      console.error('Error parsing session date/time:', error);
+    }
+    
+    return 'Upcoming';
+  };
+
+  const sessionStatus = getStatusForSession();
+
   const signInMutation = useSignInWithEmailPassword();
   const isLoading = signInMutation.isMutating;
-
-  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -87,15 +140,41 @@ function JoinClassSignin() {
     ],
   );
 
+  // Show loading state while redirecting
+  if (isRedirecting) {
+    return (
+      <div className="w-full mx-auto p-1 font-sans rounded-lg">
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Redirecting to class...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full mx-auto p-1 font-sans rounded-lg">
       <div className="flex justify-between">
         <h2 className="text-center text-2xl font-semibold text-gray-800 flex justify-start mb-0">
           <b>Join Class</b>
         </h2>
-        <div className="bg-amber-100 h-6 border rounded-md pl-2 pr-2">
-          <p className="text-amber-700 text-sm bold">
-            <b>Starting soon</b>
+        <div className={`h-6 border rounded-md pl-2 pr-2 ${
+          sessionStatus === 'Ongoing' 
+            ? 'bg-green-100' 
+            : sessionStatus === 'Starting soon' 
+            ? 'bg-amber-100' 
+            : 'bg-blue-100'
+        }`}>
+          <p className={`text-sm bold ${
+            sessionStatus === 'Ongoing' 
+              ? 'text-green-700' 
+              : sessionStatus === 'Starting soon' 
+              ? 'text-amber-700' 
+              : 'text-blue-700'
+          }`}>
+            <b>{sessionStatus}</b>
           </p>
         </div>
       </div>
