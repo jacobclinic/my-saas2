@@ -23,7 +23,8 @@ import {
 import { Badge } from '../../base-v2/ui/Badge';
 import { GRADES } from '~/lib/constants-v2';
 import { format, toZonedTime } from 'date-fns-tz';
-import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
+import { copyToClipboard } from '~/lib/utils/clipboard';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import DeleteClassDialog from '../../classes/DeleteClassDialog';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
@@ -33,6 +34,9 @@ import AdminCreateClassDialog from './AdminCreateClassDialog';
 import Button from '~/core/ui/Button';
 import DataTable from '~/core/ui/DataTable';
 import { AdminNewClassData } from '~/lib/classes/types/class-v2';
+
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+
 
 const ClassesAdmin = ({
   classesData,
@@ -58,6 +62,7 @@ const ClassesAdmin = ({
     useState<ClassListData>({} as ClassListData);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const csrfToken = useCsrfToken();
 
   const createSchedule = (cls: ClassWithTutorAndEnrollmentAdmin) => {
     return (
@@ -134,6 +139,7 @@ const ClassesAdmin = ({
         },
         '',
       ) || 'No schedule available';
+
     const registrationData = {
       classId: cls.id,
       className: cls.name || '',
@@ -142,10 +148,27 @@ const ClassesAdmin = ({
       tutorName: cls.tutorName || '',
     };
 
-    const registrationLink =
-      await generateRegistrationLinkAction(registrationData);
+    // Create URL with parameters
+    const urlParams = new URLSearchParams({
+      classId: registrationData.classId,
+      className: registrationData.className,
+      nextSession: registrationData.nextSession,
+      time: registrationData.time,
+      tutorName: registrationData.tutorName,
+    });
 
-    navigator.clipboard.writeText(registrationLink);
+    const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
+
+    const shortLinkResult = await createShortUrlAction({
+      originalUrl: registrationUrl
+    });
+
+    const finalLink =
+      shortLinkResult.success && shortLinkResult.shortUrl
+        ? shortLinkResult.shortUrl
+        : registrationUrl;
+
+    await copyToClipboard(finalLink);
     setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
     setTimeout(() => {
       setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));

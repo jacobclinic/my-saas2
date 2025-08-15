@@ -18,11 +18,17 @@ function JoinClassSignin() {
 
   const sessionParams = {
     sessionId: decodedUrl.match(/sessionId=([^&]+)/)?.[1],
-    className: decodedUrl.match(/className=([^&]+)/)?.[1],
+    className: decodedUrl.match(/className=([^&]+)/)?.[1]?.replace(/\+/g, ' '),
     sessionDate: decodedUrl.match(/sessionDate=([^&]+)/)?.[1],
-    sessionTime: decodedUrl.match(/sessionTime=([^&]+)/)?.[1],
-    sessionSubject: decodedUrl.match(/sessionSubject=([^&]+)/)?.[1],
-    sessionTitle: decodedUrl.match(/sessionTitle=([^&]+)/)?.[1],
+    sessionTime: decodedUrl
+      .match(/sessionTime=([^&]+)/)?.[1]
+      ?.replace(/\+/g, ' '),
+    sessionSubject: decodedUrl
+      .match(/sessionSubject=([^&]+)/)?.[1]
+      ?.replace(/\+/g, ' '),
+    sessionTitle: decodedUrl
+      .match(/sessionTitle=([^&]+)/)?.[1]
+      ?.replace(/\+/g, ' '),
   };
 
   const signInMutation = useSignInWithEmailPassword();
@@ -56,10 +62,14 @@ function JoinClassSignin() {
           return;
         }
 
-        // On successful sign-in, redirect redirectUrl
-        router.push(
-          `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionParams.sessionId}?type=upcoming`,
-        );
+        // On successful sign-in, redirect to the original URL
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          router.push(
+            `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionParams.sessionId}?type=upcoming`,
+          );
+        }
       } catch (error: any) {
         console.log('Error:', error);
         // Handle specific error types or messages from the API
@@ -68,7 +78,13 @@ function JoinClassSignin() {
         console.error('Sign in error:', error);
       }
     },
-    [router, sessionParams.sessionId, setAuthError],
+    [
+      router,
+      sessionParams.sessionId,
+      setAuthError,
+      redirectUrl,
+      signInMutation,
+    ],
   );
 
   return (
@@ -104,7 +120,13 @@ function JoinClassSignin() {
           </h3>
           {sessionParams.sessionDate && (
             <p className="text-sm text-blue-800 mb-1">
-              {sessionParams.sessionDate} · {sessionParams.sessionTime}
+              Date: {sessionParams.sessionDate}
+            </p>
+          )}
+
+          {sessionParams.sessionDate && (
+            <p className="text-sm text-blue-800 mb-1">
+              Time: {sessionParams.sessionTime}
             </p>
           )}
 

@@ -1,5 +1,5 @@
 import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js';
-import { Database } from '~/database.types';
+import type { Database } from '~/database.types';
 import {
   CLASSES_TABLE,
   SESSIONS_TABLE,
@@ -9,14 +9,21 @@ import {
 import {
   ClassWithTutorAndEnrollment,
   ClassWithTutorAndEnrollmentAndNextSession,
-  ClassWithTutorDetails,
+  ClassWithTutorData,
 } from '../types/class';
 import {
   ClassForStudentType,
   ClassType,
   ClassWithTutorAndEnrollmentAdmin,
   ClassWithTutorAndEnrollmentAdminRawData,
+  DbClassType,
 } from '../types/class-v2';
+import { DatabaseError } from '~/lib/shared/errors';
+import { failure, Result, success } from '~/lib/shared/result';
+import getLogger from '~/core/logger';
+
+
+const logger = getLogger();
 
 interface ClassWithTutorAndEnrollmentRawData
   extends Omit<ClassWithTutorAndEnrollment, 'noOfStudents'> {
@@ -342,6 +349,7 @@ export async function getAllClassesByTutorIdData(
           time_slots,
           starting_date,
           grade,
+          short_url_code,
           tutor:${USERS_TABLE}!tutor_id (
             first_name,
             last_name
@@ -633,8 +641,8 @@ export async function getClassDataByClassId(
   client: SupabaseClient<Database>,
   classId: string,
 ): Promise<ClassType | null> {
-  try{
-   const {data, error} = await client.from(CLASSES_TABLE).select(`
+  try {
+    const { data, error } = await client.from(CLASSES_TABLE).select(`
         id,
         created_at,
         name,
@@ -648,7 +656,7 @@ export async function getClassDataByClassId(
         grade,
         end_date`).eq('id', classId).maybeSingle();
 
-    if(error){
+    if (error) {
       console.error('Error fetching class data:', error);
       throw new Error(
         `Error fetching class data: ${(error as PostgrestError).message}`,
@@ -657,9 +665,94 @@ export async function getClassDataByClassId(
 
     return data as ClassType | null;
 
-  }catch(error){
+  } catch (error) {
     console.error('Failed to fetch class data:', error);
     throw error;
   }
-  
+
+}
+
+export async function getClassByIdWithTutor(client: SupabaseClient<Database>, classId: string): Promise<ClassWithTutorData | null> {
+  try {
+    const { data: classData, error } = await client
+      .from(CLASSES_TABLE)
+      .select(`
+        id,
+        name,
+        description,
+        subject,
+        tutor_id,
+        fee,
+        status,
+        time_slots,
+        grade,
+        starting_date,
+        created_at,
+        tutor:${USERS_TABLE}!classes_tutor_id_fkey(
+          id,
+          first_name,
+          last_name,
+          email,
+          phone_number,
+          photo_url,
+          biography,
+          display_name,
+          address,
+          city,
+          district,
+          education_level,
+          subjects_teach,
+          user_role
+        )
+      `)
+      .eq('id', classId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error getting class by ID with tutor:", error);
+      throw new Error("Failed to get class by ID with tutor. Please try again.");
+    }
+
+    if (!classData) {
+      console.log(`No class found with ID: ${classId}`);
+      return null;
+    }
+
+    return classData as ClassWithTutorData;
+  } catch (error) {
+    console.error("Error getting class by ID with tutor:", error);
+    throw new Error("Failed to get class by ID with tutor. Please try again.");
+  }
+}
+
+export async function getClassById(client: SupabaseClient<Database>, classId: string): Promise<Result<DbClassType, DatabaseError>> {
+  try {
+    const { data: classData, error } = await client
+      .from(CLASSES_TABLE)
+      .select()
+      .eq('id', classId)
+      .throwOnError()
+      .single();
+
+    if (error) {
+      logger.error("Failed to fetch class from database", error);
+      return failure(new DatabaseError("Failed to fetch class from database"));
+    }
+
+    if (!classData) {
+      logger.warn("Class not found", { classId });
+      return failure(new DatabaseError("Class not found"));
+    }
+
+    return success(classData);
+
+  } catch (error) {
+    logger.error("Something went wrong while fetching the class", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      classId
+    });
+    return failure(new DatabaseError("Something went wrong while fetching the class"));
+  }
 }

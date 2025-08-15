@@ -28,7 +28,8 @@ import {
 import RegisteredStudentsDialog from './RegisteredStudentsDialog';
 import EditClassDialog from './EditClassDialog';
 import AddStudentDialog from './AddStudentDialog';
-import { generateRegistrationLinkAction } from '~/app/actions/registration-link';
+import { copyToClipboard } from '~/lib/utils/clipboard';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 const ClassCard: React.FC<ClassCardProps> = ({
   classData,
@@ -42,22 +43,11 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
   const [addStudentLoading, setAddStudentLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const csrfToken = useCsrfToken();
 
   const handleCopyLink = async () => {
-    const classId = classData.id;
-    const registrationData = {
-      classId,
-      className: classData.name || '',
-      nextSession: classData.nextClass || classData.schedule || '',
-      time: classData.schedule || '',
-      tutorName:
-        classData.tutor?.firstName + ' ' + classData.tutor?.lastName || '',
-    };
-
-    const registrationLink =
-      await generateRegistrationLinkAction(registrationData);
-
-    navigator.clipboard.writeText(registrationLink);
+    const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/s/${classData.shortUrl}`;
+    await copyToClipboard(registrationUrl);
     setLinkCopied(true);
     setTimeout(() => {
       setLinkCopied(false);

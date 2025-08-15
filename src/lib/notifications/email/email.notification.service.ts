@@ -5,7 +5,8 @@ import {
   getSessions2_1HrsAfterSession,
   getUpcomingSessionsWithUnpaidStudentsBetween2_3Days,
   getStudentsByClassId,
-} from '../quieries';
+  getTutorsForSessionsWithin1Hr,
+} from '../queries';
 
 import { format, parseISO } from 'date-fns';
 import getLogger from '~/core/logger';
@@ -16,6 +17,9 @@ import {
   getStudentNotifyBeforeEmailTemplate,
   paymentReminderEmaiTemplate,
   getNotifyClassUpdateTemplate,
+  getTutorRegistrationTemplate,
+  getTutorApprovalOrRejectionTemplate,
+  getTutorClassReminderTemplate,
 } from '~/core/email/templates/emailTemplate';
 
 const logger = getLogger();
@@ -33,13 +37,10 @@ async function sendNotifySessionEmails(
   try {
     // Flatten all students across all sessions into a single array
     const emailTasks = data.flatMap((session) => {
-      logger.info('session', session);
-      console.log('session', session);
       return (
         session.class?.students.map((student) => ({
           to: student.student.email,
-          class_id: session.class.id,
-          topic: session.title,
+          session_id: session.id,
           first_name: student.student.first_name,
           class_name: session.class?.name ?? 'Unnamed Class',
           start_time: new Date(session.start_time).toLocaleString(),
@@ -75,9 +76,7 @@ async function sendNotifySessionEmails(
           className: task.class_name,
           sessionDate: localDate,
           sessionTime: localTime,
-          topic: task.topic,
-          classId: task.class_id,
-          studentEmail: task.to,
+          sessionId: task.session_id,
         });
         console.log('sending email to', task.to);
 
@@ -98,9 +97,7 @@ async function sendNotifySessionEmails(
             month: 'long',
             day: 'numeric',
           }),
-          topic: task.topic,
-          classId: task.class_id,
-          studentEmail: task.to,
+          sessionId: task.session_id,
         });
         await emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
@@ -115,9 +112,7 @@ async function sendNotifySessionEmails(
           className: task.class_name,
           sessionDate: localDate,
           sessionTime: localTime,
-          topic: task.topic,
-          classId: task.class_id,
-          studentEmail: task.to,
+          sessionId: task.session_id,
         });
 
         await emailService.sendEmail({
@@ -229,9 +224,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
           first_name: student.student.first_name,
           class_name: session.class?.name ?? 'Unnamed Class',
           start_time: new Date(session.start_time!).toLocaleString(),
-          fee: session.class.fee,
-          classId: session.class.id,
-          paymentUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.session_id}?type=upcoming&sessionId=${session.session_id}&className=${session.class.name}&sessionDate=${DATE}&sessionTime=${TIME}&sessionSubject=${session.class.subject}&sessionTitle=${session.title}`)}`,
+          sessionId: session.session_id,
         })) || []
       );
     });
@@ -250,10 +243,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
         sessionMonth: new Date(task.start_time).toLocaleString('en-US', {
           month: 'long',
         }),
-        studentEmail: task.to,
-        classFee: task.fee,
-        paymentUrl: task.paymentUrl,
-        classId: task.classId,
+        sessionId: task.sessionId,
       });
       await emailService.sendEmail({
         from: process.env.EMAIL_SENDER!,
@@ -267,6 +257,7 @@ async function sendPaymentReminderEmails(data: SessionWithUnpaidStudents[]) {
     for (let i = 0; i < emailTasks.length; i++) {
       try {
         await sendSingleEmail(emailTasks[i]);
+        console.log('sending payment reminder to', emailTasks[i].to);
         logger.info('sending payment reminder to', emailTasks[i].to);
       } catch (error) {
         logger.error('Failed to send email to', {
@@ -375,5 +366,151 @@ export async function notifyStudentsAfterClassScheduleUpdate(
   } catch (error) {
     console.error('Error sending class schedule update notifications:', error);
     throw error;
+  }
+}
+
+export async function sendTutorRegistrationEmail(
+  tutorName: string,
+  tutorEmail: string,
+) {
+  const sendSingleEmail = async () => {
+    const { html, text } = getTutorRegistrationTemplate(tutorName);
+
+    await emailService.sendEmail({
+      from: process.env.EMAIL_SENDER!,
+      to: tutorEmail,
+      subject: `We've Received Your Application - Comma Education`,
+      html: html,
+      text: text,
+    });
+  };
+
+  try {
+    await sendSingleEmail();
+    logger.info('Sending tutor registration success email to', {
+      email: tutorEmail,
+    });
+  } catch (error) {
+    logger.error('Failed to send tutor registration success email to', {
+      email: tutorEmail,
+      error,
+    });
+  }
+}
+
+export async function sendTutorApprovalOrRejectionEmail(
+  tutorName: string,
+  tutorEmail: string,
+  isApproved: boolean,
+) {
+  const sendSingleEmail = async () => {
+    const { html, text, subject } = getTutorApprovalOrRejectionTemplate(
+      tutorName,
+      isApproved,
+    );
+
+    await emailService.sendEmail({
+      from: process.env.EMAIL_SENDER!,
+      to: tutorEmail,
+      subject: subject,
+      html: html,
+      text: text,
+    });
+  };
+
+  try {
+    await sendSingleEmail();
+    logger.info('Sending tutor approval success email to', {
+      email: tutorEmail,
+    });
+  } catch (error) {
+    logger.error('Failed to send tutor approval email to', {
+      email: tutorEmail,
+      error,
+    });
+  }
+}
+
+export async function sendTutorClassReminder(client: SupabaseClient) {
+  try {
+    const tutorSessions: TutorNotificationClass[] =
+      await getTutorsForSessionsWithin1Hr(client);
+
+    if (tutorSessions.length === 0) {
+      console.log(
+        'No upcoming sessions found for tutor 1-hour SMS notifications',
+      );
+      return;
+    }
+
+    console.log(
+      `Found ${tutorSessions.length} sessions for tutor SMS notifications within 1 hour`,
+    );
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    // Process each tutor session individually
+    for (const tutorSession of tutorSessions) {
+      // Skip if tutor has no phone number
+      if (!tutorSession.tutor_phone_number) {
+        console.log(
+          `No phone number found for tutor of class: ${tutorSession.class_name}`,
+        );
+        continue;
+      }
+
+      // Parse the session start time for proper date formatting
+      const sessionDate = new Date(tutorSession.next_session_time);
+      // Format time for India timezone (IST)
+      const localTime = Intl.DateTimeFormat('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata',
+      }).format(sessionDate);
+
+      // todo - update the link to the tutor session
+
+      console.log(
+        `Sending 1-hour reminder email to tutor for class: ${tutorSession.class_name}, Phone: ${tutorSession.tutor_phone_number}, Tutor: ${tutorSession.tutor_name}`,
+      );
+
+      const { html, text } = getTutorClassReminderTemplate({
+        tutorName: tutorSession.tutor_name!,
+        classTime: localTime,
+        className: tutorSession.class_name!,
+      });
+
+      try {
+        await emailService.sendEmail({
+          from: process.env.EMAIL_SENDER!,
+          to: tutorSession.tutor_email!,
+          subject: ` Reminder: Your ${tutorSession.class_name} Class Starts within 1 hour!`,
+          html: html,
+          text: text,
+        });
+
+        successCount++;
+        console.log(
+          `Tutor 1-hour reminder email sent successfully for class ${tutorSession.class_name} for tutor ${tutorSession.tutor_name}`,
+        );
+      } catch (error) {
+        failureCount++;
+        console.error(
+          `Failed to send Tutor 1-hour reminder email for class ${tutorSession.class_name} for tutor ${tutorSession.tutor_name}`,
+        );
+      }
+
+      // Add a small delay between email sends to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    // Final summary
+    console.log(`Tutor 1-Hour email Notification Summary:`);
+    console.log(`Successfully sent: ${successCount} email messages`);
+    console.log(`Failed to send: ${failureCount} email messages`);
+  } catch (error) {
+    console.error('Error in notifyTutorsWithin1Houremail:', error);
   }
 }

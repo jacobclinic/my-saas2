@@ -14,7 +14,7 @@ import useSignInWithProvider from '~/core/hooks/use-sign-in-with-provider';
 const OAUTH_PROVIDERS = configuration.auth.providers.oAuth;
 
 const OAuthProviders: React.FCC<{
-  returnUrl?: string;
+  returnUrl?: string | null;
 }> = (props) => {
   const signInWithProviderMutation = useSignInWithProvider();
 

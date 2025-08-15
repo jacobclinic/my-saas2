@@ -3,27 +3,22 @@
 import React, { useCallback, useEffect, useState, useTransition } from 'react';
 import type {
   SessionStudentTableData,
-  UpcomingSessionTableData,
 } from '~/lib/sessions/types/upcoming-sessions';
-import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { Input } from '../base-v2/ui/Input';
-import { Calendar, Info, Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { PastSession, UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { DateRangePicker } from '@heroui/date-picker';
 import StudentSessionCard from '../student-dashboard/StudentSessionCard';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
-import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
 import PaymentDialog from '../student-payments/PaymentDialog';
 import {
   formatDateTimeRange,
-  getUserTimezone,
 } from '~/lib/utils/timezone-utils';
 import {
   datePickerObjectToLocalDate,
-  utcToLocalDate,
 } from '~/lib/utils/timezone-utils-filter';
-import TimezoneIndicator from '../TimezoneIndicator';
+import { useRouter } from 'next/navigation';
 
 interface DateRange {
   start?: {
@@ -63,6 +58,8 @@ const StudentUpcomingSessions = ({
     useState<SessionStudentTableData | null>(null);
 
   const [isPending, startTransition] = useTransition();
+
+  const router = useRouter();
 
   // Transform upcoming sessions data
   useEffect(() => {
@@ -113,19 +110,26 @@ const StudentUpcomingSessions = ({
 
   const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
-      startTransition(async () => {
-        const result = await joinMeetingAsUser({
-          meetingId: sessionData?.zoomMeetingId,
-          studentData: {
-            first_name: userSession?.data?.first_name || '',
-            last_name: userSession?.data?.last_name || '',
-            email: userSession?.auth?.user?.email || '',
-          },
-        });
-        if (result.success) {
-          window.open(result.start_url, '_blank');
-        } else {
-          alert('Failed to generate join link');
+      // startTransition(async () => {
+      //   const result = await joinMeetingAsUser({
+      //     meetingId: sessionData?.zoomMeetingId,
+      //     studentData: {
+      //       first_name: userSession?.data?.first_name || '',
+      //       last_name: userSession?.data?.last_name || '',
+      //       email: userSession?.auth?.user?.email || '',
+      //     },
+      //   });
+      //   if (result.success) {
+      //     window.open(result.start_url, '_blank');
+      //   } else {
+      //     alert('Failed to generate join link');
+      //   }
+      // });
+      startTransition(() => {
+        if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
+          const classId = sessionData.sessionRawData.class.id;
+          const url = `/classes/${classId}/session/${sessionData.id}`;
+          router.push(url);
         }
       });
     },
@@ -138,8 +142,8 @@ const StudentUpcomingSessions = ({
       // Apply search term filter
       const matchesSearchTerm = searchTerm
         ? (session?.class?.name || '')
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase())
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
         : true;
 
       // Apply date range filter if dateRange is selected

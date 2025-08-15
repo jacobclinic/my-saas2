@@ -28,11 +28,11 @@ import {
   PlusCircle,
   Users,
   ExternalLink,
+  ScreenShare,
 } from 'lucide-react';
 import MaterialUploadDialog from './MaterialUploadDialog';
 import EditSessionDialog from './EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
-import { parse, format } from 'date-fns';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import {
@@ -41,9 +41,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../base-v2/ui/tooltip';
-import { convertTimeRangeToISO } from '~/lib/utils/date-utils';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
-import { SessionUpdateOption } from '~/lib/enums';
+import { copyToClipboard } from '~/lib/utils/clipboard';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+
+import { useRouter } from 'next/navigation';
+import useSessionTimeValidation from '~/core/hooks/use-session-time-validation';
+import { fetchZoomSessionBySessionIdAction } from '~/lib/zoom_sessions/server-actions-v2';
+import { useToast } from '../../lib/hooks/use-toast';
+import { isIPadOS } from '~/lib/utils/device-utils';
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
@@ -55,8 +61,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   variant = 'default',
 }) => {
   const isDashboard = variant === 'dashboard';
-  // console.log('sessionData in upcoming session:', sessionData);
-
+  const router = useRouter();
   const [linkCopied, setLinkCopied] = useState<{
     student?: boolean;
     materials?: boolean;
@@ -67,16 +72,20 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [uploadedMaterials, setUploadedMaterials] = useState<
     UploadedMaterial[]
   >([]);
-  const [materialDescription, setMaterialDescription] = useState('');  const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
+  const [materialDescription, setMaterialDescription] = useState('');
+  const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
     title: sessionData?.sessionRawData?.title || '',
     description: sessionData?.sessionRawData?.description || '',
   });
 
+  const { toast } = useToast();
+
   // Store original lesson details to track changes
-  const [originalLessonDetails, setOriginalLessonDetails] = useState<LessonDetails>({
-    title: sessionData?.sessionRawData?.title || '',
-    description: sessionData?.sessionRawData?.description || '',
-  });
+  const [originalLessonDetails, setOriginalLessonDetails] =
+    useState<LessonDetails>({
+      title: sessionData?.sessionRawData?.title || '',
+      description: sessionData?.sessionRawData?.description || '',
+    });
 
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
   const [editSessionLoading, setEditSessionLoading] = useState(false);
@@ -84,28 +93,64 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [loading, setLoading] = useState(false);
 
   const csrfToken = useCsrfToken();
+  const isWithinJoinWindow = useSessionTimeValidation(sessionData.start_time);
 
-  const handleCopyLink = (link: string, type: 'student' | 'materials') => {
-    navigator.clipboard.writeText(link);
-    setLinkCopied({ ...linkCopied, [type]: true });
-    setTimeout(() => {
-      setLinkCopied({ ...linkCopied, [type]: false });
-    }, 2000);
+  const handleCopyLink = async (
+    link: string,
+    type: 'student' | 'materials',
+  ) => {
+    const data = await createShortUrlAction({
+      originalUrl: link
+    });
+    if (data.success && data.shortUrl) {
+      await copyToClipboard(data.shortUrl);
+      setLinkCopied({ ...linkCopied, [type]: true });
+      setTimeout(() => {
+        setLinkCopied({ ...linkCopied, [type]: false });
+      }, 2000);
+    }
   };
 
   const joinMeetingAsTutor = useCallback(async () => {
     startTransition(async () => {
-      const result = await joinMeetingAsHost({
-        meetingId: sessionData?.zoomMeetingId,
-      });
-      if (result.success) {
-        window.open(result.start_url, '_blank');
-      } else {
-        alert('Failed to generate join link');
+      if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
+        const classId = sessionData.sessionRawData.class.id;
+        const url = `/classes/${classId}/session/${sessionData.id}`;
+        router.push(url);
       }
     });
   }, [sessionData]);
-  
+
+  const joinInZoomDesktopClient = useCallback(() => {
+    const newTab = window.open('', '_blank');
+    startTransition(async () => {
+      const session = await fetchZoomSessionBySessionIdAction(sessionData.id);
+
+      if (session && session.meeting_id) {
+        const id = String(session.meeting_id).replace(/\D/g, '');
+        const pwd = session.password? `?pwd=${encodeURIComponent(session.password)}`: '';
+        const url = `https://zoom.us/j/${id}${pwd}`;
+
+        if (newTab) {
+          newTab.location.href = url;
+          try {
+            newTab.focus();
+          } catch {
+            console.log('Failed to focus on the new tab');
+          }
+        } else {
+          window.location.assign(url);
+        }
+      } else {
+        toast({
+          title: 'Error',
+          description:'Something wrong with the class, Please contact admin',
+          variant: 'destructive',
+        });
+      }
+    });
+  }, [sessionData]);
+
   const saveLessonDetails = async () => {
     // Save lesson details logic here
     try {
@@ -113,9 +158,9 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
       const result = await updateSessionAction({
         sessionId: sessionData.id,
         sessionData: lessonDetails,
-        csrfToken
+        csrfToken,
       });
-      
+
       if (result.success) {
         // Update original lesson details to reflect the saved state
         setOriginalLessonDetails({
@@ -253,21 +298,50 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
               </div>
             )}
             <CardFooter className="pt-3 grid grid-cols-2 md:grid-cols-4 gap-2 border-t border-neutral-100">
+              {/* Keep this as it is, In future we want to let the tutors join from the web. */}
+              {/* <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="w-full">
+                      <Button
+                        variant="ghost"
+                        className="w-full bg-primary-blue-50 text-primary-blue-700 hover:bg-primary-blue-100 border border-primary-blue-100 group-hover:bg-primary-blue-100"
+                        onClick={joinMeetingAsTutor}
+                        disabled={isPending || !isWithinJoinWindow}
+                      >
+                        <ExternalLink size={16} className="mr-2" />
+                        <span>Join Class</span>
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {!isWithinJoinWindow
+                      ? <p>Join button will be available 1 hour before class starts</p>
+                      : <p>Join the class as a tutor</p>
+                    }
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider> */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full bg-primary-blue-50 text-primary-blue-700 hover:bg-primary-blue-100 border border-primary-blue-100 group-hover:bg-primary-blue-100"
-                      onClick={joinMeetingAsTutor}
-                      disabled={isPending}
-                    >
-                      <ExternalLink size={16} className="mr-2" />
-                      <span>Join Class</span>
-                    </Button>
+                    <div className="w-full">
+                      <Button
+                        variant="ghost"
+                        className="w-full bg-primary-blue-50 text-primary-blue-700 hover:bg-primary-blue-100 border border-primary-blue-100 group-hover:bg-primary-blue-100"
+                        onClick={joinInZoomDesktopClient}
+                        disabled={isPending || !isWithinJoinWindow}
+                      >
+                        <ScreenShare size={16} className="mr-2" />
+                        <span>Open with Zoom</span>
+                      </Button>
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Join the class as a tutor</p>
+                    {!isWithinJoinWindow
+                      ? <p>Join button will be available 1 hour before class starts</p>
+                      : <p>Join the class as a tutor</p>
+                    }
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -280,7 +354,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                       className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
                       onClick={() =>
                         handleCopyLink(
-                          `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`)}`,
+                          `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`,
                           'student',
                         )
                       }
@@ -338,33 +412,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 </Tooltip>
               </TooltipProvider>
             </CardFooter>
-            {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-6 pt-0">
-
-              {sessionData.materials && sessionData.materials.length > 0 && (
-                <Button
-                  variant="outline"
-                  className="md:col-span-4"
-                  onClick={() => {
-                    const materialsText =
-                      `Class Materials for ${sessionData.name} - ${sessionData.date}\n\n` +
-                      (sessionData.materials || [])
-                        .map(
-                          (material, index) =>
-                            `${index + 1}. ${material.name}\nDownload: https://commaeducation.com/materials/${sessionData.id}/${material.id}\n`,
-                        )
-                        .join('\n');
-                    handleCopyLink(materialsText, 'materials');
-                  }}
-                >
-                  {linkCopied.materials ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <Copy className="h-4 w-4 mr-2" />
-                  )}
-                  {linkCopied.materials ? 'Materials Links Copied!' : 'Copy Materials Links'}
-                </Button>
-              )}
-            </div> */}
           </div>
         </CardContent>
       </Card>
@@ -387,17 +434,13 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionData={{
           title: sessionData.lessonTitle || '',
           description: sessionData.lessonDescription || '',
-          startTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .startTime || '',
-          endTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .endTime || '',
+          startTime: sessionData.start_time || '',
+          endTime: sessionData.end_time || '',
           meetingUrl: sessionData.zoomLinkStudent || '',
           materials: sessionData.materials || [],
         }}
         loading={editSessionLoading}
-      />      
+      />
       <AddLessonDetailsDialog
         open={showLessonDetailsDialog}
         onClose={() => {

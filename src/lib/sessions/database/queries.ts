@@ -8,12 +8,12 @@ import {
   USERS_TABLE,
   RESOURCE_MATERIALS_TABLE,
   STUDENT_PAYMENTS_TABLE,
+  ZOOM_USERS_TABLE
 } from '~/lib/db-tables';
 import { SessionsWithTableData } from '../types/session';
 import {
   PastSession,
   pastSessionsForAttendance,
-  Session,
   UpcomingSession,
 } from '../types/session-v2';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
@@ -318,7 +318,7 @@ export async function getAllUpcommingSessionsData(
         `,
         { count: 'exact' },
       )
-      .gt('start_time', new Date().toISOString())
+      .gt('end_time', new Date().toISOString())
       .order('start_time', { ascending: true });
 
     // console.log("getAllSessionsData", data)
@@ -344,15 +344,15 @@ export async function getAllUpcommingSessionsData(
         ...sessionData,
         class: classTemp
           ? {
-              id: classTemp.id,
-              name: classTemp.name,
-              subject: classTemp.subject,
-              tutor_id: classTemp.tutor_id,
-              tutor: Array.isArray(classTemp.tutor)
-                ? classTemp.tutor[0]
-                : classTemp.tutor || undefined,
-              students: classTemp.students,
-            }
+            id: classTemp.id,
+            name: classTemp.name,
+            subject: classTemp.subject,
+            tutor_id: classTemp.tutor_id,
+            tutor: Array.isArray(classTemp.tutor)
+              ? classTemp.tutor[0]
+              : classTemp.tutor || undefined,
+            students: classTemp.students,
+          }
           : undefined,
       };
     });
@@ -437,15 +437,15 @@ export async function getTodaysAllUpcommingSessionsData(
         ...sessionData,
         class: classTemp
           ? {
-              id: classTemp.id,
-              name: classTemp.name,
-              subject: classTemp.subject,
-              tutor_id: classTemp.tutor_id,
-              tutor: Array.isArray(classTemp.tutor)
-                ? classTemp.tutor[0]
-                : classTemp.tutor || undefined,
-              students: classTemp.students,
-            }
+            id: classTemp.id,
+            name: classTemp.name,
+            subject: classTemp.subject,
+            tutor_id: classTemp.tutor_id,
+            tutor: Array.isArray(classTemp.tutor)
+              ? classTemp.tutor[0]
+              : classTemp.tutor || undefined,
+            students: classTemp.students,
+          }
           : undefined,
       };
     });
@@ -553,6 +553,9 @@ export async function getAllUpcommingSessionsByTutorIdData(
       return [];
     }
 
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
     // Create base query
     let query = client
       .from(SESSIONS_TABLE)
@@ -587,7 +590,7 @@ export async function getAllUpcommingSessionsByTutorIdData(
         `,
         { count: 'exact' },
       )
-      .gt('start_time', new Date().toISOString())
+      .gt('end_time', new Date().toISOString())
       .in('class_id', classIds)
       .order('start_time', { ascending: true });
 
@@ -658,6 +661,9 @@ export async function getAllUpcommingSessionsByTutorIdDataPerWeek(
       return [];
     }
 
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
     // Create base query
     let query = client
       .from(SESSIONS_TABLE)
@@ -692,11 +698,8 @@ export async function getAllUpcommingSessionsByTutorIdDataPerWeek(
         `,
         { count: 'exact' },
       )
-      .gt('start_time', new Date().toISOString())
-      .lt(
-        'start_time',
-        new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000).toISOString(),
-      )
+      .gt('end_time', new Date().toISOString())
+      .lt('start_time', sevenDaysFromNow.toISOString())
       .in('class_id', classIds)
       .order('start_time', { ascending: true });
 
@@ -1052,15 +1055,15 @@ export async function getAllPastSessionsDataAdmin(
         ...sessionData,
         class: classTemp
           ? {
-              id: classTemp.id,
-              name: classTemp.name,
-              subject: classTemp.subject,
-              tutor_id: classTemp.tutor_id,
-              tutor: Array.isArray(classTemp.tutor)
-                ? classTemp.tutor[0]
-                : classTemp.tutor || undefined,
-              students: classTemp.students,
-            }
+            id: classTemp.id,
+            name: classTemp.name,
+            subject: classTemp.subject,
+            tutor_id: classTemp.tutor_id,
+            tutor: Array.isArray(classTemp.tutor)
+              ? classTemp.tutor[0]
+              : classTemp.tutor || undefined,
+            students: classTemp.students,
+          }
           : undefined,
         attendance: attendanceTemp ?? [],
       };
@@ -1427,7 +1430,7 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
         `,
         { count: 'exact' },
       )
-      .gt('start_time', new Date().toISOString())
+      .gt('end_time', new Date().toISOString())
       .lt(
         'start_time',
         new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000).toISOString(),
@@ -1446,8 +1449,6 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
       { data: upcomingSessions, error: upcomingSessionError },
       { data: upcomingPayments, error: upcomingPaymentError },
     ] = await Promise.all([queryForSessionData, queryForPaymentData]);
-
-    // console.log('getAllSessionsData', upcomingSessions);
 
     if (upcomingSessionError) {
       throw new Error(
@@ -1495,15 +1496,15 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
         ...sessionData,
         class: classTemp
           ? {
-              id: classTemp.id,
-              name: classTemp.name,
-              subject: classTemp.subject,
-              tutor_id: classTemp.tutor_id,
-              fee: classTemp.fee,
-              tutor: Array.isArray(classTemp.tutor)
-                ? classTemp.tutor[0]
-                : classTemp.tutor || undefined,
-            }
+            id: classTemp.id,
+            name: classTemp.name,
+            subject: classTemp.subject,
+            tutor_id: classTemp.tutor_id,
+            fee: classTemp.fee,
+            tutor: Array.isArray(classTemp.tutor)
+              ? classTemp.tutor[0]
+              : classTemp.tutor || undefined,
+          }
           : undefined,
         materials: transformedMaterials || [],
         payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
@@ -1570,7 +1571,14 @@ export async function getAllPastSessionsByStudentIdData(
             name,
             subject,
             tutor_id,
-            fee
+            fee,
+            tutor:${USERS_TABLE}!id(
+              id,
+              first_name,
+              last_name,
+              email
+            ),
+            students:${STUDENT_CLASS_ENROLLMENTS_TABLE}!class_id(id)
           ),
           materials:${RESOURCE_MATERIALS_TABLE}!id (
             id,
@@ -1597,7 +1605,6 @@ export async function getAllPastSessionsByStudentIdData(
       { data: pastPayments, error: pastPaymentError },
     ] = await Promise.all([queryForSessionData, queryForPaymentData]);
 
-    // console.log("getAllSessionsData", pastSessions)
 
     if (pastSessionError) {
       throw new Error(`Error fetching sessions: ${pastSessionError.message}`);
@@ -1616,6 +1623,15 @@ export async function getAllPastSessionsByStudentIdData(
       if (sessionData?.class) {
         if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
         else classTemp = sessionData.class;
+      }
+
+      let tutorTemp;
+      if (classTemp?.tutor) {
+        if (Array.isArray(classTemp.tutor)) {
+          tutorTemp = classTemp.tutor[0];
+        } else {
+          tutorTemp = classTemp.tutor;
+        }
       }
 
       // Find relevant payment
@@ -1644,7 +1660,17 @@ export async function getAllPastSessionsByStudentIdData(
 
       return {
         ...sessionData,
-        class: classTemp,
+        class: classTemp
+          ? {
+              id: classTemp.id,
+              name: classTemp.name,
+              subject: classTemp.subject,
+              tutor_id: classTemp.tutor_id,
+              fee: classTemp.fee,
+              tutor: tutorTemp,
+              students: classTemp.students,
+            }
+          : undefined,
         materials: transformedMaterials || [],
         payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
         payment_amount: currentPayment?.amount || classTemp?.fee || null,
@@ -1816,18 +1842,21 @@ export async function getNextSessionByClassID(
       .select(
         `
           id,
-          created_at,
           class_id,
-          recording_urls,
-          status,
           start_time,
           end_time,
-          recurring_session_id,
           title,
           description,
           updated_at,
-          meeting_url,
-          zoom_meeting_id
+          class:${CLASSES_TABLE}!class_id (
+            id,
+            name,
+            subject,
+            tutor:${USERS_TABLE}!tutor_id(
+              first_name,
+              last_name
+            )
+          )
         `,
         { count: 'exact' },
       )
@@ -1844,7 +1873,28 @@ export async function getNextSessionByClassID(
       return null;
     }
 
-    return data[0];
+    // Normalize joined class/tutor structures that may return arrays
+    const session = data[0] as unknown as UpcomingSession & {
+      class?: any;
+    };
+    let classTemp: any = undefined;
+    let tutorTemp: any = undefined;
+    if (session?.class) {
+      classTemp = Array.isArray(session.class) ? session.class[0] : session.class;
+    }
+    if (classTemp?.tutor) {
+      tutorTemp = Array.isArray(classTemp.tutor) ? classTemp.tutor[0] : classTemp.tutor;
+    }
+
+    return {
+      ...session,
+      class: classTemp
+        ? {
+            ...classTemp,
+            tutor: tutorTemp,
+          }
+        : undefined,
+    } as UpcomingSession;
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
     throw error;
@@ -1930,5 +1980,181 @@ export async function checkUpcomingSessionAvailabilityForClass(
     throw new Error(
       `Failed to check session availability: ${(error as Error).message}`,
     );
+  }
+}
+
+type UpcomingSessionWithZoomUser = UpcomingSession & {
+  class: {
+    tutor: {
+      zoom_user: {
+        id: string;
+        zoom_user_id: string;
+        email: string;
+      }[];
+    };
+  };
+};
+
+export async function getSessionsTillTomorrowWithZoomUser(
+  client: SupabaseClient<Database>
+): Promise<UpcomingSessionWithZoomUser[] | []> {
+  try {
+    // Current time in UTC
+    const now = new Date();
+
+    // End of tomorrow in UTC (23:59:59.999)
+    const tomorrowEndUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      23, 59, 59, 999
+    ));
+
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(`
+        id,
+        created_at,
+        class_id,
+        recording_urls,
+        status,
+        start_time,
+        end_time,
+        title,
+        description,
+        updated_at,
+        class:${CLASSES_TABLE}!class_id (
+          id,
+          name,
+          subject,
+          tutor_id,
+          tutor:${USERS_TABLE}!tutor_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            zoom_user: ${ZOOM_USERS_TABLE}!tutor_id (
+              id,
+              zoom_user_id,
+              email
+            )
+          )
+        )
+      `, { count: 'exact' })
+      .gt('start_time', now.toISOString())
+      .lte('start_time', tomorrowEndUTC.toISOString())
+      .order('start_time', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data as unknown as UpcomingSessionWithZoomUser[] || [];
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function getTomorrowsSessionsWithZoomUser(
+  client: SupabaseClient<Database>
+): Promise<UpcomingSessionWithZoomUser[] | []> {
+  try {
+    // Current time in UTC
+    const now = new Date();
+
+    // Start of tomorrow in UTC (00:00:00)
+    const tomorrowStartUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0, 0, 0, 0
+    ));
+
+    // End of tomorrow in UTC (23:59:59.999)
+    const tomorrowEndUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      23, 59, 59, 999
+    ));
+
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(`
+        id,
+        created_at,
+        class_id,
+        recording_urls,
+        status,
+        start_time,
+        end_time,
+        title,
+        description,
+        updated_at,
+        class:${CLASSES_TABLE}!class_id (
+          id,
+          name,
+          subject,
+          tutor_id,
+          tutor:${USERS_TABLE}!tutor_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            zoom_user: ${ZOOM_USERS_TABLE}!tutor_id (
+              id,
+              zoom_user_id,
+              email
+            )
+          )
+        )
+      `, { count: 'exact' })
+      .gte('start_time', tomorrowStartUTC.toISOString())
+      .lte('start_time', tomorrowEndUTC.toISOString())
+      .order('start_time', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data as unknown as UpcomingSessionWithZoomUser[] || [];
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function getSessionById( client: SupabaseClient<Database>,  session_id: string) {
+  try {
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(
+        `
+          id,
+          created_at,
+          class_id,
+          recording_urls,
+          status,
+          start_time,
+          end_time,
+          recurring_session_id,
+          title,
+          description,
+          updated_at,
+          meeting_url,
+          zoom_meeting_id,
+          attendance_marked
+        `,
+        { count: 'exact' },
+      )
+      .eq('id', session_id)
+      .single();
+
+    if (error) {
+      throw new Error(`Error fetching session: ${error.message}`);
+    }
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch session:', error);
+    throw error;
   }
 }

@@ -3,28 +3,15 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import { Input } from '../base-v2/ui/Input';
 import { Textarea } from '../base-v2/ui/Textarea';
-import {
-  AlertTriangle,
-  X,
-  Upload,
-  File,
-  Plus,
-  Trash,
-  Clock,
-} from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import BaseDialog from '../base-v2/BaseDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { Button } from '../base-v2/ui/Button';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import { useToast } from '../../lib/hooks/use-toast';
-import {
-  convertToLocalTime,
-  getUserTimezone,
-} from '~/lib/utils/timezone-utils';
+import { convertToLocalTime } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../TimezoneIndicator';
-import SessionEditConfirmationDialog from './SessionEditConfirmationDialog';
-import { SessionUpdateOption } from '~/lib/enums';
 
 interface Material {
   id: string;
@@ -85,25 +72,34 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         endTime: sessionData.endTime || '',
         materials: sessionData.materials || [],
         meetingUrl: sessionData.meetingUrl || '',
-      }); // Set the date and time inputs based on the session data, converted to local time
+      });
+
+      // Set the date and time inputs based on the session data, converted to local time
       if (sessionData.startTime) {
-        // Convert UTC time to user's local timezone
+        // The sessionData.startTime should be UTC, convert to local timezone
         const localStartDate = convertToLocalTime(sessionData.startTime);
         if (localStartDate) {
-          setSessionDate(localStartDate.toISOString().split('T')[0]);
-          setSessionStartTime(
-            localStartDate.toISOString().split('T')[1].substring(0, 5),
-          );
+          // Format the local date properly for input fields
+          const year = localStartDate.getFullYear();
+          const month = String(localStartDate.getMonth() + 1).padStart(2, '0');
+          const day = String(localStartDate.getDate()).padStart(2, '0');
+          const hours = String(localStartDate.getHours()).padStart(2, '0');
+          const minutes = String(localStartDate.getMinutes()).padStart(2, '0');
+
+          setSessionDate(`${year}-${month}-${day}`);
+          setSessionStartTime(`${hours}:${minutes}`);
         }
       }
 
       if (sessionData.endTime) {
-        // Convert UTC time to user's local timezone
+        // The sessionData.endTime should be UTC, convert to local timezone
         const localEndDate = convertToLocalTime(sessionData.endTime);
         if (localEndDate) {
-          setSessionEndTime(
-            localEndDate.toISOString().split('T')[1].substring(0, 5),
-          );
+          // Format the local time properly for input field
+          const hours = String(localEndDate.getHours()).padStart(2, '0');
+          const minutes = String(localEndDate.getMinutes()).padStart(2, '0');
+
+          setSessionEndTime(`${hours}:${minutes}`);
         }
       }
     }
@@ -161,8 +157,7 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   const combineDateAndTime = (date: string, time: string): string => {
     if (!date || !time) return '';
 
-    // Create a Date object with the combined date and time
-    // This will be in local time zone
+    // Create a Date object with the combined date and time in local timezone
     const combinedDateTime = new Date(`${date}T${time}:00`);
 
     // Convert to UTC by using the ISO string representation
@@ -177,7 +172,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   const isValid = sessionDate && sessionStartTime && sessionEndTime;
 
   const updateSession = async () => {
-
     if (sessionId) {
       startTransition(async () => {
         // Combine date and times before sending to the server
@@ -219,7 +213,7 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         }
       });
     }
-  }
+  };
 
   return (
     <>

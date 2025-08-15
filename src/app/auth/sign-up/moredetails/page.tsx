@@ -6,7 +6,6 @@ import { getUserByIdAction } from './actions';
 import MoreDetailsForm from '../../components/MoreDetailsForm';
 import Image from 'next/image';
 
-
 export const metadata: Metadata = {
   title: 'Complete Your Profile',
   description: 'Provide additional information to complete your profile.',
@@ -30,15 +29,32 @@ async function MoreDetailsPage({
 
   const userData = await getUserByIdAction(session.user.id);
 
-  // Only redirect if we have valid non-empty values for phone and address (names are now filled during signup)
+  // Check for onboarding completion (the fields that MoreDetailsForm actually fills)
   const hasRequiredDetails =
-    userData?.phone_number &&
-    userData?.address &&
-    userData?.phone_number.trim() !== '' &&
-    userData?.address.trim() !== '';
+    userData?.birthday &&
+    userData?.class_size &&
+    userData?.education_level &&
+    userData?.subjects_teach &&
+    userData?.identity_url &&
+    userData?.birthday.trim() !== '' &&
+    userData?.class_size.trim() !== '' &&
+    userData?.education_level.trim() !== '' &&
+    userData?.identity_url.trim() !== '' &&
+    userData?.subjects_teach.length > 0;
 
+  // If user has completed onboarding, redirect appropriately
   if (hasRequiredDetails) {
-    redirect(searchParams.returnUrl || '/dashboard');
+    // For tutors, check approval status
+    if (userData.user_role === 'tutor') {
+      if (!userData.is_approved) {
+        redirect('/waiting');
+      } else {
+        redirect(searchParams.returnUrl || '/dashboard');
+      }
+    } else {
+      // Non-tutors can go straight to dashboard
+      redirect(searchParams.returnUrl || '/dashboard');
+    }
   }
 
   return (

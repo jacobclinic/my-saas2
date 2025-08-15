@@ -95,7 +95,7 @@ const StudentPaymentsView: React.FC = () => {
     fetchInvoices(getCurrentMonth());
     // Also load all invoices for dropdown
     fetchAllInvoicesForDropdown();
-  }, [user?.data?.id, csrfToken]);
+  }, [user?.data?.id, csrfToken, periodFilter]);
 
   // Handle period filter changes with lazy loading
   useEffect(() => {
@@ -166,19 +166,8 @@ const StudentPaymentsView: React.FC = () => {
       .sort((a, b) => b.value.localeCompare(a.value));
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="text-center">
-          <RefreshCcw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading your invoices...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6 max-w-full mx-auto">
+    <div className="xl:min-w-[900px] space-y-6">
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6">
         <div className="flex flex-wrap gap-4 items-center">
@@ -223,39 +212,45 @@ const StudentPaymentsView: React.FC = () => {
       </div>
 
       {/* Invoice Cards */}
-      <div className="space-y-4">
-        {filteredInvoices.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
-              <Filter className="h-12 w-12 mx-auto" />
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <p className="text-gray-500">Loading invoices...</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredInvoices.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-gray-400 mb-4">
+                <Filter className="h-12 w-12 mx-auto" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No invoices found
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {invoices.length === 0
+                  ? "You don't have any invoices yet."
+                  : 'No invoices match your current filters.'}
+              </p>
+              {invoices.length > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter('all');
+                    setPeriodFilter(getCurrentMonth());
+                  }}
+                >
+                  Clear filters
+                </Button>
+              )}
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No invoices found
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {invoices.length === 0
-                ? "You don't have any invoices yet."
-                : 'No invoices match your current filters.'}
-            </p>{' '}
-            {invoices.length > 0 && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('all');
-                  setPeriodFilter(getCurrentMonth());
-                }}
-              >
-                Clear filters
-              </Button>
-            )}
-          </div>
-        ) : (
-          filteredInvoices.map((invoice) => (
-            <StudentInvoiceCard key={invoice.id} invoice={invoice} />
-          ))
-        )}
-      </div>
+          ) : (
+            filteredInvoices.map((invoice) => (
+              <StudentInvoiceCard key={invoice.id} invoice={invoice} />
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };

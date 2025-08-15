@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '../base-v2/ui/Card';
 import { Input } from '../base-v2/ui/Input';
 import { Button } from '../base-v2/ui/Button';
 import { User, Mail, Phone, ArrowRight, Lock } from 'lucide-react';
-import { ClassRegistrationData } from '~/lib/registration-link';
 import RegistrationSuccess from './RegistrationSuccess';
 import { registerStudentViaLoginAction } from '~/app/actions/public/student-class-register';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
+import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 
@@ -15,17 +15,21 @@ interface RegistrationViaLoginFormData {
   password: string;
 }
 
-interface StudentRegistrationFormrops {
+interface StudentRegistrationFormProps {
   classData: ClassRegistrationData;
-  nextSessionData: UpcomingSession;
+  nextSessionId: string;
   setIsRegisterViaLogin: (isRegisterViaLogin: boolean) => void;
+  formattedDate?: string;
+  formattedTime?: string;
 }
 
 const StudentRegistrationViaLogin = ({
   classData,
-  nextSessionData,
-  setIsRegisterViaLogin
-}: StudentRegistrationFormrops) => {
+  nextSessionId,
+  setIsRegisterViaLogin,
+  formattedDate,
+  formattedTime,
+}: StudentRegistrationFormProps) => {
   const [formData, setFormData] = useState<RegistrationViaLoginFormData>({
     email: '',
     password: '',
@@ -52,7 +56,6 @@ const StudentRegistrationViaLogin = ({
         const result = await registerStudentViaLoginAction({
           ...formData,
           classId: classData.classId || '',
-          className: classData.className || '',
         });
 
         if (result.success) {
@@ -62,9 +65,9 @@ const StudentRegistrationViaLogin = ({
             username: result.userData?.email,
             email: result.userData?.email,
             nextClass: {
-              sessionId: nextSessionData.id,
-              date: classData.nextSession,
-              time: classData.time,
+              sessionId: nextSessionId,
+              date: formattedDate || classData.nextSession,
+              time: formattedTime || classData.time,
               zoomLink: '',
             },
             materials: [],

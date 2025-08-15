@@ -1,0 +1,35 @@
+export const ErrorCodes = {
+    // Validation errors
+    VALIDATION_ERROR: 'VALIDATION_ERROR',
+    INVALID_INPUT: 'INVALID_INPUT',
+    INVALID_URL: 'INVALID_URL',
+
+    // Authentication errors
+    UNAUTHORIZED: 'UNAUTHORIZED',
+    FORBIDDEN: 'FORBIDDEN',
+
+    // Business logic errors
+    BUSINESS_RULE_VIOLATION: 'BUSINESS_RULE_VIOLATION',
+    RESOURCE_NOT_FOUND: 'RESOURCE_NOT_FOUND',
+    RESOURCE_ALREADY_EXISTS: 'RESOURCE_ALREADY_EXISTS',
+
+    // External service errors
+    ZOOM_ERROR: 'ZOOM_ERROR',
+    PAYMENT_ERROR: 'PAYMENT_ERROR',
+    EMAIL_ERROR: 'EMAIL_ERROR',
+
+    // Database errors
+    DATABASE_ERROR: 'DATABASE_ERROR',
+    CONNECTION_ERROR: 'CONNECTION_ERROR',
+
+    // Generic errors
+    UNEXPECTED_ERROR: 'UNEXPECTED_ERROR',
+    TIMEOUT_ERROR: 'TIMEOUT_ERROR',
+
+    // Server errors
+    INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
+
+    SERVICE_LEVEL_ERROR: 'SERVICE_LEVEL_ERROR',
+} as const;
+
+export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];

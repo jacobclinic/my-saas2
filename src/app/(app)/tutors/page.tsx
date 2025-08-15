@@ -3,7 +3,7 @@ import AppHeader from '~/app/(app)/components/AppHeader';
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { PageBody } from '~/core/ui/Page';
 import { USER_ROLES } from '~/lib/constants';
-import { getAllUsersByUserRoleData } from '~/lib/user/database/queries';
+import { getAllTutorsWithDetails } from '~/lib/user/database/queries';
 
 const TutorsList = loadDynamic(
   () => import('~/app/(app)/components/tutors/TutorsList'),
@@ -18,21 +18,12 @@ export const metadata = {
 
 async function TutorsPage() {
   const client = getSupabaseServerComponentClient();
-  const tutorsData = await getAllUsersByUserRoleData(client, USER_ROLES.TUTOR);
-  console.log("sessionData-server-component------", tutorsData);
+  //  zoom_user: CommaZoomUser | null
+  const tutorsData = await getAllTutorsWithDetails(client, USER_ROLES.TUTOR);
   return (
-    <>
-      <AppHeader
-        title={'Tutors'}
-        description={
-          "All the tutors signed up to the app."
-        }
-      />
-
-      <PageBody>
-        <TutorsList tutorsData={tutorsData}/>
-      </PageBody>
-    </>
+    <PageBody>
+      <TutorsList tutorsData={tutorsData} />
+    </PageBody>
   );
 }
 

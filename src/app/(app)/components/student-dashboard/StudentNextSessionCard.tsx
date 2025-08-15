@@ -15,16 +15,18 @@ import {
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { useRouter } from 'next/navigation';
+import { isFirstWeekOfMonth } from '~/lib/utils/date-utils';
+import SessionCardActions from './SessionCardActions';
 
 interface StudentNextSessionCardProps {
-    sessionData: SessionStudentTableData;
-    isPending: boolean;
-    setSelectedSession: (session: SessionStudentTableData) => void;
-    setShowPaymentDialog: (show: boolean) => void;
-    joinMeetingAsStudent: (sessionData: any) => void;
+  sessionData: SessionStudentTableData;
+  isPending: boolean;
+  setSelectedSession: (session: SessionStudentTableData) => void;
+  setShowPaymentDialog: (show: boolean) => void;
+  joinMeetingAsStudent: (sessionData: any) => void;
 }
 
-const StudentNextSessionCard = ({ 
+const StudentNextSessionCard = ({
   sessionData,
   isPending,
   setSelectedSession,
@@ -32,7 +34,7 @@ const StudentNextSessionCard = ({
   joinMeetingAsStudent,
 }: StudentNextSessionCardProps) => {
   const router = useRouter();
-  
+
   return (
     <Card className="transform transition-all hover:scale-[1.02]">
       <CardHeader className="pb-2">
@@ -65,7 +67,7 @@ const StudentNextSessionCard = ({
           </div>
           <div className="flex items-center text-sm text-gray-600">
             <User size={16} className="mr-2" />
-            <span>{sessionData.sessionRawData?.class?.tutor?.first_name+' '+sessionData.sessionRawData?.class?.tutor?.last_name}</span>
+            <span>{sessionData.sessionRawData?.class?.tutor?.first_name + ' ' + sessionData.sessionRawData?.class?.tutor?.last_name}</span>
           </div>
         </div>
         {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
@@ -77,62 +79,15 @@ const StudentNextSessionCard = ({
             <Badge variant="green" title="Payment is pending for verification from the admin. Please wait for the admin to verify the payment.">Payment pending verification</Badge>
           </div>
         ) : null}
-
-        {/* {sessionData?.materials && sessionData?.materials?.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-blue-900">Class Materials</h4>
-            <div className="space-y-2">
-              {sessionData?.materials?.map((material) => (
-                <div
-                  key={material.id}
-                  className="flex items-center justify-between bg-white p-2 rounded"
-                >
-                  <div className="flex items-center">
-                    <File className="h-4 w-4 text-blue-600 mr-2" />
-                    <span className="text-sm">{material.name}</span>
-                  </div>
-                  <span className="text-sm text-gray-600">{material.file_size}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )} */}
       </CardContent>
       <CardFooter className="border-t border-gray-200 bg-gray-50 p-4">
-        <div className="flex justify-between gap-2 w-full">
-          {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
-            <Button
-              variant={"primary"}
-              className="w-[118px] text-sm font-medium"
-              onClick={() => {
-                setSelectedSession(sessionData);
-                setShowPaymentDialog(true);
-              }}
-            >
-              <DollarSign className="h-4 w-4 mr-2" />
-              Pay Now
-            </Button>
-          ) : sessionData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ? (
-            null
-          ) : (
-            <Button 
-              variant={"primary"}
-              className="w-full flex-1" 
-              onClick={() => joinMeetingAsStudent(sessionData)} disabled={isPending}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Join Class
-            </Button>
-          )}
-          <Button 
-            variant="outline"
-            className='w-full flex-1 gap-1'
-            onClick={() =>
-              router.push(`/sessions/student/${sessionData.id}?type=next`)
-          }>
-            <FileText size={16} />
-            View Class
-          </Button>
-        </div>
+        <SessionCardActions
+          sessionData={sessionData}
+          isPending={isPending}
+          setSelectedSession={setSelectedSession}
+          setShowPaymentDialog={setShowPaymentDialog}
+          joinMeetingAsStudent={joinMeetingAsStudent}
+        />
       </CardFooter>
     </Card>
   )

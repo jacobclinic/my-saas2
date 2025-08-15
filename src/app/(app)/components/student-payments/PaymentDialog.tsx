@@ -20,6 +20,7 @@ import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { uploadPaymentSlipAction } from '~/lib/student-payments/server-actions';
 import { getFileBuffer } from '~/lib/utils/upload-material-utils';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
+import getLogger from '~/core/logger';
 
 interface UploadingFile {
   file: File;
@@ -48,10 +49,6 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     null,
   );
   const [copied, setCopied] = useState(false);
-  console.log(
-    '-----PaymentDialog-------sessionData:',
-    sessionData.sessionRawData?.start_time?.slice(0, 7),
-  );
 
   const bankDetails = {
     bankName: 'Hatton National Bank',
@@ -64,17 +61,45 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const whatsappLink = `https://wa.me/${whatsappNumber}`;
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const logger = getLogger();
     const file = e.target.files?.[0];
-    if (!file) return;
 
-    // Check file size (1MB = 1 * 1024 * 1024 bytes)
+    if (!file) {
+      logger.warn('[PaymentDialog] No file selected for upload');
+      return;
+    }
+
+    const uploadId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
+    logger.info('[PaymentDialog] Starting payment slip upload', {
+      uploadId,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      studentId,
+      classId: sessionData.classId,
+      sessionName: sessionData.name,
+      paymentAmount: sessionData.paymentAmount,
+    });
+
+    // Check file size (5MB = 5 * 1024 * 1024 bytes)
     const maxSizeInBytes = 5 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
+      const errorMessage =
+        'File is too large. Please use a file smaller than 5MB.';
+      logger.error('[PaymentDialog] File size validation failed', {
+        uploadId,
+        fileName: file.name,
+        fileSize: file.size,
+        maxSizeInBytes,
+        error: errorMessage,
+      });
+
       setUploadingFile({
         file,
         progress: 0,
         status: 'error',
-        error: 'File is too large. Please use a file smaller than 1MB.',
+        error: errorMessage,
       });
       return;
     }
@@ -87,17 +112,33 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       'application/pdf',
     ];
     if (!allowedTypes.includes(file.type)) {
+      const errorMessage =
+        'Invalid file format. Please use PNG, JPEG, JPG, or PDF files only.';
+      logger.error('[PaymentDialog] File type validation failed', {
+        uploadId,
+        fileName: file.name,
+        fileType: file.type,
+        allowedTypes,
+        error: errorMessage,
+      });
+
       setUploadingFile({
         file,
         progress: 0,
         status: 'error',
-        error:
-          'Invalid file format. Please use PNG, JPEG, JPG, or PDF files only.',
+        error: errorMessage,
       });
       return;
     }
 
     try {
+      logger.info(
+        '[PaymentDialog] File validation passed, starting upload process',
+        {
+          uploadId,
+        },
+      );
+
       setUploadingFile({
         file,
         progress: 0,
@@ -105,7 +146,12 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       });
 
       // Convert file to buffer
+      logger.info('[PaymentDialog] Converting file to buffer', { uploadId });
       const buffer = await getFileBuffer(file);
+      logger.info('[PaymentDialog] File buffer conversion completed', {
+        uploadId,
+        bufferSize: buffer.byteLength,
+      });
 
       setUploadingFile((prev) => (prev ? { ...prev, progress: 50 } : null));
 
@@ -113,8 +159,29 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       const paymentPeriod = sessionData.sessionRawData?.start_time?.slice(0, 7);
 
       if (!paymentPeriod) {
-        throw new Error('Payment period not found');
+        const errorMessage = 'Payment period not found';
+        logger.error('[PaymentDialog] Payment period extraction failed', {
+          uploadId,
+          sessionRawData: sessionData.sessionRawData,
+          startTime: sessionData.sessionRawData?.start_time,
+          error: errorMessage,
+        });
+        throw new Error(errorMessage);
       }
+
+      logger.info(
+        '[PaymentDialog] Calling server action to upload payment slip',
+        {
+          uploadId,
+          paymentPeriod,
+          fileData: {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            bufferSize: buffer.byteLength,
+          },
+        },
+      );
 
       // Upload to server
       const result = await uploadPaymentSlipAction({
@@ -129,7 +196,13 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         },
         csrfToken,
       });
+
       if (result.success) {
+        logger.info('[PaymentDialog] Payment slip upload successful', {
+          uploadId,
+          url: result.url,
+        });
+
         setUploadingFile((prev) =>
           prev
             ? {
@@ -150,10 +223,18 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
           onClose();
         }, 2000);
       } else {
+        logger.error('[PaymentDialog] Server action returned error', {
+          uploadId,
+          error: result.error,
+        });
         throw new Error(result.error);
       }
     } catch (error) {
-      console.log(error);
+      logger.error('[PaymentDialog] Upload process failed', {
+        uploadId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       // Enhanced error messaging
       let errorMessage = 'Upload failed. Please try again.';
@@ -161,7 +242,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       if (error instanceof Error) {
         if (error.message.includes('Body exceeded')) {
           errorMessage =
-            'File is too large. Please use a file smaller than 1MB.';
+            'File is too large. Please use a file smaller than 5MB.';
         } else if (
           error.message.includes('network') ||
           error.message.includes('Network')
@@ -184,6 +265,11 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
           errorMessage = error.message;
         }
       }
+
+      logger.error('[PaymentDialog] Final error state', {
+        uploadId,
+        finalErrorMessage: errorMessage,
+      });
 
       setUploadingFile((prev) =>
         prev

@@ -18,6 +18,8 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getUserCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 
+const emailService = EmailService.getInstance();
+
 export async function deleteUserAccountAction() {
   const logger = getLogger();
   const client = getSupabaseServerActionClient();
@@ -110,6 +112,7 @@ export const createUserByAdminAction = async (
       });
 
       const emailService = EmailService.getInstance();
+
       await emailService.sendEmail({
         from: configuration.email.fromAddress || 'noreply@yourinstitute.com',
         to: email || '',
@@ -283,7 +286,7 @@ export async function createStudentAction({
         classId: classId,
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
       });
-      const emailService = EmailService.getInstance();
+
       await emailService.sendEmail({
         from: process.env.EMAIL_SENDER!,
         to: email,
@@ -437,3 +440,4 @@ export const fetchTutorsForAdminAction = withSession(async () => {
     return { success: false, error: 'Failed to fetch tutors', tutors: [] };
   }
 });
+

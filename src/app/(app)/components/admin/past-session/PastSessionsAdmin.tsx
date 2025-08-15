@@ -1,7 +1,7 @@
 'use client';
 
 import { DateRangePicker } from '@heroui/date-picker';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PastSession } from '~/lib/sessions/types/session-v2';
 import AttendanceDialog from '../../past-sessions/AttendanceDialog';
 import { PastSessionData } from '~/lib/sessions/types/past-sessions';
@@ -17,6 +17,8 @@ import {
 import { insertAttendanceAction } from '~/lib/attendance/server-actions';
 import { convertToLocalTime } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../../TimezoneIndicator';
+import { copyToClipboard } from '~/lib/utils/clipboard';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 interface DateRange {
   start?: {
@@ -52,6 +54,7 @@ const PastSessionsAdmin = ({
   const [attendanceMarkedStatus, setAttendanceMarkedStatus] = useState<
     Record<string, boolean>
   >({});
+  const csrfToken = useCsrfToken();
 
   const handleDateRangeChange = (value: any) => {
     setDateRange(value);
@@ -139,15 +142,19 @@ const PastSessionsAdmin = ({
     );
   });
 
-  const handleCopyLink = (cls: (typeof classData)[0]) => {
-    const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&redirectUrl=${encodeURIComponent(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?type=upcoming&sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`,
-    )}`;
-    navigator.clipboard.writeText(link);
-    setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
-    setTimeout(() => {
-      setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
-    }, 2000);
+  const handleCopyLink = async (cls: (typeof classData)[0]) => {
+    const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date?.split('T')[0]}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`;
+    const data = await createShortUrlAction({
+      originalUrl: link
+    });
+
+    if (data.success && data.shortUrl) {
+      await copyToClipboard(data.shortUrl);
+      setCopiedLinks((prev) => ({ ...prev, [cls.id]: true }));
+      setTimeout(() => {
+        setCopiedLinks((prev) => ({ ...prev, [cls.id]: false }));
+      }, 2000);
+    }
   };
 
   const [deleteClassLoading, setDeleteClassLoading] = useState(false);
@@ -174,6 +181,7 @@ const PastSessionsAdmin = ({
     topic: cls.topic || '',
     zoom_meeting_id: cls.zoomMeetingId || '',
     classId: cls.classId || '',
+    subject: cls.subject || null,
     tutorId: '', // Add a placeholder or retrieve actual tutorId if available
     attendance_marked: cls.attendance_marked!,
     recordingUrl: [],

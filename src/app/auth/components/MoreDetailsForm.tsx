@@ -8,9 +8,11 @@ import TextField from '~/core/ui/TextField';
 import ImageUploader from '~/core/ui/ImageUploader';
 import Logo from '~/core/ui/Logo';
 import useSupabase from '~/core/hooks/use-supabase';
+import { CLASS_SIZE_OPTIONS } from '~/lib/constants-v2';
 import {
   updateProfilePhotoAction,
   updateOnboardingDetailsAction,
+  uploadIdentityProofAction,
 } from '../sign-up/moredetails/actions';
 
 interface MoreDetailsFormProps {
@@ -101,17 +103,23 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
     }
     setIsSubmitting(true);
     try {
-      // Add document file to form data if present
+      // First upload the identity proof file using the new upload action
       if (documentFile) {
-        formData.append('document', documentFile);
-      } else {
-        console.log('No document file in React state');
-      }
+        const uploadFormData = new FormData();
+        uploadFormData.append('identityFile', documentFile);
 
-      // Also check what's in the form input
-      const fileInput = document.getElementById(
-        'document-upload',
-      ) as HTMLInputElement;
+        const identityUploadResult =
+          await uploadIdentityProofAction(uploadFormData);
+
+        if (!identityUploadResult.success) {
+          throw new Error(
+            identityUploadResult.error || 'Failed to upload identity proof',
+          );
+        }
+
+        // Now update the onboarding details with the identity URL
+        formData.append('identityUrl', identityUploadResult.url || '');
+      }
 
       await updateOnboardingDetailsAction(formData);
 
@@ -307,10 +315,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                     <option value="" disabled>
                       Select class size
                     </option>
-                    <option value="1-5">1-5</option>
-                    <option value="6-10">6-10</option>
-                    <option value="11-20">11-20</option>
-                    <option value="21+">21+</option>
+                    {CLASS_SIZE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
                   </select>
                 </TextField.Label>
               </TextField>

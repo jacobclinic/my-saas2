@@ -15,26 +15,19 @@ import {
 } from '../../base-v2/ui/Card';
 import { Button } from '../../base-v2/ui/Button';
 import { Badge } from '../../base-v2/ui/Badge';
-import { Textarea } from '../../base-v2/ui/Textarea';
-import { Input } from '../../base-v2/ui/Input';
 import { cn } from '../../../lib/utils';
 import {
-  Camera,
-  Copy,
   Check,
   Upload,
   Edit,
-  Plus,
   Link,
   Clock,
   File,
-  Save,
   Calendar,
   User,
   BookOpen,
   Users,
   PlusCircle,
-  ExternalLink,
 } from 'lucide-react';
 import MaterialUploadDialog from '../../upcoming-sessions/MaterialUploadDialog';
 import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
@@ -42,8 +35,9 @@ import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { useToast } from '~/app/(app)/lib/hooks/use-toast';
-import { convertTimeRangeToISO } from '~/lib/utils/date-utils';
 import AddLessonDetailsDialog from '../../upcoming-sessions/AddLessonDetailsDialog';
+import { copyToClipboard } from '~/lib/utils/clipboard';
+import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 
 const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   sessionData,
@@ -110,15 +104,20 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
     setShowLessonDetailsDialog(false);
   };
 
-  const handleCopyLink = (
+  const handleCopyLink = async (
     link: string,
     type: 'student' | 'materials' | 'tutor',
   ) => {
-    navigator.clipboard.writeText(link);
-    setLinkCopied({ ...linkCopied, [type]: true });
-    setTimeout(() => {
-      setLinkCopied({ ...linkCopied, [type]: false });
-    }, 2000);
+    const data = await createShortUrlAction({
+      originalUrl: link
+    });
+    if (data.success && data.shortUrl) {
+      await copyToClipboard(data.shortUrl);
+      setLinkCopied({ ...linkCopied, [type]: true });
+      setTimeout(() => {
+        setLinkCopied({ ...linkCopied, [type]: false });
+      }, 2000);
+    }
   };
 
   const copyTutorLink = useCallback(async () => {
@@ -132,7 +131,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         alert('Failed to generate join link');
       }
     });
-  }, [sessionData]);
+  }, [handleCopyLink, sessionData?.zoomMeetingId]);
   return (
     <>
       <Card className={cn('mb-6', isDashboard && '')}>
@@ -288,12 +287,20 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
               </Button>
               <Button
                 variant="ghost"
-                onClick={() =>
-                  handleCopyLink(
-                    `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&redirectUrl=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`)}`,
-                    'student',
-                  )
-                }
+                onClick={() => {
+                  const urlParams = new URLSearchParams({
+                    classId: sessionData.sessionRawData?.class_id || '',
+                    className: sessionData.name || '',
+                    nextSession: sessionData.date || '',
+                    time: sessionData.time || '',
+                    tutorName:
+                      `${sessionData.sessionRawData?.class?.tutor?.first_name || ''} ${sessionData.sessionRawData?.class?.tutor?.last_name || ''}`.trim(),
+                  });
+
+                  const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
+
+                  handleCopyLink(registrationUrl, 'student');
+                }}
                 className="w-full bg-primary-blue-50 text-primary-blue-700 hover:bg-primary-blue-100 border border-primary-blue-100 group-hover:bg-primary-blue-100"
               >
                 {' '}
@@ -324,31 +331,6 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Class
               </Button>
-
-              {/* {sessionData.materials && sessionData.materials.length > 0 && (
-                <Button
-                  variant="outline"
-                  className="md:col-span-4"
-                  onClick={() => {
-                    const materialsText =
-                      `Class Materials for ${sessionData.name} - ${sessionData.date}\n\n` +
-                      (sessionData.materials || [])
-                        .map(
-                          (material, index) =>
-                            `${index + 1}. ${material.name}\nDownload: https://commaeducation.com/materials/${sessionData.id}/${material.id}\n`,
-                        )
-                        .join('\n');
-                    handleCopyLink(materialsText, 'materials');
-                  }}
-                >
-                  {linkCopied.materials ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <Copy className="h-4 w-4 mr-2" />
-                  )}
-                  {linkCopied.materials ? 'Materials Links Copied!' : 'Copy Materials Links'}
-                </Button>
-              )} */}
             </CardFooter>
           </div>
         </CardContent>
@@ -371,12 +353,8 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         sessionData={{
           title: sessionData?.sessionRawData?.title || '',
           description: sessionData?.sessionRawData?.description || '',
-          startTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .startTime || '',
-          endTime:
-            convertTimeRangeToISO(sessionData.time, new Date(sessionData.date))
-              .endTime || '',
+          startTime: sessionData.start_time || '',
+          endTime: sessionData.end_time || '',
           meetingUrl: sessionData?.sessionRawData?.meeting_url || '',
           materials: sessionData?.materials || [],
         }}

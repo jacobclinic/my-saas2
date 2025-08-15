@@ -8,7 +8,7 @@ import {
   getUpcomingSessionsWithUnpaidStudentsBetween2_3Days,
   getTutorsForSessionsWithin1Hr,
   getStudentsByClassId,
-} from '../quieries';
+} from '../queries';
 import { stat } from 'fs';
 
 // Define interfaces for type safety
@@ -42,6 +42,51 @@ const smsConfig: APIConfig = {
   password: process.env.TEXTIT_PASSWORD!,
   baseUrl: process.env.TEXTIT_BASE_URL!,
 };
+
+
+// Phone number formatting function
+function formatPhoneNumber(phoneNumber: string): {
+  formatted: string;
+  isValid: boolean;
+  error?: string;
+} {
+  if (!phoneNumber || phoneNumber.trim() === '') {
+    return { formatted: '', isValid: false, error: 'Phone number is empty' };
+  }
+
+  // Remove all non-digit characters except +
+  let cleaned = phoneNumber.replace(/[^\d+]/g, '');
+
+  // If it starts with +, keep it
+  if (cleaned.startsWith('+')) {
+    return { formatted: cleaned, isValid: true };
+  }
+
+  // If it starts with 0, replace with +94 (Sri Lanka)
+  if (cleaned.startsWith('0')) {
+    cleaned = '+94' + cleaned.substring(1);
+  }
+  // If it starts with 94, add +
+  else if (cleaned.startsWith('94')) {
+    cleaned = '+' + cleaned;
+  }
+  // If it doesn't start with country code, assume Sri Lanka
+  else if (cleaned.match(/^[1-9]/)) {
+    cleaned = '+94' + cleaned;
+  }
+
+  // Basic validation - should be at least 10 digits after country code
+  const digitsOnly = cleaned.replace(/[^\d]/g, '');
+  if (digitsOnly.length < 10) {
+    return {
+      formatted: cleaned,
+      isValid: false,
+      error: 'Phone number too short',
+    };
+  }
+
+  return { formatted: cleaned, isValid: true };
+}
 async function sendBulkSMS(request: SMSRequest): Promise<APIResponse> {
   try {
     const numbers = request.phoneNumbers.join(',');
@@ -182,11 +227,11 @@ async function sendNotificationSms(
     }).format(sessionDate);
 
     if (status === 'before') {
-      message = `REMINDER: Your ${session.class.name} class is tomorrow ${localDate} at ${localTime}. \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
+      message = `REMINDER: Your ${session.class.name} class is tomorrow ${localDate} at ${localTime}.\nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
     } else if (status === 'after') {
-      message = `The recording for your ${session.class.name} class is ready! Access it and all class materials here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
+      message = `The recording for your ${session.class.name} class is ready! Access it and all class materials here: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
     } else {
-      message = `Your ${session.class.name} class is starting at ${localTime} today! \nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id} \n-Comma Education`;
+      message = `Your ${session.class.name} class is starting at ${localTime} today!\nJoin & get materials: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${session.id}\n-Comma Education`;
     }
 
     const smsRequest: SMSRequest = {
@@ -447,6 +492,33 @@ export async function notifyUpcomingSessionsBefore1HourSMS(
 export async function sendSingleSMS(
   request: SingleSMSRequest,
 ): Promise<APIResponse> {
+
+  if (!request.phoneNumber || request.phoneNumber.trim() === '') {
+    return {
+      success: false,
+      error: 'Phone number is required',
+    };
+  }
+
+  // Format and validate phone number
+  const phoneValidation = formatPhoneNumber(request.phoneNumber);
+
+  if (!phoneValidation.isValid) {
+    return {
+      success: false,
+      error: `Invalid phone number: ${phoneValidation.error}`,
+    };
+  }
+
+  const formattedPhone = phoneValidation.formatted;
+
+  if (!request.message || request.message.trim() === '') {
+    return {
+      success: false,
+      error: 'Message is required',
+    };
+  }
+
   try {
     const encodedMessage = encodeURIComponent(request.message);
 
@@ -455,11 +527,13 @@ export async function sendSingleSMS(
     const params = new URLSearchParams({
       id: smsConfig.id,
       pw: smsConfig.password,
-      to: request.phoneNumber,
+      to: formattedPhone,
       text: encodedMessage, // URL-encode the message
     });
 
-    const response = await fetch(`${url}?${params.toString()}`, {
+    const fullUrl = `${url}?${params.toString()}`;
+
+    const response = await fetch(fullUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -469,18 +543,20 @@ export async function sendSingleSMS(
     const textResponse = await response.text();
 
     if (textResponse.startsWith('OK:')) {
+      const messageId = textResponse.split(':')[1];
       return {
         success: true,
-        messageId: textResponse.split(':')[1],
+        messageId: messageId,
       };
     } else {
+      console.error('SMS failed with response:', textResponse);
       return {
         success: false,
         error: textResponse,
       };
     }
   } catch (error) {
-    console.error('Error sending bulk SMS:', error);
+    console.error('Exception in sendSingleSMS:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -697,5 +773,73 @@ export async function notifyStudentsAfterClassScheduleUpdateSMS(
       error,
     );
     throw error;
+  }
+}
+
+export async function sendTutorRegistrationSMS(
+  tutorName: string,
+  tutorPhone: string,
+) {
+  if (!tutorPhone || tutorPhone.trim() === '') {
+    console.error('SMS Error: tutorPhone is empty or null');
+    return;
+  }
+
+  try {
+    const message = `Thanks for applying to Comma Education, ${tutorName}! We're reviewing your application. We'll notify you once accepted, then you can log in to the tutor portal with your registration email/password
+`;
+
+    const result = await sendSingleSMS({
+      phoneNumber: tutorPhone,
+      message: message,
+    });
+
+    if (result.success) {
+      console.log(`Successfully sent tutor registration SMS to: ${tutorPhone}`);
+    } else {
+      console.error(
+        `Failed to send tutor registration SMS to: ${tutorPhone} - ${result.error}`,
+      );
+    }
+  } catch (error) {
+    console.error('Error sending tutor registration SMS:', error);
+  }
+}
+
+export async function sendTutorApprovalSMS(
+  tutorName: string,
+  tutorPhone: string,
+  is_approved: boolean,
+) {
+  if (!tutorPhone || tutorPhone.trim() === '') {
+    console.error('SMS Error: tutorPhone is empty or null');
+    return;
+  }
+
+  try {
+    let message = '';
+    if (is_approved) {
+      message = `Congratulations, ${tutorName}! Your Comma Education application is accepted! Access your Tutor Portal: ${process.env.NEXT_PUBLIC_SITE_URL}.\nLogin with your registration email/password.\nWelcome aboard!`;
+    } else {
+      //update rejection mail
+      message = `Hi ${tutorName}, We are sorry to inform you that your Comma Education application has been rejected!\n Your documents could not be verified.\nTry again with proper documents`;
+    }
+
+    const result = await sendSingleSMS({
+      phoneNumber: tutorPhone,
+      message: message,
+    });
+
+    if (result.success) {
+      console.log(
+        `Successfully sent tutor ${is_approved ? 'approval' : 'rejection'} SMS to: ${tutorPhone}`,
+      );
+    } else {
+      console.error(
+        `Failed to send tutor ${is_approved ? 'approval' : 'rejection'} SMS to: ${tutorPhone} - ${result.error}`,
+      );
+    }
+  } catch (error) {
+    console.error('Error sending tutor approval SMS:', error);
   }
 }

@@ -4,7 +4,6 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
-import sendEmail from '../../../core/email/send-email';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { updateUserWithRetry } from '~/lib/user/actions.server';
@@ -33,7 +32,6 @@ const registrationSchema = z.object({
   birthday: z.string().min(1),
   classId: z.string().uuid(),
   password: z.string().min(6),
-  nameOfClass: z.string().min(1),
   address: z.string().min(2),
   city: z.string().min(1),
   district: z.string().min(1),
@@ -142,11 +140,21 @@ export async function registerStudentAction(
         // The system can generate missing invoices later with the monthly job
       }
 
+      const { data: classData, error: classError } = await client
+        .from('classes')
+        .select('*')
+        .eq('id', validated.classId)
+        .single();
+
+      if (classError) {
+        console.error('Error fetching class data:', classError);
+      }
+      
       try {
         const { html, text } = getStudentRegistrationEmailTemplate({
           studentName: `${validated.firstName} ${validated.lastName}`,
           email: validated.email,
-          className: validated.nameOfClass,
+          className: classData?.name || 'Your Class',
           loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
           classId: validated.classId,
         });
@@ -155,13 +163,13 @@ export async function registerStudentAction(
           emailService.sendEmail({
             from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
             to: validated.email,
-            subject: ` Welcome to ${validated.nameOfClass}! Access Your Student Portal`,
+            subject: ` Welcome to ${classData?.name || 'Your Class'}! Access Your Student Portal`,
             html,
             text,
           }),
           sendSingleSMS({
             phoneNumber: validated.phone,
-            message: `Welcome to ${validated.nameOfClass}! Your registration is confirmed. Login to your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
+            message: `Welcome to ${classData?.name || 'Your Class'}! Your registration is confirmed. Login to your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
                   \nUsername: Your email
                   \nUse the entered Password you used
                   \n-Comma Education`,
@@ -181,7 +189,7 @@ export async function registerStudentAction(
       },
     };
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', JSON.stringify(error, null, 2));
     return { success: false, error: 'Registration failed. Please try again.' };
   }
 }

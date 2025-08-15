@@ -33,7 +33,7 @@ const getSupabaseServerActionClient = (
       auth: {
         persistSession: false,
       },
-      cookies: {},
+      cookies: {}
     });
   }
 
