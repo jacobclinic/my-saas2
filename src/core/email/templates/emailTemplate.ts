@@ -283,8 +283,8 @@ export function paymentReminderEmaiTemplate(params: {
                           <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
                           <p>Your trusted partner in online education.</p>
                           <div class="social-links">
-                            <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
-                            <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                            <a href="mailto:support@commaeducation.lk" class="social-link">Support</a> |
+                            <a href="https://commaeducation.lk/" class="social-link">Website</a> |
                             <a href="#" class="social-link">Unsubscribe</a>
                           </div>
                         </td>
@@ -510,8 +510,8 @@ export function getStudentRegistrationEmailTemplate(params: {
                           <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
                           <p>Your trusted partner in online education.</p>
                           <div class="social-links">
-                            <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
-                            <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                            <a href="mailto:support@commaeducation.lk" class="social-link">Support</a> |
+                            <a href="https://commaeducation.lk/" class="social-link">Website</a> |
                             <a href="#" class="social-link">Unsubscribe</a>
                           </div>
                         </td>
@@ -1169,7 +1169,10 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
                         <p>Just a quick heads-up – your ${className} class is starting within 1 hour!</p>
                         
                         <div class="highlight-box">
-                          <p style="margin-top: 0;">Click the following button to join: </p>
+                          <p style="margin-top: 0;"><strong>Class Details:</strong></p>
+                          <p style="margin-bottom: 0;"><strong>Date:</strong> ${date}</p>
+                          <p style="margin-bottom: 10px;"><strong>Time:</strong> ${timeStr}</p>
+                          <p style="margin-bottom: 0;">Click the following button to join: </p>
                         </div>
                         
                         <div class="button-container">
@@ -1214,7 +1217,11 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
   const text = `
         Hi ${studentName},
 
-        Just a quick heads-up – your [Class Name] class is starting within 1 hour!
+        Just a quick heads-up – your ${className} class is starting within 1 hour!
+
+        Class Details:
+        Date: ${date}
+        Time: ${timeStr}
 
         Click here to join: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}
 
@@ -1962,8 +1969,8 @@ export function getTutorApprovalOrRejectionTemplate(
                           <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
                           <p>Your trusted partner in online education.</p>
                           <div class="social-links">
-                            <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
-                            <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                            <a href="mailto:support@commaeducation.lk" class="social-link">Support</a> |
+                            <a href="https://commaeducation.lk/" class="social-link">Website</a> |
                             <a href="#" class="social-link">Unsubscribe</a>
                           </div>
                         </td>
@@ -2177,8 +2184,8 @@ export function getTutorApprovalOrRejectionTemplate(
                           <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
                           <p>Your trusted partner in online education.</p>
                           <div class="social-links">
-                            <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
-                            <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                            <a href="mailto:support@commaeducation.lk" class="social-link">Support</a> |
+                            <a href="https://commaeducation.lk/" class="social-link">Website</a> |
                             <a href="#" class="social-link">Unsubscribe</a>
                           </div>
                         </td>
