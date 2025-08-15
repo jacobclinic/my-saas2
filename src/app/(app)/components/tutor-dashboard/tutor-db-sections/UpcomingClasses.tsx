@@ -76,7 +76,7 @@ const UpcomingClassesSection = ({
       {/* Next Class */}
       <div className="space-y-2">
         <div className="flex items-center">
-          <h2 className="text-xl font-bold">Upcoming Class</h2>
+          <h2 className="text-xl font-bold">Your Upcoming Classes</h2>
         </div>
         {upcomingSessionTableData.length > 0 ? (
           upcomingSessionTableData.map((sessionData) => (

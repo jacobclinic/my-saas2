@@ -311,3 +311,29 @@ export function formatToLocalHHmmAMPM(date: string | Date): string {
 export function formatToHumanReadableDate(date: string | Date): string {
   return format(new Date(date), 'EEEE, MMMM dd, yyyy');
 }
+
+export function getSessionStatus(startTime: string, endTime?: string): 'Upcoming' | 'Starting soon' | 'Ongoing' {
+  const now = new Date();
+  const sessionStart = new Date(startTime);
+  
+  if (isNaN(sessionStart.getTime())) {
+    return 'Upcoming';
+  }
+  
+  // If endTime is provided, check if session is ongoing
+  if (endTime) {
+    const sessionEnd = new Date(endTime);
+    if (now >= sessionStart && now <= sessionEnd) {
+      return 'Ongoing';
+    }
+  }
+  
+  // Check if within 1 hour before start time
+  const oneHourBefore = new Date(sessionStart.getTime() - 60 * 60 * 1000);
+  
+  if (now >= oneHourBefore && now < sessionStart) {
+    return 'Starting soon';
+  }
+  
+  return 'Upcoming';
+}
