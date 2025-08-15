@@ -22,6 +22,8 @@ export interface UpdateUserData {
   address?: string | null;
   display_name?: string | null;
   photo_url?: string | null;
+  biography?: string | null;
+  subjects_teach?: string[] | null;
 }
 
 export type InsertUserData = Database['public']['Tables']['users']['Insert'];

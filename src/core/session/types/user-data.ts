@@ -11,6 +11,8 @@ interface UserData {
   last_name: string | null;
   phone_number: string | null;
   address: string | null;
+  biography: string | null;
+  subjects_teach: string[] | null;
 }
 
 export default UserData;

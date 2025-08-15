@@ -17,11 +17,13 @@ import useSupabase from '~/core/hooks/use-supabase';
 import type UserSession from '~/core/session/types/user-session';
 import type UserData from '~/core/session/types/user-data';
 import AuthErrorMessage from '~/app/auth/components/AuthErrorMessage';
-import ImageUploader from '~/core/ui/ImageUploader';
+import ProfileImageUploader from '~/core/ui/ProfileImageUploader';
 import { USERS_TABLE } from '~/lib/db-tables';
 import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
 import { validateNameForForm } from '~/core/utils/validate-name';
 import { validatePhoneNumberForForm } from '~/core/utils/validate-phonenumber';
+import { SUBJECTS } from '~/lib/constants-v2';
+import MultiSelectDropdown from '~/core/ui/MultiSelectDropdown';
 
 function UpdateProfileForm({
   session,
@@ -30,6 +32,7 @@ function UpdateProfileForm({
   session: UserSession;
   onUpdateProfileData: (user: Partial<UserData>) => void;
 }) {
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(session?.data?.subjects_teach ?? []);
   const updateProfileMutation = useUpdateProfileMutation();
   const currentPhotoURL = session.data?.photoUrl ?? '';
   const currentDisplayName = session?.data?.displayName ?? '';
@@ -37,6 +40,8 @@ function UpdateProfileForm({
   const currentLastName = session?.data?.last_name ?? '';
   const currentPhoneNumber = session?.data?.phone_number ?? '';
   const currentAddress = session?.data?.address ?? '';
+  const currentBiography = session?.data?.biography ?? '';
+  const currentSubjectsTeach = session?.data?.subjects_teach ?? [];
 
   const user = session.auth?.user;
   const email = user?.email ?? '';
@@ -48,6 +53,7 @@ function UpdateProfileForm({
       lastName: currentLastName,
       phoneNumber: currentPhoneNumber,
       address: currentAddress,
+      biography: currentBiography,
       photoURL: '',
     },
   });
@@ -60,18 +66,29 @@ function UpdateProfileForm({
     lastName: string;
     phoneNumber: string;
     address: string;
+    biography: string;
   }) => {
     const info = {
       id: user.id,
-      displayName: data.displayName,
+      display_name: data.displayName,
       first_name: data.firstName,
       last_name: data.lastName,
       phone_number: data.phoneNumber,
       address: data.address,
+      biography: data.biography,
+      subjects_teach: selectedSubjects,
     };
 
     const promise = updateProfileMutation.trigger(info).then(() => {
-      onUpdateProfileData(info);
+      onUpdateProfileData({
+        displayName: data.displayName,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone_number: data.phoneNumber,
+        address: data.address,
+        biography: data.biography,
+        subjects_teach: selectedSubjects,
+      });
     });
 
     return toast.promise(promise, {
@@ -123,6 +140,10 @@ function UpdateProfileForm({
     value: currentAddress,
   });
 
+  const biographyControl = register('biography', {
+    value: currentBiography,
+  });
+
   useEffect(() => {
     reset({
       displayName: currentDisplayName ?? '',
@@ -130,14 +151,18 @@ function UpdateProfileForm({
       lastName: currentLastName ?? '',
       phoneNumber: currentPhoneNumber ?? '',
       address: currentAddress ?? '',
+      biography: currentBiography ?? '',
       photoURL: currentPhotoURL ?? '',
     });
+    setSelectedSubjects(currentSubjectsTeach);
   }, [
     currentDisplayName,
     currentFirstName,
     currentLastName,
     currentPhoneNumber,
     currentAddress,
+    currentBiography,
+    currentSubjectsTeach,
     currentPhotoURL,
     reset,
   ]);
@@ -148,7 +173,7 @@ function UpdateProfileForm({
         currentPhotoURL={currentPhotoURL}
         userId={user?.id}
         onAvatarUpdated={(photoUrl) => onUpdateProfileData({ photoUrl })}
-      />{' '}
+      />
       <form
         data-cy={'update-profile-form'}
         onSubmit={handleSubmit((values) => {
@@ -217,6 +242,33 @@ function UpdateProfileForm({
               data-cy={'profile-address'}
               placeholder={'Enter your address'}
             />
+          </TextField.Label>
+        </TextField>
+
+        <TextField>
+          <TextField.Label>
+            Bio
+            <textarea
+              {...biographyControl}
+              data-cy={'profile-biography'}
+              rows={4}
+              className="w-full border rounded px-3 py-2 resize-none"
+              placeholder={'Tell us about yourself, your teaching experience, and what makes you a great tutor...'}
+            />
+          </TextField.Label>
+        </TextField>
+
+        <TextField>
+          <TextField.Label>
+            Subjects You Teach
+            <div className="mt-1">
+              <MultiSelectDropdown
+                options={SUBJECTS}
+                selectedValues={selectedSubjects}
+                onSelectionChange={setSelectedSubjects}
+                placeholder="Select subjects you teach..."
+              />
+            </div>
           </TextField.Label>
         </TextField>
 
@@ -317,7 +369,7 @@ function UploadProfileAvatarForm(props: {
   );
 
   return (
-    <ImageUploader value={props.currentPhotoURL} onValueChange={onValueChange}>
+    <ProfileImageUploader value={props.currentPhotoURL} onValueChange={onValueChange}>
       <div className={'flex flex-col space-y-1'}>
         <span className={'text-sm'}>Upload your avatar picture</span>
 
@@ -325,7 +377,7 @@ function UploadProfileAvatarForm(props: {
           Please choose an image to upload as your profile picture.
         </span>
       </div>
-    </ImageUploader>
+    </ProfileImageUploader>
   );
 }
 
