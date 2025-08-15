@@ -49,7 +49,6 @@ import { isEqual } from '../utils/lodash-utils';
 import { UpstashService } from '../upstash/upstash.service';
 import { createInvoiceForNewClass } from '../invoices/database/mutations';
 
-
 type DeleteClassParams = {
   classId: string;
   csrfToken: string;
@@ -85,6 +84,22 @@ export const createClassAction = withSession(
           classResult.error.message,
           ErrorCodes.SERVICE_LEVEL_ERROR,
         );
+      }
+
+      // Create an invoice for the newly created class
+      if (classResult.success) {
+        const invoiceId = await createInvoiceForNewClass(
+          client,
+          classResult.data.id,
+          data.tutor_id,
+        );
+        if (!invoiceId) {
+          logger.error(
+            'Failed to create invoice for new class:',
+            classResult.data.id,
+          );
+          // Continue with class creation even if invoice creation fails
+        }
       }
 
       const upstashService = UpstashService.getInstance(logger);
@@ -172,6 +187,22 @@ export const createClassByAdminAction = withSession(
           classResult.error.message,
           ErrorCodes.SERVICE_LEVEL_ERROR,
         );
+      }
+
+      // Create an invoice for the newly created class
+      if (classResult.success) {
+        const invoiceId = await createInvoiceForNewClass(
+          client,
+          classResult.data.id,
+          data.tutor_id,
+        );
+        if (!invoiceId) {
+          logger.error(
+            'Failed to create invoice for new class:',
+            classResult.data.id,
+          );
+          // Continue with class creation even if invoice creation fails
+        }
       }
 
       const upstashService = UpstashService.getInstance(logger);
