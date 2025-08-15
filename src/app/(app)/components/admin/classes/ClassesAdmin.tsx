@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Check, Edit, Link, Trash, Users, Plus } from 'lucide-react';
+import { ColumnDef } from '@tanstack/react-table';
 import {
   ClassListData,
   ClassListStudent,
@@ -30,6 +31,7 @@ import AppHeader from '../../AppHeader';
 import TimezoneIndicator from '../../TimezoneIndicator';
 import AdminCreateClassDialog from './AdminCreateClassDialog';
 import Button from '~/core/ui/Button';
+import DataTable from '~/core/ui/DataTable';
 import { AdminNewClassData } from '~/lib/classes/types/class-v2';
 
 const ClassesAdmin = ({
@@ -244,14 +246,135 @@ const ClassesAdmin = ({
     }
   };
 
+  // Define column definitions for DataTable
+  const columns: ColumnDef<(typeof classData)[0]>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'tutorName',
+        header: 'Tutor Name',
+        cell: ({ row }) => (
+          <div className="whitespace-nowrap">{row.getValue('tutorName')}</div>
+        ),
+      },
+      {
+        accessorKey: 'name',
+        header: 'Class Name',
+        cell: ({ row }) => (
+          <div className="whitespace-nowrap">{row.getValue('name')}</div>
+        ),
+      },
+      {
+        id: 'day',
+        header: 'Day',
+        cell: ({ row }) => (
+          <div className="whitespace-nowrap">{row.original.time?.day}</div>
+        ),
+      },
+      {
+        id: 'timeSlot',
+        header: 'Time Slot',
+        cell: ({ row }) => (
+          <div className="whitespace-nowrap">
+            {row.original.classRawData.time_slots ? (
+              <>
+                {row.original.time_slots![0]?.startTime} -
+                {row.original.time_slots![0]?.endTime}
+              </>
+            ) : (
+              <>-</>
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => (
+          <div className="whitespace-nowrap">
+            {getStatusBadge(row.getValue('status'))}
+          </div>
+        ),
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className="whitespace-nowrap space-x-2">
+            {/* View students Button */}
+            <div className="relative group inline-block">
+              <button
+                onClick={() => {
+                  setShowStudentsDialog(true);
+                  setSelectedClassName(row.original.name);
+                  row.original.students
+                    ? setSelectedClassStudents(row.original.students)
+                    : null;
+                }}
+                className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                aria-label="Attendance"
+              >
+                <Users className="h-4 w-4" />
+              </button>
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                View Students
+              </span>
+            </div>
+            {/* Copy Link Button */}
+            <div className="relative group inline-block">
+              <button
+                onClick={() => handleCopyLink(row.original)}
+                className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                aria-label="Copy Link"
+              >
+                {copiedLinks[row.original.id] ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Link className="h-4 w-4" />
+                )}
+              </button>
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                Copy Registration Link
+              </span>
+            </div>
+            {/* Edit class button */}
+            <div className="relative group inline-block">
+              <button
+                onClick={() => {
+                  setShowEditDialog(true);
+                  handleSetEditClassData(row.original);
+                }}
+                className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                aria-label="Edit"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                Edit Class
+              </span>
+            </div>
+          </div>
+        ),
+      },
+    ],
+    [copiedLinks],
+  );
+
+  // Define column widths - giving more width to tutor name and class name
+  const columnWidths = {
+    tutorName: '200px',
+    name: '200px',
+    day: '120px',
+    timeSlot: '140px',
+    status: '120px',
+    actions: '180px',
+  };
+
   return (
     <>
-      <div className="max-w-7xl p-6">
+      <div className="max-w-screen p-6">
         {/* Header with Create Button */}
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Class groups
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Class groups</h1>
           <Button
             onClick={() => setShowCreateDialog(true)}
             className="bg-blue-700 hover:bg-blue-900 text-white"
@@ -322,120 +445,14 @@ const ClassesAdmin = ({
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Tutor Name
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Class Name
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Day
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Time slot
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredData.map((cls) => (
-                <tr key={cls.id}>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {cls.tutorName}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">{cls.name}</td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {cls.time?.day}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {/* {formatTimeSlotForDisplay(cls.time?.startTime, cls.time?.endTime)} */}
-                    {cls.classRawData.time_slots ? (
-                      <>
-                        {cls.time_slots![0]?.startTime} -
-                        {cls.time_slots![0]?.endTime}
-                      </>
-                    ) : (
-                      <>-</>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {getStatusBadge(cls.status)}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap space-x-2">
-                    {/* View students Button */}
-                    <div className="relative group inline-block">
-                      <button
-                        onClick={() => {
-                          setShowStudentsDialog(true);
-                          setSelectedClassName(cls.name);
-                          cls.students
-                            ? setSelectedClassStudents(cls.students)
-                            : null;
-                        }}
-                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                        aria-label="Attendance"
-                      >
-                        <Users className="h-4 w-4" />
-                      </button>
-                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        View Students
-                      </span>
-                    </div>
-                    {/* Copy Link Button */}
-                    <div className="relative group inline-block">
-                      <button
-                        onClick={() => handleCopyLink(cls)}
-                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                        aria-label="Copy Link"
-                      >
-                        {copiedLinks[cls.id] ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Link className="h-4 w-4" />
-                        )}
-                      </button>
-                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        Copy Registration Link
-                      </span>
-                    </div>
-                    {/* Edit class button */}
-                    <div className="relative group inline-block">
-                      <button
-                        onClick={() => {
-                          setShowEditDialog(true);
-                          handleSetEditClassData(cls);
-                        }}
-                        className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                        aria-label="Edit"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                        Edit Class
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredData.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="text-center text-gray-500 py-4">
-                    No classes found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          data={filteredData}
+          columns={columns}
+          columnWidths={columnWidths}
+          tableProps={{
+            className: 'bg-white shadow-md rounded-lg',
+          }}
+        />
       </div>
 
       <RegisteredStudentsDialog
