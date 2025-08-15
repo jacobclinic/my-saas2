@@ -9,6 +9,9 @@ import { checkUpcomingSessionAvailabilityForClass } from '~/lib/sessions/databas
 import { Enrollment } from '../types/types';
 import { TUTOR_PAYOUT_RATE } from '~/lib/constants-v2';
 
+/**
+ * @deprecated Use InvoiceService.generateMonthlyStudentInvoices instead.
+ */
 export async function generateMonthlyInvoicesStudents(
   client: SupabaseClient,
   year: number,
@@ -181,6 +184,7 @@ export async function createInvoiceForNewStudent(
 }
 
 /**
+ * @deprecated Use InvoiceService.generateMonthlyTutorInvoices instead
  * Generates monthly invoices for tutors based on paid student invoices
  * @param client Supabase client instance
  * @param year The year for which to generate invoices
@@ -321,6 +325,9 @@ export async function generateMonthlyInvoicesTutor(
   }
 }
 
+/**
+ * @deprecated Use InvoiceService.createInvoiceForNewClass instead
+ */
 export async function createInvoiceForNewClass(
   client: SupabaseClient,
   classId: string,

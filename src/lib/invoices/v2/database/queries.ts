@@ -5,7 +5,7 @@ import { Result, success, failure } from '~/lib/shared/result';
 import { AppError } from '~/lib/shared/errors';
 import { ErrorCodes } from '~/lib/shared/error-codes';
 import { Logger } from 'pino';
-import { Invoice } from '../types/invoice';
+import { Invoice, PaidStudentInvoice } from '../types/invoice';
 import { DatabaseError } from '~/lib/shared/errors';
 
 export async function getInvoiceByStudentClassAndPeriod(
@@ -101,5 +101,31 @@ export async function getInvoiceByDetails(
   } catch (error) {
     logger.error('An unexpected error occurred while fetching invoice by details.', { error });
     return failure(new DatabaseError('An unexpected error occurred while fetching invoice by details.'));
+  }
+}
+
+export async function getPaidStudentInvoicesByClassAndPeriod(
+  supabaseClient: SupabaseClient,
+  classId: string,
+  invoicePeriod: string,
+  logger: Logger
+): Promise<Result<PaidStudentInvoice[], DatabaseError>> {
+  try {
+    const { data: paidInvoices, error } = await supabaseClient
+      .from(INVOICES_TABLE)
+      .select('amount')
+      .eq('class_id', classId)
+      .eq('invoice_period', invoicePeriod)
+      .eq('status', 'paid');
+
+    if (error) {
+      logger.error('Error fetching paid student invoices.', { classId, invoicePeriod, error });
+      return failure(new DatabaseError('Error fetching paid student invoices.'));
+    }
+
+    return success(paidInvoices || []);
+  } catch (error) {
+    logger.error('An unexpected error occurred while fetching paid invoices.', { error });
+    return failure(new DatabaseError('An unexpected error occurred while fetching paid invoices.'));
   }
 }
