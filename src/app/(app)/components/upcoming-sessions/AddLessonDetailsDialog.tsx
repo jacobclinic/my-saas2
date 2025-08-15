@@ -2,11 +2,8 @@
 
 import React from 'react';
 import { Input } from '../base-v2/ui/Input';
-import { Textarea } from '../base-v2/ui/Textarea';
 import {
   BookOpen,
-  BookMarked,
-  ListChecks,
 } from 'lucide-react';
 import BaseDialog from '../base-v2/BaseDialog';
 import Label from '~/core/ui/Label';
@@ -39,8 +36,7 @@ const AddLessonDetailsDialog: React.FC<Props> = ({
     if (!originalLessonDetails) return true; // Allow saving if no original state
     
     return (
-      lessonDetails.title !== (originalLessonDetails.title || '') ||
-      lessonDetails.description !== (originalLessonDetails.description || '')
+      lessonDetails.title !== (originalLessonDetails.title || '')
     );
   };
 
@@ -61,7 +57,7 @@ const AddLessonDetailsDialog: React.FC<Props> = ({
           <div className="space-y-2">
             <Label htmlFor="topic" className="flex items-center gap-2">
               <BookOpen size={16} className="text-primary-blue-600" />
-              Topic
+              Lesson Topic
             </Label>
             <Input
               value={lessonDetails?.title || ''}
@@ -71,28 +67,9 @@ const AddLessonDetailsDialog: React.FC<Props> = ({
                   title: e.target.value,
                 })
               }
-              placeholder="Enter the lesson title..."
+              placeholder="Enter the lesson topic..."
               className="w-full"
               id="topic"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description" className="flex items-center gap-2">
-              <ListChecks size={16} className="text-primary-blue-600" />
-              Lesson Description
-            </Label>
-            <Textarea
-              id="description"
-              value={lessonDetails?.description || ''}
-              onChange={(e) =>
-                setLessonDetails({
-                  ...lessonDetails,
-                  description: e.target.value,
-                })
-              }
-              placeholder="Enter the lesson description..."
-              className="w-full"
-              rows={4}
             />
           </div>
         </div>
