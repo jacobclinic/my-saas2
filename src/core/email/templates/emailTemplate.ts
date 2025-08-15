@@ -283,8 +283,8 @@ export function paymentReminderEmaiTemplate(params: {
                           <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
                           <p>Your trusted partner in online education.</p>
                           <div class="social-links">
-                            <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
-                            <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                            <a href="mailto:support@commaeducation.lk" class="social-link">Support</a> |
+                            <a href="https://commaeducation.lk/" class="social-link">Website</a> |
                             <a href="#" class="social-link">Unsubscribe</a>
                           </div>
                         </td>
@@ -510,8 +510,8 @@ export function getStudentRegistrationEmailTemplate(params: {
                           <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
                           <p>Your trusted partner in online education.</p>
                           <div class="social-links">
-                            <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
-                            <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                            <a href="mailto:support@commaeducation.lk" class="social-link">Support</a> |
+                            <a href="https://commaeducation.lk/" class="social-link">Website</a> |
                             <a href="#" class="social-link">Unsubscribe</a>
                           </div>
                         </td>
@@ -1962,8 +1962,8 @@ export function getTutorApprovalOrRejectionTemplate(
                           <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
                           <p>Your trusted partner in online education.</p>
                           <div class="social-links">
-                            <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
-                            <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                            <a href="mailto:support@commaeducation.lk" class="social-link">Support</a> |
+                            <a href="https://commaeducation.lk/" class="social-link">Website</a> |
                             <a href="#" class="social-link">Unsubscribe</a>
                           </div>
                         </td>
@@ -2177,8 +2177,8 @@ export function getTutorApprovalOrRejectionTemplate(
                           <p>&copy; ${new Date().getFullYear()} Comma Education. All rights reserved.</p>
                           <p>Your trusted partner in online education.</p>
                           <div class="social-links">
-                            <a href="mailto:support@commaeducation.com" class="social-link">Support</a> |
-                            <a href="https://app.commaeducation.lk/" class="social-link">Website</a> |
+                            <a href="mailto:support@commaeducation.lk" class="social-link">Support</a> |
+                            <a href="https://commaeducation.lk/" class="social-link">Website</a> |
                             <a href="#" class="social-link">Unsubscribe</a>
                           </div>
                         </td>
