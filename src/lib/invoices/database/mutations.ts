@@ -8,13 +8,21 @@ import {
 import { checkUpcomingSessionAvailabilityForClass } from '~/lib/sessions/database/queries';
 import { Enrollment } from '../types/types';
 import { TUTOR_PAYOUT_RATE } from '~/lib/constants-v2';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
 
 export async function generateMonthlyInvoicesStudents(
   client: SupabaseClient,
   year: number,
   month: number,
 ): Promise<void> {
+  const startTime = performance.now();
   try {
+    logger.info(
+      `[Student Invoices] Starting generation for ${year}-${month.toString().padStart(2, '0')}`,
+    );
+
     // Format month as 'YYYY-MM'
     const invoicePeriod = `${year}-${month.toString().padStart(2, '0')}`;
     const invoiceDate = `${year}-${month.toString().padStart(2, '0')}-01`;
@@ -39,55 +47,110 @@ export async function generateMonthlyInvoicesStudents(
       throw new Error(`Error fetching enrollments: ${enrollError.message}`);
     }
 
-    if (!enrollments) {
+    if (!enrollments || enrollments.length === 0) {
+      logger.info(
+        '[Student Invoices] No enrollments found for student invoice generation',
+      );
       return;
     }
 
+    logger.info(
+      `[Student Invoices] Found ${enrollments.length} enrollments to process`,
+    );
+
+    // Get all existing invoices for this period in bulk
+    const { data: existingInvoices, error: existingError } = await client
+      .from(INVOICES_TABLE)
+      .select('student_id, class_id')
+      .eq('invoice_period', invoicePeriod);
+
+    if (existingError) {
+      throw new Error(
+        `Error fetching existing invoices: ${existingError.message}`,
+      );
+    }
+
+    logger.info(
+      `[Student Invoices] Found ${existingInvoices?.length || 0} existing invoices for ${invoicePeriod}`,
+    );
+
+    // Create a Set for faster lookups of existing invoices
+    const existingInvoiceKeys = new Set(
+      existingInvoices?.map((inv) => `${inv.student_id}-${inv.class_id}`) || [],
+    );
+
     const invoicesToInsert = [];
 
-    for (const enrollment of enrollments) {
-      const { student_id, class_id, class: classData } = enrollment;
+    // Process enrollments in smaller batches to avoid memory issues
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < enrollments.length; i += BATCH_SIZE) {
+      const batch = enrollments.slice(i, i + BATCH_SIZE);
+      const batchClassIds = Array.from(new Set(batch.map((e) => e.class_id)));
 
-      // Check if invoice already exists
-      const { data: existingInvoice } = await client
-        .from('invoices')
-        .select('id')
-        .eq('student_id', student_id)
-        .eq('class_id', class_id)
-        .eq('invoice_period', invoicePeriod)
-        .single();
+      // Check sessions for all classes in this batch at once
+      const sessionsPromises = batchClassIds.map((classId) =>
+        checkUpcomingSessionAvailabilityForClass(client, classId),
+      );
+      const sessionsResults = await Promise.all(sessionsPromises);
+      const classesWithSessions = new Set(
+        batchClassIds.filter((_, index) => sessionsResults[index]),
+      );
 
-      // Check if there are upcoming sessions for this class
-      const hasUpcomingSessions =
-        await checkUpcomingSessionAvailabilityForClass(client, class_id);
+      // Process enrollments in this batch
+      for (const enrollment of batch) {
+        const { student_id, class_id, class: classData } = enrollment;
+        const enrollmentKey = `${student_id}-${class_id}`;
 
-      // Only create invoice if there are upcoming sessions and no existing invoice
-      if (!existingInvoice && hasUpcomingSessions) {
-        invoicesToInsert.push({
-          student_id,
-          class_id,
-          invoice_no: `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${student_id.substring(0, 6)}${class_id.substring(0, 6)}`,
-          invoice_period: invoicePeriod,
-          amount: classData.fee ?? 0,
-          invoice_date: invoiceDate,
-          due_date: dueDate,
-          status: 'issued',
-        });
+        // Only create invoice if there are upcoming sessions and no existing invoice
+        if (
+          !existingInvoiceKeys.has(enrollmentKey) &&
+          classesWithSessions.has(class_id)
+        ) {
+          invoicesToInsert.push({
+            student_id,
+            class_id,
+            invoice_no: `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${student_id.substring(0, 6)}${class_id.substring(0, 6)}`,
+            invoice_period: invoicePeriod,
+            amount: classData.fee ?? 0,
+            invoice_date: invoiceDate,
+            due_date: dueDate,
+            status: 'issued',
+          });
+        }
       }
     }
 
-    // Bulk insert new invoices
+    // Bulk insert new invoices in smaller batches to avoid timeout
     if (invoicesToInsert.length > 0) {
-      const { error: insertError } = await client
-        .from('invoices')
-        .insert(invoicesToInsert);
 
-      if (insertError) {
-        throw new Error(`Error inserting invoices: ${insertError.message}`);
+      const INSERT_BATCH_SIZE = 100;
+      for (let i = 0; i < invoicesToInsert.length; i += INSERT_BATCH_SIZE) {
+        const insertBatch = invoicesToInsert.slice(i, i + INSERT_BATCH_SIZE);
+        const { error: insertError } = await client
+          .from(INVOICES_TABLE)
+          .insert(insertBatch);
+
+        if (insertError) {
+          throw new Error(
+            `Error inserting student invoices batch ${i / INSERT_BATCH_SIZE + 1}: ${insertError.message}`,
+          );
+        }
       }
+    } else {
+      logger.info(
+        `[Student Invoices] No new student invoices to create for ${invoicePeriod}`,
+      );
     }
+
+    const endTime = performance.now();
+    logger.info(
+      `[Student Invoices] Completed in ${Math.round((endTime - startTime) / 1000)}s`,
+    );
   } catch (error) {
-    console.error('Failed to generate invoices:', error);
+    logger.error(
+      '[Student Invoices] Failed to generate student invoices:',
+      error,
+    );
     throw error;
   }
 }
@@ -191,11 +254,16 @@ export async function generateMonthlyInvoicesTutor(
   year: number,
   month: number,
 ): Promise<void> {
+  const startTime = performance.now();
   try {
+    logger.info(
+      `[Tutor Invoices] Starting generation for ${year}-${month.toString().padStart(2, '0')}`,
+    );
+
     // Format month as 'YYYY-MM'
     const invoicePeriod = `${year}-${month.toString().padStart(2, '0')}`;
 
-    // Get all tutors with their classes
+    // Get all tutors with their classes in one query
     const { data: tutorClasses, error: tutorClassesError } = await client
       .from(CLASSES_TABLE)
       .select(
@@ -215,9 +283,67 @@ export async function generateMonthlyInvoicesTutor(
     }
 
     if (!tutorClasses || tutorClasses.length === 0) {
-      console.log('No active classes found');
+      logger.info(
+        '[Tutor Invoices] No active classes found for tutor invoice generation',
+      );
       return;
     }
+
+    logger.info(
+      `[Tutor Invoices] Found ${tutorClasses.length} active classes to process`,
+    );
+
+    // Get all existing tutor invoices for this period in one query
+    const { data: existingTutorInvoices, error: existingTutorError } =
+      await client
+        .from(TUTOR_INVOICES_TABLE)
+        .select('id, tutor_id, class_id')
+        .eq('payment_period', invoicePeriod);
+
+    if (existingTutorError) {
+      throw new Error(
+        `Error fetching existing tutor invoices: ${existingTutorError.message}`,
+      );
+    }
+
+    logger.info(
+      `[Tutor Invoices] Found ${existingTutorInvoices?.length || 0} existing tutor invoices for ${invoicePeriod}`,
+    );
+
+    // Create lookup map for existing tutor invoices
+    const existingTutorInvoiceMap = new Map();
+    existingTutorInvoices?.forEach((invoice) => {
+      const key = `${invoice.tutor_id}-${invoice.class_id}`;
+      existingTutorInvoiceMap.set(key, invoice);
+    });
+
+    // Get all paid student invoices for this period in one query
+    const classIds = tutorClasses.map((c) => c.id);
+    const { data: paidInvoices, error: paidInvoicesError } = await client
+      .from(INVOICES_TABLE)
+      .select('class_id, amount')
+      .in('class_id', classIds)
+      .eq('invoice_period', invoicePeriod)
+      .eq('status', 'paid');
+
+    if (paidInvoicesError) {
+      throw new Error(
+        `Error fetching paid invoices: ${paidInvoicesError.message}`,
+      );
+    }
+
+    logger.info(
+      `[Tutor Invoices] Found ${paidInvoices?.length || 0} paid student invoices for calculation`,
+    );
+
+    // Group paid invoices by class_id for easier lookup
+    const paidInvoicesByClass = new Map();
+    paidInvoices?.forEach((invoice) => {
+      if (!paidInvoicesByClass.has(invoice.class_id)) {
+        paidInvoicesByClass.set(invoice.class_id, []);
+      }
+      paidInvoicesByClass.get(invoice.class_id).push(invoice);
+    });
 
     // Group classes by tutor
     const classesByTutor = tutorClasses.reduce(
@@ -232,60 +358,34 @@ export async function generateMonthlyInvoicesTutor(
     );
 
     const tutorInvoicesToInsert = [];
+    const tutorInvoicesToUpdate = [];
 
-    // Process each tutor
+    // Process each tutor and their classes
     for (const [tutorId, classes] of Object.entries(classesByTutor)) {
       for (const classData of classes) {
-        // Check if tutor invoice already exists for this class and period
-        const { data: existingTutorInvoice } = await client
-          .from(TUTOR_INVOICES_TABLE)
-          .select('id')
-          .eq('tutor_id', tutorId)
-          .eq('class_id', classData.id)
-          .eq('payment_period', invoicePeriod)
-          .single();
+        const invoiceKey = `${tutorId}-${classData.id}`;
+        const existingInvoice = existingTutorInvoiceMap.get(invoiceKey);
 
-        const { data: paidStudentInvoices, error: paidInvoicesError } =
-          await client
-            .from(INVOICES_TABLE)
-            .select('amount')
-            .eq('class_id', classData.id)
-            .eq('invoice_period', invoicePeriod)
-            .eq('status', 'paid');
+        // Get paid invoices for this class
+        const classPaidInvoices = paidInvoicesByClass.get(classData.id) || [];
 
-        if (paidInvoicesError) {
-          console.error(
-            `Error fetching paid invoices for class ${classData.id}:`,
-            paidInvoicesError,
-          );
-          continue;
-        }
-
-        // Calculate tutor payment: number of paid invoices × class fee
-        const numberOfPaidInvoices = paidStudentInvoices?.length || 0;
+        // Calculate tutor payment: number of paid invoices × class fee × tutor payout rate
+        const numberOfPaidInvoices = classPaidInvoices.length;
         const classFee = classData.fee || 0;
         const totalRevenue = numberOfPaidInvoices * classFee;
         const tutorPayment = totalRevenue * TUTOR_PAYOUT_RATE;
 
-        // Create invoice number with exactly 16 characters: YY + MM + 6 chars from tutorId + 6 chars from classId
+        // Create invoice number with exactly 16 characters
         const invoiceNo = `${year.toString().slice(-2)}${month.toString().padStart(2, '0')}${tutorId.substring(0, 6)}${classData.id.substring(0, 6)}`;
 
-        if (existingTutorInvoice) {
-          const { error: updateError } = await client
-            .from(TUTOR_INVOICES_TABLE)
-            .update({
-              amount: tutorPayment,
-            })
-            .eq('id', existingTutorInvoice.id);
-
-          if (updateError) {
-            console.error(
-              `Error updating tutor invoice for class ${classData.id}:`,
-              updateError,
-            );
-          }
+        if (existingInvoice) {
+          // Update existing invoice
+          tutorInvoicesToUpdate.push({
+            id: existingInvoice.id,
+            amount: tutorPayment,
+          });
         } else {
-          // Always create tutor invoice for active classes, even if amount is 0
+          // Create new invoice (even if amount is 0)
           tutorInvoicesToInsert.push({
             tutor_id: tutorId,
             class_id: classData.id,
@@ -298,24 +398,87 @@ export async function generateMonthlyInvoicesTutor(
       }
     }
 
-    // Bulk insert new tutor invoices
-    if (tutorInvoicesToInsert.length > 0) {
-      const { error: insertError } = await client
-        .from(TUTOR_INVOICES_TABLE)
-        .insert(tutorInvoicesToInsert);
+    // Batch update existing invoices
+    if (tutorInvoicesToUpdate.length > 0) {
+      logger.info(
+        `[Tutor Invoices] Updating ${tutorInvoicesToUpdate.length} existing tutor invoices for ${invoicePeriod}`,
+      );
 
-      if (insertError) {
-        throw new Error(
-          `Error inserting tutor invoices: ${insertError.message}`,
+      // Process updates in smaller batches
+      const UPDATE_BATCH_SIZE = 50;
+      for (
+        let i = 0;
+        i < tutorInvoicesToUpdate.length;
+        i += UPDATE_BATCH_SIZE
+      ) {
+        const updateBatch = tutorInvoicesToUpdate.slice(
+          i,
+          i + UPDATE_BATCH_SIZE,
         );
+
+        // Use Promise.all to update in parallel within each batch
+        const updatePromises = updateBatch.map((invoice) =>
+          client
+            .from(TUTOR_INVOICES_TABLE)
+            .update({ amount: invoice.amount })
+            .eq('id', invoice.id),
+        );
+
+        const results = await Promise.all(updatePromises);
+        const failed = results.filter((result) => result.error);
+
+        if (failed.length > 0) {
+          logger.error(
+            `[Tutor Invoices] Failed to update ${failed.length} tutor invoices in batch ${i / UPDATE_BATCH_SIZE + 1}`,
+          );
+          failed.forEach((result, index) => {
+            logger.error(
+              `Update error for invoice ${updateBatch[index].id}:`,
+              result.error,
+            );
+          });
+        }
+      }
+    }
+
+    // Batch insert new tutor invoices
+    if (tutorInvoicesToInsert.length > 0) {
+      logger.info(
+        `[Tutor Invoices] Creating ${tutorInvoicesToInsert.length} new tutor invoices for ${invoicePeriod}`,
+      );
+
+      const INSERT_BATCH_SIZE = 100;
+      for (
+        let i = 0;
+        i < tutorInvoicesToInsert.length;
+        i += INSERT_BATCH_SIZE
+      ) {
+        const insertBatch = tutorInvoicesToInsert.slice(
+          i,
+          i + INSERT_BATCH_SIZE,
+        );
+        const { error: insertError } = await client
+          .from(TUTOR_INVOICES_TABLE)
+          .insert(insertBatch);
+
+        if (insertError) {
+          throw new Error(
+            `Error inserting tutor invoices batch ${i / INSERT_BATCH_SIZE + 1}: ${insertError.message}`,
+          );
+        }
       }
     } else {
-      console.log(
-        `No active classes found to generate tutor invoices for ${invoicePeriod}`,
+      logger.info(
+        `[Tutor Invoices] No new tutor invoices to create for ${invoicePeriod}`,
       );
     }
+
+    const endTime = performance.now();
+    logger.info(
+      `[Tutor Invoices] Completed tutor invoice generation for ${invoicePeriod} in ${Math.round((endTime - startTime) / 1000)}s: ${tutorInvoicesToInsert.length} new, ${tutorInvoicesToUpdate.length} updated`,
+    );
   } catch (error) {
-    console.error('Failed to generate tutor invoices:', error);
+    logger.error('[Tutor Invoices] Failed to generate tutor invoices:', error);
     throw error;
   }
 }
