@@ -8,7 +8,6 @@ import {
   ClassType,
   ClassWithTutorAndEnrollmentAdmin,
   EditClassData,
-
 } from '~/lib/classes/types/class-v2';
 import {
   Select,
@@ -232,6 +231,14 @@ const ClassesAdmin = ({
     setSelectedEditClassData(() => formatDataForEditCls(cls));
   };
 
+  // Create lookup map for O(1) access to class data
+  const classLookupMap = useMemo(() => {
+    return filteredData.reduce((map, cls) => {
+      map[cls.id] = cls;
+      return map;
+    }, {} as Record<string, typeof filteredData[0]>);
+  }, [filteredData]);
+
   // Define columns for DataTable
   const columns = useMemo(
     () => [
@@ -256,7 +263,7 @@ const ClassesAdmin = ({
         accessorKey: 'status',
         cell: ({ row }: { row: { original: ClassTableData } }) => {
           const classId = row.original.id;
-          const cls = filteredData.find((c) => c.id === classId);
+          const cls = classLookupMap[classId];
 
           return (
             <Badge
@@ -273,7 +280,7 @@ const ClassesAdmin = ({
         accessorKey: 'actions',
         cell: ({ row }: { row: { original: ClassTableData } }) => {
           const classId = row.original.id;
-          const cls = filteredData.find((c) => c.id === classId);
+          const cls = classLookupMap[classId];
 
           if (!cls) return null;
 
@@ -336,7 +343,7 @@ const ClassesAdmin = ({
         },
       },
     ],
-    [filteredData, copiedLinks],
+    [classLookupMap, copiedLinks],
   );
 
   // Prepare table data for DataTable
