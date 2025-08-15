@@ -21,10 +21,8 @@ import { GRADES } from '~/lib/constants-v2';
 import { format } from '~/lib/utils/date-utils';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
-import DeleteClassDialog from '../../classes/DeleteClassDialog';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
-import AppHeader from '../../AppHeader';
 import TimezoneIndicator from '../../TimezoneIndicator';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import DataTable from '~/core/ui/DataTable';
@@ -233,10 +231,13 @@ const ClassesAdmin = ({
 
   // Create lookup map for O(1) access to class data
   const classLookupMap = useMemo(() => {
-    return filteredData.reduce((map, cls) => {
-      map[cls.id] = cls;
-      return map;
-    }, {} as Record<string, typeof filteredData[0]>);
+    return filteredData.reduce(
+      (map, cls) => {
+        map[cls.id] = cls;
+        return map;
+      },
+      {} as Record<string, (typeof filteredData)[0]>,
+    );
   }, [filteredData]);
 
   // Define columns for DataTable
