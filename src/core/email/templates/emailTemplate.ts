@@ -1169,7 +1169,10 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
                         <p>Just a quick heads-up – your ${className} class is starting within 1 hour!</p>
                         
                         <div class="highlight-box">
-                          <p style="margin-top: 0;">Click the following button to join: </p>
+                          <p style="margin-top: 0;"><strong>Class Details:</strong></p>
+                          <p style="margin-bottom: 0;"><strong>Date:</strong> ${date}</p>
+                          <p style="margin-bottom: 10px;"><strong>Time:</strong> ${timeStr}</p>
+                          <p style="margin-bottom: 0;">Click the following button to join: </p>
                         </div>
                         
                         <div class="button-container">
@@ -1214,7 +1217,11 @@ export function getStudentNotifyBefore1HrEmailTemplate(params: {
   const text = `
         Hi ${studentName},
 
-        Just a quick heads-up – your [Class Name] class is starting within 1 hour!
+        Just a quick heads-up – your ${className} class is starting within 1 hour!
+
+        Class Details:
+        Date: ${date}
+        Time: ${timeStr}
 
         Click here to join: ${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionId}
 
