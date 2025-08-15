@@ -2,6 +2,7 @@ import { addDays, startOfWeek, endOfYear, endOfMonth } from 'date-fns';
 import { TimeSlot } from '../classes/types/class-v2';
 import { dayMap } from '../constants-v2';
 import { parse, format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 // export function getNextNOccurrences(timeSlot: TimeSlot, startDate: string, count: number): Date[] {
 
 export { format, parse };
@@ -310,4 +311,26 @@ export function formatToLocalHHmmAMPM(date: string | Date): string {
 
 export function formatToHumanReadableDate(date: string | Date): string {
   return format(new Date(date), 'EEEE, MMMM dd, yyyy');
+}
+
+export function getCurrentUTCDate(): string {
+  return new Date().toISOString();
+}
+
+export function getInvoicePeriodUTC(date: Date): string {
+  return formatInTimeZone(date, 'UTC', 'yyyy-MM');
+}
+
+export function getFullDateUTC(date: Date): string {
+  return formatInTimeZone(date, 'UTC', 'yyyy-MM-dd');
+}
+
+export function getDueDateUTC(date: Date): string {
+  const year = formatInTimeZone(date, 'UTC', 'yyyy');
+  const month = formatInTimeZone(date, 'UTC', 'MM');
+  return `${year}-${month}-15`;
+}
+
+export function getShortYearMonthUTC(date: Date): string {
+    return formatInTimeZone(date, 'UTC', 'yyMM');
 }

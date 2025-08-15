@@ -49,27 +49,6 @@ const StudentDashboard = ({
     setUpcomingCurrentPage(page);
   };
 
-  // Sample data
-  const nextSessionsSampleData = {
-    id: '1',
-    name: 'A/L 2025 Accounting Batch 04',
-    topic: 'Manufacturing Accounts - Part 1',
-    date: 'Monday, Dec 18, 2024',
-    time: '4:00 PM - 6:00 PM',
-    zoomLink: 'https://zoom.us/j/123456789',
-    paymentStatus: PaymentStatus.PENDING,
-    paymentAmount: 5000,
-    zoomMeetingId: '123456789',
-    materials: [
-      {
-        id: '1',
-        name: 'Manufacturing Accounts Notes.pdf',
-        file_size: '2.5 MB',
-      },
-      { id: '2', name: 'Practice Problems Set.pdf', file_size: '1.8 MB' },
-    ],
-  };
-
   // Transform upcoming sessions data
   useEffect(() => {
     if (upcomingSessionData?.length > 0) {

@@ -5,6 +5,7 @@ import useUserSession from '~/core/hooks/use-user-session';
 import dynamic from 'next/dynamic';
 import useUserRole from '~/lib/user/hooks/use-userRole';
 import { isFirstWeekOfMonth } from '~/lib/utils/date-utils';
+import Spinner from '~/core/ui/Spinner';
 
 
 // Zoom meeting is a client side only component
@@ -47,17 +48,18 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
         setError("Something went wrong while fetching the virtual classroom. Please try again and contact admin if the problem persists.");
       }
     };
+
     const validatePayment = async () => {
       try {
         if (!userSession) return;
         if (isHost) {
-          fetchZoomSession();
+          await fetchZoomSession();
           setError("");
           return;
         }
         const isFirstWeek = isFirstWeekOfMonth(new Date());
         if (isFirstWeek) {
-          fetchZoomSession();
+          await fetchZoomSession();
           setError("");
           return;
         }
@@ -66,25 +68,31 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
         if (!isValid) {
           setError("You must complete the payment to access this session.");
         } else {
-          fetchZoomSession();
+          await fetchZoomSession();
           setError("");
         }
       } catch (error) {
-        setError("Something went wrong while validating the payment. Please try again and contact admin if the problem persists.");
-      } finally {
         setIsLoading(false);
+        setError("Something went wrong while validating the payment. Please try again and contact admin if the problem persists.");
       }
     };
 
     validatePayment();
   }, [params.sessionId, params.classId, userSession]);
 
-  if (isLoading) {
+  const onInitSuccess = () => {
+    setIsLoading(false);
+  }
+
+  const onInitError = (error: any) => {
+    setError("Something went wrong while initializing the virtual classroom. Please try again and contact admin if the problem persists.");
+  }
+
+  if (isLoading && !zoomSession) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="max-w-md p-6 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
-          <h2 className="text-lg font-medium text-yellow-700 mb-2">Loading...</h2>
-        </div>
+      <div className="flex flex-col items-center justify-center h-screen">
+        <Spinner />
+        <p className="text-gray-500 mt-4">Preparing your virtual classroom...</p>
       </div>
     );
   }
@@ -102,11 +110,13 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
       </div>
     );
   }
+  
+
 
   return (
     <div>
       {zoomSession && (
-        <ZoomMeeting params={{ ...params, zoomSession, userEmail, userName }} />
+        <ZoomMeeting params={{ ...params, zoomSession, userEmail, userName }} onInitSuccess={onInitSuccess} onInitError={onInitError}/>
       )}
     </div>
   );

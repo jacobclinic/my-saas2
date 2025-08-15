@@ -12,6 +12,9 @@ import getLogger from '~/core/logger';
 
 const logger = getLogger();
 
+/**
+ * @deprecated Use InvoiceService.generateMonthlyStudentInvoices instead.
+ */
 export async function generateMonthlyInvoicesStudents(
   client: SupabaseClient,
   year: number,
@@ -161,6 +164,7 @@ export async function generateMonthlyInvoicesStudents(
  * @param studentId ID of the student
  * @param classId ID of the class the student registered for
  * @returns The created invoice ID or null if creation failed
+ * @deprecated Use InvoiceService.createInvoiceForNewEnrollment instead.
  */
 export async function createInvoiceForNewStudent(
   client: SupabaseClient,
@@ -243,6 +247,7 @@ export async function createInvoiceForNewStudent(
 }
 
 /**
+ * @deprecated Use InvoiceService.generateMonthlyTutorInvoices instead
  * Generates monthly invoices for tutors based on paid student invoices
  * @param client Supabase client instance
  * @param year The year for which to generate invoices
@@ -483,6 +488,9 @@ export async function generateMonthlyInvoicesTutor(
   }
 }
 
+/**
+ * @deprecated Use InvoiceService.createInvoiceForNewClass instead
+ */
 export async function createInvoiceForNewClass(
   client: SupabaseClient,
   classId: string,

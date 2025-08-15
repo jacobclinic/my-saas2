@@ -18,9 +18,13 @@ type ZoomMeetingProps = {
         userEmail: string;
         userName: string;
     };
+    onInitSuccess?: () => void;
+    onInitError?: (error: any) => void;
+    onJoinSuccess?: () => void;
+    onJoinError?: (error: any) => void;
 };
 
-const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
+const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoinError }: ZoomMeetingProps) => {
     const client = ZoomMtgEmbedded.createClient();
     const { data: role } = useUserRole();
 
@@ -51,7 +55,18 @@ const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
             ZoomMtg.init({
                 leaveUrl: dashboardUrl,
                 patchJsMedia: true,
+                disableInvite: true,
+                disablePictureInPicture: true,
+                meetingInfo: [
+                    'topic',
+                    'host',
+                    'participant',
+                    'dc',
+                    'enctype',
+                    'report'
+                ],
                 success: (success: any) => {
+                    onInitSuccess && onInitSuccess();
                     ZoomMtg.join({
                         signature: signature,
                         meetingNumber: meetingNumber,
@@ -59,14 +74,16 @@ const ZoomMeeting = ({ params }: ZoomMeetingProps) => {
                         userEmail: userEmail,
                         passWord: password,
                         success: (success: any) => {
+                            onJoinSuccess && onJoinSuccess();
                         },
                         error: (error: any) => {
-                            console.log(error);
+                            onJoinError && onJoinError(error);
                         }
                     })
+                    ZoomMtg.showInviteFunction({ show: false });
                 },
                 error: (error: any) => {
-                    console.log(error);
+                    onInitError && onInitError(error);
                 }
             })
         } catch (error) {
