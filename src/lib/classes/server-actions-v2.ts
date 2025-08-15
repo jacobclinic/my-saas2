@@ -1,12 +1,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClassByAdmin } from '~/lib/classes/database/mutations-v2';
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import {
-  ClassType,
-  NewClassData,
   AdminNewClassData,
   CreateClassParams,
   UpdateClassParams,
@@ -52,10 +49,6 @@ import { isEqual } from '../utils/lodash-utils';
 import { UpstashService } from '../upstash/upstash.service';
 import { createInvoiceForNewClass } from '../invoices/database/mutations';
 
-type AdminCreateClassParams = {
-  classData: AdminNewClassData;
-  csrfToken: string;
-};
 
 type DeleteClassParams = {
   classId: string;
