@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { useEffect } from 'react';
 
 import TextField from '~/core/ui/TextField';
+import PasswordInput from '~/core/ui/PasswordInput';
 import Button from '~/core/ui/Button';
 import If from '~/core/ui/If';
 import { filterNameInput } from '~/core/utils/input-filters';
@@ -248,11 +249,10 @@ const EmailPasswordSignUpForm: React.FCC<{
           <TextField>
             <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
               Password
-              <TextField.Input
+              <PasswordInput
                 {...passwordControl}
                 data-cy={'password-input'}
                 required
-                type="password"
                 placeholder={''}
                 autoComplete="new-password"
                 className="text-sm sm:text-base"
@@ -270,11 +270,10 @@ const EmailPasswordSignUpForm: React.FCC<{
           <TextField>
             <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
               Repeat Password
-              <TextField.Input
+              <PasswordInput
                 {...repeatPasswordControl}
                 data-cy={'repeat-password-input'}
                 required
-                type="password"
                 placeholder={''}
                 autoComplete="new-password"
                 className="text-sm sm:text-base"
