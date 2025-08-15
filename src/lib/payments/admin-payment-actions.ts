@@ -21,6 +21,9 @@ import {
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { getAllTutorInvoices } from '../invoices/database/queries';
 import { TutorInvoice } from '../invoices/types/types';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
 
 export const approveStudentPaymentAction = withSession(
   async ({
@@ -348,7 +351,7 @@ export const generateAllInvoicesAction = withSession(
 
     try {
       const [year, month] = invoicePeriod.split('-').map(Number);
-      console.log(`Starting invoice generation for ${invoicePeriod}`);
+      logger.info(`Starting invoice generation for ${invoicePeriod}`);
 
       // Start timing the operation
       const startTime = performance.now();
@@ -401,7 +404,7 @@ export const generateAllInvoicesAction = withSession(
         }
       }
 
-      console.log(
+      logger.info(
         `Invoice generation completed for ${invoicePeriod} in ${executionTime}s`,
       );
 
@@ -412,7 +415,7 @@ export const generateAllInvoicesAction = withSession(
         warnings: errors.length > 0 ? errors : undefined,
       };
     } catch (error: any) {
-      console.error('Error generating all invoices:', error);
+      logger.error('Error generating all invoices:', error);
       return {
         success: false,
         error: error.message || 'Failed to generate invoices',

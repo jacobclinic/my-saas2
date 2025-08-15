@@ -24,6 +24,9 @@ import {
   SelectValue,
 } from '../base-v2/ui/Select';
 import { Loader2, RefreshCcw, CheckCircle } from 'lucide-react';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
 
 interface AdminPaymentsPanelProps {}
 
@@ -240,14 +243,14 @@ const AdminPaymentsPanel = () => {
         }
       } else {
         // Handle case where response is not a valid JSON (e.g., 504 timeout HTML response)
-        console.error('Invalid response structure:', result);
+        logger.error('Invalid response structure:', result);
         setInvoiceMessage({
           type: 'error',
           text: 'Server request timed out or returned an invalid response. Please try again or contact support.',
         });
       }
     } catch (error) {
-      console.error('Error generating invoices:', error);
+      logger.error('Error generating invoices:', error);
       setInvoiceMessage({
         type: 'error',
         text: 'An unexpected error occurred while generating invoices. Please try again or contact support.',

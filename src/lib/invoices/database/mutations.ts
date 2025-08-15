@@ -8,6 +8,9 @@ import {
 import { checkUpcomingSessionAvailabilityForClass } from '~/lib/sessions/database/queries';
 import { Enrollment } from '../types/types';
 import { TUTOR_PAYOUT_RATE } from '~/lib/constants-v2';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
 
 export async function generateMonthlyInvoicesStudents(
   client: SupabaseClient,
@@ -16,7 +19,7 @@ export async function generateMonthlyInvoicesStudents(
 ): Promise<void> {
   const startTime = performance.now();
   try {
-    console.log(
+    logger.info(
       `[Student Invoices] Starting generation for ${year}-${month.toString().padStart(2, '0')}`,
     );
 
@@ -45,13 +48,13 @@ export async function generateMonthlyInvoicesStudents(
     }
 
     if (!enrollments || enrollments.length === 0) {
-      console.log(
+      logger.info(
         '[Student Invoices] No enrollments found for student invoice generation',
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[Student Invoices] Found ${enrollments.length} enrollments to process`,
     );
 
@@ -67,7 +70,7 @@ export async function generateMonthlyInvoicesStudents(
       );
     }
 
-    console.log(
+    logger.info(
       `[Student Invoices] Found ${existingInvoices?.length || 0} existing invoices for ${invoicePeriod}`,
     );
 
@@ -119,9 +122,6 @@ export async function generateMonthlyInvoicesStudents(
 
     // Bulk insert new invoices in smaller batches to avoid timeout
     if (invoicesToInsert.length > 0) {
-      console.log(
-        `[Student Invoices] Creating ${invoicesToInsert.length} new student invoices for ${invoicePeriod}`,
-      );
 
       const INSERT_BATCH_SIZE = 100;
       for (let i = 0; i < invoicesToInsert.length; i += INSERT_BATCH_SIZE) {
@@ -137,17 +137,17 @@ export async function generateMonthlyInvoicesStudents(
         }
       }
     } else {
-      console.log(
+      logger.info(
         `[Student Invoices] No new student invoices to create for ${invoicePeriod}`,
       );
     }
 
     const endTime = performance.now();
-    console.log(
+    logger.info(
       `[Student Invoices] Completed in ${Math.round((endTime - startTime) / 1000)}s`,
     );
   } catch (error) {
-    console.error(
+    logger.error(
       '[Student Invoices] Failed to generate student invoices:',
       error,
     );
@@ -256,7 +256,7 @@ export async function generateMonthlyInvoicesTutor(
 ): Promise<void> {
   const startTime = performance.now();
   try {
-    console.log(
+    logger.info(
       `[Tutor Invoices] Starting generation for ${year}-${month.toString().padStart(2, '0')}`,
     );
 
@@ -283,13 +283,13 @@ export async function generateMonthlyInvoicesTutor(
     }
 
     if (!tutorClasses || tutorClasses.length === 0) {
-      console.log(
+      logger.info(
         '[Tutor Invoices] No active classes found for tutor invoice generation',
       );
       return;
     }
 
-    console.log(
+    logger.info(
       `[Tutor Invoices] Found ${tutorClasses.length} active classes to process`,
     );
 
@@ -306,7 +306,7 @@ export async function generateMonthlyInvoicesTutor(
       );
     }
 
-    console.log(
+    logger.info(
       `[Tutor Invoices] Found ${existingTutorInvoices?.length || 0} existing tutor invoices for ${invoicePeriod}`,
     );
 
@@ -332,7 +332,7 @@ export async function generateMonthlyInvoicesTutor(
       );
     }
 
-    console.log(
+    logger.info(
       `[Tutor Invoices] Found ${paidInvoices?.length || 0} paid student invoices for calculation`,
     );
 
@@ -400,7 +400,7 @@ export async function generateMonthlyInvoicesTutor(
 
     // Batch update existing invoices
     if (tutorInvoicesToUpdate.length > 0) {
-      console.log(
+      logger.info(
         `[Tutor Invoices] Updating ${tutorInvoicesToUpdate.length} existing tutor invoices for ${invoicePeriod}`,
       );
 
@@ -428,11 +428,11 @@ export async function generateMonthlyInvoicesTutor(
         const failed = results.filter((result) => result.error);
 
         if (failed.length > 0) {
-          console.error(
+          logger.error(
             `[Tutor Invoices] Failed to update ${failed.length} tutor invoices in batch ${i / UPDATE_BATCH_SIZE + 1}`,
           );
           failed.forEach((result, index) => {
-            console.error(
+            logger.error(
               `Update error for invoice ${updateBatch[index].id}:`,
               result.error,
             );
@@ -443,7 +443,7 @@ export async function generateMonthlyInvoicesTutor(
 
     // Batch insert new tutor invoices
     if (tutorInvoicesToInsert.length > 0) {
-      console.log(
+      logger.info(
         `[Tutor Invoices] Creating ${tutorInvoicesToInsert.length} new tutor invoices for ${invoicePeriod}`,
       );
 
@@ -468,17 +468,17 @@ export async function generateMonthlyInvoicesTutor(
         }
       }
     } else {
-      console.log(
+      logger.info(
         `[Tutor Invoices] No new tutor invoices to create for ${invoicePeriod}`,
       );
     }
 
     const endTime = performance.now();
-    console.log(
+    logger.info(
       `[Tutor Invoices] Completed tutor invoice generation for ${invoicePeriod} in ${Math.round((endTime - startTime) / 1000)}s: ${tutorInvoicesToInsert.length} new, ${tutorInvoicesToUpdate.length} updated`,
     );
   } catch (error) {
-    console.error('[Tutor Invoices] Failed to generate tutor invoices:', error);
+    logger.error('[Tutor Invoices] Failed to generate tutor invoices:', error);
     throw error;
   }
 }
