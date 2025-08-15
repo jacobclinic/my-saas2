@@ -309,6 +309,10 @@ export function formatToLocalHHmmAMPM(date: string | Date): string {
   return format(new Date(date), 'hh:mm aaa');
 }
 
+export function formatDateStandard(date: string | Date, dateFormat: string = 'dd/MM/yyyy'): string {
+  return format(new Date(date), dateFormat);
+}
+
 export function formatToHumanReadableDate(date: string | Date): string {
   return format(new Date(date), 'EEEE, MMMM dd, yyyy');
 }
