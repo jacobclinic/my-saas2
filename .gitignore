@@ -49,3 +49,4 @@ public/sitemap.xml
 
 # testing api
 src/app/api/public/test/route.ts
+CLAUDE.md
