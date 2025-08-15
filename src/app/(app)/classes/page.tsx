@@ -8,6 +8,9 @@ import ClassesListClient from '../components/classes/ClassesListClient';
 import ClassesAdmin from '../components/admin/classes/ClassesAdmin';
 import { fetchTutorsForAdminAction } from '~/lib/user/actions.server';
 import { TutorOption } from '~/lib/classes/types/class-v2';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
 
 export const metadata = {
   title: 'Sessions',
@@ -55,10 +58,10 @@ async function ClassesPage() {
       tutors: tutorData,
     } = await fetchTutorsForAdminAction();
     if (!success) {
-      console.error('Error fetching tutors:', error);
+      logger.error('Error fetching tutors:', error);
     }
     if (error) {
-      console.log(error);
+      logger.error(error);
     }
     tutors = tutorData;
   }

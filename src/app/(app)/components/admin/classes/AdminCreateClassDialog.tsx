@@ -16,10 +16,15 @@ import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { createClassByAdminAction } from '~/lib/classes/server-actions-v2';
 import { useToast } from '../../../lib/hooks/use-toast';
 import BaseDialog from '../../base-v2/BaseDialog';
-import { AdminNewClassData, TimeSlot } from '~/lib/classes/types/class-v2';
+import {
+  AdminNewClassData,
+  CreateClassPayload,
+  TimeSlot,
+} from '~/lib/classes/types/class-v2';
 import Button from '~/core/ui/Button';
 import { Plus, X } from 'lucide-react';
 import SearchableSelect from '../../base-v2/ui/SearchableSelect';
+import { Json } from '~/database.types-backup';
 
 interface TutorOption {
   id: string;
@@ -112,14 +117,21 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
 
   const handleSubmit = () => {
     const startDate = new Date(newClass.startDate).toISOString();
-    const payload = {
-      ...newClass,
-      startDate,
+    const classDataPayload: CreateClassPayload = {
+      fee: Number(newClass.monthlyFee),
+      grade: newClass.yearGrade,
+      name: newClass.name,
+      description: newClass.description,
+      starting_date: startDate,
+      status: 'active',
+      subject: newClass.subject,
+      time_slots: newClass.timeSlots as unknown as Json[],
+      tutor_id: newClass.tutorId,
     };
 
     startTransition(async () => {
       const result = await createClassByAdminAction({
-        classData: payload,
+        data: classDataPayload,
         csrfToken,
       });
 

@@ -18,10 +18,12 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getUserCredentialsEmailTemplate } from '~/core/email/templates/emailTemplate';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 
+const logger = getLogger();
+
 const emailService = EmailService.getInstance();
 
 export async function deleteUserAccountAction() {
-  const logger = getLogger();
+  logger.info('User requested to delete their account');
   const client = getSupabaseServerActionClient();
   const { user } = await requireSession(client);
 
@@ -400,7 +402,7 @@ export const fetchTutorsForAdminAction = withSession(async () => {
   } = await client.auth.getSession();
 
   if (sessionError || !session?.user) {
-    console.error('User not authenticated:', sessionError);
+    logger.error('User not authenticated:', sessionError);
     return { success: false, error: 'User not authenticated', tutors: [] };
   }
 
@@ -410,7 +412,7 @@ export const fetchTutorsForAdminAction = withSession(async () => {
   const Admin = await isAdmin(client);
 
   if (!Admin) {
-    console.error('Unauthorized access attempt:');
+    logger.error('Unauthorized access attempt:');
     return {
       success: false,
       error: 'Unauthorized: Admin access required',
@@ -436,7 +438,7 @@ export const fetchTutorsForAdminAction = withSession(async () => {
 
     return { success: true, error:null, tutors: formattedTutors };
   } catch (error) {
-    console.error('Error in fetchTutorsForAdminAction:', error);
+    logger.error('Error in fetchTutorsForAdminAction:', error);
     return { success: false, error: 'Failed to fetch tutors', tutors: [] };
   }
 });
