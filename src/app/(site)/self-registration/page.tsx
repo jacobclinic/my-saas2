@@ -7,6 +7,7 @@ import { Card, CardContent } from '~/app/(app)/components/base-v2/ui/Card';
 import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
 import { PublicNextSessionResponse } from '~/lib/sessions/types/session-v2';
 import { formatToHumanReadableDate, formatToLocalHHmmAMPM } from '~/lib/utils/date-utils';
+import { getUserDataById } from '~/lib/user/database/queries';
 
 interface SearchParams {
   classId: string;
@@ -22,6 +23,14 @@ export default async function RegisterPage({
   searchParams: SearchParams;
 }) {
   const client = getSupabaseServerComponentClient();
+
+  // Check if user is authenticated and get their data
+  const { data: { user: authUser } } = await client.auth.getUser();
+  let userData = null;
+  
+  if (authUser) {
+    userData = await getUserDataById(client, authUser.id);
+  }
 
   // Extract data from URL parameters
   const classData: ClassRegistrationData = {
@@ -113,6 +122,8 @@ export default async function RegisterPage({
           nextSessionId={classRegistrationData?.id!}
           formattedDate={classRegistrationData ? formatToHumanReadableDate(classRegistrationData.start_time!) : undefined}
           formattedTime={classRegistrationData ? formatToLocalHHmmAMPM(classRegistrationData.start_time!) + ' - ' + formatToLocalHHmmAMPM(classRegistrationData.end_time!) : undefined}
+          authUser={authUser}
+          userData={userData}
         />
       </div>
     </div>
