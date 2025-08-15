@@ -302,6 +302,7 @@ import { ErrorCodes } from '~/lib/shared/error-codes';
 - **Always use API routes for authenticated user queries/reads**
 - **Use API routes in `/api/public/` folder for publicly accessible queries**
 - **Always use the logger from `~/core/logger` for all logging**
+- **Never use console.log, console.error, console.warn, etc. - always use logger instead**
 
 ### Environment Setup
 1. Start Supabase: `npm run supabase:start`
