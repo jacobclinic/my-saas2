@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 
 import TextField from '~/core/ui/TextField';
+import PasswordInput from '~/core/ui/PasswordInput';
 import Button from '~/core/ui/Button';
 import If from '~/core/ui/If';
 
@@ -41,10 +42,9 @@ const EmailPasswordSignInForm: React.FCC<{
         <TextField>
           <TextField.Label  className='mb-1.5 block text-xs sm:text-sm font-medium text-gray-700'>
             Password
-            <TextField.Input
+            <PasswordInput
               required
               data-cy={'password-input'}
-              type="password"
               placeholder={''}
               {...passwordControl}
               className='text-sm sm:text-base'
