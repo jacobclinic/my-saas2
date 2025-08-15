@@ -1,15 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Check, Edit, Link, Trash, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Edit, Link, Users } from 'lucide-react';
 import {
   ClassListData,
   ClassListStudent,
   ClassType,
   ClassWithTutorAndEnrollmentAdmin,
   EditClassData,
-  SelectedClassAdmin,
-  TimeSlot,
+
 } from '~/lib/classes/types/class-v2';
 import {
   Select,
@@ -20,7 +19,7 @@ import {
 } from '../../base-v2/ui/Select';
 import { Badge } from '../../base-v2/ui/Badge';
 import { GRADES } from '~/lib/constants-v2';
-import { format, toZonedTime } from 'date-fns-tz';
+import { format } from '~/lib/utils/date-utils';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import DeleteClassDialog from '../../classes/DeleteClassDialog';
