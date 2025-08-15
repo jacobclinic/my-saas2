@@ -3,11 +3,11 @@ import { Logger } from 'pino';
 import { INVOICES_TABLE } from '~/lib/db-tables';
 import { DatabaseError } from '~/lib/shared/errors';
 import { failure, Result, success } from '~/lib/shared/result';
-import { Invoice } from '~/lib/invoices/v2/types/invoice';
+import { InvoiceInsert } from '~/lib/invoices/v2/types/invoice';
 
 export async function createInvoices(
   supabaseClient: SupabaseClient,
-  invoices: Omit<Invoice, 'id'>[],
+  invoices: InvoiceInsert[],
   logger: Logger,
 ): Promise<Result<void, DatabaseError>> {
   try {
@@ -38,9 +38,9 @@ export async function createInvoices(
 
 export async function createSingleInvoice(
   supabaseClient: SupabaseClient,
-  invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
+  invoiceData: InvoiceInsert,
   logger: Logger
-): Promise<Result<Invoice, DatabaseError>> {
+): Promise<Result<InvoiceInsert, DatabaseError>> {
   try {
     const { data: newInvoice, error: insertError } = await supabaseClient
       .from(INVOICES_TABLE)

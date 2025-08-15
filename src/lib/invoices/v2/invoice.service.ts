@@ -7,7 +7,7 @@ import { getAllEnrollmentsWithClass } from '~/lib/class-enrollments/database/que
 import { getInvoicesByPeriod, getInvoiceByDetails } from './database/queries';
 import { createInvoices, createSingleInvoice } from './database/mutations';
 import { checkUpcomingSessionAvailabilityForClass } from '~/lib/sessions/database/queries';
-import { Invoice } from './types/invoice';
+import { Invoice, InvoiceInsert } from './types/invoice';
 import { TutorInvoice } from './types/tutor-invoice';
 import {
   getInvoicePeriodUTC,
@@ -72,7 +72,7 @@ export class InvoiceService {
 
       const enrollments = enrollmentsResult.data;
       const existingInvoices = existingInvoicesResult.data;
-      const invoicesToInsert: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>[] = [];
+      const invoicesToInsert: InvoiceInsert[] = [];
 
       for (const enrollment of enrollments) {
         const { student_id, class_id, class: classData } = enrollment;
@@ -105,7 +105,7 @@ export class InvoiceService {
       }
 
       if (invoicesToInsert.length > 0) {
-        const createResult = await createInvoices(this.supabaseClient, invoicesToInsert as Omit<Invoice, "id">[], this.logger);
+        const createResult = await createInvoices(this.supabaseClient, invoicesToInsert, this.logger);
         if (!createResult.success) {
           return failure(new AppError('Failed to create invoices.', ErrorCodes.DATABASE_ERROR));
         }
@@ -128,7 +128,7 @@ export class InvoiceService {
     }
   }
 
-  async createInvoiceForNewEnrollment(studentId: string, classId: string): Promise<Result<Invoice, AppError>> {
+  async createInvoiceForNewEnrollment(studentId: string, classId: string): Promise<Result<InvoiceInsert, AppError>> {
     try {
       const now = new Date();
       const invoicePeriod = getInvoicePeriodUTC(now);
