@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import configuration from '~/configuration';
 import { useForm } from 'react-hook-form';
 import useSignInWithEmailPassword from '~/core/hooks/use-sign-in-with-email-password';
-import { getSessionStatus } from '~/lib/utils/date-utils';
+import { getSessionStatus, parse } from '~/lib/utils/date-utils';
 import useUserSession from '~/core/hooks/use-user-session';
 
 function JoinClassSignin() {
@@ -71,8 +71,8 @@ function JoinClassSignin() {
       const timeRange = sessionParams.sessionTime.split(' - ');
       const startTime = timeRange[0];
       
-      // Convert date string to Date object and combine with time
-      const sessionDateTime = new Date(`${sessionParams.sessionDate} ${startTime}`);
+      // Use date-fns to parse the date and time properly
+      const sessionDateTime = parse(`${sessionParams.sessionDate} ${startTime}`, 'EEEE, MMMM dd, yyyy h:mm a', new Date());
       
       if (!isNaN(sessionDateTime.getTime())) {
         return getSessionStatus(sessionDateTime.toISOString());
