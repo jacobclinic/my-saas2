@@ -426,7 +426,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         onClose={() => setShowSessionEditDialog(false)}
         sessionId={sessionData.id}
         sessionData={{
-          title: sessionData.lessonTitle || '',
+          title: sessionData.title || '',
           startTime: sessionData.start_time || '',
           endTime: sessionData.end_time || '',
           meetingUrl: sessionData.zoomLinkStudent || '',

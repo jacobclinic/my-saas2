@@ -347,7 +347,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         onClose={() => setShowSessionEditDialog(false)}
         sessionId={sessionData.id}
         sessionData={{
-          title: sessionData?.sessionRawData?.title || '',
+          title: sessionData.lessonTitle || '',
           startTime: sessionData.start_time || '',
           endTime: sessionData.end_time || '',
           meetingUrl: sessionData?.sessionRawData?.meeting_url || '',
