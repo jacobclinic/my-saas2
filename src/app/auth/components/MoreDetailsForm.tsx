@@ -25,7 +25,9 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
   returnUrl,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(
+    user.user_metadata?.avatar_url || null,
+  );
   const [formErrors, setFormErrors] = useState<{
     dob?: string;
     education?: string;
@@ -199,7 +201,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                   onValueChange={uploadProfilePhoto}
                 >
                   <div className="flex flex-col items-center">
-                    <span className="text-sm font-medium text-primary">
+                    <span className="text-sm font-medium text-primary-800">
                       {photoUrl
                         ? 'Change Profile Picture'
                         : 'Upload Profile Picture'}
