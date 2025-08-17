@@ -44,7 +44,7 @@ async function calculatePaymentDueDate(
       .limit(2);
 
     if (error) {
-      return failure(new AppError('Failed to fetch sessions', 'QUERY_ERROR', { cause: error }));
+      return failure(new AppError('Failed to fetch sessions', 'QUERY_ERROR'));
     }
 
     if (!sessions || sessions.length < 2) {
@@ -72,7 +72,7 @@ async function calculatePaymentDueDate(
     
     return success(formattedDueDate);
   } catch (error) {
-    return failure(new AppError('Failed to calculate payment due date', 'CALCULATION_ERROR', { cause: error }));
+    return failure(new AppError('Failed to calculate payment due date', 'CALCULATION_ERROR'));
   }
 }
 
