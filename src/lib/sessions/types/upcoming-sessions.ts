@@ -23,6 +23,7 @@ interface UpcomingSessionTableData {
   zoomMeetingId: string;
   materials?: Material[];
   lessonTitle?: string;
+  title?: string;
   lessonDescription?: string;
   sessionRawData?: UpcomingSession;
 }
