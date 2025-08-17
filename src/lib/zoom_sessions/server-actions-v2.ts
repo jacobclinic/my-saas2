@@ -3,9 +3,8 @@
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { getZoomSessionBySessionId } from './database/queries';
 import getLogger from '~/core/logger';
-import { getStudentPaymentsByPeriod } from '../payments/database/queries';
 import { getSessionById } from '../sessions/database/queries';
-import { getPaymentPeriodFromDate } from '../utils/date-utils';
+import { InvoiceService } from '../invoices/v2/invoice.service';
 
 const logger = getLogger();
 
@@ -39,36 +38,31 @@ export async function fetchZoomSessionBySessionIdAction(sessionId: string) {
 
 export async function validateStudentPaymentForSessionAction(sessionId: string, classId: string, userId: string): Promise<boolean> {
   try {
-    if (!sessionId || !userId) {
-      console.error('validateStudentPaymentForSession: Missing parameters');
+    if (!sessionId || !classId || !userId) {
+      logger.error('validateStudentPaymentForSession: Missing one or more required parameters.', { sessionId, classId, userId });
       return false;
     }
+
     const sessionData = await getSessionById(client, sessionId);
 
-    if (!sessionData) {
-      logger.error('validateStudentPaymentForSession: Session not found for ID:', sessionId);
-      return false;
-    }
-
-    if (!sessionData.start_time) {
-      logger.error('validateStudentPaymentForSession: Session start_time is missing for ID:', sessionId);
+    if (!sessionData || !sessionData.start_time) {
+      logger.error('validateStudentPaymentForSession: Session or session start time not found.', { sessionId });
       return false;
     }
 
     const sessionDate = new Date(sessionData.start_time);
-    const paymentPeriod = getPaymentPeriodFromDate(sessionDate);
+    
+    const invoiceService = InvoiceService.getInstance(client, logger);
+    const validationResult = await invoiceService.validateStudentPayment(userId, classId, sessionDate);
 
-    const paymentStatus = await getStudentPaymentsByPeriod(client, userId, classId, paymentPeriod);
-    for (const payment of paymentStatus) {
-      if (payment.status === 'paid' && payment.payment_period === paymentPeriod) {
-        logger.info(`validateStudentPaymentForSession: Payment valid for user ${userId} in period ${paymentPeriod}`);
-        return !!(payment.invoice && payment.invoice.status === 'paid')
-      } 
+    if (!validationResult.success) {
+      logger.error('validateStudentPaymentForSession: Failed to validate payment.', { error: validationResult.error });
+      return false;
     }
-    logger.warn(`validateStudentPaymentForSession: No valid payment found for user ${userId} in period ${paymentPeriod}`);
-    return false;
+
+    return validationResult.data;
   } catch (error) {
-    logger.error('Error in validateStudentPaymentForSession:', error);
+    logger.error('An unexpected error occurred in validateStudentPaymentForSessionAction.', { error });
     return false;
   }
 }

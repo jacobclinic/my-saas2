@@ -5,9 +5,10 @@ import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
 import { USERS_TABLE } from '~/lib/db-tables';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
-import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentRegistrationEmailTemplate } from '~/core/email/templates/emailTemplate';
+import { InvoiceService } from '~/lib/invoices/v2/invoice.service';
+import getLogger from '~/core/logger';
 
 const registrationSchema = z.object({
   email: z.string().email(),
@@ -76,12 +77,14 @@ export async function registerStudentViaLoginAction(
       }
 
       // Create invoice for the newly registered student
-      const invoiceId = await createInvoiceForNewStudent(
-        client,
+      const logger = getLogger();
+      const invoiceService = InvoiceService.getInstance(client, logger);
+      const invoiceResult = await invoiceService.createInvoiceForNewEnrollment(
         userId,
         validated.classId,
       );
-      if (!invoiceId) {
+
+      if (!invoiceResult.success) {
         console.error('Failed to create invoice for student:', userId);
         // Continue with registration even if invoice creation fails
         // The system can generate missing invoices later with the monthly job
