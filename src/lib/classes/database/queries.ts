@@ -17,6 +17,7 @@ import {
   ClassWithTutorAndEnrollmentAdmin,
   ClassWithTutorAndEnrollmentAdminRawData,
   DbClassType,
+  ActiveClassForTutorInvoice,
 } from '../types/class-v2';
 import { DatabaseError } from '~/lib/shared/errors';
 import { failure, Result, success } from '~/lib/shared/result';
@@ -754,5 +755,52 @@ export async function getClassById(client: SupabaseClient<Database>, classId: st
       classId
     });
     return failure(new DatabaseError("Something went wrong while fetching the class"));
+  }
+}
+
+export async function getClassFeeById(
+  client: SupabaseClient,
+  classId: string
+): Promise<Result<number | null, DatabaseError>> {
+  try {
+    const { data: classData, error: classError } = await client
+      .from(CLASSES_TABLE)
+      .select('fee')
+      .eq('id', classId)
+      .single();
+
+    if (classError) {
+      return failure(new DatabaseError('Failed to fetch class fee.'));
+    }
+
+    return success(classData?.fee ?? null);
+  } catch (error) {
+    return failure(new DatabaseError('An unexpected error occurred while fetching class fee.'));
+  }
+}
+
+export async function getActiveClassesForTutorInvoices(
+  client: SupabaseClient,
+): Promise<Result<ActiveClassForTutorInvoice[], DatabaseError>> {
+  try {
+    const { data: tutorClasses, error } = await client
+      .from(CLASSES_TABLE)
+      .select(`
+        id,
+        fee,
+        tutor_id,
+        name
+      `)
+      .eq('status', 'active');
+
+    if (error) {
+      logger.error('Error fetching active classes for tutor invoices.', { error });
+      return failure(new DatabaseError('Error fetching active classes for tutor invoices.'));
+    }
+
+    return success(tutorClasses || []);
+  } catch (error) {
+    logger.error('An unexpected error occurred while fetching active classes.', { error });
+    return failure(new DatabaseError('An unexpected error occurred while fetching active classes.'));
   }
 }

@@ -5,6 +5,10 @@ import {
 } from '~/lib/invoices/database/mutations';
 import { getLastMonthPeriod, getNextMonthPeriod } from '~/lib/utils/invoice-utils';
 
+/**
+ * @deprecated Use InvoiceService.generateMonthlyTutorInvoices instead
+ * Generates monthly invoices for tutors based on paid student invoices
+ * */
 export async function POST(req: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
