@@ -18,6 +18,7 @@ import StudentNextSessionCard from './StudentNextSessionCard';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import PaginationControls from '../../components/PaginationControls';
 import { useRouter } from 'next/navigation';
+import { TooltipProvider } from '../base-v2/ui/tooltip';
 
 const StudentDashboard = ({
   upcomingSessionData,
@@ -146,8 +147,9 @@ const StudentDashboard = ({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <TooltipProvider>
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
        
 
         {/* Next Session */}
@@ -205,8 +207,9 @@ const StudentDashboard = ({
             studentId={studentId}
           />
         )}
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 

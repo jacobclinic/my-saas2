@@ -23,7 +23,6 @@ import { AlertTriangle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '../base-v2/ui/tooltip';
 import { useRouter } from 'next/navigation';
@@ -177,57 +176,53 @@ const StudentSessionCard = ({
                 )}
                 
                 {/* Join Class button - always shown for upcoming sessions */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Button 
-                          variant={"primary"}
-                          className="w-[150px]" 
-                          onClick={() => joinMeetingAsStudent(sessionData)} 
-                          disabled={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}>
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Join Class
-                        </Button>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {sessionData.paymentStatus !== PaymentStatus.VERIFIED ? (
-                        <p>Please make payment to join the class</p>
-                      ) : (
-                        <p>Join the class</p>
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button 
+                        variant={"primary"}
+                        className="w-[150px]" 
+                        onClick={() => joinMeetingAsStudent(sessionData)} 
+                        disabled={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}>
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Join Class
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {sessionData.paymentStatus !== PaymentStatus.VERIFIED ? (
+                      <p>Please make payment to join the class</p>
+                    ) : (
+                      <p>Join the class</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
                 
                 {/* View Class button - always shown for upcoming sessions */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Button
-                          variant={"outline"}
-                          className="w-[150px]"
-                          disabled={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}
-                          onClick={() =>
-                            router.push(`/sessions/student/${sessionData.id}?type=${type}`)
-                          }
-                        >
-                          <FileText className="h-4 w-4 mr-2" />
-                          View Class
-                        </Button>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {sessionData.paymentStatus !== PaymentStatus.VERIFIED ? (
-                        <p>Please make payment to view class details</p>
-                      ) : (
-                        <p>View class details</p>
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        variant={"outline"}
+                        className="w-[150px]"
+                        disabled={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}
+                        onClick={() =>
+                          router.push(`/sessions/student/${sessionData.id}?type=${type}`)
+                        }
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        View Class
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {sessionData.paymentStatus !== PaymentStatus.VERIFIED ? (
+                      <p>Please make payment to view class details</p>
+                    ) : (
+                      <p>View class details</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </>
           ) : (
