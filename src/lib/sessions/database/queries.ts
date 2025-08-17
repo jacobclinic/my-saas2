@@ -18,13 +18,15 @@ import {
 } from '../types/session-v2';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
+import { Result, success, failure } from '~/lib/shared/result';
+import { AppError } from '~/lib/shared/errors';
 
 // Helper function to calculate payment due date (one day before 2nd class of the month)
 async function calculatePaymentDueDate(
   client: SupabaseClient<Database>,
   classId: string,
   sessionMonth: string
-): Promise<string | null> {
+): Promise<Result<string>> {
   try {
     // Get all sessions for this class in the given month
     const monthStart = `${sessionMonth}-01`;
@@ -41,14 +43,18 @@ async function calculatePaymentDueDate(
       .order('start_time', { ascending: true })
       .limit(2);
 
-    if (error || !sessions || sessions.length < 2) {
-      return null; // Can't calculate due date without 2nd session
+    if (error) {
+      return failure(new AppError('Failed to fetch sessions', 'QUERY_ERROR', { cause: error }));
+    }
+
+    if (!sessions || sessions.length < 2) {
+      return failure(new AppError('Cannot calculate due date without at least 2 sessions', 'INSUFFICIENT_DATA'));
     }
 
     // Get the 2nd session date and subtract 1 day
     const secondSessionStartTime = sessions[1].start_time;
     if (!secondSessionStartTime) {
-      return null;
+      return failure(new AppError('Second session has no start time', 'INVALID_DATA'));
     }
     
     // Parse the date and work with UTC to avoid timezone issues
@@ -64,9 +70,9 @@ async function calculatePaymentDueDate(
       day: 'numeric',
     });
     
-    return formattedDueDate;
+    return success(formattedDueDate);
   } catch (error) {
-    return null;
+    return failure(new AppError('Failed to calculate payment due date', 'CALCULATION_ERROR', { cause: error }));
   }
 }
 
@@ -1545,11 +1551,16 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
             currentPayment?.status === PAYMENT_STATUS.REJECTED ||
             !currentPayment) // No payment record means pending
         ) {
-          paymentDueDate = await calculatePaymentDueDate(
+          const dueDateResult = await calculatePaymentDueDate(
             client,
             sessionData.class_id,
             sessionMonth
           );
+          
+          if (dueDateResult.success) {
+            paymentDueDate = dueDateResult.data;
+          }
+          // If calculation fails, paymentDueDate remains null
         }
 
         // Transform materials based on payment status
