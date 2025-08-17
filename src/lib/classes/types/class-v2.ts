@@ -317,3 +317,5 @@ export type ClassCreatedEvent = {
   tutorId: string;
   startDate: string;
 }
+
+export type ActiveClassForTutorInvoice = Pick<DbClassType, 'id' | 'fee' | 'tutor_id' | 'name'>;
