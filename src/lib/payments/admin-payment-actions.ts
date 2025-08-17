@@ -21,6 +21,9 @@ import {
 import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
 import { getAllTutorInvoices } from '../invoices/database/queries';
 import { TutorInvoice } from '../invoices/types/types';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
 
 export const approveStudentPaymentAction = withSession(
   async ({
@@ -348,29 +351,71 @@ export const generateAllInvoicesAction = withSession(
 
     try {
       const [year, month] = invoicePeriod.split('-').map(Number);
+      logger.info(`Starting invoice generation for ${invoicePeriod}`);
 
       // Start timing the operation
       const startTime = performance.now();
 
-      // Generate both student and tutor invoices
-      await Promise.all([
+      // Generate both student and tutor invoices with better error handling
+      const [studentResult, tutorResult] = await Promise.allSettled([
         generateMonthlyInvoicesStudents(client, year, month),
         generateMonthlyInvoicesTutor(client, year, month),
       ]);
-      // await generateMonthlyInvoicesStudents(client, year, month);
-      // await generateMonthlyInvoicesTutor(client, year, month);
 
-      // Calculate how long it took
+      // Calculate execution time
       const endTime = performance.now();
       const executionTime = Math.round((endTime - startTime) / 1000);
 
+      // Check results
+      const studentSuccess = studentResult.status === 'fulfilled';
+      const tutorSuccess = tutorResult.status === 'fulfilled';
+
+      let message = '';
+      let errors = [];
+
+      if (studentSuccess && tutorSuccess) {
+        message = `All invoices successfully generated for ${invoicePeriod}`;
+      } else {
+        // Partial success or failure
+        if (studentSuccess) {
+          message += `Student invoices generated successfully. `;
+        } else {
+          errors.push(
+            `Student invoice generation failed: ${studentResult.reason}`,
+          );
+        }
+
+        if (tutorSuccess) {
+          message += `Tutor invoices generated successfully.`;
+        } else {
+          errors.push(`Tutor invoice generation failed: ${tutorResult.reason}`);
+        }
+
+        if (errors.length === 2) {
+          // Both failed
+          return {
+            success: false,
+            error: errors.join(' '),
+            executionTime,
+          };
+        } else {
+          // Partial success
+          message = `Partial success: ${message}`;
+        }
+      }
+
+      logger.info(
+        `Invoice generation completed for ${invoicePeriod} in ${executionTime}s`,
+      );
+
       return {
         success: true,
-        message: `All invoices successfully generated for ${invoicePeriod}`,
+        message,
         executionTime,
+        warnings: errors.length > 0 ? errors : undefined,
       };
     } catch (error: any) {
-      console.error('Error generating all invoices:', error);
+      logger.error('Error generating all invoices:', error);
       return {
         success: false,
         error: error.message || 'Failed to generate invoices',

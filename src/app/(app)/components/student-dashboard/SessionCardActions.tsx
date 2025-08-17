@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '~/app/(app)/components/base-v2/ui/Button';
-import { DollarSign, ExternalLink, FileText } from 'lucide-react';
+import { Banknote, ExternalLink, FileText } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
@@ -98,7 +98,7 @@ const SessionCardActions = ({
           className="w-[118px] text-sm font-medium"
           onClick={onPayNow}
         >
-          <DollarSign className="h-4 w-4 mr-2" />
+          <Banknote className="h-4 w-4 mr-2" />
           Pay Now
         </Button>
       );
