@@ -24,6 +24,9 @@ import {
   SelectValue,
 } from '../base-v2/ui/Select';
 import { Loader2, RefreshCcw, CheckCircle } from 'lucide-react';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
 
 interface AdminPaymentsPanelProps {}
 
@@ -206,29 +209,51 @@ const AdminPaymentsPanel = () => {
         invoicePeriod: selectedInvoiceMonth,
       });
 
-      if (result.success) {
-        setInvoiceMessage({
-          type: 'success',
-          text: `${result.message} for ${selectedInvoiceMonth} (took ${result.executionTime} seconds)`,
-        });
-        // Optionally, reload data if needed
-        if (activeTab === 'student-payments') {
-          loadStudentPaymentsForPeriod(selectedPeriod);
-        }
-        if (activeTab === 'tutor-payments') {
-          loadTutorInvoicesForPeriod(selectedPeriod);
+      // Check if result is valid and has the expected structure
+      if (result && typeof result === 'object' && 'success' in result) {
+        if (result.success) {
+          let message = `${result.message} for ${selectedInvoiceMonth} (took ${result.executionTime} seconds)`;
+
+          // Add warnings if there are any (partial success)
+          if (result.warnings && result.warnings.length > 0) {
+            message += `\n\nWarnings:\n${result.warnings.join('\n')}`;
+          }
+
+          setInvoiceMessage({
+            type:
+              result.warnings && result.warnings.length > 0
+                ? 'error'
+                : 'success',
+            text: message,
+          });
+
+          // Optionally, reload data if needed
+          if (activeTab === 'student-payments') {
+            loadStudentPaymentsForPeriod(selectedPeriod);
+          }
+          if (activeTab === 'tutor-payments') {
+            loadTutorInvoicesForPeriod(selectedPeriod);
+          }
+        } else {
+          setInvoiceMessage({
+            type: 'error',
+            text:
+              result.message || result.error || 'Failed to generate invoices',
+          });
         }
       } else {
+        // Handle case where response is not a valid JSON (e.g., 504 timeout HTML response)
+        logger.error('Invalid response structure:', result);
         setInvoiceMessage({
           type: 'error',
-          text: result.message || 'Failed to generate invoices',
+          text: 'Server request timed out or returned an invalid response. Please try again or contact support.',
         });
       }
     } catch (error) {
-      console.error('Error generating invoices:', error);
+      logger.error('Error generating invoices:', error);
       setInvoiceMessage({
         type: 'error',
-        text: 'An unexpected error occurred while generating invoices',
+        text: 'An unexpected error occurred while generating invoices. Please try again or contact support.',
       });
     } finally {
       setIsGeneratingInvoices(false);
@@ -290,7 +315,9 @@ const AdminPaymentsPanel = () => {
                 : 'text-red-700'
             }
           >
-            {invoiceMessage.text}
+            <pre className="whitespace-pre-wrap font-sans text-sm">
+              {invoiceMessage.text}
+            </pre>
           </AlertDescription>
         </Alert>
       )}
