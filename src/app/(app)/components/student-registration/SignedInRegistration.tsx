@@ -8,6 +8,14 @@ import { registerStudentAction } from '../../../actions/public/student-registrat
 import RegistrationSuccess from './RegistrationSuccess';
 import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
 import type { User as AuthUser } from '@supabase/supabase-js';
+import type BaseUserData from '~/core/session/types/user-data';
+
+// Extend UserData for student registration with additional required fields
+interface StudentRegistrationUserData extends BaseUserData {
+  city: string | null;
+  district: string | null;
+  birthday: string | null;
+}
 
 // Generate a secure random password for registration validation
 const generateSecurePassword = (): string => {
@@ -19,25 +27,13 @@ const generateSecurePassword = (): string => {
   return password;
 };
 
-interface UserData {
-  id: string;
-  displayName?: string | null;
-  first_name?: string | null;
-  last_name?: string | null;
-  phone_number?: string | null;
-  address?: string | null;
-  city?: string | null;
-  district?: string | null;
-  birthday?: string | null;
-}
-
 interface SignedInRegistrationProps {
   classData: ClassRegistrationData;
   nextSessionId: string;
   formattedDate?: string;
   formattedTime?: string;
   authUser: AuthUser;
-  userData: UserData | null;
+  userData: StudentRegistrationUserData | null;
 }
 
 const SignedInRegistration = ({
