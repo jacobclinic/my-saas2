@@ -9,6 +9,16 @@ import RegistrationSuccess from './RegistrationSuccess';
 import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
 import type { User as AuthUser } from '@supabase/supabase-js';
 
+// Generate a secure random password for registration validation
+const generateSecurePassword = (): string => {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let password = '';
+  for (let i = 0; i < 16; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+};
+
 interface UserData {
   id: string;
   displayName?: string | null;
@@ -16,6 +26,9 @@ interface UserData {
   last_name?: string | null;
   phone_number?: string | null;
   address?: string | null;
+  city?: string | null;
+  district?: string | null;
+  birthday?: string | null;
 }
 
 interface SignedInRegistrationProps {
@@ -48,21 +61,57 @@ const SignedInRegistration = ({
       return;
     }
 
+    // Validate required user data
+    if (!userData.first_name || !userData.last_name) {
+      setError('First name and last name are required. Please update your profile and try again.');
+      return;
+    }
+
+    if (!authUser.email) {
+      setError('Email is required. Please ensure your account has a valid email address.');
+      return;
+    }
+
+    if (!userData.phone_number) {
+      setError('Phone number is required. Please update your profile with a valid phone number.');
+      return;
+    }
+
+    if (!userData.address) {
+      setError('Address is required. Please update your profile with your address information.');
+      return;
+    }
+
+    if (!userData.city) {
+      setError('City is required. Please update your profile with your city information.');
+      return;
+    }
+
+    if (!userData.district) {
+      setError('District is required. Please update your profile with your district information.');
+      return;
+    }
+
+    if (!userData.birthday) {
+      setError('Birthday is required. Please update your profile with your birthday information.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
     try {
-      // Use the existing registration action with minimal data for signed-in users
+      // Use the existing registration action with validated user data
       const result = await registerStudentAction({
-        firstName: userData.first_name || 'Student',
-        lastName: userData.last_name || 'User',
-        email: authUser.email || '',
-        phone: userData.phone_number || '0771234567', // Fallback phone
-        birthday: '2000-01-01', // Default birthday if not available
-        address: userData.address || 'Colombo', // Default address
-        city: 'Colombo', // Default city
-        district: 'Colombo', // Default district
-        password: 'temp123456', // Temporary password for validation
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        email: authUser.email,
+        phone: userData.phone_number,
+        birthday: userData.birthday,
+        address: userData.address,
+        city: userData.city,
+        district: userData.district,
+        password: generateSecurePassword(),
         classId: classData.classId || ''
       });
 
