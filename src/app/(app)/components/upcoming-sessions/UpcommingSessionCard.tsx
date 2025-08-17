@@ -48,7 +48,7 @@ import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import { useRouter } from 'next/navigation';
 import useSessionTimeValidation from '~/core/hooks/use-session-time-validation';
 import { fetchZoomSessionBySessionIdAction } from '~/lib/zoom_sessions/server-actions-v2';
-import { useToast } from '../../lib/hooks/use-toast';
+import { toast } from 'sonner';
 import { isIPadOS } from '~/lib/utils/device-utils';
 
 interface TimeRange {
@@ -78,7 +78,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
     description: sessionData?.sessionRawData?.description || '',
   });
 
-  const { toast } = useToast();
 
   // Store original lesson details to track changes
   const [originalLessonDetails, setOriginalLessonDetails] =
@@ -142,11 +141,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
           window.location.assign(url);
         }
       } else {
-        toast({
-          title: 'Error',
-          description:'Something wrong with the class, Please contact admin',
-          variant: 'destructive',
-        });
+        toast.error('Something wrong with the class, Please contact admin');
       }
     });
   }, [sessionData]);

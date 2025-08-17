@@ -34,7 +34,7 @@ import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { useToast } from '~/app/(app)/lib/hooks/use-toast';
+import { toast } from 'sonner';
 import AddLessonDetailsDialog from '../../upcoming-sessions/AddLessonDetailsDialog';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
@@ -45,7 +45,6 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
 }) => {
   const isDashboard = variant === 'dashboard';
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
 
   const [linkCopied, setLinkCopied] = useState<{
     student?: boolean;
@@ -83,22 +82,14 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
     });
 
     if (result.success) {
-      toast({
-        title: 'Success',
-        description: 'Session edited successfully',
-        variant: 'success',
-      });
+      toast.success('Session edited successfully');
       // Update original lesson details to reflect the saved state
       setOriginalLessonDetails({
         title: lessonDetails.title,
         description: lessonDetails.description,
       });
     } else {
-      toast({
-        title: 'Error',
-        description: 'Failed to edit session',
-        variant: 'destructive',
-      });
+      toast.error('Failed to edit session');
     }
     setEditSessionLoading(false);
     setShowLessonDetailsDialog(false);

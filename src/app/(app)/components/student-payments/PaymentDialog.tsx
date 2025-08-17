@@ -21,7 +21,7 @@ import { uploadPaymentSlipAction } from '~/lib/student-payments/server-actions';
 import { getFileBuffer } from '~/lib/utils/upload-material-utils';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import getLogger from '~/core/logger';
-import { useToast } from '~/app/(app)/lib/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface UploadingFile {
   file: File;
@@ -46,7 +46,6 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   onPaymentSuccess,
 }) => {
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
   const [uploadingFile, setUploadingFile] = useState<UploadingFile | null>(
     null,
   );
@@ -216,11 +215,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         );
 
         // Show success toast
-        toast({
-          variant: 'success',
-          title: 'Receipt Submitted Successfully',
-          description: 'Your payment receipt has been submitted for admin approval.',
-        });
+        toast.success('Your payment receipt has been submitted for admin approval.');
 
         // Call the success callback to update parent state
         if (onPaymentSuccess) {
