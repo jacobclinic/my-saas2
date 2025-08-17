@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import configuration from '~/configuration';
 import { useForm } from 'react-hook-form';
 import useSignInWithEmailPassword from '~/core/hooks/use-sign-in-with-email-password';
-import { getSessionStatus } from '~/lib/utils/date-utils';
+import { getSessionStatus, parseSessionDateTime } from '~/lib/utils/date-utils';
 import useUserSession from '~/core/hooks/use-user-session';
 
 function JoinClassSignin() {
@@ -63,22 +63,14 @@ function JoinClassSignin() {
       return 'Upcoming';
     }
     
-    // Construct ISO datetime string from date and time
-    // Assuming sessionDate is in format like "Thursday, August 14, 2025"
-    // and sessionTime is in format like "4:30 PM - 9:30 PM"
-    try {
-      // Extract start time from session time range
-      const timeRange = sessionParams.sessionTime.split(' - ');
-      const startTime = timeRange[0];
-      
-      // Convert date string to Date object and combine with time
-      const sessionDateTime = new Date(`${sessionParams.sessionDate} ${startTime}`);
-      
-      if (!isNaN(sessionDateTime.getTime())) {
-        return getSessionStatus(sessionDateTime.toISOString());
-      }
-    } catch (error) {
-      console.error('Error parsing session date/time:', error);
+    // Use utility function to parse session date and time
+    const sessionDateTime = parseSessionDateTime(
+      sessionParams.sessionDate, 
+      sessionParams.sessionTime
+    );
+    
+    if (sessionDateTime) {
+      return getSessionStatus(sessionDateTime);
     }
     
     return 'Upcoming';

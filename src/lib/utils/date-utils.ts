@@ -1,4 +1,4 @@
-import { addDays, startOfWeek, endOfYear, endOfMonth } from 'date-fns';
+import { addDays, startOfWeek, endOfYear, endOfMonth, subHours, isAfter, isBefore, isWithinInterval } from 'date-fns';
 import { TimeSlot } from '../classes/types/class-v2';
 import { dayMap } from '../constants-v2';
 import { parse, format } from 'date-fns';
@@ -317,6 +317,48 @@ export function formatToHumanReadableDate(date: string | Date): string {
   return format(new Date(date), 'EEEE, MMMM dd, yyyy');
 }
 
+/**
+ * Checks if the current time is within 1 hour before the given start time
+ * @param startTime - ISO string or Date object representing session start time
+ * @returns boolean indicating if within 1 hour before start
+ */
+export function isOneHourBefore(startTime: string | Date): boolean {
+  const now = new Date();
+  const sessionStart = new Date(startTime);
+  const oneHourBefore = subHours(sessionStart, 1);
+  
+  return isWithinInterval(now, { start: oneHourBefore, end: sessionStart });
+}
+
+/**
+ * Parses a session date and time string into an ISO datetime string
+ * @param sessionDate - Date string like "Thursday, August 14, 2025"
+ * @param sessionTime - Time range string like "4:30 PM - 9:30 PM"
+ * @returns ISO datetime string or null if parsing fails
+ */
+export function parseSessionDateTime(sessionDate: string, sessionTime: string): string | null {
+  try {
+    // Extract start time from session time range
+    const timeRange = sessionTime.split(' - ');
+    const startTime = timeRange[0]?.trim();
+    
+    if (!startTime) return null;
+    
+    // Parse the date and time using date-fns
+    const dateTimeString = `${sessionDate} ${startTime}`;
+    const parsedDate = new Date(dateTimeString);
+    
+    if (isNaN(parsedDate.getTime())) {
+      return null;
+    }
+    
+    return parsedDate.toISOString();
+  } catch (error) {
+    console.error('Error parsing session date/time:', error);
+    return null;
+  }
+}
+
 export function getSessionStatus(startTime: string, endTime?: string): 'Upcoming' | 'Starting soon' | 'Ongoing' {
   const now = new Date();
   const sessionStart = new Date(startTime);
@@ -328,15 +370,13 @@ export function getSessionStatus(startTime: string, endTime?: string): 'Upcoming
   // If endTime is provided, check if session is ongoing
   if (endTime) {
     const sessionEnd = new Date(endTime);
-    if (now >= sessionStart && now <= sessionEnd) {
+    if (isWithinInterval(now, { start: sessionStart, end: sessionEnd })) {
       return 'Ongoing';
     }
   }
   
-  // Check if within 1 hour before start time
-  const oneHourBefore = new Date(sessionStart.getTime() - 60 * 60 * 1000);
-  
-  if (now >= oneHourBefore && now < sessionStart) {
+  // Check if within 1 hour before start time using date-fns
+  if (isOneHourBefore(sessionStart)) {
     return 'Starting soon';
   }
   
