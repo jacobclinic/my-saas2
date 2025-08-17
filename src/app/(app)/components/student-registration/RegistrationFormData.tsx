@@ -67,29 +67,7 @@ const StudentRegistrationForm = ({
   authUser,
   userData,
 }: StudentRegistrationFormProps) => {
-  // If user is signed in, show simplified registration form
-  if (authUser && userData) {
-    // Extend userData with additional fields for student registration
-    // These fields might not be available in the base user data
-    const studentUserData = {
-      ...userData,
-      city: (userData as any).city || null,
-      district: (userData as any).district || null,
-      birthday: (userData as any).birthday || null,
-    };
-
-    return (
-      <SignedInRegistration
-        classData={classData}
-        nextSessionId={nextSessionId}
-        formattedDate={formattedDate}
-        formattedTime={formattedTime}
-        authUser={authUser}
-        userData={studentUserData}
-      />
-    );
-  }
-
+  // All hooks must be called before any conditional logic
   const [formData, setFormData] = useState<RegistrationFormData>({
     firstName: '',
     lastName: '',
@@ -113,6 +91,29 @@ const StudentRegistrationForm = ({
 
   const signUpMutation = useSignUpWithEmailAndPasswordMutation();
   const birthdayLimits = getBirthdayDateLimits();
+
+  // If user is signed in, show simplified registration form
+  if (authUser && userData) {
+    // Extend userData with additional fields for student registration
+    // These fields might not be available in the base user data
+    const studentUserData = {
+      ...userData,
+      city: (userData as any).city || null,
+      district: (userData as any).district || null,
+      birthday: (userData as any).birthday || null,
+    };
+
+    return (
+      <SignedInRegistration
+        classData={classData}
+        nextSessionId={nextSessionId}
+        formattedDate={formattedDate}
+        formattedTime={formattedTime}
+        authUser={authUser}
+        userData={studentUserData}
+      />
+    );
+  }
 
   // Simplified validation function
   const validateFormField = (fieldName: keyof RegistrationFormData, value: string) => {
