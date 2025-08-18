@@ -9,7 +9,7 @@ import BaseDialog from '../base-v2/BaseDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { Button } from '../base-v2/ui/Button';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
-import { useToast } from '../../lib/hooks/use-toast';
+import { toast } from 'sonner';
 import { convertToLocalTime } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../TimezoneIndicator';
 
@@ -46,7 +46,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
 
   const [editedSession, setEditedSession] = useState<EditSessionData>({
     title: '',
@@ -196,20 +195,13 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 
         if (result.success) {
           onClose();
-          toast({
-            title: 'Success',
-            description: result.warning
-              ? 'Session updated with warning: ' + result.warning
-              : 'Session edited successfully',
-            variant: result.warning ? 'destructive' : 'success',
-            duration: result.warning ? 8000 : 3000, // Longer duration for warnings
-          });
+          if (result.warning) {
+            toast.error('Session updated with warning: ' + result.warning, { duration: 8000 });
+          } else {
+            toast.success('Session edited successfully');
+          }
         } else {
-          toast({
-            title: 'Error',
-            description: result.error || 'Failed to edit session',
-            variant: 'destructive',
-          });
+          toast.error(result.error || 'Failed to edit session');
         }
       });
     }

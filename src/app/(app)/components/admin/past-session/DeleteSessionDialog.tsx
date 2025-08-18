@@ -5,7 +5,7 @@ import { X, Plus, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '../../base-v2/ui/Alert';
 import BaseDialog from '../../base-v2/BaseDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { useToast } from '../../../lib/hooks/use-toast';
+import { toast } from 'sonner';
 import { deleteSessionAction } from '~/lib/sessions/server-actions';
 
 interface DeleteSessionDialogProps {
@@ -25,7 +25,6 @@ const DeleteSessionDialog: React.FC<DeleteSessionDialogProps> = ({
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
 
   const handleSubmit = () => {
     if (!sessionId) return;
@@ -33,18 +32,9 @@ const DeleteSessionDialog: React.FC<DeleteSessionDialogProps> = ({
       const result = await deleteSessionAction({ csrfToken, sessionId });
       if (result.success) {
         onClose();
-        toast({
-          title: 'Session Deleted',
-          description: 'The session has been successfully deleted.',
-          variant: 'success',
-        });
+        toast.success('The session has been successfully deleted.');
       } else {
-        toast({
-          title: 'Error deleting session',
-          description:
-            'There was an error deleting the session. Please try again.',
-          variant: 'destructive',
-        });
+        toast.error('There was an error deleting the session. Please try again.');
       }
       onDeleteSession(sessionId);
     });
