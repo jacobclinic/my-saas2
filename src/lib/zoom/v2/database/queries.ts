@@ -1,5 +1,7 @@
 import { ZOOM_USERS_TABLE } from '~/lib/db-tables';
-import { Client } from '../types';
+import { Client, CommaZoomUser, DBZoomUser } from '../types';
+import { failure, Result, success } from '~/lib/shared/result';
+import { DatabaseError } from '~/lib/shared/errors';
 
 export async function getZoomUserByTutorId(client: Client, tutorId: string) {
     return await client
@@ -62,3 +64,40 @@ export async function getAllZoomUsersWithTutor(client: Client) {
     return data;
 }
 
+export async function getUnassignedZoomUsers(client: Client): Promise<Result<DBZoomUser[]>> {
+    try {
+        const { data, error } = await client
+            .from(ZOOM_USERS_TABLE)
+            .select('*')
+            .eq('is_assigned', false);
+        if (error) {
+            return failure(
+                new DatabaseError(
+                    `Failed to fetch unassigned zoom users: ${error.message}`,
+                ),
+            );
+        }
+        const users = data as DBZoomUser[];
+        return success(users);
+    } catch (error) {
+        return failure(
+            new DatabaseError(`Failed to fetch unassigned zoom users: ${error}`),
+        );
+    }
+}
+
+export async function getZoomUserById(client: Client, zoomUserId: number): Promise<Result<DBZoomUser>> {
+    try {
+        const { data, error } = await client
+            .from(ZOOM_USERS_TABLE)
+            .select('*')
+            .eq('id', zoomUserId)
+            .maybeSingle();
+        if (error) {
+            return failure(new DatabaseError(`Failed to fetch zoom user by zoom user id: ${error.message}`));
+        }
+        return success(data as DBZoomUser);
+    } catch (error) {
+        return failure(new DatabaseError(`Failed to fetch zoom user by zoom user id: ${error}`));
+    }
+}
