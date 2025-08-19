@@ -335,9 +335,37 @@ const StudentSessionDetails = ({
                 {type === 'past' && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-900 mb-3">
-                      Class Recording
+                      Class Recordings
                     </h3>
-                    <div className="bg-gray-50 rounded-lg overflow-hidden">
+                    {Array.isArray(formattedSessionData.recordingUrl) && formattedSessionData.recordingUrl.length > 0 ? (
+                      <div className="space-y-2">
+                        {formattedSessionData.recordingUrl.map((recording, index) => (
+                          <div key={`${recording}-${index}`} className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <Video size={20} className="text-gray-600 mr-3 flex-shrink-0" />
+                            <div className="flex-grow min-w-0">
+                              <p className="text-sm text-gray-700 truncate">
+                                Class Recording {index + 1}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(recording, '_blank')}
+                              className="ml-2 flex-shrink-0"
+                            >
+                              View
+                            </Button>
+                          </div>
+                        ))
+                        }
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 rounded-lg p-4 text-center">
+                        <Video size={24} className="text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500">No recordings available for this class.</p>
+                      </div>
+                    )}
+                    {/* <div className="bg-gray-50 rounded-lg overflow-hidden">
                       <div className="aspect-video bg-gray-900 relative">
                         <div className="absolute inset-0 flex items-center justify-center">
                           <Video size={48} className="text-white opacity-70" />
@@ -360,7 +388,7 @@ const StudentSessionDetails = ({
                           Watch Recording
                         </Button>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 )}
               </div>

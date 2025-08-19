@@ -223,7 +223,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
               <Button
                 key={index}
                 onClick={async () =>
-                  window.open(await getRecordingUrl(fileName), '_blank')
+                  window.open(fileName, '_blank')
                 }
                 className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
               >
