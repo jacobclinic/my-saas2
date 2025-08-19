@@ -103,9 +103,9 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
     }
   };
 
-   const calculateAttendancePercentage = ({
+  const calculateAttendancePercentage = ({
     attendanceCount,
-    totalStudents,  
+    totalStudents,
     subtractOne = false,
   }: {
     attendanceCount: number;
@@ -115,11 +115,11 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
     if (totalStudents === undefined || totalStudents <= 0) {
       return '0%';
     }
-  
+
     const adjustedCount = subtractOne ? attendanceCount - 1 : attendanceCount;
     const finalCount = Math.max(0, adjustedCount);
     const percentage = (finalCount / totalStudents) * 100;
-    
+
     return `${percentage.toFixed(1)}%`;
   }
 
@@ -151,15 +151,15 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
           </div>
           <div className="p-4 bg-primary-blue-50 rounded-lg flex flex-col items-center justify-center">
             <p className="text-sm font-medium text-primary-blue-600">Attended</p>
-            <p className="text-2xl font-bold text-primary-blue-700 mt-2">{attendance.length}</p>
+            <p className="text-2xl font-bold text-primary-blue-700 mt-2">  {selectedSession?.attendance?.length ?? 0}</p>
           </div>
           <div className="p-4 bg-primary-blue-50 rounded-lg flex flex-col items-center justify-center">
             <p className="text-sm font-medium text-primary-blue-600">Attendance Rate</p>
             <p className="text-2xl font-bold text-primary-blue-700 mt-2">
               {calculateAttendancePercentage({
-                attendanceCount: attendance.length,
+                attendanceCount: selectedSession?.attendance?.length ?? 0,
                 totalStudents: selectedSession?.noOfStudents || 0,
-                subtractOne: true,
+                subtractOne: false,
               })}
             </p>
           </div>
