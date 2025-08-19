@@ -11,11 +11,9 @@ const ZOOM_WEBHOOK_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN as string;
 export async function POST(req: Request) {
   try {
     logger.info(`[Zoom] Received Zoom Webhook`);
-    logger.info(`[Zoom] Request Headers: ${JSON.stringify(req.headers)}`);
-    logger.info(`[Zoom] Request Body: ${JSON.stringify(req.body)}`);
-    console.log(`[Zoom] Request Body: ${JSON.stringify(req.body)}`);
-
     const rawBody = await req.text();
+    logger.info(`[Zoom] Request Body: ${rawBody}`);
+    console.log(`[Zoom] Request Body: ${rawBody}`);
     const isAuthenticated = await isAutheticatedRequest(req, rawBody);
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
