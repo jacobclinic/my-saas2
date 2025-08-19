@@ -5,6 +5,7 @@ import { markAttendanceAction } from '~/lib/attendance/server-actions';
 import { AttendanceService } from '~/lib/attendance/attendence.service';
 import { ZoomWebhookEvent } from '~/lib/zoom/v2/types';
 import { ZoomParticipantLeftWebhookPayload } from '~/lib/zoom/v2/types';
+import { SessionService } from '~/lib/sessions/session.service';
 
 const logger = getLogger();
 
@@ -33,8 +34,6 @@ export const ZoomWebhookEventHandlerRegistry = {
     [zoomWebhookEvents.RECORDING_COMPLETED]: processZoomRecording,
     [zoomWebhookEvents.MEETING_ENDED]: processMeetingEnded,
     [zoomWebhookEvents.MEETING_PARTICIPANT_LEFT]: processMeetingParticipantLeft,
-
-
 } as const;
 
 function verifyZoomWebhookUrl(data: ZoomWebhookEvent) {
@@ -55,9 +54,20 @@ function verifyZoomWebhookUrl(data: ZoomWebhookEvent) {
 }
 
 
-function processZoomRecording(data: ZoomWebhookEvent) {
+async function processZoomRecording(data: ZoomWebhookEvent) {
     try {
         console.log("Processing Zoom recording:", JSON.stringify(data, null, 2));
+        if(data.event === zoomWebhookEvents.RECORDING_COMPLETED){
+            const sessionService = new SessionService(supabaseClient, logger);
+            const shareUrl = data.payload.object.share_url;
+            const allRecordings = [shareUrl];
+            const result = await sessionService.updateSessionRecodingUrls(data.payload.object.id.toString(), allRecordings);
+            if(!result.success){
+                logger.error('Failed to update session recording urls', result.error);
+                return { success: false, error: result.error.message };
+            }
+            return { success: true, message: 'Zoom recording processed' };
+        }
         return { success: true, message: 'Zoom recording processed' };
     } catch (error) {
         logger.error('Error processing Zoom recording:', error);
@@ -68,13 +78,10 @@ function processZoomRecording(data: ZoomWebhookEvent) {
 async function processMeetingEnded(data: ZoomWebhookEvent) {
     try {
         if (data.event === zoomWebhookEvents.MEETING_ENDED) {
-            const newData = data.payload.object.start_time
-            // Todo: Update the session details,
-            // Todo: Start student attendance
-            await markAttendanceAction(supabaseClient);
+            return { success: true, message: 'Zoom meeting ended' };
         }
     } catch (error) {
-        logger.error('Error processing student attendance:', error);
+        logger.error('Error processing Zoom meeting ended:', error);
         throw error;
     }
 }

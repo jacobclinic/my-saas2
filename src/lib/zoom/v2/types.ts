@@ -62,12 +62,52 @@ interface ZoomParticipantLeftPayload {
     };
 }
 
+export interface ZoomRecordingFile {
+    id: string;
+    meeting_id: string;
+    recording_start: string;
+    recording_end: string;
+    file_type: string;
+    file_extension: string;
+    file_size: number;
+    play_url?: string; // Only present for playable files (MP4, M4A)
+    download_url: string;
+    status: string;
+    recording_type: string;
+    encryption_fingerprint: string;
+}
+
+export interface ZoomRecordingCompletedPayload {
+    account_id: string;
+    object: {
+        uuid: string;
+        id: number;
+        account_id: string;
+        host_id: string;
+        topic: string;
+        type: number;
+        start_time: string;
+        timezone: string;
+        host_email: string;
+        duration: number;
+        total_size: number;
+        recording_count: number;
+        share_url: string;
+        recording_files: ZoomRecordingFile[];
+        on_prem: boolean;
+    };
+}
+
+
 export type ZoomWebhookEvent = BaseZoomWebhookPayload<'meeting.ended', ZoomMeetingEndedPayload> | BaseZoomWebhookPayload<
     'endpoint.url_validation',
     ZoomUrlValidationPayload
 > | BaseZoomWebhookPayload<
     'meeting.participant_left',
     ZoomParticipantLeftPayload
+> | BaseZoomWebhookPayload<
+    'recording.completed',
+    ZoomRecordingCompletedPayload
 >
 
 // Keep the old interface for backward compatibility if needed elsewhere

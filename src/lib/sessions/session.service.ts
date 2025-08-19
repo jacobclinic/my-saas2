@@ -5,11 +5,11 @@ import { failure, Result, success } from "../shared/result";
 import { DatabaseError, ServiceError } from "../shared/errors";
 import { generateWeeklyOccurrences, RecurrenceInput } from "../utils/recurrence-utils";
 import { TimeSlot } from "../classes/types/class-v2";
-import { createMultipleRecurringSessions, deleteSessions } from "./database/mutations";
+import { createMultipleRecurringSessions, deleteSessions, updateSessionAsync } from "./database/mutations";
 import { InsertSessionData } from "./types/session-v2";
-import { SESSIONS_TABLE } from "../db-tables";
 import { getNextSessionByClassID } from "./database/queries";
-import type { UpcomingSession } from "./types/session-v2";
+import type { UpcomingSession, UpdateSessionData } from "./types/session-v2";
+import { getZoomSessionByZoomMeetingId } from "../zoom_sessions/database/queries";
 
 type Client = SupabaseClient<Database>;
 
@@ -108,6 +108,26 @@ export class SessionService {
                 classId,
             });
             return failure(new ServiceError("Failed to fetch next session"));
+        }
+    }
+
+    async updateSessionRecodingUrls(zoomMeetingId: string, recordingUrls: string[]) : Promise<Result<UpdateSessionData, DatabaseError>> {
+        try {
+
+            const zoomSession = await getZoomSessionByZoomMeetingId(this.supabaseClient, zoomMeetingId);
+            const result = await updateSessionAsync(this.supabaseClient, zoomSession.session_id, { recording_urls: recordingUrls });
+            if(!result.success){
+                this.logger.error("Failed to update session recording urls", result.error);
+                return failure(new ServiceError(result.error.message));
+            }
+            return success(result.data);
+        } catch (error) {
+            this.logger.error("Failed to update session recording urls", {
+                error: error instanceof Error ? error.message : String(error),
+                zoomMeetingId,
+                recordingUrls,
+            });
+            return failure(new ServiceError("Failed to update session recording urls"));
         }
     }
 }

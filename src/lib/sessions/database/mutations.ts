@@ -6,7 +6,7 @@ type Client = SupabaseClient<Database>;
 import { SESSIONS_TABLE } from '~/lib/db-tables';
 import SessionType from '../types/session';
 import getLogger from '~/core/logger';
-import { InsertSessionData } from '../types/session-v2';
+import { InsertSessionData, UpdateSessionData } from '../types/session-v2';
 import { DatabaseError } from '~/lib/shared/errors';
 import { failure, Result, success } from '~/lib/shared/result';
 
@@ -307,7 +307,7 @@ export async function updateAttendanceMarked(
 
 
 
-export async function createMultipleRecurringSessions(client: Client, sessions: InsertSessionData[]) : Promise<Result<InsertSessionData[], DatabaseError>> {
+export async function createMultipleRecurringSessions(client: Client, sessions: InsertSessionData[]): Promise<Result<InsertSessionData[], DatabaseError>> {
   try {
     const { data: insertedSessions, error } = await client
       .from(SESSIONS_TABLE)
@@ -326,7 +326,7 @@ export async function createMultipleRecurringSessions(client: Client, sessions: 
   }
 }
 
-export async function deleteSessions(client: Client, classId: string, startDate: string) : Promise<Result<void, DatabaseError>> {
+export async function deleteSessions(client: Client, classId: string, startDate: string): Promise<Result<void, DatabaseError>> {
   try {
     const { error: deleteSessionsError } = await client
       .from(SESSIONS_TABLE)
@@ -342,5 +342,27 @@ export async function deleteSessions(client: Client, classId: string, startDate:
   } catch (error) {
     logger.error("Something went wrong while deleting the recurring sessions", error);
     return failure(new DatabaseError("Something went wrong while deleting the recurring sessions"));
+  }
+}
+
+export async function updateSessionAsync(client: Client, sessionId: string, session: UpdateSessionData):
+  Promise<Result<UpdateSessionData, DatabaseError>> {
+  try {
+    const { data: updatedSession, error } = await client
+      .from(SESSIONS_TABLE)
+      .update(session)
+      .eq('id', sessionId)
+      .select()
+      .single();
+
+    if (error) {
+      logger.error("Failed to update the session", error);
+      return failure(new DatabaseError("Failed to update the session"));
+    }
+    return success(updatedSession);
+  }
+  catch (error) {
+    logger.error("Something went wrong while updating the session", error);
+    return failure(new DatabaseError("Something went wrong while updating the session"));
   }
 }
