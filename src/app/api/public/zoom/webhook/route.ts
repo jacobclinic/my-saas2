@@ -7,11 +7,12 @@ const ZOOM_WEBHOOK_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN as string;
 
 export async function POST(req: Request) {
   try {
-    const isAuthenticated = await isAutheticatedRequest(req);
+    const rawBody = await req.text();
+    const isAuthenticated = await isAutheticatedRequest(req, rawBody);
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const dataPayload: ZoomWebhookEvent = await req.json();
+    const dataPayload: ZoomWebhookEvent = JSON.parse(rawBody);
     const handlerKey = dataPayload.event as keyof typeof ZoomWebhookEventHandlerRegistry;
     const handler = ZoomWebhookEventHandlerRegistry[handlerKey];
     if (!handler) {
@@ -24,8 +25,8 @@ export async function POST(req: Request) {
   }
 }
 
-export async function isAutheticatedRequest(request: Request) {
-  const message = `v0:${request.headers.get('x-zm-request-timestamp')}:${JSON.stringify(request.body)}`;
+export async function isAutheticatedRequest(request: Request, rawBody: string) {
+  const message = `v0:${request.headers.get('x-zm-request-timestamp')}:${rawBody}`;
   const hashForVerify = crypto.createHmac('sha256', ZOOM_WEBHOOK_SECRET_TOKEN).update(message).digest('hex');
   const signature = `v0=${hashForVerify}`
   return request.headers.get("x-zm-signature") === signature
