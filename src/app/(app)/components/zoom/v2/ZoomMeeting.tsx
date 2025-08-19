@@ -15,7 +15,7 @@ type ZoomMeetingProps = {
         classId: string;
         sessionId: string;
         zoomSession: any;
-        userEmail: string;
+        customerKey: string;
         userName: string;
     };
     onInitSuccess?: () => void;
@@ -32,10 +32,11 @@ const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoin
     const meetingNumber = params.zoomSession?.meeting_id;
     const password = params.zoomSession?.password;
     const userName = params.userName;
-    const userEmail = params.userEmail;
+    const customerKey = params.customerKey;
 
+    console.log("[ZoomMeeting] Username", userName);
     const getSignature = async () => {
-        if (!meetingNumber || !password || !userName || !userEmail) {
+        if (!meetingNumber || !password || !userName || !customerKey) {
             console.warn("Missing meeting data, cannot join meeting.");
             return;
         }
@@ -66,17 +67,20 @@ const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoin
                     'report'
                 ],
                 success: (success: any) => {
+                    console.log("[ZoomMeeting] Init Success", success);
                     onInitSuccess && onInitSuccess();
                     ZoomMtg.join({
                         signature: signature,
                         meetingNumber: meetingNumber,
                         userName: userName,
-                        userEmail: userEmail,
                         passWord: password,
+                        customerKey: customerKey,
                         success: (success: any) => {
+                            console.log("[ZoomMeeting] Join Success", success);
                             onJoinSuccess && onJoinSuccess();
                         },
                         error: (error: any) => {
+                            console.log("[ZoomMeeting] Join Error", error);
                             onJoinError && onJoinError(error);
                         }
                     })
@@ -92,10 +96,10 @@ const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoin
     }
 
     useEffect(() => {
-        if (meetingNumber && password && userName && userEmail) {
+        if (meetingNumber && password && userName && customerKey) {
             getSignature();
         }
-    }, [meetingNumber, password, userName, userEmail]);
+    }, [meetingNumber, password, userName, customerKey]);
 
     return (
         <div className="flex-1 w-full h-screen relative">

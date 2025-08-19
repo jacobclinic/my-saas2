@@ -34,10 +34,48 @@ interface ZoomMeetingEndedPayload {
     };
 }
 
+interface ZoomParticipantLeftPayload {
+    account_id: string;
+    object: {
+        uuid: string;
+        participant: {
+            customer_key: string;
+            leave_time: string;
+            public_ip: string;
+            user_id: string;
+            user_name: string;
+            registrant_id: string;
+            participant_user_id: string;
+            id: string;
+            leave_reason: string;
+            email: string;
+            private_ip: string;
+            participant_uuid: string;
+        };
+        id: string;
+        type: number;
+        topic: string;
+        host_id: string;
+        duration: number;
+        start_time: string;
+        timezone: string;
+    };
+}
+
 export type ZoomWebhookEvent = BaseZoomWebhookPayload<'meeting.ended', ZoomMeetingEndedPayload> | BaseZoomWebhookPayload<
     'endpoint.url_validation',
     ZoomUrlValidationPayload
+> | BaseZoomWebhookPayload<
+    'meeting.participant_left',
+    ZoomParticipantLeftPayload
 >
+
+// Keep the old interface for backward compatibility if needed elsewhere
+export interface ZoomParticipantLeftWebhookPayload {
+    payload: ZoomParticipantLeftPayload;
+    event_ts: number;
+    event: string;
+}
 
 export type ZoomUserType = 1 | 2 | 3; // 1=Basic, 2=Licensed, 3=On-prem
 export type ZoomCreateUserAction = 'create' | 'autoCreate' | 'custCreate' | 'ssoCreate';

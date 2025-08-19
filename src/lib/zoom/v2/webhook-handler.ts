@@ -2,7 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import getLogger from '~/core/logger';
 import { markAttendanceAction } from '~/lib/attendance/server-actions';
-import { ZoomWebhookEvent, ZoomWebhookPayload } from '~/lib/zoom/v2/types';
+import { AttendanceService } from '~/lib/attendance/attendence.service';
+import { ZoomWebhookEvent } from '~/lib/zoom/v2/types';
+import { ZoomParticipantLeftWebhookPayload } from '~/lib/zoom/v2/types';
 
 const logger = getLogger();
 
@@ -10,7 +12,7 @@ export const zoomWebhookEvents = {
     ENDPOINT_URL_VALIDATION: 'endpoint.url_validation',
     MEETING_ENDED: 'meeting.ended',
     RECORDING_COMPLETED: 'recording.completed',
-    MEETING_PARTICIPANT_LEFT: "meeting.participant_left​"
+    MEETING_PARTICIPANT_LEFT: "meeting.participant_left"
 } as const;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -30,6 +32,8 @@ export const ZoomWebhookEventHandlerRegistry = {
     [zoomWebhookEvents.ENDPOINT_URL_VALIDATION]: verifyZoomWebhookUrl,
     [zoomWebhookEvents.RECORDING_COMPLETED]: processZoomRecording,
     [zoomWebhookEvents.MEETING_ENDED]: processMeetingEnded,
+    [zoomWebhookEvents.MEETING_PARTICIPANT_LEFT]: processMeetingParticipantLeft,
+
 
 } as const;
 
@@ -74,3 +78,49 @@ async function processMeetingEnded(data: ZoomWebhookEvent) {
     }
 }
 
+async function processMeetingParticipantLeft(data: ZoomWebhookEvent) {
+    try {
+        if (data.event === zoomWebhookEvents.MEETING_PARTICIPANT_LEFT) {
+            const customerKey = data.payload.object.participant.customer_key;
+            
+            logger.info('Processing meeting participant left event', {
+                meetingId: data.payload.object.id,
+                customerKey,
+                participantName: data.payload.object.participant.user_name,
+                leaveTime: data.payload.object.participant.leave_time,
+            });
+
+            if (!customerKey || customerKey.trim() === '') {
+                logger.info('No customer key provided, skipping attendance marking', {
+                    meetingId: data.payload.object.id,
+                    participantName: data.payload.object.participant.user_name,
+                });
+                return { success: true, message: 'No customer key provided' };
+            }
+
+
+            const attendanceService = new AttendanceService(supabaseClient, logger);
+            const result = await attendanceService.markStudentAttendance(customerKey, data);
+
+            if (!result.success) {
+                logger.error('Failed to mark student attendance', {
+                    error: result.error.message,
+                    customerKey,
+                    meetingId: data.payload.object.id,
+                });
+                return { success: false, error: result.error.message };
+            }
+
+            logger.info('Successfully processed participant left and marked attendance', {
+                customerKey,
+                attendanceRecordId: result.data.id,
+                meetingId: data.payload.object.id,
+            });
+
+            return { success: true, attendanceRecordId: result.data.id };
+        }
+    } catch (error) {
+        logger.error('Error processing meeting participant left:', error);
+        return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+}

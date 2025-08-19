@@ -6,6 +6,8 @@ import dynamic from 'next/dynamic';
 import useUserRole from '~/lib/user/hooks/use-userRole';
 import { isFirstWeekOfMonth } from '~/lib/utils/date-utils';
 import Spinner from '~/core/ui/Spinner';
+import { generateZoomCustomerKeyMappingAction } from '~/lib/attendance/server-actions';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 
 // Zoom meeting is a client side only component
@@ -27,16 +29,23 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(true);
   const userSession = useUserSession();
-  const { data: role } = useUserRole();
+  const [customerKey, setCustomerKey] = useState<string | null>(null);
+  const { data: role } = useUserRole(); 
+  const csrfToken = useCsrfToken();
 
   const userEmail = userSession?.auth?.user?.email!;
   const userName = userSession?.data?.first_name! || userEmail;
   const isHost = role === "tutor" || role === "admin";
 
+
   useEffect(() => {
     const fetchZoomSession = async () => {
       try {
         const session = await fetchZoomSessionBySessionIdAction(params.sessionId);
+        const customerKeyResponse = await generateZoomCustomerKeyMappingAction({sessionId: params.sessionId, csrfToken: csrfToken});
+        if (customerKeyResponse.success && customerKeyResponse.customerKey) {
+          setCustomerKey(customerKeyResponse.customerKey);
+        }
         if (session) {
           setZoomSession(session);
           setError("");
@@ -115,8 +124,8 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
 
   return (
     <div>
-      {zoomSession && (
-        <ZoomMeeting params={{ ...params, zoomSession, userEmail, userName }} onInitSuccess={onInitSuccess} onInitError={onInitError}/>
+      {zoomSession && customerKey && (
+        <ZoomMeeting params={{ ...params, zoomSession, customerKey, userName }} onInitSuccess={onInitSuccess} onInitError={onInitError}/>
       )}
     </div>
   );
