@@ -249,6 +249,7 @@ export async function insertStudentSessionAttendance(
         error: insertError.message,
         attendanceData,
       });
+      console.log("Error in insertStudentSessionAttendance",JSON.stringify(insertError));
       return failure(new DatabaseError('Failed to insert student session attendance'));
     }
 

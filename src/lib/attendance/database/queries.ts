@@ -67,6 +67,6 @@ export async function getSessionAndUserByCustomerKey(
             name: error instanceof Error ? error.name : undefined,
             customerKey,
         });
-        return failure(new DatabaseError('Failed to lookup session and user by customer key'));
-    }
+    return failure(new DatabaseError('Failed to lookup session and user by customer key'));
+  }
 }

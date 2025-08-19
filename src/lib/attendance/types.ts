@@ -37,5 +37,34 @@ export const generateZoomCustomerKeyMappingFailure = (message: string, code: str
 
 
 
+// Manual attendance marking types
+export interface MarkStudentAttendanceManualParams {
+    sessionId: string;
+    userId: string;
+    csrfToken: string;
+}
+
+export interface MarkStudentAttendanceManualResponse {
+    success: boolean;
+    message?: string;
+    attendanceRecordId?: string;
+    error?: {
+        code: string;
+        message: string;
+    };
+}
+
+export const markStudentAttendanceManualSuccess = (attendanceRecordId: string): MarkStudentAttendanceManualResponse => ({
+    success: true,
+    attendanceRecordId,
+});
+
+export const markStudentAttendanceManualFailure = (message: string, code: string): MarkStudentAttendanceManualResponse => ({
+    success: false,
+    error: {
+        code,
+        message,
+    },
+});
+
 // Note: Webhook payload types are now centralized in zoom/v2/types.ts
-// Mark attendance is handled directly by the service layer with Result<T, E> pattern

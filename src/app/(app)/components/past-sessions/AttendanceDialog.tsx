@@ -103,6 +103,26 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
     }
   };
 
+   const calculateAttendancePercentage = ({
+    attendanceCount,
+    totalStudents,  
+    subtractOne = false,
+  }: {
+    attendanceCount: number;
+    totalStudents: number;
+    subtractOne?: boolean;
+  }): string => {
+    if (totalStudents === undefined || totalStudents <= 0) {
+      return '0%';
+    }
+  
+    const adjustedCount = subtractOne ? attendanceCount - 1 : attendanceCount;
+    const finalCount = Math.max(0, adjustedCount);
+    const percentage = (finalCount / totalStudents) * 100;
+    
+    return `${percentage.toFixed(1)}%`;
+  }
+
   const dialogFooter = (
     <Button
       className="w-full"
@@ -125,21 +145,22 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
     >
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-4">
-          <div className="p-4 bg-neutral-50 rounded-lg">
+          <div className="p-4 bg-neutral-50 rounded-lg flex flex-col items-center justify-center">
             <p className="text-sm font-medium text-neutral-600">Total Students</p>
-            <p className="text-2xl font-bold text-neutral-900">{selectedSession?.noOfStudents}</p>
+            <p className="text-2xl font-bold text-neutral-900 mt-2">{selectedSession?.noOfStudents}</p>
           </div>
-          <div className="p-4 bg-primary-blue-50 rounded-lg">
+          <div className="p-4 bg-primary-blue-50 rounded-lg flex flex-col items-center justify-center">
             <p className="text-sm font-medium text-primary-blue-600">Attended</p>
-            <p className="text-2xl font-bold text-primary-blue-700">{attendance.length}</p>
+            <p className="text-2xl font-bold text-primary-blue-700 mt-2">{attendance.length}</p>
           </div>
-          <div className="p-4 bg-primary-blue-50 rounded-lg">
+          <div className="p-4 bg-primary-blue-50 rounded-lg flex flex-col items-center justify-center">
             <p className="text-sm font-medium text-primary-blue-600">Attendance Rate</p>
-            <p className="text-2xl font-bold text-primary-blue-700">
-              {selectedSession?.noOfStudents !== undefined &&
-                selectedSession?.noOfStudents > 0
-                ? `${(((attendance.length - 1) / selectedSession.noOfStudents) * 100).toFixed(1)}%`
-                : '0%'}
+            <p className="text-2xl font-bold text-primary-blue-700 mt-2">
+              {calculateAttendancePercentage({
+                attendanceCount: attendance.length,
+                totalStudents: selectedSession?.noOfStudents || 0,
+                subtractOne: true,
+              })}
             </p>
           </div>
         </div>
