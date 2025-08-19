@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import { ZoomWebhookEventHandlerRegistry } from "~/lib/zoom/v2/webhook-handler";
 import crypto from 'crypto';
 import { ZoomWebhookEvent } from "~/lib/zoom/v2/types";
+import getLogger from "~/core/logger";
+
+const logger = getLogger();
 
 const ZOOM_WEBHOOK_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN as string;
 
 export async function POST(req: Request) {
   try {
+    logger.info(`[Zoom] Received Zoom Webhook`);
+    logger.info(`[Zoom] Request Headers: ${JSON.stringify(req.headers)}`);
+    logger.info(`[Zoom] Request Body: ${JSON.stringify(req.body)}`);
+    console.log(`[Zoom] Request Body: ${JSON.stringify(req.body)}`);
+
     const rawBody = await req.text();
     const isAuthenticated = await isAutheticatedRequest(req, rawBody);
     if (!isAuthenticated) {
@@ -16,11 +24,23 @@ export async function POST(req: Request) {
     const handlerKey = dataPayload.event as keyof typeof ZoomWebhookEventHandlerRegistry;
     const handler = ZoomWebhookEventHandlerRegistry[handlerKey];
     if (!handler) {
+      logger.error(`[Zoom] Invalid event:`, {
+        event: dataPayload.event,
+      });
+      console.log(`[Zoom] Invalid event:`, {
+        event: dataPayload.event,
+      });
       return NextResponse.json({ error: 'Invalid event' }, { status: 400 });
     }
     const response = handler(dataPayload);
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
+    logger.error(`[Zoom] Error:`, {
+      error,
+    });
+    console.log(`[Zoom] Error:`, {
+      error,
+    });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
