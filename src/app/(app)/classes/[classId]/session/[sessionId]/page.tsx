@@ -44,6 +44,7 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
         const session = await fetchZoomSessionBySessionIdAction(params.sessionId);
         const customerKeyResponse = await generateZoomCustomerKeyMappingAction({sessionId: params.sessionId, csrfToken: csrfToken});
         if (customerKeyResponse.success && customerKeyResponse.customerKey) {
+          console.log("Customer key generated", customerKeyResponse.customerKey);
           setCustomerKey(customerKeyResponse.customerKey);
         }
         if (session) {

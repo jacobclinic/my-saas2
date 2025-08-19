@@ -67,7 +67,7 @@ const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoin
                     'report'
                 ],
                 success: (success: any) => {
-                    console.log("[ZoomMeeting] Init Success", success);
+                    console.log("[ZoomMeeting] Init Success for the customer key ", customerKey);
                     onInitSuccess && onInitSuccess();
                     ZoomMtg.join({
                         signature: signature,
@@ -76,7 +76,7 @@ const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoin
                         passWord: password,
                         customerKey: customerKey,
                         success: (success: any) => {
-                            console.log("[ZoomMeeting] Join Success", success);
+                            console.log("[ZoomMeeting] Join Success for the customer key ", customerKey);
                             onJoinSuccess && onJoinSuccess();
                         },
                         error: (error: any) => {
