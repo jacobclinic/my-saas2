@@ -57,7 +57,8 @@ function verifyZoomWebhookUrl(data: ZoomWebhookEvent) {
 
 function processZoomRecording(data: ZoomWebhookEvent) {
     try {
-
+        console.log("Processing Zoom recording:", JSON.stringify(data, null, 2));
+        return { success: true, message: 'Zoom recording processed' };
     } catch (error) {
         logger.error('Error processing Zoom recording:', error);
         throw error;

@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ error: 'Invalid event' }, { status: 400 });
     }
-    const response = handler(dataPayload);
+    const response = await handler(dataPayload);
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
     logger.error(`[Zoom] Error:`, {
