@@ -18,6 +18,63 @@ import {
 } from '../types/session-v2';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
+import { Result, success, failure } from '~/lib/shared/result';
+import { AppError } from '~/lib/shared/errors';
+
+// Helper function to calculate payment due date (one day before 2nd class of the month)
+async function calculatePaymentDueDate(
+  client: SupabaseClient<Database>,
+  classId: string,
+  sessionMonth: string
+): Promise<Result<string>> {
+  try {
+    // Get all sessions for this class in the given month
+    const monthStart = `${sessionMonth}-01`;
+    const nextMonth = new Date(sessionMonth + '-01');
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const monthEnd = nextMonth.toISOString().slice(0, 10);
+
+    const { data: sessions, error } = await client
+      .from(SESSIONS_TABLE)
+      .select('start_time')
+      .eq('class_id', classId)
+      .gte('start_time', `${monthStart}T00:00:00`)
+      .lt('start_time', `${monthEnd}T00:00:00`)
+      .order('start_time', { ascending: true })
+      .limit(2);
+
+    if (error) {
+      return failure(new AppError('Failed to fetch sessions', 'QUERY_ERROR'));
+    }
+
+    if (!sessions || sessions.length < 2) {
+      return failure(new AppError('Cannot calculate due date without at least 2 sessions', 'INSUFFICIENT_DATA'));
+    }
+
+    // Get the 2nd session date and subtract 1 day
+    const secondSessionStartTime = sessions[1].start_time;
+    if (!secondSessionStartTime) {
+      return failure(new AppError('Second session has no start time', 'INVALID_DATA'));
+    }
+    
+    // Parse the date and work with UTC to avoid timezone issues
+    const secondSessionDate = new Date(secondSessionStartTime);
+    
+    // Create a new date for the due date calculation using setDate for proper date arithmetic
+    const dueDate = new Date(secondSessionDate);
+    dueDate.setDate(dueDate.getDate() - 1);
+
+    const formattedDueDate = dueDate.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+    
+    return success(formattedDueDate);
+  } catch (error) {
+    return failure(new AppError('Failed to calculate payment due date', 'CALCULATION_ERROR'));
+  }
+}
 
 // /**
 //  * @description Fetch session object data (not auth!) by ID {@link sessionId}
@@ -1466,51 +1523,76 @@ export async function getAllUpcomingSessionsByStudentIdPerWeek(
       return [];
     }
 
-    const transformedData = upcomingSessions?.map((sessionData) => {
-      let classTemp;
-      if (sessionData?.class) {
-        if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
-        else classTemp = sessionData.class;
-      }
-
-      // Find relevant payment
-      const sessionMonth = new Date(sessionData.start_time || '')
-        .toISOString()
-        .slice(0, 7);
-      const currentPayment = upcomingPayments.find(
-        (payment) =>
-          payment.class_id === sessionData.class_id &&
-          payment.payment_period === sessionMonth,
-      );
-
-      // Transform materials based on payment status
-      const transformedMaterials = sessionData.materials?.map((material) => {
-        if (currentPayment?.status === PaymentStatus.VERIFIED) {
-          return material;
+    const transformedData = await Promise.all(
+      upcomingSessions?.map(async (sessionData) => {
+        let classTemp;
+        if (sessionData?.class) {
+          if (Array.isArray(sessionData.class)) classTemp = sessionData.class[0];
+          else classTemp = sessionData.class;
         }
-        const { url, ...materialWithoutUrl } = material;
-        return materialWithoutUrl;
-      });
 
-      return {
-        ...sessionData,
-        class: classTemp
-          ? {
-            id: classTemp.id,
-            name: classTemp.name,
-            subject: classTemp.subject,
-            tutor_id: classTemp.tutor_id,
-            fee: classTemp.fee,
-            tutor: Array.isArray(classTemp.tutor)
-              ? classTemp.tutor[0]
-              : classTemp.tutor || undefined,
+        // Find relevant payment
+        const sessionMonth = new Date(sessionData.start_time || '')
+          .toISOString()
+          .slice(0, 7);
+        const currentPayment = upcomingPayments.find(
+          (payment) =>
+            payment.class_id === sessionData.class_id &&
+            payment.payment_period === sessionMonth,
+        );
+
+        // Calculate payment due date (one day before 2nd class of the month)
+        let paymentDueDate: string | null = null;
+        
+        if (
+          sessionData.class_id &&
+          (currentPayment?.status === PAYMENT_STATUS.PENDING ||
+            currentPayment?.status === PAYMENT_STATUS.PENDING_VERIFICATION ||
+            currentPayment?.status === PAYMENT_STATUS.REJECTED ||
+            !currentPayment) // No payment record means pending
+        ) {
+          const dueDateResult = await calculatePaymentDueDate(
+            client,
+            sessionData.class_id,
+            sessionMonth
+          );
+          
+          if (dueDateResult.success) {
+            paymentDueDate = dueDateResult.data;
           }
-          : undefined,
-        materials: transformedMaterials || [],
-        payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
-        payment_amount: currentPayment?.amount || classTemp?.fee || null,
-      };
-    });
+          // If calculation fails, paymentDueDate remains null
+        }
+
+        // Transform materials based on payment status
+        const transformedMaterials = sessionData.materials?.map((material) => {
+          if (currentPayment?.status === PaymentStatus.VERIFIED) {
+            return material;
+          }
+          const { url, ...materialWithoutUrl } = material;
+          return materialWithoutUrl;
+        });
+
+        return {
+          ...sessionData,
+          class: classTemp
+            ? {
+              id: classTemp.id,
+              name: classTemp.name,
+              subject: classTemp.subject,
+              tutor_id: classTemp.tutor_id,
+              fee: classTemp.fee,
+              tutor: Array.isArray(classTemp.tutor)
+                ? classTemp.tutor[0]
+                : classTemp.tutor || undefined,
+            }
+            : undefined,
+          materials: transformedMaterials || [],
+          payment_status: currentPayment?.status || PAYMENT_STATUS.PENDING,
+          payment_amount: currentPayment?.amount || classTemp?.fee || null,
+          payment_due_date: paymentDueDate,
+        };
+      }) || []
+    );
 
     return transformedData;
   } catch (error) {

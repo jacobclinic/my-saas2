@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import useMutation from 'swr/mutation';
 import { Factor } from '@supabase/gotrue-js';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Tooltip, TooltipContent, TooltipTrigger } from '~/core/ui/Tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 
 import useFetchAuthFactors from '~/core/hooks/use-fetch-factors';
 import Spinner from '~/core/ui/Spinner';
@@ -228,15 +228,17 @@ function FactorsTable({
             </td>
 
             <td className={'flex justify-end'}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <IconButton onClick={() => setUnenrolling(factor.id)}>
-                    <XMarkIcon className={'h-4'} />
-                  </IconButton>
-                </TooltipTrigger>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <IconButton onClick={() => setUnenrolling(factor.id)}>
+                      <XMarkIcon className={'h-4'} />
+                    </IconButton>
+                  </TooltipTrigger>
 
-                <TooltipContent>Unenroll this factor</TooltipContent>
-              </Tooltip>
+                  <TooltipContent>Unenroll this factor</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </td>
           </tr>
         ))}

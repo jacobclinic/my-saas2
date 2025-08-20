@@ -24,7 +24,7 @@ import { Button } from '../base-v2/ui/Button';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { updateClassAction } from '~/lib/classes/server-actions-v2';
-import { useToast } from '../../lib/hooks/use-toast';
+import { toast } from 'sonner';
 import DeleteClassDialog from './DeleteClassDialog';
 import { Json } from '~/database.types';
 
@@ -45,7 +45,6 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
 
   // Add a state to store the original class data for comparison
   const [originalClass, setOriginalClass] = useState<EditClassData | null>(
@@ -187,18 +186,10 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
         });
         if (result.success) {
           onClose();
-          toast({
-            title: 'Success',
-            description: 'Class edited successfully',
-            variant: 'success',
-          });
+          toast.success('Class edited successfully');
         } else {
           const errorMessage = result.error || 'Failed to edit class, Please try again. If the problem persists, please contact support.';
-          toast({
-            title: 'Error',
-            description: errorMessage,
-            variant: 'destructive',
-          });
+          toast.error(errorMessage);
         }
       });
       onUpdateClass(classData.id, editedClass);

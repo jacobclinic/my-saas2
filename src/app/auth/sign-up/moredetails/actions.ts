@@ -131,23 +131,6 @@ export async function updateOnboardingDetailsAction(formData: FormData) {
       console.error('Database update error:', error);
       throw error;
     }
-
-    // Create Zoom user if not already created
-    const zoomDisplayName = `${currentUserData.first_name} ${currentUserData.last_name}`;
-    logger.info(`Creating Zoom user for email: ${zoomDisplayName}`);
-    const zoomService = new ZoomService(client);
-    await zoomService.createZoomUser({
-      action: 'create',
-      user_info: {
-        first_name: currentUserData.first_name || '',
-        last_name: currentUserData.last_name || '',
-        display_name: zoomDisplayName,
-        type: 1, //Will create the basic user now. But needs to assign liscenced users later.
-      },
-      tutor_id: currentUserData?.id!,
-    })
-
-
     //notify tutors
     const { data: userData, error: userError } = await client
       .from(USERS_TABLE)

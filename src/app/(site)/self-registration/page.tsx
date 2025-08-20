@@ -8,6 +8,7 @@ import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
 import { PublicNextSessionResponse } from '~/lib/sessions/types/session-v2';
 import { formatToHumanReadableDate, formatToLocalHHmmAMPM } from '~/lib/utils/date-utils';
 import { getUserDataById } from '~/lib/user/database/queries';
+import { formatToLocalTime } from '~/lib/utils/timezone-utils';
 
 interface SearchParams {
   classId: string;
@@ -102,7 +103,7 @@ export default async function RegisterPage({
 
               <div className="flex items-center text-gray-600">
                 <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                {formatToLocalHHmmAMPM(classRegistrationData?.start_time!) + ' - ' + formatToLocalHHmmAMPM(classRegistrationData?.end_time!)}
+                {formatToLocalTime(classRegistrationData?.start_time!, 'h:mm a') + ' - ' + formatToLocalTime(classRegistrationData?.end_time!, 'h:mm a')}
               </div>  
 
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
@@ -121,7 +122,7 @@ export default async function RegisterPage({
           classData={classData}
           nextSessionId={classRegistrationData?.id!}
           formattedDate={classRegistrationData ? formatToHumanReadableDate(classRegistrationData.start_time!) : undefined}
-          formattedTime={classRegistrationData ? formatToLocalHHmmAMPM(classRegistrationData.start_time!) + ' - ' + formatToLocalHHmmAMPM(classRegistrationData.end_time!) : undefined}
+          formattedTime={classRegistrationData ? formatToLocalTime(classRegistrationData.start_time!, 'h:mm a') + ' - ' + formatToLocalTime(classRegistrationData.end_time!, 'h:mm a') : undefined}
           authUser={authUser}
           userData={userData}
         />
