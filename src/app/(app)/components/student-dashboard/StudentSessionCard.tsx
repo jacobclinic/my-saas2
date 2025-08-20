@@ -25,7 +25,7 @@ import {
   TooltipContent,
   TooltipTrigger,
   TooltipProvider,
-} from '../base-v2/ui/tooltip';
+} from '~/app/(app)/components/base-v2/ui/tooltip';
 import { useRouter } from 'next/navigation';
 
 interface StudentSessionCardProps {

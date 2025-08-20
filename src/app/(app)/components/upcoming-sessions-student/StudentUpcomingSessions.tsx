@@ -19,7 +19,7 @@ import {
   datePickerObjectToLocalDate,
 } from '~/lib/utils/timezone-utils-filter';
 import { useRouter } from 'next/navigation';
-import { TooltipProvider } from '../base-v2/ui/tooltip';
+import { TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 
 interface DateRange {
   start?: {
