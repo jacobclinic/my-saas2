@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import BaseDialog from '../base-v2/BaseDialog';
 import { ClassListData } from '~/lib/classes/types/class-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { useToast } from '../../lib/hooks/use-toast';
+import { toast } from 'sonner';
 import { deleteClassAction } from '~/lib/classes/server-actions-v2';
 
 interface DeleteClassDialogProps {
@@ -26,7 +26,6 @@ const DeleteClassDialog: React.FC<DeleteClassDialogProps> = ({
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
 
   const handleSubmit = () => {
     if (!classId) return;
@@ -37,18 +36,9 @@ const DeleteClassDialog: React.FC<DeleteClassDialogProps> = ({
       });
       if (result.success) {
         onClose();
-        toast({
-          title: 'Class Deleted',
-          description: 'The class has been successfully deleted.',
-          variant: 'success',
-        });
+        toast.success('The class has been successfully deleted.');
       } else {
-        toast({
-          title: 'Error deleting class',
-          description:
-            'There was an error deleting the class. Please try again.',
-          variant: 'destructive',
-        });
+        toast.error('There was an error deleting the class. Please try again.');
       }
       onDeleteClass(classId);
     });

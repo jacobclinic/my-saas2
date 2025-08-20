@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { sendTutorApprovalNotification } from '~/lib/utils/internal-api-client';
+import { ZoomService } from '~/lib/zoom/v2/zoom.service';
+import { getUserDataById } from '../database/queries';
 
 export interface ApproveTutorActionResult {
   success: boolean;
@@ -10,10 +12,7 @@ export interface ApproveTutorActionResult {
   data?: any;
 }
 
-export async function approveTutorAction(
-  tutorId: string,
-  approve: boolean,
-): Promise<ApproveTutorActionResult> {
+export async function approveTutorAction(tutorId: string, approve: boolean, zoomUserId: number): Promise<ApproveTutorActionResult> {
   try {
     const client = getSupabaseServerActionClient();
 
@@ -37,6 +36,44 @@ export async function approveTutorAction(
       console.error('Error updating tutor approval status:', error);
       throw new Error(`Failed to update tutor: ${error.message}`);
     }
+
+    // Create the new zoom user.
+    // Create Zoom user if not already created
+    const currentUserData = await getUserDataById(client, tutorId);
+    if (!currentUserData) {
+      return {
+        success: false,
+        error: 'Failed to get tutor data',
+      }
+    }
+    const zoomDisplayName = `${currentUserData.first_name} ${currentUserData.last_name}`;
+    const zoomService = new ZoomService(client);
+    const zoomUserResult = await zoomService.getZoomUserById(zoomUserId);
+    if (!zoomUserResult.success) {
+      return {
+        success: false,
+        error: 'Failed to get zoom user',
+      }
+    }
+
+    const zoomUser = zoomUserResult.data;
+
+    console.log(zoomUser);
+
+    // Create the zoom user.
+    await zoomService.createZoomUser({
+      action: 'create',
+      user_info: {
+        first_name: currentUserData.first_name || '',
+        last_name: currentUserData.last_name || '',
+        display_name: zoomDisplayName,
+        type: 1, //Will create the basic user now. But needs to assign liscenced users later.
+        email: zoomUser.email
+      },
+      email: zoomUser.email,
+      zoom_user_id: zoomUser.id,
+      tutor_id: tutorId,
+    })
 
     // Send email notification based on approval status
     try {

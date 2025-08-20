@@ -15,6 +15,12 @@ import {
   FileText,
   Banknote,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../base-v2/ui/tooltip';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
@@ -229,41 +235,73 @@ const StudentSessionCard = ({
             </>
           ) : (
             <>
-              {sessionData.recordingUrl &&
-              sessionData.recordingUrl.length > 0 ? (
-                sessionData.recordingUrl.map((fileName, index) => (
+              {/* Always show View Class button for past sessions, but disable if payment not made */}
+              <div className='flex items-center gap-2'>
+                {/* Show Make Payment button if payment is not verified */}
+                {sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED && (
                   <Button
-                    key={index}
-                    onClick={async () =>
-                      window.open(await getRecordingUrl(fileName), '_blank')
-                    }
-                    className="flex items-center"
+                    variant="primary"
+                    className="w-[150px]"
+                    onClick={() => {
+                      setSelectedSession(sessionData);
+                      setShowPaymentDialog(true);
+                    }}
                   >
-                    <Video className="h-4 w-4 mr-2" />
-                    Watch Recording {index + 1}
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Make Payment
                   </Button>
-                ))
-              ) : (
-                <>
-                  {sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED ? (
-                    <Alert className="border-red-200 bg-red-50">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-700">
-                        Recording not available for this session.
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Alert className="border-red-200 bg-red-50">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-700">
-                        You have not made the payment to the class
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </>
+                )}
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-[150px]">
+                        <Button
+                          variant={sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED ? "primary" : "outline"}
+                          className="w-full"
+                          disabled={sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED || isPending}
+                          onClick={() =>
+                            router.push(`/sessions/student/${sessionData.id}?type=${type}`)
+                          }
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          View Class
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED
+                        ? <p>Make a payment to view the class</p>
+                        : <p>View class details and materials</p>
+                      }
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              {/* Recording buttons */}
+              {sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED && sessionData.recordingUrl &&
+              sessionData.recordingUrl.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {sessionData.recordingUrl.map((fileName, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      onClick={async () =>
+                        window.open(await getRecordingUrl(fileName), '_blank')
+                      }
+                      className="flex items-center"
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Watch Recording {index + 1}
+                    </Button>
+                  ))}
+                </div>
               )}
-              {sessionData.materials?.[0]?.url && (
-                <Button variant="outline" onClick={handleDownloadMaterials}>
+
+              {/* Download Materials button */}
+              {sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED && sessionData.materials?.[0]?.url && (
+                <Button variant="outline" onClick={handleDownloadMaterials} className="mt-2">
                   <Download className="h-4 w-4 mr-2" />
                   Download Materials
                 </Button>

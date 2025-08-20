@@ -7,7 +7,7 @@ import { ClassListData, NewStudentData } from '~/lib/classes/types/class-v2';
 import BaseDialog from '../base-v2/BaseDialog';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { useToast } from '../../lib/hooks/use-toast';
+import { toast } from 'sonner';
 import { sendEmailMSGToStudentAction } from '~/lib/classes/server-actions-v2';
 import { filterNameInput, filterPhoneInput } from '~/core/utils/input-filters';
 import { validateEmail } from '../../../../core/utils/validate-email';
@@ -31,7 +31,6 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
 
   const [newStudent, setNewStudent] = useState<NewStudentData>({
     firstName: '',
@@ -120,18 +119,9 @@ const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
         phoneNumber: newStudent.phone,
       });
       if (notificationResult.success) {
-        toast({
-          title: 'Success',
-          description: 'Student notified successfully',
-          variant: 'default',
-        });
+        toast.success('Student notified successfully');
       } else {
-        toast({
-          title: 'Error',
-          description:
-            'Student invitation failed. Invalid email or phone number',
-          variant: 'destructive',
-        });
+        toast.error('Student invitation failed. Invalid email or phone number');
         onClose();
         setNewStudent({
           firstName: '',

@@ -2,11 +2,10 @@
 
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useToast } from '~/app/(app)/lib/hooks/use-toast';
+import { toast } from 'sonner';
 
 const UnauthorizedAccessToast = () => {
   const searchParams = useSearchParams();
-  const { toast } = useToast();
 
   useEffect(() => {
     const message = searchParams.get('message');
@@ -14,13 +13,9 @@ const UnauthorizedAccessToast = () => {
 
     if (message === 'unauthorized' && role) {
       // Show toast notification for unauthorized access
-      toast({
-        title: 'Access Restricted',
-        description: `You don't have access to ${role} sessions. Please contact support if you think this is an error.`,
-        variant: 'destructive',
-      });
+      toast.error(`You don't have access to ${role} sessions. Please contact support if you think this is an error.`);
     }
-  }, [searchParams, toast]);
+  }, [searchParams]);
 
   // This component doesn't render anything visible
   return null;

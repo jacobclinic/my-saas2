@@ -86,6 +86,7 @@ const UpcomingSessions = ({
         };
       }),
       lessonTitle: session?.title || '',
+      title: session?.title || '',
       lessonDescription: session?.description || '',
       sessionRawData: session,
     };
