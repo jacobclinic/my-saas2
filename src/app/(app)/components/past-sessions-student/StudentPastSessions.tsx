@@ -16,6 +16,7 @@ import useUserSession from '~/core/hooks/use-user-session';
 import PaymentDialog from '../student-payments/PaymentDialog';
 import { formatDateTimeRange } from '~/lib/utils/timezone-utils';
 import { useRouter } from 'next/navigation';
+import { TooltipProvider } from '../base-v2/ui/tooltip';
 
 
 interface DateRange {
@@ -162,7 +163,8 @@ const StudentPastSessions = ({
   };
 
   return (
-    <div className="xl:min-w-[900px] space-y-6">
+    <TooltipProvider>
+      <div className="xl:min-w-[900px] space-y-6">
       {/* Header & Search */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -211,7 +213,8 @@ const StudentPastSessions = ({
           )}
         </div>
       )}
-    </div>
+      </div>
+    </TooltipProvider>
   );
 };
 

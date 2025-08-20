@@ -35,6 +35,7 @@ interface SessionStudentTableData {
   time: string;
   paymentStatus: PaymentStatus;
   paymentAmount?: number;
+  paymentDueDate?: string;
   zoomLink?: string;
   zoomMeetingId: string;
   recordingUrl?: string[];
