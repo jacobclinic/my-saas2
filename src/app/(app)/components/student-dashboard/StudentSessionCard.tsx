@@ -24,6 +24,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from '../base-v2/ui/tooltip';
 import { useRouter } from 'next/navigation';
 
@@ -95,8 +96,9 @@ const StudentSessionCard = ({
   );
 
   return (
-    <Card className="mb-4">
-      <CardContent className="p-5">
+    <TooltipProvider>
+      <Card className="mb-4">
+        <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-start">
             <div className="mr-4 p-2 bg-blue-100 rounded-lg">
@@ -270,7 +272,8 @@ const StudentSessionCard = ({
           )}
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </TooltipProvider>
   );
 };
 
