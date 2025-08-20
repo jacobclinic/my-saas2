@@ -14,7 +14,7 @@ import TimezoneIndicator from '../TimezoneIndicator';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { createClassAction } from '~/lib/classes/server-actions-v2';
-import { useToast } from '../../lib/hooks/use-toast';
+import { toast } from 'sonner';
 import BaseDialog from '../base-v2/BaseDialog';
 import { CreateClassPayload, NewClassData, TimeSlot } from '~/lib/classes/types/class-v2';
 import Button from '~/core/ui/Button';
@@ -38,7 +38,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
 
   // Get today's date in Sri Lanka timezone (UTC+5:30) in YYYY-MM-DD format
   const getTodayInSriLankaTimezone = () => {
@@ -124,11 +123,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 
       if (result.success) {
         onClose();
-        toast({
-          title: 'Success',
-          description: 'New class created successfully',
-          variant: 'success',
-        });
+        toast.success('New class created successfully');
         setNewClass({
           name: '',
           subject: '',
@@ -143,11 +138,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
         });
       } else {
         const errorMessage = result.error || 'Failed to create class, Please try again. If the problem persists, please contact support.';
-        toast({
-          title: 'Error',
-          description: errorMessage,
-          variant: 'destructive',
-        });
+        toast.error(errorMessage);
       }
     });
     onCreateClass?.(newClass);

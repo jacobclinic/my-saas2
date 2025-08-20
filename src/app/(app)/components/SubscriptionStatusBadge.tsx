@@ -1,4 +1,4 @@
-import { Tooltip, TooltipTrigger, TooltipContent } from '~/core/ui/Tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 import Badge from '~/core/ui/Badge';
 
 import Subscription from '~/lib/subscriptions/subscription';
@@ -13,17 +13,19 @@ function SubscriptionStatusBadge({
   const messages = getMessagesByStatus(status);
 
   return (
-    <Tooltip>
-      <TooltipTrigger>
-        <Badge size={'small'} color={messages.type}>
-          {messages.label}
-        </Badge>
-      </TooltipTrigger>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <Badge size={'small'} color={messages.type}>
+            {messages.label}
+          </Badge>
+        </TooltipTrigger>
 
-      <TooltipContent>
-        {messages.description(getDates(subscription))}
-      </TooltipContent>
-    </Tooltip>
+        <TooltipContent>
+          {messages.description(getDates(subscription))}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

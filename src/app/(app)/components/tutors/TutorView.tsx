@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BaseDialog from '../base-v2/BaseDialog';
 import { Button } from '../base-v2/ui/Button';
 import { Badge } from '../base-v2/ui/Badge';
@@ -22,7 +22,9 @@ import {
 import UserType from '~/lib/user/types/user';
 import { approveTutorAction } from '~/lib/user/actions/approve-tutor-action';
 import { toast } from 'sonner';
-import { CommaZoomUser } from '~/lib/zoom/v2/types';
+import { CommaZoomUser, DBZoomUser } from '~/lib/zoom/v2/types';
+import { getUnassignedZoomUsersAction } from '~/lib/zoom/v2/actions';
+import { Select, SelectItem, SelectValue, SelectTrigger, SelectContent } from '../base-v2/ui/Select';
 
 // Extended UserType to include additional tutor-specific fields
 interface ExtendedUserType extends UserType {
@@ -44,8 +46,25 @@ const TutorView: React.FC<TutorViewProps> = ({
   onTutorUpdate,
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [unassignedZoomUsers, setUnassignedZoomUsers] = useState<DBZoomUser[]>([]);
+  const [selectedZoomUserId, setSelectedZoomUserId] = useState<string>("");
+
+  useEffect(() => {
+    const fetchUnassignedZoomUsers = async () => {
+      const result = await getUnassignedZoomUsersAction();
+      console.log(result);
+      if (result.success) {
+        setUnassignedZoomUsers(result.data);
+      } else {
+        setUnassignedZoomUsers([]);
+      }
+    };
+    fetchUnassignedZoomUsers();
+  }, []);
 
   if (!tutor) return null;
+
+
 
   const handleViewIdentityProof = () => {
     if (tutor.identity_url) {
@@ -54,16 +73,17 @@ const TutorView: React.FC<TutorViewProps> = ({
   };
 
   const handleApproveReject = async (approve: boolean) => {
-    if (!tutor.id) return;
 
-    if (!tutor.zoom_user) {
-      toast.error("Cannot approve a tutor without a associated zoom account");
+    if (!selectedZoomUserId) {
+      toast.error("Please select a zoom user to approve the tutor");
       return;
     }
 
+    if (!tutor.id) return;
+
     setIsProcessing(true);
     try {
-      const result = await approveTutorAction(tutor.id, approve);
+      const result = await approveTutorAction(tutor.id, approve, parseInt(selectedZoomUserId));
 
       if (result.success) {
         toast.success(
@@ -89,6 +109,11 @@ const TutorView: React.FC<TutorViewProps> = ({
       setIsProcessing(false);
     }
   };
+
+  const handleZoomUserChange = async (zoomUserId: string) => {
+    if (!tutor.id) return;
+    setSelectedZoomUserId(zoomUserId);
+  }
 
   const getStatusBadge = (status?: string | null) => {
     switch (status?.toUpperCase()) {
@@ -249,12 +274,26 @@ const TutorView: React.FC<TutorViewProps> = ({
             <Presentation className="h-5 w-5 mr-2" />
             Zoom User Information
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
             <div className="flex items-center space-x-3">
               <Mail className="h-4 w-4 text-gray-500" />
               <div>
                 <p className="text-sm text-gray-500">Zoom Email (Internal use only)</p>
-                <p className="font-medium">{tutor.zoom_user?.email || '-'}</p>
+                <div className="w-full mt-2">
+                  <Select onValueChange={(value) => handleZoomUserChange(value)}>
+                    <SelectTrigger className="w-[300px]">
+                      <SelectValue placeholder="Select a zoom user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {unassignedZoomUsers.map((user) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
               </div>
             </div>
           </div>
