@@ -10,7 +10,7 @@ import { cva } from 'cva';
 import { cn } from '~/core/generic/shadcn-utils';
 
 import If from '~/core/ui/If';
-import { TooltipContent, Tooltip, TooltipTrigger } from '~/core/ui/Tooltip';
+import { TooltipContent, Tooltip, TooltipTrigger, TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 import SidebarContext from '~/lib/contexts/sidebar';
 import isRouteActive from '~/core/generic/is-route-active';
 
@@ -150,15 +150,17 @@ export function SidebarItem({
   return (
     <Link key={path} href={path} className={className}>
       <If condition={collapsed} fallback={<Icon className={'h-5'} />}>
-        <Tooltip>
-          <TooltipTrigger>
-            <Icon className={'h-5'} />
-          </TooltipTrigger>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Icon className={'h-5'} />
+            </TooltipTrigger>
 
-          <TooltipContent side={'right'} sideOffset={20}>
-            {children}
-          </TooltipContent>
-        </Tooltip>
+            <TooltipContent side={'right'} sideOffset={20}>
+              {children}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </If>
 
       <span>{children}</span>
