@@ -304,6 +304,60 @@ import { ErrorCodes } from '~/lib/shared/error-codes';
 - **Always use the logger from `~/core/logger` for all logging**
 - **Never use console.log, console.error, console.warn, etc. - always use logger instead**
 
+## React Development Standards
+
+### Rules of Hooks - CRITICAL
+React Hooks must follow strict rules to ensure components render consistently:
+
+**❌ NEVER call hooks conditionally:**
+```typescript
+// BAD - Hooks called after conditional return
+const MyComponent = ({ user }) => {
+  if (user) {
+    return <SignedInComponent user={user} />;
+  }
+  
+  const [data, setData] = useState(null); // ERROR: Hook called conditionally
+  const mutation = useMutation(); // ERROR: Hook called conditionally
+  
+  return <SignedOutComponent />;
+};
+```
+
+**✅ ALWAYS call hooks at the top level:**
+```typescript
+// GOOD - All hooks called before any conditional logic
+const MyComponent = ({ user }) => {
+  const [data, setData] = useState(null); // ✅ Hook at top level
+  const mutation = useMutation(); // ✅ Hook at top level
+  
+  if (user) {
+    return <SignedInComponent user={user} />;
+  }
+  
+  return <SignedOutComponent />;
+};
+```
+
+### React Hook Guidelines
+- **All hooks must be called at the top of the component**
+- **Never call hooks inside loops, conditions, or nested functions**
+- **Always call hooks in the same order on every render**
+- **Move conditional logic AFTER all hook declarations**
+- **Use early returns only AFTER all hooks are declared**
+
+### Interface Consistency
+- **Avoid duplicate interfaces** - Use centralized type definitions
+- **Extend existing types** when adding fields rather than creating duplicates
+- **Import from centralized locations** like `~/core/session/types/user-data`
+
+### Security in Components
+- **Never use hardcoded fallback values** that could pollute the database
+- **Always validate required data** before processing
+- **Provide clear error messages** when validation fails
+- **Use secure random generation** for passwords and tokens
+- **Reject operations** when required user data is missing
+
 ### Environment Setup
 1. Start Supabase: `npm run supabase:start`
 2. Copy the anon key and service role key to `.env.local`:

@@ -26,6 +26,9 @@ export async function getUserDataById(
       last_name,
       phone_number,
       address,
+      birthday,
+      city,
+      district,
       biography,
       subjects_teach
     `,
