@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from "react";
-import ZoomMtgEmbedded from "@zoom/meetingsdk/embedded";
 import { generateZoomSdkSignature } from '~/lib/zoom/v2/actions';
 import useUserRole from '~/lib/user/hooks/use-userRole';
 
@@ -25,7 +24,6 @@ type ZoomMeetingProps = {
 };
 
 const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoinError }: ZoomMeetingProps) => {
-    const client = ZoomMtgEmbedded.createClient();
     const { data: role } = useUserRole();
 
     const isHost = role === "tutor" || role === "admin";
@@ -76,6 +74,7 @@ const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoin
                         passWord: password,
                         customerKey: customerKey,
                         success: (success: any) => {
+                            console.log("[ZoomMeeting] Join Success called ---------------------------------------------------------------------------------------------------");
                             console.log("[ZoomMeeting] Join Success for the customer key ", customerKey);
                             onJoinSuccess && onJoinSuccess();
                         },
