@@ -145,7 +145,7 @@ const TutorDashboard = ({
       <div className="space-y-2">
         <div className="flex items-center">
           <Info className="h-5 w-5 mr-2" />
-          <h2 className="text-xl font-bold">Upcoming Class</h2>
+          <h2 className="text-xl font-bold">Your Upcoming Classes</h2>
         </div>
         {upcomingSessionTableData ? (
           <UpcommingSessionClassCard
