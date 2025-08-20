@@ -171,7 +171,7 @@ const StudentDashboard = ({
 
         {/* Upcoming Sessions */}
         {upcomingSessions.length > 0 && (
-          <div className="lg:col-span-2 order-2 bg-white rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-purple-50 border-none shadow-lg">
+          <div className="lg:col-span-2 order-2 bg-white rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-blue-100 border-none shadow-lg">
             <div className="flex items-center p-4">
               <h2 className="text-lg font-semibold text-gray-900">This Week&apos;s Classes</h2>
             </div>
