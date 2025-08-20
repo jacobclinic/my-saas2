@@ -18,7 +18,7 @@ import StudentNextSessionCard from './StudentNextSessionCard';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import PaginationControls from '../../components/PaginationControls';
 import { useRouter } from 'next/navigation';
-import { TooltipProvider } from '../base-v2/ui/tooltip';
+import { TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 
 const StudentDashboard = ({
   upcomingSessionData,

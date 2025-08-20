@@ -14,13 +14,8 @@ import {
   ExternalLink,
   FileText,
   Banknote,
+  DollarSign,
 } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../base-v2/ui/tooltip';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
@@ -30,7 +25,8 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '../base-v2/ui/tooltip';
+  TooltipProvider,
+} from '~/app/(app)/components/base-v2/ui/tooltip';
 import { useRouter } from 'next/navigation';
 
 interface StudentSessionCardProps {
@@ -101,8 +97,9 @@ const StudentSessionCard = ({
   );
 
   return (
-    <Card className="mb-4">
-      <CardContent className="p-5">
+    <TooltipProvider>
+      <Card className="mb-4">
+        <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-start">
             <div className="mr-4 p-2 bg-blue-100 rounded-lg">
@@ -308,7 +305,8 @@ const StudentSessionCard = ({
           )}
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </TooltipProvider>
   );
 };
 

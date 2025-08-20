@@ -16,7 +16,7 @@ import useUserSession from '~/core/hooks/use-user-session';
 import PaymentDialog from '../student-payments/PaymentDialog';
 import { formatDateTimeRange } from '~/lib/utils/timezone-utils';
 import { useRouter } from 'next/navigation';
-import { TooltipProvider } from '../base-v2/ui/tooltip';
+import { TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 
 
 interface DateRange {
