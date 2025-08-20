@@ -33,7 +33,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '../base-v2/ui/tooltip';
+} from '~/app/(app)/components/base-v2/ui/tooltip';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';

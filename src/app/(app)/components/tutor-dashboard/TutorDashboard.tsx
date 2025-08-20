@@ -75,6 +75,7 @@ const TutorDashboard = ({
         zoomLinkStudent: session?.meeting_url || '',
         zoomMeetingId: session?.zoom_meeting_id || '',
         lessonTitle: session?.title || '',
+        title: session?.title || '',
         materials: (session?.materials || []).map((material) => {
           return {
             id: material.id,

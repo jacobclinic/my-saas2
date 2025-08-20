@@ -139,6 +139,8 @@ export type ZoomCreateUserRequest = {
     action: ZoomCreateUserAction;
     user_info: ZoomUserRequestInfo;
     tutor_id: string;
+    email: string;
+    zoom_user_id: number;
 }
 
 export type ZoomUser = {
@@ -330,3 +332,5 @@ export type ZoomMeetingRecordingUrl = {
     play_url: string;
     download_url: string;
 }
+
+export type DBZoomUser = Database['public']['Tables']['zoom_users']['Row'];
