@@ -28,7 +28,9 @@ export async function getUserDataById(
       address,
       birthday,
       city,
-      district
+      district,
+      biography,
+      subjects_teach
     `,
     )
     .eq('id', userId)

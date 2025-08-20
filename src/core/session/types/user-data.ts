@@ -14,6 +14,8 @@ interface UserData {
   birthday: string | null;
   city: string | null;
   district: string | null;
+  biography: string | null;
+  subjects_teach: string[] | null;
 }
 
 export default UserData;
