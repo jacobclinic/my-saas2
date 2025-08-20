@@ -25,7 +25,12 @@ export async function getUserDataById(
       first_name,
       last_name,
       phone_number,
-      address
+      address,
+      birthday,
+      city,
+      district,
+      biography,
+      subjects_teach
     `,
     )
     .eq('id', userId)
