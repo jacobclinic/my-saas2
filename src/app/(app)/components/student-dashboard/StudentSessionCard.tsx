@@ -14,13 +14,8 @@ import {
   ExternalLink,
   FileText,
   Banknote,
+  DollarSign,
 } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../base-v2/ui/tooltip';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
