@@ -6,6 +6,8 @@ import dynamic from 'next/dynamic';
 import useUserRole from '~/lib/user/hooks/use-userRole';
 import { isFirstWeekOfMonth } from '~/lib/utils/date-utils';
 import Spinner from '~/core/ui/Spinner';
+import { generateZoomCustomerKeyMappingAction, markStudentAttendanceManualAction } from '~/lib/attendance/server-actions';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 
 // Zoom meeting is a client side only component
@@ -27,16 +29,25 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(true);
   const userSession = useUserSession();
+  const [customerKey, setCustomerKey] = useState<string | null>(null);
   const { data: role } = useUserRole();
+  const csrfToken = useCsrfToken();
 
+  const userId = userSession?.auth?.user?.id!;
   const userEmail = userSession?.auth?.user?.email!;
   const userName = userSession?.data?.first_name! || userEmail;
   const isHost = role === "tutor" || role === "admin";
+
 
   useEffect(() => {
     const fetchZoomSession = async () => {
       try {
         const session = await fetchZoomSessionBySessionIdAction(params.sessionId);
+        const customerKeyResponse = await generateZoomCustomerKeyMappingAction({ sessionId: params.sessionId, csrfToken: csrfToken });
+        if (customerKeyResponse.success && customerKeyResponse.customerKey) {
+          console.log("Customer key generated", customerKeyResponse.customerKey);
+          setCustomerKey(customerKeyResponse.customerKey);
+        }
         if (session) {
           setZoomSession(session);
           setError("");
@@ -64,7 +75,7 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
           return;
         }
         const isValid = await validateStudentPaymentForSessionAction(params.sessionId, params.classId, userSession.auth.user.id);
-        
+
         if (!isValid) {
           setError("You must complete the payment to access this session.");
         } else {
@@ -86,6 +97,10 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
 
   const onInitError = (error: any) => {
     setError("Something went wrong while initializing the virtual classroom. Please try again and contact admin if the problem persists.");
+  }
+
+  const onJoinSuccess = async () => {
+    await markStudentAttendanceManualAction({ sessionId: params.sessionId, userId: userId, csrfToken: csrfToken });
   }
 
   if (isLoading && !zoomSession) {
@@ -110,13 +125,16 @@ const ClassSessionPage = ({ params }: ClassSessionPageProps) => {
       </div>
     );
   }
-  
+
 
 
   return (
     <div>
-      {zoomSession && (
-        <ZoomMeeting params={{ ...params, zoomSession, userEmail, userName }} onInitSuccess={onInitSuccess} onInitError={onInitError}/>
+      {zoomSession && customerKey && (
+        <ZoomMeeting params={{ ...params, zoomSession, customerKey, userName }}
+          onInitSuccess={onInitSuccess}
+          onInitError={onInitError}
+          onJoinSuccess={onJoinSuccess} />
       )}
     </div>
   );

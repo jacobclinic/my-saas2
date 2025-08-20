@@ -75,6 +75,7 @@ export type { Session, UpcomingSession, PastSession, pastSessionsForAttendance }
 
 
 export type InsertSessionData = Database['public']['Tables']['sessions']['Insert'];
+export type UpdateSessionData = Database['public']['Tables']['sessions']['Update'];
 
 // Public API types for minimized next-session payload
 

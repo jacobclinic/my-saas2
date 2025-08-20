@@ -1,3 +1,5 @@
+import { Database } from "~/database.types";
+
 interface UserType {
   id: string;
   photo_url?: string | null;
@@ -24,3 +26,6 @@ interface UserType {
 
 export default UserType;
 // export type { SessionsWithTableData, SessionTableData };
+
+
+export type DBUser = Database['public']['Tables']['users']['Row'];

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from "react";
-import ZoomMtgEmbedded from "@zoom/meetingsdk/embedded";
 import { generateZoomSdkSignature } from '~/lib/zoom/v2/actions';
 import useUserRole from '~/lib/user/hooks/use-userRole';
 
@@ -15,7 +14,7 @@ type ZoomMeetingProps = {
         classId: string;
         sessionId: string;
         zoomSession: any;
-        userEmail: string;
+        customerKey: string;
         userName: string;
     };
     onInitSuccess?: () => void;
@@ -25,17 +24,17 @@ type ZoomMeetingProps = {
 };
 
 const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoinError }: ZoomMeetingProps) => {
-    const client = ZoomMtgEmbedded.createClient();
     const { data: role } = useUserRole();
 
     const isHost = role === "tutor" || role === "admin";
     const meetingNumber = params.zoomSession?.meeting_id;
     const password = params.zoomSession?.password;
     const userName = params.userName;
-    const userEmail = params.userEmail;
+    const customerKey = params.customerKey;
 
+    console.log("[ZoomMeeting] Username", userName);
     const getSignature = async () => {
-        if (!meetingNumber || !password || !userName || !userEmail) {
+        if (!meetingNumber || !password || !userName || !customerKey) {
             console.warn("Missing meeting data, cannot join meeting.");
             return;
         }
@@ -66,17 +65,21 @@ const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoin
                     'report'
                 ],
                 success: (success: any) => {
+                    console.log("[ZoomMeeting] Init Success for the customer key ", customerKey);
                     onInitSuccess && onInitSuccess();
                     ZoomMtg.join({
                         signature: signature,
                         meetingNumber: meetingNumber,
                         userName: userName,
-                        userEmail: userEmail,
                         passWord: password,
+                        customerKey: customerKey,
                         success: (success: any) => {
+                            console.log("[ZoomMeeting] Join Success called ---------------------------------------------------------------------------------------------------");
+                            console.log("[ZoomMeeting] Join Success for the customer key ", customerKey);
                             onJoinSuccess && onJoinSuccess();
                         },
                         error: (error: any) => {
+                            console.log("[ZoomMeeting] Join Error", error);
                             onJoinError && onJoinError(error);
                         }
                     })
@@ -92,10 +95,10 @@ const ZoomMeeting = ({ params, onInitSuccess, onInitError, onJoinSuccess, onJoin
     }
 
     useEffect(() => {
-        if (meetingNumber && password && userName && userEmail) {
+        if (meetingNumber && password && userName && customerKey) {
             getSignature();
         }
-    }, [meetingNumber, password, userName, userEmail]);
+    }, [meetingNumber, password, userName, customerKey]);
 
     return (
         <div className="flex-1 w-full h-screen relative">
