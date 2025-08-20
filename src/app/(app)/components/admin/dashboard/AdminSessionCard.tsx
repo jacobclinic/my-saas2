@@ -60,14 +60,12 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [materialDescription, setMaterialDescription] = useState('');
   const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
     title: sessionData.lessonTitle || '',
-    description: sessionData.lessonDescription || '',
   });
 
   // Store original lesson details to track changes
   const [originalLessonDetails, setOriginalLessonDetails] =
     useState<LessonDetails>({
       title: sessionData.lessonTitle || '',
-      description: sessionData.lessonDescription || '',
     });
 
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
@@ -86,7 +84,6 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
       // Update original lesson details to reflect the saved state
       setOriginalLessonDetails({
         title: lessonDetails.title,
-        description: lessonDetails.description,
       });
     } else {
       toast.error('Failed to edit session');
@@ -217,7 +214,6 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     <h3 className="text-lg font-medium">
                       {lessonDetails.title}
                     </h3>
-                    <p className="text-gray-600">{lessonDetails.description}</p>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -342,14 +338,26 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         onClose={() => setShowSessionEditDialog(false)}
         sessionId={sessionData.id}
         sessionData={{
-          title: sessionData?.sessionRawData?.title || '',
-          description: sessionData?.sessionRawData?.description || '',
+          title: sessionData.lessonTitle || '',
           startTime: sessionData.start_time || '',
           endTime: sessionData.end_time || '',
           meetingUrl: sessionData?.sessionRawData?.meeting_url || '',
           materials: sessionData?.materials || [],
         }}
         loading={editSessionLoading}
+        onSuccess={(updatedData) => {
+          // Update local lesson details state when title changes
+          if (updatedData.title !== undefined) {
+            setLessonDetails(prev => ({
+              ...prev,
+              title: updatedData.title!
+            }));
+            setOriginalLessonDetails(prev => ({
+              ...prev,
+              title: updatedData.title!
+            }));
+          }
+        }}
       />{' '}
       <AddLessonDetailsDialog
         open={showLessonDetailsDialog}
@@ -357,7 +365,6 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
           // Reset to the last saved state, not the original session data
           setLessonDetails({
             title: originalLessonDetails.title,
-            description: originalLessonDetails.description,
           });
           setShowLessonDetailsDialog(false);
         }}
