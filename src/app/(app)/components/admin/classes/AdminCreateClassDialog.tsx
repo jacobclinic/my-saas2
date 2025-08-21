@@ -217,6 +217,7 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
             }
             placeholder="Search and select a tutor..."
             className="mt-1"
+            noResultsText='No tutors found for '
           />
         </div>
 

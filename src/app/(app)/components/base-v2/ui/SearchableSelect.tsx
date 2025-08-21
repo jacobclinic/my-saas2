@@ -18,6 +18,7 @@ interface SearchableSelectProps {
   onValueChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  noResultsText?: string;
 }
 
 const SearchableSelect: React.FC<SearchableSelectProps> = ({
@@ -26,6 +27,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   onValueChange,
   placeholder = 'Search and select...',
   className = '',
+  noResultsText = 'No items found matching',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -167,7 +169,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
             ))
           ) : (
             <div className="px-3 py-2 text-muted-foreground text-sm">
-              No tutors found matching {searchTerm}
+              {noResultsText} {searchTerm}
             </div>
           )}
         </div>
