@@ -40,7 +40,7 @@ export default async function RegisterPage({
     classId: searchParams.classId || '',
     className: searchParams.className || '',
     nextSession: searchParams.nextSession || '',
-    time: searchParams.time || '',
+    time: searchParams.time || '', // the time contains both day and the time.
     tutorName: searchParams.tutorName || '',
   };
 
