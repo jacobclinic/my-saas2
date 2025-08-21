@@ -436,10 +436,9 @@ export const fetchTutorsForAdminAction = withSession(async () => {
       };
     });
 
-    return { success: true, error:null, tutors: formattedTutors };
+    return { success: true, error: null, tutors: formattedTutors };
   } catch (error) {
     logger.error('Error in fetchTutorsForAdminAction:', error);
     return { success: false, error: 'Failed to fetch tutors', tutors: [] };
   }
 });
-
