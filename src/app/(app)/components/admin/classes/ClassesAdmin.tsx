@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '../../base-v2/ui/Select';
 import { Badge } from '../../base-v2/ui/Badge';
-import { GRADES } from '~/lib/constants-v2';
+import { GRADES, PAGE_SIZE } from '~/lib/constants-v2';
 import { format } from '~/lib/utils/date-utils';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
@@ -344,7 +344,7 @@ const ClassesAdmin = ({
         },
       },
     ],
-    [classLookupMap, copiedLinks],
+    [classLookupMap],
   );
 
   // Prepare table data for DataTable
@@ -427,8 +427,8 @@ const ClassesAdmin = ({
           data={tableData}
           columns={columns}
           columnWidths={columnWidths}
-          pageSize={10}
-          pageCount={Math.ceil(tableData.length / 10)}
+          pageSize={PAGE_SIZE}
+          pageCount={Math.ceil(tableData.length / PAGE_SIZE)}
         />
       </div>
 
