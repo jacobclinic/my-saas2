@@ -49,20 +49,35 @@ export async function createClass(
   }
 }
 
-export async function getClassById(client: Client, classId: string) {
+export async function getClassById(
+  client: Client,
+  classId: string,
+): Promise<Result<DbClassType, DatabaseError>> {
   try {
     const { data: classData, error } = await client
       .from(CLASSES_TABLE)
       .select('*')
       .eq('id', classId)
+      .throwOnError()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      logger.error('Failed to get class by ID', { error, classId });
+      return failure(new DatabaseError('Failed to get class by ID'));
+    }
 
-    return classData;
+    logger.info('Class retrieved successfully', { classId });
+    return success(classData);
   } catch (error) {
-    logger.error('Error getting class by ID:', error);
-    throw new Error('Failed to get class by ID. Please try again.');
+    logger.error('Something went wrong while getting class by ID', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      classId,
+    });
+    return failure(
+      new DatabaseError('Something went wrong while getting class by ID'),
+    );
   }
 }
 
@@ -103,7 +118,7 @@ export async function updateClass(
 export async function createClassByAdmin(
   client: Client,
   data: AdminNewClassData,
-) {
+): Promise<Result<DbClassType, DatabaseError>> {
   try {
     const { data: insertedClass, error } = await client
       .from(CLASSES_TABLE)
@@ -127,14 +142,23 @@ export async function createClassByAdmin(
       .throwOnError()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      logger.error('Failed to create class by admin', { error, data });
+      return failure(new DatabaseError('Failed to create class by admin'));
+    }
 
-    logger.info('Class created successfully by admin:', insertedClass);
-
-    return insertedClass;
+    logger.info('Class created successfully by admin', { insertedClass });
+    return success(insertedClass);
   } catch (error) {
-    logger.error('Error creating class by admin:', error);
-    throw new Error('Failed to create class. Please try again.');
+    logger.error('Something went wrong while creating class by admin', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      data,
+    });
+    return failure(
+      new DatabaseError('Something went wrong while creating class by admin'),
+    );
   }
 }
 
