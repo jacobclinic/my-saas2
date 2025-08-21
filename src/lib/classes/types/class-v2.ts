@@ -261,6 +261,23 @@ export interface DeleteClassResponse extends ApiResponse<string> {
   deletedId?: string;
 }
 
+
+export interface AdminNewClassData {
+  name: string;
+  subject: string;
+  description: string;
+  yearGrade: string;
+  monthlyFee: string;
+  startDate: string;
+  timeSlots: TimeSlot[];
+  tutorId: string;
+}
+
+export interface TutorOption {
+  id: string;
+  name: string;
+}
+
 export const createClassSuccess = (): CreateClassResponse => ({
   success: true
 });

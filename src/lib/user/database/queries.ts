@@ -86,8 +86,6 @@ export async function getAllUsersByUserRoleData(
       .eq('user_role', userRole)
       .order('created_at', { ascending: false });
 
-    // console.log("getAllUsersData", data)
-
     if (error) {
       throw new Error(`Error fetching all users: ${error.message}`);
     }

@@ -6,6 +6,11 @@ import {
 import { redirect } from 'next/navigation';
 import ClassesListClient from '../components/classes/ClassesListClient';
 import ClassesAdmin from '../components/admin/classes/ClassesAdmin';
+import { fetchTutorsForAdminAction } from '~/lib/user/actions.server';
+import { TutorOption } from '~/lib/classes/types/class-v2';
+import getLogger from '~/core/logger';
+
+const logger = getLogger();
 
 export const metadata = {
   title: 'Sessions',
@@ -39,17 +44,31 @@ async function ClassesPage() {
 
   let classesData: any[] = [];
   let tutorId;
+  let tutors: TutorOption[] = [];
 
   if (userRole === 'tutor') {
     classesData = await getAllClassesByTutorIdData(client, user?.id || '');
     tutorId = user?.id;
   } else if (userRole === 'admin') {
-    classesData = await getAllClassesDataAdmin(client);  
+    classesData = await getAllClassesDataAdmin(client);
+    // Fetch tutors for admin
+    const {
+      success,
+      error,
+      tutors: tutorData,
+    } = await fetchTutorsForAdminAction();
+    if (!success) {
+      logger.error('Error fetching tutors:', error);
+    }
+    if (error) {
+      logger.error(error);
+    }
+    tutors = tutorData;
   }
 
   return (
     <>
-      <div className='w-full h-full lg:pb-6 lg:pt-0 flex flex-col flex-1'>
+      <div className="w-full h-full lg:pb-6 lg:pt-0 flex flex-col flex-1">
         {userRole === 'tutor' ? (
           <ClassesListClient
             classesData={classesData}
@@ -57,7 +76,7 @@ async function ClassesPage() {
             tutorId={tutorId}
           />
         ) : (
-          <ClassesAdmin classesData={classesData} />
+          <ClassesAdmin classesData={classesData} tutors={tutors} />
         )}
       </div>
     </>

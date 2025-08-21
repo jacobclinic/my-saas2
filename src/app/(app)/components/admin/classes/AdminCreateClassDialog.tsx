@@ -1,79 +1,80 @@
 'use client';
 
 import React, { useEffect, useState, useTransition } from 'react';
-import { Input } from '../base-v2/ui/Input';
-import { Textarea } from '../base-v2/ui/Textarea';
+import { Input } from '../../base-v2/ui/Input';
+import { Textarea } from '../../base-v2/ui/Textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../base-v2/ui/Select';
-import TimezoneIndicator from '../TimezoneIndicator';
+} from '../../base-v2/ui/Select';
+import TimezoneIndicator from '../../TimezoneIndicator';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
+import { getTodayInSriLankaTimezone } from '~/lib/utils/date-utils';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { createClassAction } from '~/lib/classes/server-actions-v2';
-import { toast } from 'sonner';
-import BaseDialog from '../base-v2/BaseDialog';
-import { CreateClassPayload, NewClassData, TimeSlot } from '~/lib/classes/types/class-v2';
+import { createClassByAdminAction } from '~/lib/classes/server-actions-v2';
+import { useToast } from '../../../lib/hooks/use-toast';
+import BaseDialog from '../../base-v2/BaseDialog';
+import {
+  AdminNewClassData,
+  CreateClassPayload,
+  TimeSlot,
+} from '~/lib/classes/types/class-v2';
 import Button from '~/core/ui/Button';
 import { Plus, X } from 'lucide-react';
-import { Json } from '~/database.types';
+import SearchableSelect from '../../base-v2/ui/SearchableSelect';
+import { Json } from '~/database.types-backup';
 
-interface CreateClassDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onCreateClass?: (classData: NewClassData) => void;
-  loading?: boolean;
-  tutorId: string;
+interface TutorOption {
+  id: string;
+  name: string;
 }
 
-const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
+interface AdminCreateClassDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onCreateClass?: (classData: AdminNewClassData) => void;
+  loading?: boolean;
+  tutors: TutorOption[];
+}
+
+const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
   open,
   onClose,
   onCreateClass,
   loading = false,
-  tutorId,
+  tutors,
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
-
-  // Get today's date in Sri Lanka timezone (UTC+5:30) in YYYY-MM-DD format
-  const getTodayInSriLankaTimezone = () => {
-    const now = new Date();
-    const currentTime = now.getTime();
-    const sriLankaTime = currentTime + 5.5 * 60 * 60 * 1000;
-    const sriLankaDate = new Date(sriLankaTime);
-
-    const year = sriLankaDate.getUTCFullYear();
-    const month = String(sriLankaDate.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(sriLankaDate.getUTCDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  };
+  const { toast } = useToast();
 
   const today = getTodayInSriLankaTimezone();
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const [newClass, setNewClass] = useState<NewClassData>({
+  const [newClass, setNewClass] = useState<AdminNewClassData>({
     name: '',
     subject: '',
     description: '',
     yearGrade: '',
     monthlyFee: '',
-    startDate: today, // Default to today's date in local timezone
+    startDate: today,
     timeSlots: [
       { day: '', startTime: '', endTime: '', timezone: userTimezone },
-    ], // Single time slot
-    tutorId,
+    ],
+    tutorId: '',
   });
 
-  const [allFilled, setAllFilled] = useState(false);
+  const [allFilled, setAllFilled] = useState<boolean>(false);
 
   const handleAddTimeSlot = () => {
     setNewClass((prev) => ({
       ...prev,
-      timeSlots: [...prev.timeSlots, { day: '', startTime: '', endTime: '', timezone: userTimezone }],
+      timeSlots: [
+        ...prev.timeSlots,
+        { day: '', startTime: '', endTime: '', timezone: userTimezone },
+      ],
     }));
   };
 
@@ -89,21 +90,21 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     field: keyof TimeSlot,
     value: string,
   ) => {
-    setNewClass((prev: NewClassData) => {
+    setNewClass((prev: AdminNewClassData) => {
       const updatedTimeSlots = prev.timeSlots.map((slot, i) =>
         i === index ? { ...slot, [field]: value } : slot,
       );
 
       return {
         ...prev,
-        timeSlots: updatedTimeSlots as [TimeSlot], // Type assertion to match the expected tuple type
+        timeSlots: updatedTimeSlots,
       };
     });
   };
 
   const handleSubmit = () => {
     const startDate = new Date(newClass.startDate).toISOString();
-    const classDataPayload: CreateClassPayload ={
+    const classDataPayload: CreateClassPayload = {
       fee: Number(newClass.monthlyFee),
       grade: newClass.yearGrade,
       name: newClass.name,
@@ -112,64 +113,60 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       status: 'active',
       subject: newClass.subject,
       time_slots: newClass.timeSlots as unknown as Json[],
-      tutor_id: newClass.tutorId
-    }
+      tutor_id: newClass.tutorId,
+    };
 
     startTransition(async () => {
-      const result = await createClassAction({
+      const result = await createClassByAdminAction({
         data: classDataPayload,
         csrfToken,
       });
 
       if (result.success) {
         onClose();
-        toast.success('New class created successfully');
+        toast({
+          title: 'Success',
+          description: 'New class created successfully',
+          variant: 'success',
+        });
         setNewClass({
           name: '',
           subject: '',
           description: '',
           yearGrade: '',
           monthlyFee: '',
-          startDate: '',
+          startDate: today,
           timeSlots: [
             { day: '', startTime: '', endTime: '', timezone: userTimezone },
-          ], // Reset to a single time slot
-          tutorId,
+          ],
+          tutorId: '',
         });
       } else {
-        const errorMessage = result.error || 'Failed to create class, Please try again. If the problem persists, please contact support.';
-        toast.error(errorMessage);
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to create class',
+          variant: 'destructive',
+        });
       }
     });
     onCreateClass?.(newClass);
   };
 
-  const isValid =
+  const isValid = Boolean(
     newClass.name &&
-    newClass.subject &&
-    newClass.monthlyFee &&
-    newClass.yearGrade &&
-    newClass.startDate &&
-    newClass.timeSlots.every(
-      (slot) => slot.day && slot.startTime && slot.endTime,
-    );
+      newClass.subject &&
+      newClass.monthlyFee &&
+      newClass.yearGrade &&
+      newClass.startDate &&
+      newClass.tutorId &&
+      newClass.timeSlots.every(
+        (slot) => slot.day && slot.startTime && slot.endTime,
+      ),
+  );
 
   useEffect(() => {
-    if (isValid) {
-      setAllFilled(true);
-    } else {
-      setAllFilled(false);
-    }
-  }, [
-    newClass.name,
-    newClass.subject,
-    newClass.monthlyFee,
-    newClass.yearGrade,
-    newClass.startDate,
-    newClass.timeSlots,
-    isValid,
-  ]);
-
+    setAllFilled(isValid);
+  }, [isValid]);
 
   const handleClose = () => {
     onClose();
@@ -179,11 +176,11 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       description: '',
       yearGrade: '',
       monthlyFee: '',
-      startDate: '',
+      startDate: today,
       timeSlots: [
         { day: '', startTime: '', endTime: '', timezone: userTimezone },
-      ], // Reset to a single time slot
-      tutorId,
+      ],
+      tutorId: '',
     });
   };
 
@@ -192,7 +189,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       open={open}
       onClose={handleClose}
       title="Create Class Group"
-      description="Set up your class details and schedule"
+      description="Set up class details and assign a tutor"
       maxWidth="xl"
       onConfirm={handleSubmit}
       confirmButtonText="Create Class"
@@ -207,6 +204,20 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
             placeholder="Enter class name"
             value={newClass.name}
             onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Assign Tutor</label>
+          <SearchableSelect
+            options={tutors}
+            value={newClass.tutorId}
+            onValueChange={(value) =>
+              setNewClass({ ...newClass, tutorId: value })
+            }
+            placeholder="Search and select a tutor..."
+            className="mt-1"
+            noResultsText='No tutors found for '
           />
         </div>
 
@@ -372,4 +383,4 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   );
 };
 
-export default CreateClassDialog;
+export default AdminCreateClassDialog;
