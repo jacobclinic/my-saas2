@@ -5,10 +5,11 @@ import { z } from 'zod';
 import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
-import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { updateUserWithRetry } from '~/lib/user/actions.server';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentRegistrationEmailTemplate } from '~/core/email/templates/emailTemplate';
+import { InvoiceService } from '~/lib/invoices/v2/invoice.service';
+import getLogger from '~/core/logger';
 
 // Helper function to wait
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -129,13 +130,18 @@ export async function registerStudentAction(
       if (enrollmentError) throw enrollmentError;
 
       // Create invoice for the newly registered student
-      const invoiceId = await createInvoiceForNewStudent(
-        client,
+      const logger = getLogger();
+      const invoiceService = InvoiceService.getInstance(client, logger);
+      const invoiceResult = await invoiceService.createInvoiceForNewEnrollment(
         userId,
         validated.classId,
       );
-      if (!invoiceId) {
-        console.error('Failed to create invoice for student:', userId);
+
+      if (!invoiceResult.success) {
+        logger.error('Failed to create invoice for student:', {
+          userId: userId,
+          classId: validated.classId,
+        });
         // Continue with registration even if invoice creation fails
         // The system can generate missing invoices later with the monthly job
       }

@@ -18,6 +18,7 @@ import StudentNextSessionCard from './StudentNextSessionCard';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import PaginationControls from '../../components/PaginationControls';
 import { useRouter } from 'next/navigation';
+import { TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 
 const StudentDashboard = ({
   upcomingSessionData,
@@ -47,27 +48,6 @@ const StudentDashboard = ({
   const handleUpcomingPageChange = (page: number) => {
     // console.log('Upcoming Page Changed:', page);
     setUpcomingCurrentPage(page);
-  };
-
-  // Sample data
-  const nextSessionsSampleData = {
-    id: '1',
-    name: 'A/L 2025 Accounting Batch 04',
-    topic: 'Manufacturing Accounts - Part 1',
-    date: 'Monday, Dec 18, 2024',
-    time: '4:00 PM - 6:00 PM',
-    zoomLink: 'https://zoom.us/j/123456789',
-    paymentStatus: PaymentStatus.PENDING,
-    paymentAmount: 5000,
-    zoomMeetingId: '123456789',
-    materials: [
-      {
-        id: '1',
-        name: 'Manufacturing Accounts Notes.pdf',
-        file_size: '2.5 MB',
-      },
-      { id: '2', name: 'Practice Problems Set.pdf', file_size: '1.8 MB' },
-    ],
   };
 
   // Transform upcoming sessions data
@@ -125,6 +105,7 @@ const StudentDashboard = ({
         (sessionData.payment_status as PaymentStatus) || PaymentStatus.PENDING,
       paymentAmount:
         Number(sessionData.payment_amount) || sessionData.class?.fee || 0,
+      paymentDueDate: sessionData.payment_due_date || undefined,
       zoomLink: sessionData.meeting_url || undefined,
       zoomMeetingId: sessionData.zoom_meeting_id || '',
       recordingUrl: sessionData.recording_urls || [],
@@ -166,13 +147,14 @@ const StudentDashboard = ({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <TooltipProvider>
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
        
 
         {/* Next Session */}
         <div className='lg:col-span-1 order-1'>
-          <h2 className="text-lg font-semibold text-gray-900 p-4">Next Class</h2>
+          <h2 className="text-lg font-semibold text-gray-900 p-4">Your Next Class</h2>
           <div className='p-4'>
             {nextSession && (
               <StudentNextSessionCard
@@ -189,9 +171,9 @@ const StudentDashboard = ({
 
         {/* Upcoming Sessions */}
         {upcomingSessions.length > 0 && (
-          <div className="lg:col-span-2 order-2 bg-white rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-purple-50 border-none shadow-lg">
+          <div className="lg:col-span-2 order-2 bg-white rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-blue-100 border-none shadow-lg">
             <div className="flex items-center p-4">
-              <h2 className="text-lg font-semibold text-gray-900">This Week&apos;s Classes</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Your Upcoming Classes</h2>
             </div>
             <div className='p-4'>
               {currentUpcomingSessions.map((sessionData) => (
@@ -225,8 +207,9 @@ const StudentDashboard = ({
             studentId={studentId}
           />
         )}
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 

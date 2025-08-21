@@ -47,6 +47,7 @@ interface UpcomingSession extends Session {
   materials?: SessionMaterial[];
   payment_status?: string;
   payment_amount?: number | null;
+  payment_due_date?: string | null;
 }
 
 interface PastSessionAttendanceStudent {
@@ -74,6 +75,7 @@ export type { Session, UpcomingSession, PastSession, pastSessionsForAttendance }
 
 
 export type InsertSessionData = Database['public']['Tables']['sessions']['Insert'];
+export type UpdateSessionData = Database['public']['Tables']['sessions']['Update'];
 
 // Public API types for minimized next-session payload
 

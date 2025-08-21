@@ -191,10 +191,13 @@ export async function updateClassShortUrl(
   }
 }
 
+
 export async function deleteClass(
   client: Client,
   classId: string,
 ): Promise<Result<string, DatabaseError>> {
+export async function deleteClass(client: Client, classId: string): Promise<Result<string, DatabaseError>> {
+
   try {
     const currentTime = new Date().toISOString();
 

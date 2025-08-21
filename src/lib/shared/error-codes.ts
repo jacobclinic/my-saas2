@@ -21,6 +21,7 @@ export const ErrorCodes = {
     // Database errors
     DATABASE_ERROR: 'DATABASE_ERROR',
     CONNECTION_ERROR: 'CONNECTION_ERROR',
+    NO_RECORDS_FOUND: 'NO_RECORDS_FOUND',
 
     // Generic errors
     UNEXPECTED_ERROR: 'UNEXPECTED_ERROR',

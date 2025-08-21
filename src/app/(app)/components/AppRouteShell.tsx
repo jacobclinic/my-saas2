@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useCollapsible from '~/core/hooks/use-sidebar-state';
 import AppSidebar from '~/app/(app)/components/AppSidebar';
-import Toaster from '~/components/Toaster';
 import SentryBrowserWrapper from '~/components/SentryProvider';
 import UserSession from '~/core/session/types/user-session';
 
@@ -47,8 +46,6 @@ const RouteShell: React.FCC<{
             whenSignedOut={configuration.paths.signIn}
           >
             <main>
-              <Toaster richColors={false} />
-
               <RouteShellWithSidebar
                 collapsed={data.ui.sidebarState === 'collapsed'}
               >

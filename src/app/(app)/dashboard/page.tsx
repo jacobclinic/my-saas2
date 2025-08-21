@@ -14,10 +14,22 @@ import TutorDBClient from '../components/tutor-dashboard/TutorDashBoardClient';
 import AdminDashboardClient from '../components/admin/dashboard/AdminDashboardClient';
 import UnauthorizedAccessToast from '../components/UnauthorizedAccessToast';
 import { getTutorDashboardDataAction } from '~/lib/tutorStats/server-action';
+import { Sun, Moon } from 'lucide-react';
 
 export const metadata = {
   title: 'Dashboard',
 };
+
+function getTimeBasedGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) {
+    return { greeting: 'Good morning', icon: Sun };
+  } else if (hour < 18) {
+    return { greeting: 'Good afternoon', icon: Sun };
+  } else {
+    return { greeting: 'Good evening', icon: Moon };
+  }
+}
 
 async function DashboardPage() {
   const client = getSupabaseServerComponentClient();
@@ -36,10 +48,10 @@ async function DashboardPage() {
       redirect('/auth/sign-in');
     }
 
-    // Get user role
+    // Get user role and name
     const { data: userData, error: userError } = await client
       .from('users')
-      .select('user_role')
+      .select('user_role, first_name, last_name')
       .eq('id', user.id)
       .single();
 
@@ -78,11 +90,21 @@ async function DashboardPage() {
         );
       }
 
+      // Generate dynamic greeting for tutor
+      const { greeting, icon: GreetingIcon } = getTimeBasedGreeting();
+      const tutorName = userData.first_name ? `${userData.first_name}` : 'Tutor';
+      const dynamicTitle = (
+        <div className="flex items-center space-x-2">
+          <GreetingIcon className="h-6 w-6 text-yellow-500" />
+          <span>{greeting}, {tutorName}</span>
+        </div>
+      );
+
       // Render tutor dashboard
       return (
         <>
           <UnauthorizedAccessToast />
-          <AppHeader title="Tutor Dashboard" />
+          <AppHeader title={dynamicTitle} />
           <PageBody>
             {!sessionData.length ? (
               <Alert className="bg-blue-50 border-blue-200">
@@ -107,11 +129,21 @@ async function DashboardPage() {
         user.id,
       );
 
+      // Generate dynamic greeting for student
+      const { greeting, icon: GreetingIcon } = getTimeBasedGreeting();
+      const studentName = userData.first_name ? `${userData.first_name}` : 'Student';
+      const dynamicTitle = (
+        <div className="flex items-center space-x-2">
+          <GreetingIcon className="h-6 w-6 text-yellow-500" />
+          <span>{greeting}, {studentName}</span>
+        </div>
+      );
+
       // Render student dashboard
       return (
         <>
           <UnauthorizedAccessToast />
-          <AppHeader title="Student Dashboard" />
+          <AppHeader title={dynamicTitle} />
           <PageBody>
             {!upcomingSessions.length ? (
               <Alert className="bg-blue-50 border-blue-200">

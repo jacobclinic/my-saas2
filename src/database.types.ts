@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -470,6 +470,7 @@ export type Database = {
           leave_time: string
           name: string | null
           session_id: string | null
+          student_id: string
           time: string | null
         }
         Insert: {
@@ -480,6 +481,7 @@ export type Database = {
           leave_time: string
           name?: string | null
           session_id?: string | null
+          student_id: string
           time?: string | null
         }
         Update: {
@@ -490,6 +492,7 @@ export type Database = {
           leave_time?: string
           name?: string | null
           session_id?: string | null
+          student_id?: string
           time?: string | null
         }
         Relationships: [
@@ -498,6 +501,13 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_session_attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -680,6 +690,45 @@ export type Database = {
           user_role?: string | null
         }
         Relationships: []
+      }
+      zoom_customer_key_mapping: {
+        Row: {
+          created_at: string
+          customer_key: string
+          id: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_key?: string
+          id?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_key?: string
+          id?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zoom_customer_key_mapping_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zoom_customer_key_mapping_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       zoom_sessions: {
         Row: {

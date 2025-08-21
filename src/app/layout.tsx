@@ -7,7 +7,7 @@ import ThemeSetter from '~/components/ThemeSetter';
 import Fonts from '~/components/Fonts';
 
 import configuration from '~/configuration';
-import { Toaster } from './(app)/components/base-v2/ui/toaster';
+import Toaster from '~/components/Toaster';
 
 export default function RootLayout({
   children,

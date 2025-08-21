@@ -20,6 +20,9 @@ import { validateEmail } from '../../../../core/utils/validate-email';
 import { validatePhoneNumber } from '~/core/utils/validate-phonenumber';
 import { validateName } from '~/core/utils/validate-name';
 import { ClassRegistrationData } from '~/lib/classes/types/class-v2';
+import SignedInRegistration from './SignedInRegistration';
+import type { User as AuthUser } from '@supabase/supabase-js';
+import type BaseUserData from '~/core/session/types/user-data';
 
 // import { registerStudentAction } from '@/app/actions/registerStudentAction';
 
@@ -52,6 +55,8 @@ interface StudentRegistrationFormProps {
   nextSessionId: string;
   formattedDate?: string;
   formattedTime?: string;
+  authUser?: AuthUser | null;
+  userData?: BaseUserData | null;
 } 
 
 const StudentRegistrationForm = ({
@@ -59,7 +64,10 @@ const StudentRegistrationForm = ({
   nextSessionId,
   formattedDate,
   formattedTime,
+  authUser,
+  userData,
 }: StudentRegistrationFormProps) => {
+  // All hooks must be called before any conditional logic
   const [formData, setFormData] = useState<RegistrationFormData>({
     firstName: '',
     lastName: '',
@@ -83,6 +91,29 @@ const StudentRegistrationForm = ({
 
   const signUpMutation = useSignUpWithEmailAndPasswordMutation();
   const birthdayLimits = getBirthdayDateLimits();
+
+  // If user is signed in, show simplified registration form
+  if (authUser && userData) {
+    // Extend userData with additional fields for student registration
+    // These fields might not be available in the base user data
+    const studentUserData = {
+      ...userData,
+      city: (userData as any).city || null,
+      district: (userData as any).district || null,
+      birthday: (userData as any).birthday || null,
+    };
+
+    return (
+      <SignedInRegistration
+        classData={classData}
+        nextSessionId={nextSessionId}
+        formattedDate={formattedDate}
+        formattedTime={formattedTime}
+        authUser={authUser}
+        userData={studentUserData}
+      />
+    );
+  }
 
   // Simplified validation function
   const validateFormField = (fieldName: keyof RegistrationFormData, value: string) => {

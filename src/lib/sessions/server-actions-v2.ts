@@ -82,50 +82,50 @@ export const updateSessionAction = withSession(
         throw new Error('Failed to update session in database');
 
       // Only attempt to update Zoom meeting if time has changed
-      // if (timeChanged) {
-      //   try {
-      //     // Ensure null values are converted to undefined for the zoom update
-      //     const zoomUpdatedata = {
-      //       title: sessionData.title || session.title || '',
-      //       description: sessionData.description || session.description || '',
-      //       startTime: sessionData.startTime || session.start_time || undefined,
-      //       endTime: sessionData.endTime || session.end_time || undefined,
-      //       meetingUrl: session.meeting_url,
-      //     };
+      if (timeChanged) {
+        try {
+          // Ensure null values are converted to undefined for the zoom update
+          const zoomUpdatedata = {
+            title: sessionData.title || session.title || '',
+            description: sessionData.description || session.description || '',
+            startTime: sessionData.startTime || session.start_time || undefined,
+            endTime: sessionData.endTime || session.end_time || undefined,
+            meetingUrl: session.meeting_url,
+          };
 
-      //     const zoomSessionUpdate = await updateZoomSessionAction({
-      //       sessionId: sessionId,
-      //       sessionData: zoomUpdatedata,
-      //       csrfToken: params.csrfToken,
-      //     });
+          const zoomSessionUpdate = await updateZoomSessionAction({
+            sessionId: sessionId,
+            sessionData: zoomUpdatedata,
+            csrfToken: params.csrfToken,
+          });
 
-      //     if (zoomSessionUpdate.error) {
-      //       console.error(
-      //         'Zoom session update error:',
-      //         zoomSessionUpdate.error,
-      //       );
-      //       return {
-      //         success: true,
-      //         warning:
-      //           'Session updated in database, but Zoom meeting update failed due to API issues. Your changes are saved, but meeting link might need updating separately.',
-      //       };
-      //     }
+          if (zoomSessionUpdate.error) {
+            console.error(
+              'Zoom session update error:',
+              zoomSessionUpdate.error,
+            );
+            return {
+              success: true,
+              warning:
+                'Session updated in database, but Zoom meeting update failed due to API issues. Your changes are saved, but meeting link might need updating separately.',
+            };
+          }
 
-      //     if (zoomSessionUpdate.warning) {
-      //       return {
-      //         success: true,
-      //         warning: zoomSessionUpdate.warning,
-      //       };
-      //     }
-      //   } catch (zoomError) {
-      //     console.error('Failed to update Zoom meeting:', zoomError);
-      //     return {
-      //       success: true,
-      //       warning:
-      //         'Session updated successfully, but there was a problem communicating with Zoom. Your changes are saved, but meeting link might need updating separately.',
-      //     };
-      //   }
-      // }
+          if (zoomSessionUpdate.warning) {
+            return {
+              success: true,
+              warning: zoomSessionUpdate.warning,
+            };
+          }
+        } catch (zoomError) {
+          console.error('Failed to update Zoom meeting:', zoomError);
+          return {
+            success: true,
+            warning:
+              'Session updated successfully, but there was a problem communicating with Zoom. Your changes are saved, but meeting link might need updating separately.',
+          };
+        }
+      }
 
       revalidatePath('/sessions');
       revalidatePath('/upcoming-sessions');

@@ -8,17 +8,25 @@ import {
   Video,
   Clock,
   Calendar,
-  DollarSign,
   Download,
   Book,
   User,
   ExternalLink,
   FileText,
+  Banknote,
+  DollarSign,
 } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { AlertTriangle } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from '~/app/(app)/components/base-v2/ui/tooltip';
 import { useRouter } from 'next/navigation';
 
 interface StudentSessionCardProps {
@@ -89,15 +97,17 @@ const StudentSessionCard = ({
   );
 
   return (
-    <Card className="mb-4">
-      <CardContent className="p-5">
-        <div className="flex items-start">
-          <div className="mr-4 p-2 bg-blue-100 rounded-lg">
-            <Book className="h-5 w-5 text-blue-600" />
-          </div>
+    <TooltipProvider>
+      <Card className="mb-4">
+        <CardContent className="p-5">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start">
+            <div className="mr-4 p-2 bg-blue-100 rounded-lg">
+              <Book className="h-5 w-5 text-blue-600" />
+            </div>
 
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900">{sessionData.name}</h3>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">{sessionData.name}</h3>
             {sessionData.topic ? (
               <p className="text-sm text-gray-600 mt-1">{sessionData.topic}</p>
             ) : (
@@ -131,97 +141,162 @@ const StudentSessionCard = ({
                   Payment pending verification
                 </Badge>
               )}
+            </div>
           </div>
+          
+          {/* Payment Due Date - shown in right corner when payment is pending */}
+          {(sessionData.paymentStatus === PAYMENT_STATUS.PENDING || 
+            sessionData.paymentStatus === PAYMENT_STATUS.PENDING_VERIFICATION ||
+            sessionData.paymentStatus === PAYMENT_STATUS.REJECTED ||
+            sessionData.paymentStatus === PaymentStatus.NOT_PAID) && 
+            sessionData.paymentDueDate && type === 'upcoming' && (
+            <div className="text-right">
+              <Badge variant="red">
+                Due: {sessionData.paymentDueDate}
+              </Badge>
+            </div>
+          )}
         </div>
       </CardContent>
       <CardContent className="p-4 space-y-4">
         <div className="flex flex-wrap gap-2">
           {type === 'upcoming' ? (
             <>
-              {sessionData.paymentStatus === PAYMENT_STATUS.PENDING ? (
-                <Button
-                  variant={"primary"}
-                  onClick={() => {
-                    setSelectedSession(sessionData);
-                    setShowPaymentDialog(true);
-                  }}
-                >
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Make Payment
-                </Button>
-              ) : sessionData.paymentStatus ===
-                PAYMENT_STATUS.PENDING_VERIFICATION ? null : sessionData.paymentStatus ===
-                  PAYMENT_STATUS.REJECTED ? (
-                <Button
-                  className="bg-red-600 hover:bg-red-700"
-                  onClick={() => {
-                    setSelectedSession(sessionData);
-                    setShowPaymentDialog(true);
-                  }}
-                >
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Try The Payment Again
-                </Button>
-              ) : (
-                <div className='flex items-center gap-2'>
-                  <Button 
-                    variant={"primary"}
-                    className="w-[150px]" 
-                    onClick={() => joinMeetingAsStudent(sessionData)} disabled={isPending}>
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Join Class
-                  </Button>
+              <div className='flex items-center gap-2 flex-wrap'>
+                {/* Payment button - shown when payment is needed */}
+                {(sessionData.paymentStatus === PAYMENT_STATUS.PENDING || 
+                  sessionData.paymentStatus === PAYMENT_STATUS.REJECTED) && (
                   <Button
-                    variant={"outline"}
-                    className="w-[150px]"
-                    disabled={isPending}
-                    onClick={() =>
-                      router.push(`/sessions/student/${sessionData.id}?type=${type}`)
-                    }
+                    variant={sessionData.paymentStatus === PAYMENT_STATUS.REJECTED ? "destructive" : "primary"}
+                    onClick={() => {
+                      setSelectedSession(sessionData);
+                      setShowPaymentDialog(true);
+                    }}
                   >
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Class
+                    <Banknote className="h-4 w-4 mr-2" />
+                    {sessionData.paymentStatus === PAYMENT_STATUS.REJECTED ? "Try Payment Again" : "Make Payment"}
                   </Button>
-                </div>
-              )}
+                )}
+                
+                {/* Join Class button - always shown for upcoming sessions */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button 
+                        variant={"primary"}
+                        className="w-[150px]" 
+                        onClick={() => joinMeetingAsStudent(sessionData)} 
+                        disabled={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}>
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Join Class
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {sessionData.paymentStatus !== PaymentStatus.VERIFIED ? (
+                      <p>Please make payment to join the class</p>
+                    ) : (
+                      <p>Join the class</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+                
+                {/* View Class button - always shown for upcoming sessions */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        variant={"outline"}
+                        className="w-[150px]"
+                        disabled={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}
+                        onClick={() =>
+                          router.push(`/sessions/student/${sessionData.id}?type=${type}`)
+                        }
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        View Class
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {sessionData.paymentStatus !== PaymentStatus.VERIFIED ? (
+                      <p>Please make payment to view class details</p>
+                    ) : (
+                      <p>View class details</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </>
           ) : (
             <>
-              {sessionData.recordingUrl &&
-              sessionData.recordingUrl.length > 0 ? (
-                sessionData.recordingUrl.map((fileName, index) => (
+              {/* Always show View Class button for past sessions, but disable if payment not made */}
+              <div className='flex items-center gap-2'>
+                {/* Show Make Payment button if payment is not verified */}
+                {sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED && (
                   <Button
-                    key={index}
-                    onClick={async () =>
-                      window.open(await getRecordingUrl(fileName), '_blank')
-                    }
-                    className="flex items-center"
+                    variant="primary"
+                    className="w-[150px]"
+                    onClick={() => {
+                      setSelectedSession(sessionData);
+                      setShowPaymentDialog(true);
+                    }}
                   >
-                    <Video className="h-4 w-4 mr-2" />
-                    Watch Recording {index + 1}
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Make Payment
                   </Button>
-                ))
-              ) : (
-                <>
-                  {sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED ? (
-                    <Alert className="border-red-200 bg-red-50">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-700">
-                        Recording not available for this session.
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Alert className="border-red-200 bg-red-50">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-700">
-                        You have not made the payment to the class
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </>
+                )}
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-[150px]">
+                        <Button
+                          variant={sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED ? "primary" : "outline"}
+                          className="w-full"
+                          disabled={sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED || isPending}
+                          onClick={() =>
+                            router.push(`/sessions/student/${sessionData.id}?type=${type}`)
+                          }
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          View Class
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED
+                        ? <p>Make a payment to view the class</p>
+                        : <p>View class details and materials</p>
+                      }
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              {/* Recording buttons */}
+              {sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED && sessionData.recordingUrl &&
+              sessionData.recordingUrl.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {sessionData.recordingUrl.map((fileName, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      onClick={async () =>
+                        window.open(await getRecordingUrl(fileName), '_blank')
+                      }
+                      className="flex items-center"
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Watch Recording {index + 1}
+                    </Button>
+                  ))}
+                </div>
               )}
-              {sessionData.materials?.[0]?.url && (
-                <Button variant="outline" onClick={handleDownloadMaterials}>
+
+              {/* Download Materials button */}
+              {sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED && sessionData.materials?.[0]?.url && (
+                <Button variant="outline" onClick={handleDownloadMaterials} className="mt-2">
                   <Download className="h-4 w-4 mr-2" />
                   Download Materials
                 </Button>
@@ -230,7 +305,8 @@ const StudentSessionCard = ({
           )}
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </TooltipProvider>
   );
 };
 

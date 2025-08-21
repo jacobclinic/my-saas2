@@ -33,7 +33,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '../base-v2/ui/tooltip';
+} from '~/app/(app)/components/base-v2/ui/tooltip';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
@@ -223,7 +223,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
               <Button
                 key={index}
                 onClick={async () =>
-                  window.open(await getRecordingUrl(fileName), '_blank')
+                  window.open(fileName, '_blank')
                 }
                 className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
               >
