@@ -1,4 +1,5 @@
 import { addDays, startOfWeek, endOfYear, endOfMonth } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { TimeSlot } from '../classes/types/class-v2';
 import { dayMap } from '../constants-v2';
 import { parse, format } from 'date-fns';
@@ -13,6 +14,15 @@ interface TimeRange {
 
 export function getCurrentDateTimeISO(): string {
   return new Date().toISOString();
+}
+
+/**
+ * Gets today's date in Sri Lanka timezone (Asia/Colombo) in YYYY-MM-DD format
+ * @returns Today's date in Sri Lanka timezone as YYYY-MM-DD string
+ */
+export function getTodayInSriLankaTimezone(): string {
+  const now = new Date();
+  return formatInTimeZone(now, 'Asia/Colombo', 'yyyy-MM-dd');
 }
 
 export function getNextNOccurrences(

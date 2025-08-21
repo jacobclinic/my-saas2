@@ -12,6 +12,7 @@ import {
 } from '../../base-v2/ui/Select';
 import TimezoneIndicator from '../../TimezoneIndicator';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
+import { getTodayInSriLankaTimezone } from '~/lib/utils/date-utils';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { createClassByAdminAction } from '~/lib/classes/server-actions-v2';
 import { useToast } from '../../../lib/hooks/use-toast';
@@ -49,20 +50,6 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
-
-  // Get today's date in Sri Lanka timezone (UTC+5:30) in YYYY-MM-DD format
-  const getTodayInSriLankaTimezone = () => {
-    const now = new Date();
-    const currentTime = now.getTime();
-    const sriLankaTime = currentTime + 5.5 * 60 * 60 * 1000;
-    const sriLankaDate = new Date(sriLankaTime);
-
-    const year = sriLankaDate.getUTCFullYear();
-    const month = String(sriLankaDate.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(sriLankaDate.getUTCDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  };
 
   const today = getTodayInSriLankaTimezone();
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
