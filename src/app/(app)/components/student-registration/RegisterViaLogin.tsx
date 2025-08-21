@@ -17,14 +17,18 @@ interface RegistrationViaLoginFormData {
 
 interface StudentRegistrationFormProps {
   classData: ClassRegistrationData;
-  nextSessionData: UpcomingSession;
+  nextSessionId: string;
   setIsRegisterViaLogin: (isRegisterViaLogin: boolean) => void;
+  formattedDate?: string;
+  formattedTime?: string;
 }
 
 const StudentRegistrationViaLogin = ({
   classData,
-  nextSessionData,
-  setIsRegisterViaLogin
+  nextSessionId,
+  setIsRegisterViaLogin,
+  formattedDate,
+  formattedTime,
 }: StudentRegistrationFormProps) => {
   const [formData, setFormData] = useState<RegistrationViaLoginFormData>({
     email: '',
@@ -52,7 +56,6 @@ const StudentRegistrationViaLogin = ({
         const result = await registerStudentViaLoginAction({
           ...formData,
           classId: classData.classId || '',
-          className: classData.className || '',
         });
 
         if (result.success) {
@@ -62,9 +65,9 @@ const StudentRegistrationViaLogin = ({
             username: result.userData?.email,
             email: result.userData?.email,
             nextClass: {
-              sessionId: nextSessionData.id,
-              date: classData.nextSession,
-              time: classData.time,
+              sessionId: nextSessionId,
+              date: formattedDate || classData.nextSession,
+              time: formattedTime || classData.time,
               zoomLink: '',
             },
             materials: [],

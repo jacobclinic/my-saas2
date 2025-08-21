@@ -18,13 +18,6 @@ function getCookieStrategy(request: NextRequest, response: NextResponse) {
   return {
     set: (name: string, value: string, options: CookieOptions) => {
       request.cookies.set({ name, value, ...options });
-
-      response = NextResponse.next({
-        request: {
-          headers: request.headers,
-        },
-      });
-
       response.cookies.set({
         name,
         value,
@@ -40,13 +33,6 @@ function getCookieStrategy(request: NextRequest, response: NextResponse) {
         value: '',
         ...options,
       });
-
-      response = NextResponse.next({
-        request: {
-          headers: request.headers,
-        },
-      });
-
       response.cookies.set({
         name,
         value: '',

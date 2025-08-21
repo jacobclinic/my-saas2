@@ -34,7 +34,7 @@ import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import { useToast } from '~/app/(app)/lib/hooks/use-toast';
+import { toast } from 'sonner';
 import AddLessonDetailsDialog from '../../upcoming-sessions/AddLessonDetailsDialog';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
@@ -45,7 +45,6 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
 }) => {
   const isDashboard = variant === 'dashboard';
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
 
   const [linkCopied, setLinkCopied] = useState<{
     student?: boolean;
@@ -61,14 +60,12 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [materialDescription, setMaterialDescription] = useState('');
   const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
     title: sessionData.lessonTitle || '',
-    description: sessionData.lessonDescription || '',
   });
 
   // Store original lesson details to track changes
   const [originalLessonDetails, setOriginalLessonDetails] =
     useState<LessonDetails>({
       title: sessionData.lessonTitle || '',
-      description: sessionData.lessonDescription || '',
     });
 
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
@@ -83,22 +80,13 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
     });
 
     if (result.success) {
-      toast({
-        title: 'Success',
-        description: 'Session edited successfully',
-        variant: 'success',
-      });
+      toast.success('Session edited successfully');
       // Update original lesson details to reflect the saved state
       setOriginalLessonDetails({
         title: lessonDetails.title,
-        description: lessonDetails.description,
       });
     } else {
-      toast({
-        title: 'Error',
-        description: 'Failed to edit session',
-        variant: 'destructive',
-      });
+      toast.error('Failed to edit session');
     }
     setEditSessionLoading(false);
     setShowLessonDetailsDialog(false);
@@ -109,8 +97,7 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
     type: 'student' | 'materials' | 'tutor',
   ) => {
     const data = await createShortUrlAction({
-      originalUrl: link,
-      csrfToken,
+      originalUrl: link
     });
     if (data.success && data.shortUrl) {
       await copyToClipboard(data.shortUrl);
@@ -227,7 +214,6 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
                     <h3 className="text-lg font-medium">
                       {lessonDetails.title}
                     </h3>
-                    <p className="text-gray-600">{lessonDetails.description}</p>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -352,14 +338,26 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
         onClose={() => setShowSessionEditDialog(false)}
         sessionId={sessionData.id}
         sessionData={{
-          title: sessionData?.sessionRawData?.title || '',
-          description: sessionData?.sessionRawData?.description || '',
+          title: sessionData.lessonTitle || '',
           startTime: sessionData.start_time || '',
           endTime: sessionData.end_time || '',
           meetingUrl: sessionData?.sessionRawData?.meeting_url || '',
           materials: sessionData?.materials || [],
         }}
         loading={editSessionLoading}
+        onSuccess={(updatedData) => {
+          // Update local lesson details state when title changes
+          if (updatedData.title !== undefined) {
+            setLessonDetails(prev => ({
+              ...prev,
+              title: updatedData.title!
+            }));
+            setOriginalLessonDetails(prev => ({
+              ...prev,
+              title: updatedData.title!
+            }));
+          }
+        }}
       />{' '}
       <AddLessonDetailsDialog
         open={showLessonDetailsDialog}
@@ -367,7 +365,6 @@ const AdminSessionCard: React.FC<UpcommingSessionCardProps> = ({
           // Reset to the last saved state, not the original session data
           setLessonDetails({
             title: originalLessonDetails.title,
-            description: originalLessonDetails.description,
           });
           setShowLessonDetailsDialog(false);
         }}

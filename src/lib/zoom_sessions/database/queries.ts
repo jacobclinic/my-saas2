@@ -28,3 +28,22 @@ export async function getZoomSessionBySessionId(client: Client, sessionId: strin
   };
   return data;
 }
+
+export async function getZoomSessionByZoomMeetingId(client: Client, zoomMeetingId: string) {
+  try{
+    const { data, error } = await client
+    .from(ZOOM_SESSIONS_TABLE)
+    .select('*')
+    .eq('meeting_id', zoomMeetingId)
+    .single();
+
+    if (error) {
+      logger.error('Error fetching session by zoom meeting ID:', error);
+      throw error
+    };
+    return data;
+  } catch (error) {
+    logger.error('Error fetching session by zoom meeting ID:', error);
+    throw error
+  }
+}

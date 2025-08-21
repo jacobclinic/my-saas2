@@ -2,14 +2,11 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { Input } from '../base-v2/ui/Input';
-import { Textarea } from '../base-v2/ui/Textarea';
-import { AlertTriangle } from 'lucide-react';
-import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import BaseDialog from '../base-v2/BaseDialog';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { Button } from '../base-v2/ui/Button';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
-import { useToast } from '../../lib/hooks/use-toast';
+import { toast } from 'sonner';
 import { convertToLocalTime } from '~/lib/utils/timezone-utils';
 import TimezoneIndicator from '../TimezoneIndicator';
 
@@ -22,7 +19,6 @@ interface Material {
 
 interface EditSessionData {
   title: string;
-  description: string;
   startTime: string;
   endTime: string;
   materials: Material[];
@@ -35,6 +31,7 @@ interface EditSessionDialogProps {
   sessionId: string;
   sessionData: EditSessionData;
   loading?: boolean;
+  onSuccess?: (updatedData: { title?: string }) => void;
 }
 
 const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
@@ -43,14 +40,13 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   sessionId,
   sessionData,
   loading = false,
+  onSuccess,
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
 
   const [editedSession, setEditedSession] = useState<EditSessionData>({
     title: '',
-    description: '',
     startTime: '',
     endTime: '',
     materials: [],
@@ -67,7 +63,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     if (sessionData) {
       setEditedSession({
         title: sessionData.title || '',
-        description: sessionData.description || '',
         startTime: sessionData.startTime || '',
         endTime: sessionData.endTime || '',
         materials: sessionData.materials || [],
@@ -134,7 +129,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   useEffect(() => {
     if (
       editedSession.title !== sessionData.title ||
-      editedSession.description !== sessionData.description ||
       editedSession.startTime !== sessionData.startTime ||
       editedSession.endTime !== sessionData.endTime ||
       editedSession.materials.length !== sessionData.materials.length ||
@@ -146,7 +140,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     }
   }, [
     editedSession.title,
-    editedSession.description,
     editedSession.startTime,
     editedSession.endTime,
     editedSession.materials.length,
@@ -195,21 +188,19 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         });
 
         if (result.success) {
+          // Call onSuccess callback with updated data before closing
+          if (onSuccess && updatedSession.title !== sessionData.title) {
+            onSuccess({ title: updatedSession.title });
+          }
+          
           onClose();
-          toast({
-            title: 'Success',
-            description: result.warning
-              ? 'Session updated with warning: ' + result.warning
-              : 'Session edited successfully',
-            variant: result.warning ? 'destructive' : 'success',
-            duration: result.warning ? 8000 : 3000, // Longer duration for warnings
-          });
+          if (result.warning) {
+            toast.error('Session updated with warning: ' + result.warning, { duration: 8000 });
+          } else {
+            toast.success('Session edited successfully');
+          }
         } else {
-          toast({
-            title: 'Error',
-            description: result.error || 'Failed to edit session',
-            variant: 'destructive',
-          });
+          toast.error(result.error || 'Failed to edit session');
         }
       });
     }
@@ -231,29 +222,15 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       >
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Session Title</label>
+            <label className="text-sm font-medium">Lesson Topic</label>
             <Input
-              placeholder="Enter session title"
+              placeholder="Enter lesson topic"
               value={editedSession.title}
               onChange={(e) =>
                 setEditedSession({ ...editedSession, title: e.target.value })
               }
             />
           </div>
-          <div>
-            <label className="text-sm font-medium">Description</label>
-            <Textarea
-              placeholder="Describe what will be covered in this session..."
-              value={editedSession.description}
-              onChange={(e) =>
-                setEditedSession({
-                  ...editedSession,
-                  description: e.target.value,
-                })
-              }
-              className="h-24"
-            />
-          </div>{' '}
           <div className="flex justify-between items-center">
             <label className="text-sm font-medium">Session Date</label>
             <TimezoneIndicator showIcon={false} className="text-xs" />
@@ -282,13 +259,6 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               />
             </div>
           </div>
-          <Alert className="bg-yellow-50 border-yellow-200">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-700">
-              Changes to the session details will affect all enrolled students.
-              Make sure to notify them of any changes.
-            </AlertDescription>
-          </Alert>
         </div>
       </BaseDialog>
     </>

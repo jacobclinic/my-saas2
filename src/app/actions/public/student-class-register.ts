@@ -5,15 +5,15 @@ import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
 import { USERS_TABLE } from '~/lib/db-tables';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
-import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentRegistrationEmailTemplate } from '~/core/email/templates/emailTemplate';
+import { InvoiceService } from '~/lib/invoices/v2/invoice.service';
+import getLogger from '~/core/logger';
 
 const registrationSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   classId: z.string().uuid(),
-  className: z.string().min(1),
 });
 
 export async function registerStudentViaLoginAction(
@@ -77,12 +77,14 @@ export async function registerStudentViaLoginAction(
       }
 
       // Create invoice for the newly registered student
-      const invoiceId = await createInvoiceForNewStudent(
-        client,
+      const logger = getLogger();
+      const invoiceService = InvoiceService.getInstance(client, logger);
+      const invoiceResult = await invoiceService.createInvoiceForNewEnrollment(
         userId,
         validated.classId,
       );
-      if (!invoiceId) {
+
+      if (!invoiceResult.success) {
         console.error('Failed to create invoice for student:', userId);
         // Continue with registration even if invoice creation fails
         // The system can generate missing invoices later with the monthly job
@@ -105,10 +107,20 @@ export async function registerStudentViaLoginAction(
         .eq('id', userId)
         .single();
 
+      const { data: classData, error: classError } = await client
+        .from('classes')
+        .select('*')
+        .eq('id', validated.classId)
+        .single();
+
+      if (classError) {
+        console.error('Error fetching class data:', classError);
+      }
+
       const { html, text } = getStudentRegistrationEmailTemplate({
         studentName: `${userDetails?.first_name} ${userDetails?.last_name}`,
         email: validated.email,
-        className: formData.className,
+        className: classData?.name || 'Your Class',
         loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
         classId: validated.classId,
       });
@@ -118,14 +130,14 @@ export async function registerStudentViaLoginAction(
         emailService.sendEmail({
           from: process.env.EMAIL_SENDER!,
           to: validated.email,
-          subject: `Welcome to ${formData.className}! Access Your Student Portal`,
+          subject: `Welcome to ${classData?.name || 'Your Class'}! Access Your Student Portal`,
           html,
           text,
         }),
         // send welcome sms
         sendSingleSMS({
           phoneNumber: userDetails?.phone_number!,
-          message: `Welcome to ${formData.className}! Access your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
+          message: `Welcome to ${classData?.name || 'Your Class'}! Access your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
                 \nLogin with your registration email/password.
                 \n-Comma Education`,
         }),

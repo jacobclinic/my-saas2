@@ -9,7 +9,7 @@ import SubscriptionStatusBadge from '~/app/(app)/components/SubscriptionStatusBa
 import DataTable from '~/core/ui/DataTable';
 import UserData from '~/core/session/types/user-data';
 import { Avatar, AvatarFallback, AvatarImage } from '~/core/ui/Avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '~/core/ui/Tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 
 import {
   DropdownMenu,
@@ -59,16 +59,18 @@ const columns: Array<ColumnDef<UserRow>> = [
       const displayText = displayName ?? user.email ?? user.phone ?? '';
 
       return (
-        <Tooltip>
-          <TooltipTrigger>
-            <Avatar>
-              {photoUrl ? <AvatarImage src={photoUrl} /> : null}
-              <AvatarFallback>{displayText[0]}</AvatarFallback>
-            </Avatar>
-          </TooltipTrigger>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Avatar>
+                {photoUrl ? <AvatarImage src={photoUrl} /> : null}
+                <AvatarFallback>{displayText[0]}</AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
 
-          <TooltipContent>{displayText}</TooltipContent>
-        </Tooltip>
+            <TooltipContent>{displayText}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     },
   },

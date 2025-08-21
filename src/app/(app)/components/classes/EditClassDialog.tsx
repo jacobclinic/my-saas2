@@ -18,13 +18,15 @@ import {
   EditClassData,
   ClassListData,
   ClassType,
+  UpdateClassData,
 } from '~/lib/classes/types/class-v2';
 import { Button } from '../base-v2/ui/Button';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { updateClassAction } from '~/lib/classes/server-actions-v2';
-import { useToast } from '../../lib/hooks/use-toast';
+import { toast } from 'sonner';
 import DeleteClassDialog from './DeleteClassDialog';
+import { Json } from '~/database.types';
 
 interface EditClassDialogProps {
   open: boolean;
@@ -43,7 +45,6 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
-  const { toast } = useToast();
 
   // Add a state to store the original class data for comparison
   const [originalClass, setOriginalClass] = useState<EditClassData | null>(
@@ -168,35 +169,27 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
   const handleSubmit = () => {
     if (classData) {
       startTransition(async () => {
-        const transformedClassData: Partial<Omit<ClassType, 'id'>> = {
+        const updateClassPayload: UpdateClassData = {
           name: editedClass.name,
           subject: editedClass.subject,
           description: editedClass.description,
           grade: editedClass.yearGrade,
           fee: editedClass.monthlyFee,
           starting_date: editedClass.startDate,
-          time_slots: editedClass.timeSlots,
+          time_slots: editedClass.timeSlots as unknown as Json[],
           status: editedClass.status,
-        };
+        }
         const result = await updateClassAction({
           classId: classData.id,
-          classData: transformedClassData,
+          classData: updateClassPayload,
           csrfToken,
         });
         if (result.success) {
           onClose();
-          toast({
-            title: 'Success',
-            description: 'Class edited successfully',
-            variant: 'success',
-          });
+          toast.success('Class edited successfully');
         } else {
           const errorMessage = result.error || 'Failed to edit class, Please try again. If the problem persists, please contact support.';
-          toast({
-            title: 'Error',
-            description: errorMessage,
-            variant: 'destructive',
-          });
+          toast.error(errorMessage);
         }
       });
       onUpdateClass(classData.id, editedClass);

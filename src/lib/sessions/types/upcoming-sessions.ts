@@ -23,6 +23,7 @@ interface UpcomingSessionTableData {
   zoomMeetingId: string;
   materials?: Material[];
   lessonTitle?: string;
+  title?: string;
   lessonDescription?: string;
   sessionRawData?: UpcomingSession;
 }
@@ -35,6 +36,7 @@ interface SessionStudentTableData {
   time: string;
   paymentStatus: PaymentStatus;
   paymentAmount?: number;
+  paymentDueDate?: string;
   zoomLink?: string;
   zoomMeetingId: string;
   recordingUrl?: string[];
@@ -58,13 +60,11 @@ interface EditingLessonState {
 interface LessonDetailsState {
   [key: number]: {
     title: string;
-    description: string;
   };
 }
 
 interface LessonDetails {
   title: string;
-  description: string;
 }
 
 interface MaterialUploadDialogProps {

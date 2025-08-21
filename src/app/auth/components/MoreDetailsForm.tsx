@@ -5,15 +5,16 @@ import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import Button from '~/core/ui/Button';
 import TextField from '~/core/ui/TextField';
-import ImageUploader from '~/core/ui/ImageUploader';
+import ProfileImageUploader from '~/core/ui/ProfileImageUploader';
 import Logo from '~/core/ui/Logo';
 import useSupabase from '~/core/hooks/use-supabase';
-import { CLASS_SIZE_OPTIONS } from '~/lib/constants-v2';
+import { CLASS_SIZE_OPTIONS, SUBJECTS } from '~/lib/constants-v2';
 import {
   updateProfilePhotoAction,
   updateOnboardingDetailsAction,
   uploadIdentityProofAction,
 } from '../sign-up/moredetails/actions';
+import MultiSelectDropdown from '~/core/ui/MultiSelectDropdown';
 
 interface MoreDetailsFormProps {
   user: User;
@@ -25,13 +26,17 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
   returnUrl,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(
+    user.user_metadata?.avatar_url || null,
+  );
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [formErrors, setFormErrors] = useState<{
     dob?: string;
     education?: string;
     subjects?: string;
     classSize?: string;
     document?: string;
+    bio?: string;
   }>({});
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const client = useSupabase();
@@ -44,7 +49,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
     const formData = new FormData(form);
     const dob = formData.get('dob') as string;
     const education = formData.get('education') as string;
-    const subjects = formData.get('subjects') as string;
+    const bio = formData.get('bio') as string;
     const classSize = formData.get('classSize') as string;
     const documentNotes = formData.get('documentNotes') as string;
     // Add returnUrl to form data if provided
@@ -57,6 +62,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
       subjects?: string;
       classSize?: string;
       document?: string;
+      bio?: string;
     } = {};
     // Date of birth validation (age 13-100)
     if (!dob) {
@@ -77,8 +83,11 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
     if (!education) {
       errors.education = 'Please select your highest level of education';
     }
-    if (!subjects || subjects.trim().length < 3) {
-      errors.subjects = 'Please enter subjects you teach';
+    if (!bio || bio.trim().length < 10) {
+      errors.bio = 'Please enter a bio (at least 10 characters)';
+    }
+    if (selectedSubjects.length === 0) {
+      errors.subjects = 'Please select at least one subject you teach';
     }
     if (!classSize) {
       errors.classSize = 'Please select preferred class size';
@@ -120,6 +129,9 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
         // Now update the onboarding details with the identity URL
         formData.append('identityUrl', identityUploadResult.url || '');
       }
+
+      // Add selected subjects as a JSON string
+      formData.append('subjects', JSON.stringify(selectedSubjects));
 
       await updateOnboardingDetailsAction(formData);
 
@@ -194,12 +206,12 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
           <form onSubmit={handleSubmit} className="space-y-2 px-1">
             <div className="flex flex-col items-center justify-center pt-4">
               <div className="w-full">
-                <ImageUploader
+                <ProfileImageUploader
                   value={photoUrl}
                   onValueChange={uploadProfilePhoto}
                 >
                   <div className="flex flex-col items-center">
-                    <span className="text-sm font-medium text-primary">
+                    <span className="text-sm font-medium text-primary-800">
                       {photoUrl
                         ? 'Change Profile Picture'
                         : 'Upload Profile Picture'}
@@ -208,7 +220,7 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                       Choose an image for your profile (optional)
                     </span>
                   </div>
-                </ImageUploader>
+                </ProfileImageUploader>
               </div>
             </div>
 
@@ -278,6 +290,25 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                 </TextField.Label>
               </TextField>
 
+              {/* Bio */}
+              <TextField>
+                <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
+                  Bio
+                  {formErrors.bio && (
+                    <p className="text-red-500 text-sm">
+                      {formErrors.bio}
+                    </p>
+                  )}
+                  <textarea
+                    name="bio"
+                    required
+                    rows={4}
+                    className="w-full border rounded px-2 py-2"
+                    placeholder="Tell us about yourself, your teaching experience, and what makes you a great tutor..."
+                  />
+                </TextField.Label>
+              </TextField>
+
               {/* Subjects You Teach */}
               <TextField>
                 <TextField.Label className="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
@@ -287,13 +318,18 @@ const MoreDetailsForm: React.FC<MoreDetailsFormProps> = ({
                       {formErrors.subjects}
                     </p>
                   )}
-                  <textarea
-                    name="subjects"
-                    required
-                    rows={3}
-                    className="w-full border rounded px-2 py-2"
-                    placeholder="e.g., Mathematics, Physics, Chemistry (separate with commas or spaces)"
-                  />
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-500">
+                      Select the subjects you teach (choose multiple)
+                    </p>
+                    <MultiSelectDropdown
+                      options={SUBJECTS}
+                      selectedValues={selectedSubjects}
+                      onSelectionChange={setSelectedSubjects}
+                      placeholder="Select subjects you teach..."
+                      error={formErrors.subjects}
+                    />
+                  </div>
                 </TextField.Label>
               </TextField>
 

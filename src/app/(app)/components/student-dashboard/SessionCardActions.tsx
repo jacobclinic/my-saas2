@@ -2,9 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '~/app/(app)/components/base-v2/ui/Button';
-import { DollarSign, ExternalLink, FileText } from 'lucide-react';
+import { Banknote, ExternalLink, FileText } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
+import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import { isFirstWeekOfMonth } from '~/lib/utils/date-utils';
 import useSessionTimeValidation from '~/core/hooks/use-session-time-validation';
 import {
@@ -43,6 +44,15 @@ const SessionCardActions = ({
 
   const onViewClass = () =>
     router.push(`/sessions/student/${sessionData.id}?type=next`);
+
+  const isPaymentRequired = () => {
+    return [
+      PaymentStatus.PENDING,
+      PaymentStatus.PENDING_VERIFICATION,
+      PaymentStatus.REJECTED,
+      PaymentStatus.NOT_PAID
+    ].includes(sessionData.paymentStatus);
+  };
 
   const renderPrimaryAction = () => {
     const isFreeFirstWeek = isFirstWeekOfMonth(sessionData.date);
@@ -88,7 +98,7 @@ const SessionCardActions = ({
           className="w-[118px] text-sm font-medium"
           onClick={onPayNow}
         >
-          <DollarSign className="h-4 w-4 mr-2" />
+          <Banknote className="h-4 w-4 mr-2" />
           Pay Now
         </Button>
       );
@@ -104,6 +114,7 @@ const SessionCardActions = ({
         variant="outline"
         className="w-full flex-1 gap-1"
         onClick={onViewClass}
+        disabled={isPaymentRequired()}
       >
         <FileText size={16} />
         View Class

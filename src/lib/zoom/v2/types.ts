@@ -34,10 +34,88 @@ interface ZoomMeetingEndedPayload {
     };
 }
 
+interface ZoomParticipantLeftPayload {
+    account_id: string;
+    object: {
+        uuid: string;
+        participant: {
+            customer_key: string;
+            leave_time: string;
+            public_ip: string;
+            user_id: string;
+            user_name: string;
+            registrant_id: string;
+            participant_user_id: string;
+            id: string;
+            leave_reason: string;
+            email: string;
+            private_ip: string;
+            participant_uuid: string;
+        };
+        id: string;
+        type: number;
+        topic: string;
+        host_id: string;
+        duration: number;
+        start_time: string;
+        timezone: string;
+    };
+}
+
+export interface ZoomRecordingFile {
+    id: string;
+    meeting_id: string;
+    recording_start: string;
+    recording_end: string;
+    file_type: string;
+    file_extension: string;
+    file_size: number;
+    play_url?: string; // Only present for playable files (MP4, M4A)
+    download_url: string;
+    status: string;
+    recording_type: string;
+    encryption_fingerprint: string;
+}
+
+export interface ZoomRecordingCompletedPayload {
+    account_id: string;
+    object: {
+        uuid: string;
+        id: number;
+        account_id: string;
+        host_id: string;
+        topic: string;
+        type: number;
+        start_time: string;
+        timezone: string;
+        host_email: string;
+        duration: number;
+        total_size: number;
+        recording_count: number;
+        share_url: string;
+        recording_files: ZoomRecordingFile[];
+        on_prem: boolean;
+    };
+}
+
+
 export type ZoomWebhookEvent = BaseZoomWebhookPayload<'meeting.ended', ZoomMeetingEndedPayload> | BaseZoomWebhookPayload<
     'endpoint.url_validation',
     ZoomUrlValidationPayload
+> | BaseZoomWebhookPayload<
+    'meeting.participant_left',
+    ZoomParticipantLeftPayload
+> | BaseZoomWebhookPayload<
+    'recording.completed',
+    ZoomRecordingCompletedPayload
 >
+
+// Keep the old interface for backward compatibility if needed elsewhere
+export interface ZoomParticipantLeftWebhookPayload {
+    payload: ZoomParticipantLeftPayload;
+    event_ts: number;
+    event: string;
+}
 
 export type ZoomUserType = 1 | 2 | 3; // 1=Basic, 2=Licensed, 3=On-prem
 export type ZoomCreateUserAction = 'create' | 'autoCreate' | 'custCreate' | 'ssoCreate';
@@ -61,6 +139,8 @@ export type ZoomCreateUserRequest = {
     action: ZoomCreateUserAction;
     user_info: ZoomUserRequestInfo;
     tutor_id: string;
+    email: string;
+    zoom_user_id: number;
 }
 
 export type ZoomUser = {
@@ -252,3 +332,5 @@ export type ZoomMeetingRecordingUrl = {
     play_url: string;
     download_url: string;
 }
+
+export type DBZoomUser = Database['public']['Tables']['zoom_users']['Row'];

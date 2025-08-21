@@ -48,38 +48,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const csrfToken = useCsrfToken();
 
   const handleCopyLink = async () => {
-    const classId = classData.id;
-    const registrationData = {
-      classId,
-      className: classData.name || '',
-      nextSession: classData.nextClass || classData.schedule || '',
-      time: classData.schedule || '',
-      tutorName:
-        classData.tutor?.firstName + ' ' + classData.tutor?.lastName || '',
-    };
-
-    // Create URL with parameters
-    const urlParams = new URLSearchParams({
-      classId: registrationData.classId,
-      className: registrationData.className,
-      nextSession: registrationData.nextSession,
-      time: registrationData.time,
-      tutorName: registrationData.tutorName,
-    });
-
-    const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
-
-    const shortLinkResult = await createShortUrlAction({
-      originalUrl: registrationUrl,
-      csrfToken: csrfToken,
-    });
-
-    const finalLink =
-      shortLinkResult.success && shortLinkResult.shortUrl
-        ? shortLinkResult.shortUrl
-        : registrationUrl;
-
-    await copyToClipboard(finalLink);
+    const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/s/${classData.shortUrl}`;
+    await copyToClipboard(registrationUrl);
     setLinkCopied(true);
     setTimeout(() => {
       setLinkCopied(false);

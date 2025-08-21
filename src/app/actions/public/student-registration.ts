@@ -5,10 +5,11 @@ import { z } from 'zod';
 import { rateLimit } from '../../../lib/rate-limit';
 import getSupabaseServerActionClient from '../../../core/supabase/action-client';
 import { sendSingleSMS } from '~/lib/notifications/sms/sms.notification.service';
-import { createInvoiceForNewStudent } from '~/lib/invoices/database/mutations';
 import { updateUserWithRetry } from '~/lib/user/actions.server';
 import { EmailService } from '~/core/email/send-email-mailtrap';
 import { getStudentRegistrationEmailTemplate } from '~/core/email/templates/emailTemplate';
+import { InvoiceService } from '~/lib/invoices/v2/invoice.service';
+import getLogger from '~/core/logger';
 
 // Helper function to wait
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -32,7 +33,6 @@ const registrationSchema = z.object({
   birthday: z.string().min(1),
   classId: z.string().uuid(),
   password: z.string().min(6),
-  nameOfClass: z.string().min(1),
   address: z.string().min(2),
   city: z.string().min(1),
   district: z.string().min(1),
@@ -130,22 +130,37 @@ export async function registerStudentAction(
       if (enrollmentError) throw enrollmentError;
 
       // Create invoice for the newly registered student
-      const invoiceId = await createInvoiceForNewStudent(
-        client,
+      const logger = getLogger();
+      const invoiceService = InvoiceService.getInstance(client, logger);
+      const invoiceResult = await invoiceService.createInvoiceForNewEnrollment(
         userId,
         validated.classId,
       );
-      if (!invoiceId) {
-        console.error('Failed to create invoice for student:', userId);
+
+      if (!invoiceResult.success) {
+        logger.error('Failed to create invoice for student:', {
+          userId: userId,
+          classId: validated.classId,
+        });
         // Continue with registration even if invoice creation fails
         // The system can generate missing invoices later with the monthly job
       }
 
+      const { data: classData, error: classError } = await client
+        .from('classes')
+        .select('*')
+        .eq('id', validated.classId)
+        .single();
+
+      if (classError) {
+        console.error('Error fetching class data:', classError);
+      }
+      
       try {
         const { html, text } = getStudentRegistrationEmailTemplate({
           studentName: `${validated.firstName} ${validated.lastName}`,
           email: validated.email,
-          className: validated.nameOfClass,
+          className: classData?.name || 'Your Class',
           loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in`,
           classId: validated.classId,
         });
@@ -154,13 +169,13 @@ export async function registerStudentAction(
           emailService.sendEmail({
             from: process.env.EMAIL_SENDER || 'noreply@yourdomain.com',
             to: validated.email,
-            subject: ` Welcome to ${validated.nameOfClass}! Access Your Student Portal`,
+            subject: ` Welcome to ${classData?.name || 'Your Class'}! Access Your Student Portal`,
             html,
             text,
           }),
           sendSingleSMS({
             phoneNumber: validated.phone,
-            message: `Welcome to ${validated.nameOfClass}! Your registration is confirmed. Login to your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
+            message: `Welcome to ${classData?.name || 'Your Class'}! Your registration is confirmed. Login to your student portal: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/sign-in
                   \nUsername: Your email
                   \nUse the entered Password you used
                   \n-Comma Education`,
@@ -180,7 +195,7 @@ export async function registerStudentAction(
       },
     };
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', JSON.stringify(error, null, 2));
     return { success: false, error: 'Registration failed. Please try again.' };
   }
 }

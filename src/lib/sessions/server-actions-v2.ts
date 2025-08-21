@@ -1,9 +1,12 @@
 'use server';
 
+import { withSession } from '~/core/generic/actions-utils';
+import getSupabaseServerActionClient from '~/core/supabase/action-client';
+import getLogger from '~/core/logger';
+import { SessionService } from './session.service';
+import { ErrorCodes } from '~/lib/shared/error-codes';
 import { revalidatePath } from 'next/cache';
 import { zoomService } from '../zoom/zoom.service';
-import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import { withSession } from '~/core/generic/actions-utils';
 import {
   deleteMaterialFromStorage,
   uploadMaterialToStorage,
@@ -79,50 +82,50 @@ export const updateSessionAction = withSession(
         throw new Error('Failed to update session in database');
 
       // Only attempt to update Zoom meeting if time has changed
-      // if (timeChanged) {
-      //   try {
-      //     // Ensure null values are converted to undefined for the zoom update
-      //     const zoomUpdatedata = {
-      //       title: sessionData.title || session.title || '',
-      //       description: sessionData.description || session.description || '',
-      //       startTime: sessionData.startTime || session.start_time || undefined,
-      //       endTime: sessionData.endTime || session.end_time || undefined,
-      //       meetingUrl: session.meeting_url,
-      //     };
+      if (timeChanged) {
+        try {
+          // Ensure null values are converted to undefined for the zoom update
+          const zoomUpdatedata = {
+            title: sessionData.title || session.title || '',
+            description: sessionData.description || session.description || '',
+            startTime: sessionData.startTime || session.start_time || undefined,
+            endTime: sessionData.endTime || session.end_time || undefined,
+            meetingUrl: session.meeting_url,
+          };
 
-      //     const zoomSessionUpdate = await updateZoomSessionAction({
-      //       sessionId: sessionId,
-      //       sessionData: zoomUpdatedata,
-      //       csrfToken: params.csrfToken,
-      //     });
+          const zoomSessionUpdate = await updateZoomSessionAction({
+            sessionId: sessionId,
+            sessionData: zoomUpdatedata,
+            csrfToken: params.csrfToken,
+          });
 
-      //     if (zoomSessionUpdate.error) {
-      //       console.error(
-      //         'Zoom session update error:',
-      //         zoomSessionUpdate.error,
-      //       );
-      //       return {
-      //         success: true,
-      //         warning:
-      //           'Session updated in database, but Zoom meeting update failed due to API issues. Your changes are saved, but meeting link might need updating separately.',
-      //       };
-      //     }
+          if (zoomSessionUpdate.error) {
+            console.error(
+              'Zoom session update error:',
+              zoomSessionUpdate.error,
+            );
+            return {
+              success: true,
+              warning:
+                'Session updated in database, but Zoom meeting update failed due to API issues. Your changes are saved, but meeting link might need updating separately.',
+            };
+          }
 
-      //     if (zoomSessionUpdate.warning) {
-      //       return {
-      //         success: true,
-      //         warning: zoomSessionUpdate.warning,
-      //       };
-      //     }
-      //   } catch (zoomError) {
-      //     console.error('Failed to update Zoom meeting:', zoomError);
-      //     return {
-      //       success: true,
-      //       warning:
-      //         'Session updated successfully, but there was a problem communicating with Zoom. Your changes are saved, but meeting link might need updating separately.',
-      //     };
-      //   }
-      // }
+          if (zoomSessionUpdate.warning) {
+            return {
+              success: true,
+              warning: zoomSessionUpdate.warning,
+            };
+          }
+        } catch (zoomError) {
+          console.error('Failed to update Zoom meeting:', zoomError);
+          return {
+            success: true,
+            warning:
+              'Session updated successfully, but there was a problem communicating with Zoom. Your changes are saved, but meeting link might need updating separately.',
+          };
+        }
+      }
 
       revalidatePath('/sessions');
       revalidatePath('/upcoming-sessions');
@@ -340,3 +343,27 @@ export async function updateAttendanceMarkedAction(
     return { success: false, error: 'Failed to update attendance marked' };
   }
 }
+
+export const getNextSessionByClassIdAction = withSession(
+  async ({ classId }: { classId: string }) => {
+    const client = getSupabaseServerActionClient();
+    const logger = getLogger();
+    const service = new SessionService(client, logger);
+
+    try {
+      if (!classId) {
+        return { success: false, error: 'Invalid classId', code: ErrorCodes.VALIDATION_ERROR };
+      }
+
+      const result = await service.getNextSessionByClassId(classId);
+      if (!result.success) {
+        return { success: false, error: result.error.message, code: ErrorCodes.SERVICE_LEVEL_ERROR };
+      }
+
+      return { success: true, data: result.data };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, error: message, code: ErrorCodes.INTERNAL_SERVER_ERROR };
+    }
+  }
+);

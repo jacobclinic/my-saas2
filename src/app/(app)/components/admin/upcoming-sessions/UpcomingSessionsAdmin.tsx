@@ -14,6 +14,7 @@ import EditSessionDialog from '../../upcoming-sessions/EditSessionDialog';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { formatDateStandard } from '~/lib/utils/date-utils';
 
 interface DateRange {
   start?: { year: number; month: number; day: number } | null;
@@ -125,8 +126,7 @@ const UpcomingSessionsAdmin = ({
   const handleCopyLink = async (cls: (typeof classData)[0]) => {
     const link = `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${cls.id}?sessionId=${cls.id}&className=${cls.name}&sessionDate=${cls.date?.split('T')[0]}&sessionTime=${cls.time}&sessionSubject=${cls.subject}&sessionTitle=${cls.topic}`;
     const data = await createShortUrlAction({
-      originalUrl: link,
-      csrfToken,
+      originalUrl: link
     });
     if (data.success && data.shortUrl) {
       await copyToClipboard(data.shortUrl);
@@ -252,7 +252,7 @@ const UpcomingSessionsAdmin = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{cls.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {cls.date?.split('T')[0]}
+                    {formatDateStandard(cls.date!)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{cls.time}</td>
                   <td className="px-6 py-4 whitespace-nowrap space-x-2">

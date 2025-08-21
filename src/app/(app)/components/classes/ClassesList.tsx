@@ -73,6 +73,7 @@ const TutorClasses = ({
           students: classData?.students?.length || 0,
           grade: classData?.grade || 'N/A',
           registrationLink: '',
+          shortUrl: classData?.short_url_code || '',
           nextClass: formattedDate,
           tutor: {
             id: classData?.tutor_id || '',

@@ -12,33 +12,33 @@ import ClassType from '../types/class';
  * @param data - Class data (excluding the ID)
  */
 export async function createClass(client: Client, data: Omit<ClassType, 'id'>) {
-  try {
-    const { data: insertedClass, error } = await client
-      .from(CLASSES_TABLE)
-      .insert({
-        name: data.name,
-        description: data.description,
-        subject: data.subject,
-        tutor_id: data.tutorId,
-        fee: data.fee,
-        time_slots: data.timeSlots?.map((slot) => ({
-          day: slot.day,
-          time: slot.time,    
-          duration: slot.duration,    
-          reccurringPattern: slot.reccurringPattern,    
-        })),
-      })
-      .select('id')
-      .throwOnError()
-      .single();
+  // try {
+  //   const { data: insertedClass, error } = await client
+  //     .from(CLASSES_TABLE)
+  //     .insert({
+  //       name: data.name,
+  //       description: data.description,
+  //       subject: data.subject,
+  //       tutor_id: data.tutorId,
+  //       fee: data.fee,
+  //       time_slots: data.timeSlots?.map((slot) => ({
+  //         day: slot.day,
+  //         time: slot.time,    
+  //         duration: slot.duration,    
+  //         reccurringPattern: slot.reccurringPattern,    
+  //       })),
+  //     })
+  //     .select('id')
+  //     .throwOnError()
+  //     .single();
 
-    if (error) throw error; // Manually throw error if any
+  //   if (error) throw error; // Manually throw error if any
 
-    return insertedClass;
-  } catch (error) {
-    console.error("Error creating class:", error);
-    throw new Error("Failed to create class. Please try again.");
-  }
+  //   return insertedClass;
+  // } catch (error) {
+  //   console.error("Error creating class:", error);
+  //   throw new Error("Failed to create class. Please try again.");
+  // }
 }
 
 /**

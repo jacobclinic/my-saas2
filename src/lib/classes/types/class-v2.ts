@@ -1,6 +1,7 @@
-import { Json } from '~/database.types';
+import { Database, Json } from '~/database.types';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import { ClassWithTutorAndEnrollmentAndNextSession } from './class';
+import { ApiResponse } from '~/lib/shared/types/api';
 
 // types.ts
 
@@ -23,32 +24,6 @@ interface NextSession {
   start_time: string;
 }
 
-export interface ClassType {
-  id: string;
-  created_at?: string;
-  name?: string | null;
-  description: string | null;
-  subject: string | null;
-  tutor_id: string;
-  fee: number | null;
-  status: string | null;
-  tutor?: {
-    first_name: string | null;
-    last_name: string | null;
-  };
-  time_slots:
-    | {
-        day: string;
-        startTime: string;
-        endTime: string;
-      }[]
-    | null;
-  grade: string | null;
-  starting_date: string | null;
-  students?: ClassListStudent[] | [];
-  upcomingSession: string | null;
-}
-
 export interface ClassForStudentType {
   id: string | null;
   class_id: string | null;
@@ -65,12 +40,12 @@ export interface ClassForStudentType {
       last_name: string | null;
     };
     time_slots:
-      | {
-          day: string;
-          startTime: string;
-          endTime: string;
-        }[]
-      | null;
+    | {
+      day: string;
+      startTime: string;
+      endTime: string;
+    }[]
+    | null;
     fee?: number | null;
     status?: string | null;
     grade?: string | null;
@@ -110,6 +85,7 @@ export interface ClassListData {
   description?: string;
   timeSlots?: { day: string; time: string }[];
   classRawData?: ClassType;
+  shortUrl?: string | null;
   tutor?: {
     id: string;
     firstName: string | null;
@@ -228,12 +204,12 @@ export interface SelectedClassAdmin {
   fee: number | null;
   status: string | null;
   time_slots:
-    | {
-        day: string;
-        start_time: string;
-        end_time: string;
-      }[]
-    | null;
+  | {
+    day: string;
+    start_time: string;
+    end_time: string;
+  }[]
+  | null;
   grade: string | null;
   upcomingSession: string | null;
 }
@@ -245,3 +221,101 @@ export interface ClassRegistrationData {
   time: string;
   tutorName: string;
 }
+
+export interface ClassType {
+  id: string;
+  created_at?: string;
+  name?: string | null;
+  description: string | null;
+  subject: string | null;
+  tutor_id: string;
+  fee: number | null;
+  status: string | null;
+  tutor?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
+  time_slots:
+  | {
+    day: string;
+    startTime: string;
+    endTime: string;
+  }[]
+  | null;
+  grade: string | null;
+  starting_date: string | null;
+  students?: ClassListStudent[] | [];
+  upcomingSession: string | null;
+  short_url_code?: string | null;
+}
+
+export interface CreateClassResponse extends ApiResponse<Class> {
+  class?: Class;
+}
+
+export interface UpdateClassResponse extends ApiResponse<Class> {
+  class?: Class;
+}
+
+export interface DeleteClassResponse extends ApiResponse<string> {
+  deletedId?: string;
+}
+
+export const createClassSuccess = (): CreateClassResponse => ({
+  success: true
+});
+
+export const createClassFailure = (error: string, code?: string): CreateClassResponse => ({
+  success: false,
+  error,
+  code
+});
+
+export const updateClassSuccess = (): UpdateClassResponse => ({
+  success: true
+});
+
+export const updateClassFailure = (error: string, code?: string): UpdateClassResponse => ({
+  success: false,
+  error,
+  code
+});
+
+export const deleteClassSuccess = (): DeleteClassResponse => ({
+  success: true
+});
+
+export const deleteClassFailure = (error: string, code?: string): DeleteClassResponse => ({
+  success: false,
+  error,
+  code
+});
+
+// DB Types
+export type InsertClassData = Database['public']['Tables']['classes']['Insert'];
+export type UpdateClassData = Database['public']['Tables']['classes']['Update'];
+export type DbClassType = Database['public']['Tables']['classes']['Row'];
+
+
+export type CreateClassPayload = InsertClassData;
+
+export type CreateClassParams = {
+  data: CreateClassPayload,
+  csrfToken: string
+}
+
+export type UpdateClassParams = {
+  classId: string;
+  classData: UpdateClassData;
+  csrfToken: string;
+}
+
+
+export type ClassCreatedEvent = {
+  classId: string;
+  timeSlots: TimeSlot[];
+  tutorId: string;
+  startDate: string;
+}
+
+export type ActiveClassForTutorInvoice = Pick<DbClassType, 'id' | 'fee' | 'tutor_id' | 'name'>;
