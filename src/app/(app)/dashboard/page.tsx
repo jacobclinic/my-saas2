@@ -40,11 +40,9 @@ async function DashboardPage() {
       data: { user },
       error: authError,
     } = await client.auth.getUser();
-    // console.log('-----DashboardPage-------auth-User:', user);
 
     // Handle authentication error
-    if (authError || !user?.id) {
-      console.error('Authentication error:', authError);
+    if (authError || !user) {
       redirect('/auth/sign-in');
     }
 
@@ -187,7 +185,12 @@ async function DashboardPage() {
 
     // Handle unknown user role
     throw new Error('Invalid user role');
-  } catch (error) {
+  } catch (error: any) {
+    // Check if it's a redirect error and re-throw it if so
+    if (error?.digest?.includes('NEXT_REDIRECT')) {
+      throw error;
+    }
+
     // Handle any other errors
     console.error('Dashboard error:', error);
     return (

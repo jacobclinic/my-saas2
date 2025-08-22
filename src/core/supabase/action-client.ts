@@ -45,17 +45,47 @@ function getCookiesStrategy() {
 
   return {
     get: (name: string) => {
-      return cookieStore.get(name)?.value;
+      try {
+        return cookieStore.get(name)?.value;
+      } catch (e) {
+        console.warn('Cookie get warning:', e);
+        return null;
+      }
     },
     set: (name: string, value: string, options: any) => {
-      cookieStore.set({ name, value, ...options });
+      try {
+
+        if (process.env.NEXT_RUNTIME === 'nodejs') {
+          cookieStore.set({ 
+            name, 
+            value, 
+            ...options,
+
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            httpOnly: true
+          });
+        }
+      } catch (e) {
+        console.error('Cookie set error:', e);
+      }
     },
     remove: (name: string, options: any) => {
-      cookieStore.set({
-        name,
-        value: '',
-        ...options,
-      });
+      try {
+        if (process.env.NEXT_RUNTIME === 'nodejs') {
+          cookieStore.set({
+            name,
+            value: '',
+            ...options,
+            maxAge: 0,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            httpOnly: true
+          });
+        }
+      } catch (e) {
+        console.error('Cookie remove error:', e);
+      }
     },
   };
 }

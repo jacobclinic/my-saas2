@@ -50,6 +50,7 @@ import useSessionTimeValidation from '~/core/hooks/use-session-time-validation';
 import { fetchZoomSessionBySessionIdAction } from '~/lib/zoom_sessions/server-actions-v2';
 import { toast } from 'sonner';
 import { isIPadOS } from '~/lib/utils/device-utils';
+import CopyLinkButton from '~/components/CopyLinkButton';
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
@@ -125,7 +126,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
       if (session && session.meeting_id) {
         const id = String(session.meeting_id).replace(/\D/g, '');
-        const pwd = session.password? `?pwd=${encodeURIComponent(session.password)}`: '';
+        const pwd = session.password ? `?pwd=${encodeURIComponent(session.password)}` : '';
         const url = `https://zoom.us/j/${id}${pwd}`;
 
         if (newTab) {
@@ -335,33 +336,12 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 </Tooltip>
               </TooltipProvider>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
-                      onClick={() =>
-                        handleCopyLink(
-                          `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`,
-                          'student',
-                        )
-                      }
-                    >
-                      {' '}
-                      {linkCopied.student ? (
-                        <Check className="h-4 w-4 mr-2" />
-                      ) : (
-                        <Link className="h-4 w-4 mr-2" />
-                      )}
-                      {linkCopied.student ? 'Copied!' : 'Copy Student Link'}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copy student link to clipboard</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <CopyLinkButton
+                url={`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`}
+                buttonText="Copy Student Link"
+                tooltipText='Copy class link to clipboard'
+                shouldGenerateLink={true}
+              />
 
               <TooltipProvider>
                 <Tooltip>
