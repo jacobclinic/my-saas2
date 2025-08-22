@@ -74,9 +74,20 @@ export default async function SessionViewPage({ params }: Params) {
     sessionData.class_id!,
   );
 
-  // Determine session type based on end time
-  const sessionType =
-    new Date(sessionData.end_time || '') > new Date() ? 'upcoming' : 'past';
+  // Determine session type based on start and end time
+  const now = new Date();
+  const startTime = new Date(sessionData.start_time || '');
+  const endTime = new Date(sessionData.end_time || '');
+  
+  let sessionType: 'upcoming' | 'past';
+  if (now < startTime) {
+    sessionType = 'upcoming';
+  } else if (now >= startTime && now <= endTime) {
+    // Active sessions should be treated as upcoming (they can join)
+    sessionType = 'upcoming';
+  } else {
+    sessionType = 'past';
+  }
 
   return (
     <>
