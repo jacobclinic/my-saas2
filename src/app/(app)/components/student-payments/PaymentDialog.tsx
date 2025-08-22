@@ -21,6 +21,7 @@ import { uploadPaymentSlipAction } from '~/lib/student-payments/server-actions';
 import { getFileBuffer } from '~/lib/utils/upload-material-utils';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import getLogger from '~/core/logger';
+import { toast } from 'sonner';
 
 interface UploadingFile {
   file: File;
@@ -213,12 +214,15 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
             : null,
         );
 
+        // Show success toast
+        toast.success('Your payment receipt has been submitted for admin approval.');
+
         // Call the success callback to update parent state
         if (onPaymentSuccess) {
           onPaymentSuccess();
         }
 
-        // Show success message and close dialog after delay
+        // Close dialog after delay
         setTimeout(() => {
           onClose();
         }, 2000);
@@ -346,11 +350,13 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
               <div className="text-lg font-medium">
                 Rs. {sessionData.paymentAmount}
               </div>
-              <div>
-                <p className="text-xs text-amber-600">
-                  Payment Due: 8 {monthName} {year}
-                </p>
-              </div>
+              {sessionData.paymentDueDate && (
+                <div>
+                  <p className="text-xs text-amber-600">
+                    Payment Due: {sessionData.paymentDueDate}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

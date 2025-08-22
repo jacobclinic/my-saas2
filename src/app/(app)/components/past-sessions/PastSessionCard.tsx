@@ -33,10 +33,11 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '../base-v2/ui/tooltip';
+} from '~/app/(app)/components/base-v2/ui/tooltip';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
+import CopyLinkButton from '~/components/CopyLinkButton';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
@@ -223,7 +224,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
               <Button
                 key={index}
                 onClick={async () =>
-                  window.open(await getRecordingUrl(fileName), '_blank')
+                  window.open(fileName, '_blank')
                 }
                 className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
               >
@@ -237,33 +238,13 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
               No recordings available
             </Button>
           )}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
-                  onClick={() =>
-                    handleCopyLink(
-                      `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.topic}`,
-                      'student',
-                    )
-                  }
-                >
-                  {' '}
-                  {linkCopied.student ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <Link className="h-4 w-4 mr-2" />
-                  )}
-                  {linkCopied.student ? 'Copied!' : 'Copy Student Link'}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Copy class link to clipboard</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+
+          <CopyLinkButton
+            url={`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.topic}`}
+            buttonText="Copy Student Link"
+            tooltipText='Copy class link to clipboard'
+            shouldGenerateLink={true}
+          />
 
           <TooltipProvider>
             <Tooltip>

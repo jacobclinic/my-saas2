@@ -6,10 +6,10 @@ import { Database } from "~/database.types";
 import getSupabaseServerActionClient from "~/core/supabase/action-client";
 import { getSessionsTillTomorrowWithZoomUser } from "~/lib/sessions/database/queries";
 import { createZoomSession } from "~/lib/zoom_sessions/database/mutations";
-import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomMeetingRecordingUrl } from "./types";
+import { DBZoomUser, ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomMeetingRecordingUrl } from "./types";
 import { ZOOM_SESSIONS_TABLE } from "~/lib/db-tables";
-import { getAllUnassignedZoomUsers, getAllZoomUsersWithTutor, getZoomUserByTutorId } from "./database/queries";
-import { ZoomError } from "~/lib/shared/errors";
+import { getAllUnassignedZoomUsers, getAllZoomUsersWithTutor, getUnassignedZoomUsers, getZoomUserById, getZoomUserByTutorId } from "./database/queries";
+import { DatabaseError, ZoomError } from "~/lib/shared/errors";
 import { failure, Result, success } from "~/lib/shared/result";
 
 
@@ -40,18 +40,17 @@ export class ZoomService {
                 logger.warn(`Zoom user already exists for tutor ID: ${user.tutor_id}`);
                 return existingZoomUser;
             }
-            const allUnassignedZoomUsers = await getAllUnassignedZoomUsers(this.supabaseClient);
 
-            if (!allUnassignedZoomUsers || allUnassignedZoomUsers.length === 0) {
-                throw new Error('No unassigned Zoom users are available to assign.');
+            if (!user.email) {
+                logger.error(`Cannot create a zoom user without an email for the tutor ID: ${user.tutor_id}`);
+                return null;
             }
 
-            const randomUnassignedZoomUser = allUnassignedZoomUsers[0];
-            user.user_info.email = randomUnassignedZoomUser.email;
+            user.user_info.email = user.email;
 
             const zoomUser = await this.client.createUser(user);
 
-            await updateZoomUser(this.supabaseClient, randomUnassignedZoomUser.id, {
+            await updateZoomUser(this.supabaseClient, user.zoom_user_id, {
                 ...zoomUser,
                 tutor_id: user.tutor_id,
             });
@@ -259,7 +258,7 @@ export class ZoomService {
         }
     }
 
-    async checkIfZoomUserValid(tutorId: string) : Promise<Result<boolean, ZoomError>>{
+    async checkIfZoomUserValid(tutorId: string): Promise<Result<boolean, ZoomError>> {
         try {
             const tutorZoomUser = await getZoomUserByTutorId(this.supabaseClient, tutorId);
             if (tutorZoomUser.data) {
@@ -296,6 +295,34 @@ export class ZoomService {
         } catch (error) {
             logger.error(error, "Failed to create unassigned zoom user");
             throw error;
+        }
+    }
+
+    async getUnassignedZoomUsers(): Promise<Result<DBZoomUser[]>> {
+        try {
+            const unassignedZoomUsers = await getUnassignedZoomUsers(this.supabaseClient);
+            if (unassignedZoomUsers.success) {
+                return success(unassignedZoomUsers.data);
+            }
+            logger.error("Failed to get unassigned zoom users", unassignedZoomUsers.error);
+            return failure(new DatabaseError('Failed to get unassigned zoom users'));
+        } catch (error) {
+            logger.error(error, "Failed to get unassigned zoom users");
+            return failure(new DatabaseError('Failed to get unassigned zoom users'));
+        }
+    }
+
+    async getZoomUserById(zoomUserId: number): Promise<Result<DBZoomUser>> {
+        try {
+            const zoomUser = await getZoomUserById(this.supabaseClient, zoomUserId);
+            if (zoomUser.success) {
+                return success(zoomUser.data);
+            }
+            logger.error("Failed to get zoom user by zoom user id", zoomUser.error);
+            return failure(new DatabaseError('Failed to get zoom user by zoom user id'));
+        } catch (error) {
+            logger.error(error, "Failed to get zoom user by zoom user id");
+            return failure(new DatabaseError('Failed to get zoom user by zoom user id'));
         }
     }
 }

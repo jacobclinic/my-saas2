@@ -25,6 +25,7 @@ import getLogger from '~/core/logger';
 import { SessionService } from '../sessions/session.service';
 import { isEqual } from '../utils/lodash-utils';
 import { UpstashService } from '../upstash/upstash.service';
+import { ShortLinksService } from '../short-links/short-links-service';
 
 
 type DeleteClassParams = {
@@ -40,7 +41,7 @@ export const createClassAction = withSession(
     const logger = getLogger();
     const zoomService = new ZoomService(client);
     const classService = new ClassService(client, logger);
-    const sessionService = new SessionService(client, logger);
+    const shortLinksService = ShortLinksService.getInstance(client, logger);
     try {
 
       await verifyCsrfToken(csrfToken);
@@ -56,6 +57,27 @@ export const createClassAction = withSession(
 
       if (!classResult.success) {
         return createClassFailure(classResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+      }
+
+      const classUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?classId=${classResult.data.id}`;
+      const shortUrlResult = await shortLinksService.createShortUrl(classUrl);
+      if (shortUrlResult.success && shortUrlResult.data.short_code) {
+        const updateShortUrlResult = await classService.updateClassShortUrl(
+          classResult.data.id,
+          shortUrlResult.data.short_code
+        );
+        if (!updateShortUrlResult.success) {
+          logger.warn('Failed to update class with short URL, but class was created', {
+            classId: classResult.data.id,
+            shortCode: shortUrlResult.data.short_code,
+            error: updateShortUrlResult.error.message
+          });
+        }
+      } else {
+        logger.warn('Short URL creation failed, but class was created', {
+          classId: classResult.data.id,
+          error: !shortUrlResult.success ? shortUrlResult.error.message : 'Short URL creation failed'
+        });
       }
 
       const upstashService = UpstashService.getInstance(logger);

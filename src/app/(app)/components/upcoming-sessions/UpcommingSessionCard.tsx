@@ -40,7 +40,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '../base-v2/ui/tooltip';
+} from '~/app/(app)/components/base-v2/ui/tooltip';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
@@ -48,8 +48,9 @@ import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import { useRouter } from 'next/navigation';
 import useSessionTimeValidation from '~/core/hooks/use-session-time-validation';
 import { fetchZoomSessionBySessionIdAction } from '~/lib/zoom_sessions/server-actions-v2';
-import { useToast } from '../../lib/hooks/use-toast';
+import { toast } from 'sonner';
 import { isIPadOS } from '~/lib/utils/device-utils';
+import CopyLinkButton from '~/components/CopyLinkButton';
 
 interface TimeRange {
   startTime: string; // e.g., "2025-05-03T06:13:00Z"
@@ -75,16 +76,13 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const [materialDescription, setMaterialDescription] = useState('');
   const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
     title: sessionData?.sessionRawData?.title || '',
-    description: sessionData?.sessionRawData?.description || '',
   });
 
-  const { toast } = useToast();
 
   // Store original lesson details to track changes
   const [originalLessonDetails, setOriginalLessonDetails] =
     useState<LessonDetails>({
       title: sessionData?.sessionRawData?.title || '',
-      description: sessionData?.sessionRawData?.description || '',
     });
 
   const [showEditSessionDialog, setShowSessionEditDialog] = useState(false);
@@ -128,7 +126,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
 
       if (session && session.meeting_id) {
         const id = String(session.meeting_id).replace(/\D/g, '');
-        const pwd = session.password? `?pwd=${encodeURIComponent(session.password)}`: '';
+        const pwd = session.password ? `?pwd=${encodeURIComponent(session.password)}` : '';
         const url = `https://zoom.us/j/${id}${pwd}`;
 
         if (newTab) {
@@ -142,11 +140,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
           window.location.assign(url);
         }
       } else {
-        toast({
-          title: 'Error',
-          description:'Something wrong with the class, Please contact admin',
-          variant: 'destructive',
-        });
+        toast.error('Something wrong with the class, Please contact admin');
       }
     });
   }, [sessionData]);
@@ -165,7 +159,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         // Update original lesson details to reflect the saved state
         setOriginalLessonDetails({
           title: lessonDetails.title,
-          description: lessonDetails.description,
         });
       }
     } catch (error) {
@@ -253,9 +246,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 ) : (
                   <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
                     <h3 className="font-medium">{lessonDetails.title}</h3>
-                    <p className="text-gray-600 text-sm">
-                      {lessonDetails.description}
-                    </p>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -346,33 +336,12 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 </Tooltip>
               </TooltipProvider>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
-                      onClick={() =>
-                        handleCopyLink(
-                          `${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`,
-                          'student',
-                        )
-                      }
-                    >
-                      {' '}
-                      {linkCopied.student ? (
-                        <Check className="h-4 w-4 mr-2" />
-                      ) : (
-                        <Link className="h-4 w-4 mr-2" />
-                      )}
-                      {linkCopied.student ? 'Copied!' : 'Copy Student Link'}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copy student link to clipboard</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <CopyLinkButton
+                url={`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`}
+                buttonText="Copy Student Link"
+                tooltipText='Copy class link to clipboard'
+                shouldGenerateLink={true}
+              />
 
               <TooltipProvider>
                 <Tooltip>
@@ -432,14 +401,26 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         onClose={() => setShowSessionEditDialog(false)}
         sessionId={sessionData.id}
         sessionData={{
-          title: sessionData.lessonTitle || '',
-          description: sessionData.lessonDescription || '',
+          title: sessionData.title || '',
           startTime: sessionData.start_time || '',
           endTime: sessionData.end_time || '',
           meetingUrl: sessionData.zoomLinkStudent || '',
           materials: sessionData.materials || [],
         }}
         loading={editSessionLoading}
+        onSuccess={(updatedData) => {
+          // Update local lesson details state when title changes
+          if (updatedData.title !== undefined) {
+            setLessonDetails(prev => ({
+              ...prev,
+              title: updatedData.title!
+            }));
+            setOriginalLessonDetails(prev => ({
+              ...prev,
+              title: updatedData.title!
+            }));
+          }
+        }}
       />
       <AddLessonDetailsDialog
         open={showLessonDetailsDialog}
@@ -447,7 +428,6 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
           // Reset to the last saved state, not the original session data
           setLessonDetails({
             title: originalLessonDetails.title,
-            description: originalLessonDetails.description,
           });
           setShowLessonDetailsDialog(false);
         }}

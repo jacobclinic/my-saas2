@@ -48,3 +48,8 @@ export async function createUnassignedZoomUserAction(email: string) {
   }
 
 }
+
+export async function getUnassignedZoomUsersAction() {
+  const zoomService = new ZoomService();
+  return await zoomService.getUnassignedZoomUsers();
+}

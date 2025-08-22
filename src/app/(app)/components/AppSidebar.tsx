@@ -10,7 +10,7 @@ import AppSidebarNavigation from './AppSidebarNavigation';
 import Sidebar, { SidebarContent } from '~/core/ui/Sidebar';
 import Logo from '~/core/ui/Logo';
 import LogoMini from '~/core/ui/Logo/LogoMini';
-import { Tooltip, TooltipContent, TooltipTrigger } from '~/core/ui/Tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 
 import SidebarContext from '~/lib/contexts/sidebar';
 import configuration from '~/configuration';
@@ -93,27 +93,29 @@ function CollapsibleButton({
     'bg-background text-gray-300 dark:text-gray-600 h-5 w-5';
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        className={className}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        onClick={() => onClick(!collapsed)}
-      >
-        <ArrowRightCircleIcon
-          className={classNames(iconClassName, {
-            hidden: !collapsed,
-          })}
-        />
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger
+          className={className}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          onClick={() => onClick(!collapsed)}
+        >
+          <ArrowRightCircleIcon
+            className={classNames(iconClassName, {
+              hidden: !collapsed,
+            })}
+          />
 
-        <ArrowLeftCircleIcon
-          className={classNames(iconClassName, {
-            hidden: collapsed,
-          })}
-        />
-      </TooltipTrigger>
+          <ArrowLeftCircleIcon
+            className={classNames(iconClassName, {
+              hidden: collapsed,
+            })}
+          />
+        </TooltipTrigger>
 
-      <TooltipContent sideOffset={20}>Expand sidebar</TooltipContent>
-    </Tooltip>
+        <TooltipContent sideOffset={20}>Expand sidebar</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
