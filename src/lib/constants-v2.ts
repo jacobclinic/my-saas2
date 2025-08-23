@@ -79,3 +79,5 @@ export const CLASS_SIZE_OPTIONS = ['10-100', '101-500', '501-1000', '1001-1500',
 export const TUTOR_PAYOUT_RATE = 0.85;
 
 export const COMMA_EDU_DOMAIN = 'commaeducation.lk';
+
+export const PAGE_SIZE = 10;
