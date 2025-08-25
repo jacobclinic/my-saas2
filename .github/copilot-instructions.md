@@ -83,6 +83,58 @@ This project uses Next.js App Router with nested layouts:
 - `(app)`: Protected application pages requiring authentication
 - `auth`: Authentication-related pages
 
+## Layered Architecture Flow
+
+- **Service Layer**:
+  - All business logic must reside in service classes.
+  - Service classes should be implemented as singleton instances unless explicitly specified otherwise.
+  - Service classes should never contain direct database queries or mutations; they should call query/mutation functions for data access.
+  - Always use existing TypeScript types, especially those derived from `database.types.ts` (e.g., `DbClassType = Database['public']['Tables']['classes']['Row']`).
+
+- **Database Layer**:
+  - Queries files (`queries.ts`) must contain only database read operations, with no business logic.
+  - Mutations files (`mutations-v2.ts` or `mutations.ts`) must contain only database write operations, with no business logic.
+  - All types for database operations must be derived from `database.types.ts`.
+
+- **Orchestration Layer**:
+  - Orchestration (workflow, validation, side effects) must be handled in server actions (`server-actions-v2.ts`) or API routes.
+  - Server actions and API routes should only call service methods, never database queries/mutations directly.
+
+### Example Patterns
+
+```typescript
+// Service class singleton pattern
+export class ClassService {
+  private static instance: ClassService;
+  private constructor(private client: SupabaseClient<Database>, private logger: Logger) {}
+  static getInstance(client: SupabaseClient<Database>, logger: Logger) {
+    if (!ClassService.instance) {
+      ClassService.instance = new ClassService(client, logger);
+    }
+    return ClassService.instance;
+  }
+  // ...business logic methods...
+}
+
+// Database type usage
+export type DbClassType = Database['public']['Tables']['classes']['Row'];
+```
+
+### Summary Table
+
+| Layer             | File(s)                        | Responsibility                        | Notes                                      |
+|-------------------|-------------------------------|----------------------------------------|--------------------------------------------|
+| Orchestration     | server-actions-v2.ts, API      | Workflow, validation, side effects     | Only call service methods                  |
+| Service           | *.service.ts                   | Business logic                         | Singleton pattern, no direct DB calls      |
+| Database (Query)  | queries.ts                     | Read operations only                   | No business logic, use types from DB file  |
+| Database (Mutate) | mutations-v2.ts, mutations.ts  | Write operations only                  | No business logic, use types from DB file  |
+
+### Additional Rules
+
+- Never call services, queries, or mutations directly from React components or pages.
+- Always use the logger for error handling.
+- Always use workspace TypeScript types for all layers.
+
 ### Role-Based Access Control
 - Components use the `RoleControlledComponent` wrapper or `userRole` context to control visibility
 - Role types: `admin`, `tutor`, `student`
@@ -356,6 +408,12 @@ Examples:
 - `TutorViewDialog`
 - `ClassListTable`
 - `SessionDetailsCard`
+
+## Frontend Guidelines
+
+- Always prefer server components.
+- Always use server actions to fetch data in server components; never call queries or mutations directly in components.
+- Keep components small and reusable.
 
 ### Use Workspace Dependencies
 Always use workspace dependencies over standard library alternatives:
