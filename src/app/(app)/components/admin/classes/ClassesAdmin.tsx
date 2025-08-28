@@ -8,6 +8,7 @@ import {
   ClassListStudent,
   ClassType,
   ClassWithTutorAndEnrollmentAdmin,
+  DbClassType,
   EditClassData,
   SelectedClassAdmin,
   TimeSlot,
@@ -33,7 +34,6 @@ import TimezoneIndicator from '../../TimezoneIndicator';
 import AdminCreateClassDialog from './AdminCreateClassDialog';
 import Button from '~/core/ui/Button';
 import DataTable from '~/core/ui/DataTable';
-import { AdminNewClassData } from '~/lib/classes/types/class-v2';
 
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 
@@ -207,7 +207,7 @@ const ClassesAdmin = ({
     setSelectedEditClassData(() => formatDataForEditCls(cls));
   };
 
-  const handleCreateClass = async (classData: AdminNewClassData) => {
+  const handleCreateClass = async (classData: DbClassType) => {
     try {
       setCreateLoading(true);
       // The actual creation is handled in the dialog component

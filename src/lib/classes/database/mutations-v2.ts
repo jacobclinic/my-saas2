@@ -4,7 +4,6 @@ import type { Database } from '~/database.types';
 type Client = SupabaseClient<Database>;
 
 import { CLASSES_TABLE, SESSIONS_TABLE } from '~/lib/db-tables';
-import { ClassType, NewClassData, AdminNewClassData } from '../types/class-v2';
 
 import {
   DbClassType,
@@ -115,53 +114,6 @@ export async function updateClass(
   }
 }
 
-export async function createClassByAdmin(
-  client: Client,
-  data: AdminNewClassData,
-): Promise<Result<DbClassType, DatabaseError>> {
-  try {
-    const { data: insertedClass, error } = await client
-      .from(CLASSES_TABLE)
-      .insert({
-        name: data.name,
-        subject: data.subject,
-        description: data.description,
-        grade: data.yearGrade,
-        fee: parseInt(data.monthlyFee),
-        starting_date: data.startDate,
-        time_slots: data.timeSlots.map((slot) => ({
-          day: slot.day,
-          startTime: slot.startTime,
-          endTime: slot.endTime,
-          timezone: slot.timezone,
-        })),
-        status: 'active',
-        tutor_id: data.tutorId,
-      })
-      .select()
-      .throwOnError()
-      .single();
-
-    if (error) {
-      logger.error('Failed to create class by admin', { error, data });
-      return failure(new DatabaseError('Failed to create class by admin'));
-    }
-
-    logger.info('Class created successfully by admin', { insertedClass });
-    return success(insertedClass);
-  } catch (error) {
-    logger.error('Something went wrong while creating class by admin', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : undefined,
-      data,
-    });
-    return failure(
-      new DatabaseError('Something went wrong while creating class by admin'),
-    );
-  }
-}
-
 export async function updateClassShortUrl(
   client: Client,
   classId: string,
@@ -192,10 +144,6 @@ export async function updateClassShortUrl(
 }
 
 
-export async function deleteClass(
-  client: Client,
-  classId: string,
-): Promise<Result<string, DatabaseError>> {
 export async function deleteClass(client: Client, classId: string): Promise<Result<string, DatabaseError>> {
 
   try {

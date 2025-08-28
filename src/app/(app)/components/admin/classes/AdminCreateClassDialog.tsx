@@ -12,14 +12,14 @@ import {
 } from '../../base-v2/ui/Select';
 import TimezoneIndicator from '../../TimezoneIndicator';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
-import { getTodayInSriLankaTimezone } from '~/lib/utils/date-utils';
+import { getTodayInLocalTimezone } from '~/lib/utils/date-utils';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { createClassByAdminAction } from '~/lib/classes/server-actions-v2';
 import { useToast } from '../../../lib/hooks/use-toast';
 import BaseDialog from '../../base-v2/BaseDialog';
 import {
-  AdminNewClassData,
   CreateClassPayload,
+  DbClassType,
   TimeSlot,
 } from '~/lib/classes/types/class-v2';
 import Button from '~/core/ui/Button';
@@ -35,7 +35,7 @@ interface TutorOption {
 interface AdminCreateClassDialogProps {
   open: boolean;
   onClose: () => void;
-  onCreateClass?: (classData: AdminNewClassData) => void;
+  onCreateClass?: (classData: DbClassType) => void;
   loading?: boolean;
   tutors: TutorOption[];
 }
@@ -51,19 +51,24 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
   const csrfToken = useCsrfToken();
   const { toast } = useToast();
 
-  const today = getTodayInSriLankaTimezone();
+  const today = getTodayInLocalTimezone();
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const [newClass, setNewClass] = useState<AdminNewClassData>({
-    name: '',
-    subject: '',
+  const [newClass, setNewClass] = useState<DbClassType>({
+    created_at: '',
     description: '',
-    yearGrade: '',
-    monthlyFee: '',
-    startDate: today,
-    timeSlots: [
-      { day: '', startTime: '', endTime: '', timezone: userTimezone },
+    end_date: null,
+    fee: 0,
+    grade: '',
+    id: '',
+    name: '',
+    short_url_code: null,
+    starting_date: '',
+    status: '',
+    subject: '',
+    time_slots: [
+      { day: '', startTime: '', endTime: '', timezone: userTimezone } as Json,
     ],
-    tutorId: '',
+    tutor_id: '',
   });
 
   const [allFilled, setAllFilled] = useState<boolean>(false);
@@ -71,9 +76,9 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
   const handleAddTimeSlot = () => {
     setNewClass((prev) => ({
       ...prev,
-      timeSlots: [
-        ...prev.timeSlots,
-        { day: '', startTime: '', endTime: '', timezone: userTimezone },
+      time_slots: [
+        ...prev.time_slots,
+        { day: '', startTime: '', endTime: '', timezone: userTimezone } as Json,
       ],
     }));
   };
@@ -81,7 +86,7 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
   const handleRemoveTimeSlot = (index: number) => {
     setNewClass((prev) => ({
       ...prev,
-      timeSlots: prev.timeSlots.filter((_, i) => i !== index),
+      time_slots: prev.time_slots.filter((_, i) => i !== index),
     }));
   };
 
@@ -90,30 +95,31 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
     field: keyof TimeSlot,
     value: string,
   ) => {
-    setNewClass((prev: AdminNewClassData) => {
-      const updatedTimeSlots = prev.timeSlots.map((slot, i) =>
-        i === index ? { ...slot, [field]: value } : slot,
-      );
+    setNewClass((prev: DbClassType) => {
+      const updatedTimeSlots = prev.time_slots.map((slot, i) => {
+        const ts = slot as unknown as Json[];
+        return i === index ? { ...ts, [field]: value } : ts;
+      });
 
       return {
         ...prev,
-        timeSlots: updatedTimeSlots,
+        time_slots: updatedTimeSlots as Json[],
       };
     });
   };
 
   const handleSubmit = () => {
-    const startDate = new Date(newClass.startDate).toISOString();
+    const startDate = new Date(newClass.starting_date).toISOString();
     const classDataPayload: CreateClassPayload = {
-      fee: Number(newClass.monthlyFee),
-      grade: newClass.yearGrade,
+      fee: Number(newClass.fee),
+      grade: newClass.grade,
       name: newClass.name,
       description: newClass.description,
       starting_date: startDate,
       status: 'active',
       subject: newClass.subject,
-      time_slots: newClass.timeSlots as unknown as Json[],
-      tutor_id: newClass.tutorId,
+      time_slots: newClass.time_slots as unknown as Json[],
+      tutor_id: newClass.tutor_id,
     };
 
     startTransition(async () => {
@@ -130,16 +136,26 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
           variant: 'success',
         });
         setNewClass({
-          name: '',
-          subject: '',
+          created_at: '',
           description: '',
-          yearGrade: '',
-          monthlyFee: '',
-          startDate: today,
-          timeSlots: [
-            { day: '', startTime: '', endTime: '', timezone: userTimezone },
+          end_date: null,
+          fee: 0,
+          grade: '',
+          id: '',
+          name: '',
+          short_url_code: null,
+          starting_date: '',
+          status: '',
+          subject: '',
+          time_slots: [
+            {
+              day: '',
+              startTime: '',
+              endTime: '',
+              timezone: userTimezone,
+            } as Json,
           ],
-          tutorId: '',
+          tutor_id: '',
         });
       } else {
         toast({
@@ -155,12 +171,15 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
   const isValid = Boolean(
     newClass.name &&
       newClass.subject &&
-      newClass.monthlyFee &&
-      newClass.yearGrade &&
-      newClass.startDate &&
-      newClass.tutorId &&
-      newClass.timeSlots.every(
-        (slot) => slot.day && slot.startTime && slot.endTime,
+      newClass.fee &&
+      newClass.grade &&
+      newClass.starting_date &&
+      newClass.tutor_id &&
+      newClass.time_slots.every(
+        (slot) => {
+          const timeSlot = slot as unknown as TimeSlot;
+          return timeSlot.day && timeSlot.startTime && timeSlot.endTime;
+        },
       ),
   );
 
@@ -171,16 +190,21 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
   const handleClose = () => {
     onClose();
     setNewClass({
-      name: '',
-      subject: '',
+      created_at: '',
       description: '',
-      yearGrade: '',
-      monthlyFee: '',
-      startDate: today,
-      timeSlots: [
-        { day: '', startTime: '', endTime: '', timezone: userTimezone },
+      end_date: null,
+      fee: 0,
+      grade: '',
+      id: '',
+      name: '',
+      short_url_code: null,
+      starting_date: '',
+      status: '',
+      subject: '',
+      time_slots: [
+        { day: '', startTime: '', endTime: '', timezone: userTimezone } as Json,
       ],
-      tutorId: '',
+      tutor_id: '',
     });
   };
 
@@ -211,13 +235,13 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
           <label className="text-sm font-medium">Assign Tutor</label>
           <SearchableSelect
             options={tutors}
-            value={newClass.tutorId}
+            value={newClass.tutor_id}
             onValueChange={(value) =>
-              setNewClass({ ...newClass, tutorId: value })
+              setNewClass({ ...newClass, tutor_id: value })
             }
             placeholder="Search and select a tutor..."
             className="mt-1"
-            noResultsText='No tutors found for '
+            noResultsText="No tutors found for "
           />
         </div>
 
@@ -246,7 +270,7 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
           <label className="text-sm font-medium">Description</label>
           <Textarea
             placeholder="Describe what students will learn in this class..."
-            value={newClass.description}
+            value={newClass.description || ''}
             onChange={(e) =>
               setNewClass({ ...newClass, description: e.target.value })
             }
@@ -258,9 +282,9 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
           <div>
             <label className="text-sm font-medium">Year/Grade</label>
             <Select
-              value={newClass.yearGrade}
+              value={newClass.grade}
               onValueChange={(value) =>
-                setNewClass({ ...newClass, yearGrade: value })
+                setNewClass({ ...newClass, grade: value })
               }
             >
               <SelectTrigger>
@@ -281,9 +305,9 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
             <Input
               type="number"
               placeholder="Enter fee amount"
-              value={newClass.monthlyFee}
+              value={newClass.fee}
               onChange={(e) =>
-                setNewClass({ ...newClass, monthlyFee: e.target.value })
+                setNewClass({ ...newClass, fee: parseInt(e.target.value) })
               }
             />
           </div>
@@ -294,11 +318,11 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
             <label className="text-sm font-medium">Starting Date</label>
             <Input
               type="date"
-              value={newClass.startDate}
+              value={newClass.starting_date}
               onChange={(e) =>
-                setNewClass({ ...newClass, startDate: e.target.value })
+                setNewClass({ ...newClass, starting_date: e.target.value })
               }
-              min={new Date().toISOString().split('T')[0]}
+              min={getTodayInLocalTimezone()}
             />
           </div>
         </div>
@@ -325,10 +349,10 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
               <label className="text-sm font-medium">Start Time</label>
               <label className="text-sm font-medium">End Time</label>
             </div>
-            {newClass.timeSlots.map((slot, index) => (
+            {newClass.time_slots.map((slot, index) => (
               <div key={index} className="flex gap-2 items-start">
                 <Select
-                  value={slot.day}
+                  value={(slot as unknown as TimeSlot).day}
                   onValueChange={(value) => updateTimeSlot(index, 'day', value)}
                 >
                   <SelectTrigger className="w-[200px]">
@@ -346,7 +370,7 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
                 <div className="flex gap-2">
                   <Input
                     type="time"
-                    value={slot.startTime}
+                    value={(slot as unknown as TimeSlot).startTime}
                     onChange={(e) =>
                       updateTimeSlot(index, 'startTime', e.target.value)
                     }
@@ -355,7 +379,7 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
 
                   <Input
                     type="time"
-                    value={slot.endTime}
+                    value={(slot as unknown as TimeSlot).endTime}
                     onChange={(e) =>
                       updateTimeSlot(index, 'endTime', e.target.value)
                     }
@@ -363,7 +387,7 @@ const AdminCreateClassDialog: React.FC<AdminCreateClassDialogProps> = ({
                   />
                 </div>
 
-                {newClass.timeSlots.length > 1 && (
+                {newClass.time_slots.length > 1 && (
                   <Button
                     type="button"
                     variant="ghost"

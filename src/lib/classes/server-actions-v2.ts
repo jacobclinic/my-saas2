@@ -4,11 +4,10 @@ import { revalidatePath } from 'next/cache';
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import {
-  AdminNewClassData,
   CreateClassParams,
   UpdateClassParams,
 } from './types/class-v2';
-import { SESSIONS_TABLE, USERS_TABLE } from '../db-tables';
+import { USERS_TABLE } from '../db-tables';
 import {
   createClassFailure,
   CreateClassResponse,
@@ -47,7 +46,8 @@ import getLogger from '~/core/logger';
 import { SessionService } from '../sessions/session.service';
 import { isEqual } from '../utils/lodash-utils';
 import { UpstashService } from '../upstash/upstash.service';
-import { createInvoiceForNewClass } from '../invoices/database/mutations';
+
+const logger = getLogger();
 
 type DeleteClassParams = {
   classId: string;
@@ -61,7 +61,6 @@ export const createClassAction = withSession(
     const logger = getLogger();
     const zoomService = new ZoomService(client);
     const classService = new ClassService(client, logger);
-    const sessionService = new SessionService(client, logger);
     try {
       await verifyCsrfToken(csrfToken);
 
@@ -84,22 +83,6 @@ export const createClassAction = withSession(
           classResult.error.message,
           ErrorCodes.SERVICE_LEVEL_ERROR,
         );
-      }
-
-      // Create an invoice for the newly created class
-      if (classResult.success) {
-        const invoiceId = await createInvoiceForNewClass(
-          client,
-          classResult.data.id,
-          data.tutor_id,
-        );
-        if (!invoiceId) {
-          logger.error(
-            'Failed to create invoice for new class:',
-            classResult.data.id,
-          );
-          // Continue with class creation even if invoice creation fails
-        }
       }
 
       const upstashService = UpstashService.getInstance(logger);
@@ -187,22 +170,6 @@ export const createClassByAdminAction = withSession(
           classResult.error.message,
           ErrorCodes.SERVICE_LEVEL_ERROR,
         );
-      }
-
-      // Create an invoice for the newly created class
-      if (classResult.success) {
-        const invoiceId = await createInvoiceForNewClass(
-          client,
-          classResult.data.id,
-          data.tutor_id,
-        );
-        if (!invoiceId) {
-          logger.error(
-            'Failed to create invoice for new class:',
-            classResult.data.id,
-          );
-          // Continue with class creation even if invoice creation fails
-        }
       }
 
       const upstashService = UpstashService.getInstance(logger);
@@ -422,11 +389,11 @@ export const updateClassAction = withSession(
                 nextClassDate: nextSessionDate,
               }),
             ]);
-            console.log(
+            logger.info(
               'Successfully sent schedule update notifications (email and SMS) to students',
             );
           } catch (notificationError) {
-            console.error(
+            logger.error(
               'Failed to send schedule update notifications:',
               notificationError,
             );
@@ -518,7 +485,7 @@ export const getAllUpcominSessionsAdmin = withSession(async () => {
   const isAdmin = userProfile.user_role === 'admin';
 
   if (!isAdmin) {
-    console.log('here...');
+    logger.info('User is not an admin');
     throw new Error('Unauthorized to access this data');
   }
 
@@ -617,7 +584,7 @@ export const sendEmailMSGToStudentAction = withSession(
         }),
       ]);
     } catch (error) {
-      console.error('Error sending email:', error);
+      logger.error('Error sending email:', error);
     }
 
     return {
@@ -650,7 +617,7 @@ function generateAllWeeklyOccurrencesForYear(classData: {
       );
       occurrences.push(...weeklyOccurrences);
     } catch (error) {
-      console.error(
+      logger.error(
         `Error generating weekly occurrences for slot: ${JSON.stringify(slot)}`,
         error,
       );
