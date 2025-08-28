@@ -518,7 +518,7 @@ const ClassesAdmin = ({
 
           {/* Table */}
           <DataTable
-            data={filteredData}
+            data={tableData}
             columns={columns}
             columnWidths={columnWidths}
             tableProps={{
