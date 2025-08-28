@@ -22,21 +22,50 @@ import {
   SelectValue,
 } from '../../base-v2/ui/Select';
 import { Badge } from '../../base-v2/ui/Badge';
-import { GRADES } from '~/lib/constants-v2';
-import { format, toZonedTime } from 'date-fns-tz';
+import { GRADES, PAGE_SIZE } from '~/lib/constants-v2';
+import { format } from '~/lib/utils/date-utils';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
-import DeleteClassDialog from '../../classes/DeleteClassDialog';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
-import AppHeader from '../../AppHeader';
 import TimezoneIndicator from '../../TimezoneIndicator';
 import AdminCreateClassDialog from './AdminCreateClassDialog';
 import Button from '~/core/ui/Button';
 import DataTable from '~/core/ui/DataTable';
-
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 
+// Helper function to get status badge variant
+const getStatusBadgeVariant = (status: string) => {
+  switch (status?.toUpperCase()) {
+    case 'ACTIVE':
+      return 'green';
+    case 'CANCELED':
+      return 'red';
+    default:
+      return 'gray';
+  }
+};
+
+// Column widths configuration
+const columnWidths = {
+  tutorName: '200px',
+  className: '250px',
+  day: '100px',
+  timeSlot: '150px',
+  status: '120px',
+  actions: '200px',
+};
+
+// Table data type for DataTable
+type ClassTableData = {
+  id: string;
+  tutorName: string;
+  className: string;
+  day: string;
+  timeSlot: string;
+  status: string;
+  actions: string;
+};
 
 const ClassesAdmin = ({
   classesData,
@@ -122,7 +151,9 @@ const ClassesAdmin = ({
     const yearMatch =
       selectedYear !== 'all' ? cls.grade === selectedYear : true;
     const statusMatch =
-      selectedStatus !== 'all' ? cls.status === selectedStatus : true;
+      selectedStatus !== 'all'
+        ? cls.status?.toUpperCase() === selectedStatus.toUpperCase()
+        : true;
     return nameMatch && yearMatch && statusMatch;
   });
 
@@ -160,7 +191,7 @@ const ClassesAdmin = ({
     const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
 
     const shortLinkResult = await createShortUrlAction({
-      originalUrl: registrationUrl
+      originalUrl: registrationUrl,
     });
 
     const finalLink =
@@ -269,117 +300,121 @@ const ClassesAdmin = ({
     }
   };
 
-  // Define column definitions for DataTable
-  const columns: ColumnDef<(typeof classData)[0]>[] = useMemo(
+  const classLookupMap = useMemo(() => {
+    return filteredData.reduce(
+      (map, cls) => {
+        map[cls.id] = cls;
+        return map;
+      },
+      {} as Record<string, (typeof filteredData)[0]>,
+    );
+  }, [filteredData]);
+
+  // Define columns for DataTable
+  const columns = useMemo(
     () => [
       {
-        accessorKey: 'tutorName',
         header: 'Tutor Name',
-        cell: ({ row }) => (
-          <div className="whitespace-nowrap">{row.getValue('tutorName')}</div>
-        ),
+        accessorKey: 'tutorName',
       },
       {
-        accessorKey: 'name',
         header: 'Class Name',
-        cell: ({ row }) => (
-          <div className="whitespace-nowrap">{row.getValue('name')}</div>
-        ),
+        accessorKey: 'className',
       },
       {
-        id: 'day',
         header: 'Day',
-        cell: ({ row }) => (
-          <div className="whitespace-nowrap">{row.original.time?.day}</div>
-        ),
+        accessorKey: 'day',
       },
       {
-        id: 'timeSlot',
         header: 'Time Slot',
-        cell: ({ row }) => (
-          <div className="whitespace-nowrap">
-            {row.original.classRawData.time_slots ? (
-              <>
-                {row.original.time_slots![0]?.startTime} -
-                {row.original.time_slots![0]?.endTime}
-              </>
-            ) : (
-              <>-</>
-            )}
-          </div>
-        ),
+        accessorKey: 'timeSlot',
       },
       {
-        accessorKey: 'status',
         header: 'Status',
-        cell: ({ row }) => (
-          <div className="whitespace-nowrap">
-            {getStatusBadge(row.getValue('status'))}
-          </div>
-        ),
+        accessorKey: 'status',
+        cell: ({ row }: { row: { original: ClassTableData } }) => {
+          const classId = row.original.id;
+          const cls = classLookupMap[classId];
+
+          return (
+            <Badge
+              variant={getStatusBadgeVariant(cls?.status || '')}
+              className="text-xs"
+            >
+              {cls?.status?.toUpperCase() || 'Unknown'}
+            </Badge>
+          );
+        },
       },
       {
-        id: 'actions',
         header: 'Actions',
-        cell: ({ row }) => (
-          <div className="whitespace-nowrap space-x-2">
-            {/* View students Button */}
-            <div className="relative group inline-block">
-              <button
-                onClick={() => {
-                  setShowStudentsDialog(true);
-                  setSelectedClassName(row.original.name);
-                  row.original.students
-                    ? setSelectedClassStudents(row.original.students)
-                    : null;
-                }}
-                className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                aria-label="Attendance"
-              >
-                <Users className="h-4 w-4" />
-              </button>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                View Students
-              </span>
+        accessorKey: 'actions',
+        cell: ({ row }: { row: { original: ClassTableData } }) => {
+          const classId = row.original.id;
+          const cls = classLookupMap[classId];
+
+          if (!cls) return null;
+
+          return (
+            <div className="space-x-2">
+              {/* View students Button */}
+              <div className="relative group inline-block">
+                <button
+                  onClick={() => {
+                    setShowStudentsDialog(true);
+                    setSelectedClassName(cls.name);
+                    cls.students
+                      ? setSelectedClassStudents(cls.students)
+                      : null;
+                  }}
+                  className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                  aria-label="Attendance"
+                >
+                  <Users className="h-4 w-4" />
+                </button>
+                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                  View Students
+                </span>
+              </div>
+              {/* Copy Link Button */}
+              <div className="relative group inline-block">
+                <button
+                  onClick={() => handleCopyLink(cls)}
+                  className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                  aria-label="Copy Link"
+                >
+                  {copiedLinks[cls.id] ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Link className="h-4 w-4" />
+                  )}
+                </button>
+                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                  Copy Registration Link
+                </span>
+              </div>
+              {/* Edit class button */}
+              <div className="relative group inline-block">
+                <button
+                  onClick={() => {
+                    setShowEditDialog(true);
+                    handleSetEditClassData(cls);
+                  }}
+                  className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                  aria-label="Edit"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
+                  Edit Class
+                </span>
+              </div>
             </div>
-            {/* Copy Link Button */}
-            <div className="relative group inline-block">
-              <button
-                onClick={() => handleCopyLink(row.original)}
-                className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                aria-label="Copy Link"
-              >
-                {copiedLinks[row.original.id] ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Link className="h-4 w-4" />
-                )}
-              </button>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                Copy Registration Link
-              </span>
-            </div>
-            {/* Edit class button */}
-            <div className="relative group inline-block">
-              <button
-                onClick={() => {
-                  setShowEditDialog(true);
-                  handleSetEditClassData(row.original);
-                }}
-                className="bg-white border-2 border-gray-300 text-black px-3 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
-                aria-label="Edit"
-              >
-                <Edit className="h-4 w-4" />
-              </button>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-4 hidden group-hover:block bg-gray-800 text-white text-xs font-medium rounded py-1 px-2 z-10">
-                Edit Class
-              </span>
-            </div>
-          </div>
-        ),
+          );
+        },
       },
     ],
-    [copiedLinks],
+    [classLookupMap],
   );
 
   // Define column widths - giving more width to tutor name and class name
@@ -391,6 +426,21 @@ const ClassesAdmin = ({
     status: '120px',
     actions: '180px',
   };
+
+  const tableData: ClassTableData[] = useMemo(() => {
+    return filteredData.map((cls) => ({
+      id: cls.id,
+      tutorName: cls.tutorName,
+      className: cls.name,
+      day: cls.time?.day || '-',
+      timeSlot:
+        cls.classRawData.time_slots && cls.time_slots?.[0]
+          ? `${cls.time_slots[0].startTime} - ${cls.time_slots[0].endTime}`
+          : '-',
+      status: cls.status || 'Unknown',
+      actions: 'Actions',
+    }));
+  }, [filteredData]);
 
   return (
     <>
@@ -409,11 +459,6 @@ const ClassesAdmin = ({
 
         {/* Filters */}
         <div className="bg-white shadow-md rounded-lg pb-4 pl-4 pr-4 mb-2">
-          {/* Timezone Indicator */}
-          <div className="flex justify-end">
-            <TimezoneIndicator />
-          </div>
-
           <div className="flex gap-6 items-end">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -448,34 +493,41 @@ const ClassesAdmin = ({
               </Select>
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status Filter
-              </label>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="canceled">Canceled</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status Filter
+                </label>
+                <Select
+                  value={selectedStatus}
+                  onValueChange={setSelectedStatus}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="canceled">Canceled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Table */}
-        <DataTable
-          data={filteredData}
-          columns={columns}
-          columnWidths={columnWidths}
-          tableProps={{
-            className: 'bg-white shadow-md rounded-lg',
-          }}
-        />
+          {/* Table */}
+          <DataTable
+            data={filteredData}
+            columns={columns}
+            columnWidths={columnWidths}
+            tableProps={{
+              className: 'bg-white shadow-md rounded-lg',
+            }}
+            pageSize={PAGE_SIZE}
+            pageCount={Math.ceil(tableData.length / PAGE_SIZE)}
+          />
+        </div>
       </div>
 
       <RegisteredStudentsDialog
