@@ -76,10 +76,17 @@ const StudentSessionCard = ({
   };
 
   const getRecordingUrl = useCallback(
-    async (fileName: string): Promise<string> => {
-      console.log('Fetching signed URL for:', fileName);
+    async (urlOrFileName: string): Promise<string> => {
+      // Check if the input is already a full URL
+      if (urlOrFileName.startsWith('http://') || urlOrFileName.startsWith('https://')) {
+        // If it's already a full URL, return it directly
+        return urlOrFileName;
+      }
+      
+      // Otherwise, treat it as a filename and get a signed URL
+      console.log('Fetching signed URL for:', urlOrFileName);
       const response = await fetch(
-        `/api/signed-url?fileName=${encodeURIComponent(fileName)}`,
+        `/api/signed-url?fileName=${encodeURIComponent(urlOrFileName)}`,
       );
       if (!response.ok) {
         throw new Error(`Failed to fetch signed URL: ${response.statusText}`);
