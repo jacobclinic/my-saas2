@@ -26,11 +26,16 @@ const MobileTooltip = ({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault()
-    setIsOpen(prev => !prev)
-    if (!isOpen) {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      timeoutRef.current = setTimeout(() => setIsOpen(false), 3000)
-    }
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    
+    setIsOpen(prev => {
+      const newState = !prev
+      if (newState) {
+        // If opening, set auto-hide timer
+        timeoutRef.current = setTimeout(() => setIsOpen(false), 3000)
+      }
+      return newState
+    })
   }
 
   const handleClick = (e: React.MouseEvent) => {
@@ -38,11 +43,16 @@ const MobileTooltip = ({
     if (forceTouch) {
       e.preventDefault()
       e.stopPropagation()
-      setIsOpen(prev => !prev)
-      if (!isOpen) {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current)
-        timeoutRef.current = setTimeout(() => setIsOpen(false), 3000)
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      
+      setIsOpen(prev => {
+        const newState = !prev
+        if (newState) {
+          // If opening, set auto-hide timer
+          timeoutRef.current = setTimeout(() => setIsOpen(false), 3000)
+        }
+        return newState
+      })
     }
   }
 
