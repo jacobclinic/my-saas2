@@ -88,6 +88,7 @@ export interface PublicClassInfo {
   id: string;
   name: string | null;
   subject: string | null;
+  description: string | null;
   tutor?: PublicClassTutorInfo;
 }
 
