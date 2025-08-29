@@ -19,7 +19,6 @@ import {
   datePickerObjectToLocalDate,
 } from '~/lib/utils/timezone-utils-filter';
 import { useRouter } from 'next/navigation';
-import { TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 
 interface DateRange {
   start?: {
@@ -176,8 +175,7 @@ const StudentUpcomingSessions = ({
   };
 
   return (
-    <TooltipProvider>
-      <div className="xl:min-w-[900px] space-y-6">
+    <div className="xl:min-w-[900px] space-y-6">
       {/* Header & Search */}{' '}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -225,8 +223,7 @@ const StudentUpcomingSessions = ({
           )}
         </div>
       )}
-      </div>
-    </TooltipProvider>
+    </div>
   );
 };
 

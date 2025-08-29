@@ -6,12 +6,7 @@ import { Check, Link, Loader2 } from 'lucide-react';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { toast } from 'sonner';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '~/app/(app)/components/base-v2/ui/tooltip';
+import { MobileTooltip } from '~/app/(app)/components/base-v2/ui/mobile-tooltip';
 
 interface CopyLinkButtonProps {
     url: string;
@@ -67,35 +62,31 @@ const CopyLinkButton: React.FC<CopyLinkButtonProps> = ({
     };
 
     return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button
-                        variant={variant}
-                        className={`w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200 ${className}`}
-                        onClick={handleCopyLink}
-                        disabled={isGeneratingLink}
-                    >
-                        {isGeneratingLink ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : linkCopied ? (
-                            <Check className="h-4 w-4 mr-2" />
-                        ) : (
-                            buttonIcon
-                        )}
-                        {isGeneratingLink
-                            ? 'Generating...'
-                            : linkCopied
-                                ? 'Copied!'
-                                : buttonText
-                        }
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>{tooltipText}</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
+        <MobileTooltip
+            content={<p>{tooltipText}</p>}
+            forceTouch={isGeneratingLink}
+        >
+            <Button
+                variant={variant}
+                className={`w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200 ${className}`}
+                onClick={isGeneratingLink ? undefined : handleCopyLink}
+                disabled={isGeneratingLink}
+            >
+                {isGeneratingLink ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : linkCopied ? (
+                    <Check className="h-4 w-4 mr-2" />
+                ) : (
+                    buttonIcon
+                )}
+                {isGeneratingLink
+                    ? 'Generating...'
+                    : linkCopied
+                        ? 'Copied!'
+                        : buttonText
+                }
+            </Button>
+        </MobileTooltip>
     );
 };
 
