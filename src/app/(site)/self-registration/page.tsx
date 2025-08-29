@@ -91,6 +91,11 @@ export default async function RegisterPage({
                 <h3 className="text-lg font-semibold text-gray-900">
                   {classRegistrationData?.class.name}
                 </h3>
+                {classRegistrationData?.class.description && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    {classRegistrationData.class.description}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center text-gray-600">
@@ -105,7 +110,9 @@ export default async function RegisterPage({
 
               <div className="flex items-center text-gray-600">
                 <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                {capitalizeDayNames(classData.time)}
+                {classRegistrationData ? 
+                  formatToLocalTime(classRegistrationData.start_time!, 'h:mm a') + ' - ' + formatToLocalTime(classRegistrationData.end_time!, 'h:mm a')
+                  : 'Time not available'}
               </div>
 
 
