@@ -14,19 +14,13 @@ import {
   ExternalLink,
   FileText,
   Banknote,
-  DollarSign,
 } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import { Alert, AlertDescription } from '../base-v2/ui/Alert';
 import { AlertTriangle } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from '~/app/(app)/components/base-v2/ui/tooltip';
+import { MobileTooltip } from '~/app/(app)/components/base-v2/ui/mobile-tooltip';
 import { useRouter } from 'next/navigation';
 
 interface StudentSessionCardProps {
@@ -97,8 +91,7 @@ const StudentSessionCard = ({
   );
 
   return (
-    <TooltipProvider>
-      <Card className="mb-4">
+    <Card className="mb-4">
         <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-start">
@@ -174,58 +167,54 @@ const StudentSessionCard = ({
                     }}
                   >
                     <Banknote className="h-4 w-4 mr-2" />
-                    {sessionData.paymentStatus === PAYMENT_STATUS.REJECTED ? "Try Payment Again" : "Make Payment"}
+                    {sessionData.paymentStatus === PAYMENT_STATUS.REJECTED ? "Try Payment Again" : "Pay Now"}
                   </Button>
                 )}
                 
                 {/* Join Class button - always shown for upcoming sessions */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button 
-                        variant={"primary"}
-                        className="w-[150px]" 
-                        onClick={() => joinMeetingAsStudent(sessionData)} 
-                        disabled={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}>
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Join Class
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {sessionData.paymentStatus !== PaymentStatus.VERIFIED ? (
+                <MobileTooltip
+                  content={
+                    sessionData.paymentStatus !== PaymentStatus.VERIFIED ? (
                       <p>Please make payment to join the class</p>
                     ) : (
                       <p>Join the class</p>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
+                    )
+                  }
+                  forceTouch={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}
+                >
+                  <Button 
+                    variant={"primary"}
+                    className="w-[150px]" 
+                    onClick={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED ? undefined : () => joinMeetingAsStudent(sessionData)} 
+                    disabled={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Join Class
+                  </Button>
+                </MobileTooltip>
                 
                 {/* View Class button - always shown for upcoming sessions */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button
-                        variant={"outline"}
-                        className="w-[150px]"
-                        disabled={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}
-                        onClick={() =>
-                          router.push(`/sessions/student/${sessionData.id}?type=${type}`)
-                        }
-                      >
-                        <FileText className="h-4 w-4 mr-2" />
-                        View Class
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {sessionData.paymentStatus !== PaymentStatus.VERIFIED ? (
+                <MobileTooltip
+                  content={
+                    sessionData.paymentStatus !== PaymentStatus.VERIFIED ? (
                       <p>Please make payment to view class details</p>
                     ) : (
                       <p>View class details</p>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
+                    )
+                  }
+                  forceTouch={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}
+                >
+                  <Button
+                    variant={"outline"}
+                    className="w-[150px]"
+                    disabled={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED}
+                    onClick={isPending || sessionData.paymentStatus !== PaymentStatus.VERIFIED ? undefined : () =>
+                      router.push(`/sessions/student/${sessionData.id}?type=${type}`)
+                    }
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    View Class
+                  </Button>
+                </MobileTooltip>
               </div>
             </>
           ) : (
@@ -242,36 +231,33 @@ const StudentSessionCard = ({
                       setShowPaymentDialog(true);
                     }}
                   >
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    Make Payment
+                    <Banknote className="h-4 w-4 mr-2" />
+                    Pay Now
                   </Button>
                 )}
 
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="w-[150px]">
-                        <Button
-                          variant={sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED ? "primary" : "outline"}
-                          className="w-full"
-                          disabled={sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED || isPending}
-                          onClick={() =>
-                            router.push(`/sessions/student/${sessionData.id}?type=${type}`)
-                          }
-                        >
-                          <FileText className="h-4 w-4 mr-2" />
-                          View Class
-                        </Button>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED
+                <div className="w-[150px]">
+                  <MobileTooltip
+                    content={
+                      sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED
                         ? <p>Make a payment to view the class</p>
                         : <p>View class details and materials</p>
+                    }
+                    forceTouch={sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED || isPending}
+                  >
+                    <Button
+                      variant={sessionData.paymentStatus === PAYMENT_STATUS.VERIFIED ? "primary" : "outline"}
+                      className="w-full"
+                      disabled={sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED || isPending}
+                      onClick={sessionData.paymentStatus !== PAYMENT_STATUS.VERIFIED || isPending ? undefined : () =>
+                        router.push(`/sessions/student/${sessionData.id}?type=${type}`)
                       }
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Class
+                    </Button>
+                  </MobileTooltip>
+                </div>
               </div>
 
               {/* Recording buttons */}
@@ -305,8 +291,7 @@ const StudentSessionCard = ({
           )}
         </div>
       </CardContent>
-      </Card>
-    </TooltipProvider>
+    </Card>
   );
 };
 

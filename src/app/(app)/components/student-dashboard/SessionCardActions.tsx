@@ -8,12 +8,7 @@ import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import { isFirstWeekOfMonth } from '~/lib/utils/date-utils';
 import useSessionTimeValidation from '~/core/hooks/use-session-time-validation';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '~/app/(app)/components/base-v2/ui/tooltip';
+import { MobileTooltip } from '~/app/(app)/components/base-v2/ui/mobile-tooltip';
 
 interface SessionCardActionsProps {
   sessionData: SessionStudentTableData;
@@ -63,31 +58,30 @@ const SessionCardActions = ({
       sessionData.paymentStatus !== PAYMENT_STATUS.PENDING_VERIFICATION;
 
     if (isFreeFirstWeek || isPaymentPaid) {
+      const isDisabled = isPending || !isWithinJoinWindow;
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="w-full flex-1">
-                <Button
-                  variant={'primary'}
-                  className="w-full"
-                  onClick={onJoinMeeting}
-                  disabled={isPending || !isWithinJoinWindow}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Join Class
-                </Button>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              {!isWithinJoinWindow ? (
+        <div className="w-full flex-1">
+          <MobileTooltip
+            content={
+              !isWithinJoinWindow ? (
                 <p>Will be available 1 hour before class starts</p>
               ) : (
                 <p>Join the class</p>
-              )}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+              )
+            }
+            forceTouch={isDisabled} // Force touch handling for disabled buttons
+          >
+            <Button
+              variant={'primary'}
+              className="w-full"
+              onClick={isDisabled ? undefined : onJoinMeeting}
+              disabled={isDisabled}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Join Class
+            </Button>
+          </MobileTooltip>
+        </div>
       );
     }
 
@@ -107,18 +101,33 @@ const SessionCardActions = ({
     return null;
   };
 
+  const isViewDisabled = isPaymentRequired();
+  
   return (
-    <div className="flex justify-between gap-2 w-full">
+    <div className="flex gap-2 w-full">
       {renderPrimaryAction()}
-      <Button
-        variant="outline"
-        className="w-full flex-1 gap-1"
-        onClick={onViewClass}
-        disabled={isPaymentRequired()}
-      >
-        <FileText size={16} />
-        View Class
-      </Button>
+      <div className="flex-1">
+        <MobileTooltip
+          content={
+            isViewDisabled ? (
+              <p>Payment required to view class details</p>
+            ) : (
+              <p>View class details and materials</p>
+            )
+          }
+          forceTouch={isViewDisabled} // Force touch handling for disabled buttons
+        >
+          <Button
+            variant="outline"
+            className="w-full gap-1"
+            onClick={isViewDisabled ? undefined : onViewClass}
+            disabled={isViewDisabled}
+          >
+            <FileText size={16} />
+            View Class
+          </Button>
+        </MobileTooltip>
+      </div>
     </div>
   );
 };

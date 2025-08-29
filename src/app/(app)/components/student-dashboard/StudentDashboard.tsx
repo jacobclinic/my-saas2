@@ -18,7 +18,6 @@ import StudentNextSessionCard from './StudentNextSessionCard';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import PaginationControls from '../../components/PaginationControls';
 import { useRouter } from 'next/navigation';
-import { TooltipProvider } from '~/app/(app)/components/base-v2/ui/tooltip';
 
 const StudentDashboard = ({
   upcomingSessionData,
@@ -147,69 +146,67 @@ const StudentDashboard = ({
   );
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-       
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+     
 
-        {/* Next Session */}
-        <div className='lg:col-span-1 order-1'>
-          <h2 className="text-lg font-semibold text-gray-900 p-4">Your Next Class</h2>
+      {/* Next Session */}
+      <div className='lg:col-span-1 order-1'>
+        <h2 className="text-lg font-semibold text-gray-900 p-4">Your Next Class</h2>
+        <div className='p-4'>
+          {nextSession && (
+            <StudentNextSessionCard
+              key={nextSession.id}
+              sessionData={nextSession}
+              isPending={isPending}
+              setSelectedSession={setSelectedSession}
+              setShowPaymentDialog={setShowPaymentDialog}
+              joinMeetingAsStudent={joinMeetingAsStudentUser}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Upcoming Sessions */}
+      {upcomingSessions.length > 0 && (
+        <div className="lg:col-span-2 order-2 bg-white rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-blue-100 border-none shadow-lg">
+          <div className="flex items-center p-4">
+            <h2 className="text-lg font-semibold text-gray-900">Your Upcoming Classes</h2>
+          </div>
           <div className='p-4'>
-            {nextSession && (
-              <StudentNextSessionCard
-                key={nextSession.id}
-                sessionData={nextSession}
+            {currentUpcomingSessions.map((sessionData) => (
+              <StudentSessionCard
+                key={sessionData.id}
+                sessionData={sessionData}
+                type="upcoming"
                 isPending={isPending}
                 setSelectedSession={setSelectedSession}
                 setShowPaymentDialog={setShowPaymentDialog}
                 joinMeetingAsStudent={joinMeetingAsStudentUser}
               />
+            ))}
+            {/* Pagination Controls for Upcoming Sessions */}
+            {totalPagesOfUpcmingSessions > 1 && (
+              <PaginationControls
+                currentPage={upcomingCurrentPage}
+                totalPages={totalPagesOfUpcmingSessions}
+                onPageChange={handleUpcomingPageChange}
+              />
             )}
+
           </div>
         </div>
-
-        {/* Upcoming Sessions */}
-        {upcomingSessions.length > 0 && (
-          <div className="lg:col-span-2 order-2 bg-white rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-blue-100 border-none shadow-lg">
-            <div className="flex items-center p-4">
-              <h2 className="text-lg font-semibold text-gray-900">Your Upcoming Classes</h2>
-            </div>
-            <div className='p-4'>
-              {currentUpcomingSessions.map((sessionData) => (
-                <StudentSessionCard
-                  key={sessionData.id}
-                  sessionData={sessionData}
-                  type="upcoming"
-                  isPending={isPending}
-                  setSelectedSession={setSelectedSession}
-                  setShowPaymentDialog={setShowPaymentDialog}
-                  joinMeetingAsStudent={joinMeetingAsStudentUser}
-                />
-              ))}
-              {/* Pagination Controls for Upcoming Sessions */}
-              {totalPagesOfUpcmingSessions > 1 && (
-                <PaginationControls
-                  currentPage={upcomingCurrentPage}
-                  totalPages={totalPagesOfUpcmingSessions}
-                  onPageChange={handleUpcomingPageChange}
-                />
-              )}
-
-            </div>
-          </div>
-        )}
-        {showPaymentDialog && selectedSession && (
-          <PaymentDialog
-            open={showPaymentDialog}
-            onClose={() => setShowPaymentDialog(false)}
-            sessionData={selectedSession}
-            studentId={studentId}
-          />
-        )}
-        </div>
+      )}
+      {showPaymentDialog && selectedSession && (
+        <PaymentDialog
+          open={showPaymentDialog}
+          onClose={() => setShowPaymentDialog(false)}
+          sessionData={selectedSession}
+          studentId={studentId}
+        />
+      )}
       </div>
-    </TooltipProvider>
+    </div>
   );
 };
 

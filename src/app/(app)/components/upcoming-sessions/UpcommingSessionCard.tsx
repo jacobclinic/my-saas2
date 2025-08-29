@@ -35,12 +35,7 @@ import EditSessionDialog from './EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
 import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '~/app/(app)/components/base-v2/ui/tooltip';
+import { MobileTooltip } from '~/app/(app)/components/base-v2/ui/mobile-tooltip';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
@@ -312,29 +307,24 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider> */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="w-full">
-                      <Button
-                        variant="ghost"
-                        className="w-full bg-primary-blue-50 text-primary-blue-700 hover:bg-primary-blue-100 border border-primary-blue-100 group-hover:bg-primary-blue-100"
-                        onClick={joinInZoomDesktopClient}
-                        disabled={isPending || !isWithinJoinWindow}
-                      >
-                        <ScreenShare size={16} className="mr-2" />
-                        <span>Open with Zoom</span>
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {!isWithinJoinWindow
-                      ? <p>Join button will be available 1 hour before class starts</p>
-                      : <p>Join the class as a tutor</p>
-                    }
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <MobileTooltip
+                content={
+                  !isWithinJoinWindow
+                    ? <p>Join button will be available 1 hour before class starts</p>
+                    : <p>Join the class as a tutor</p>
+                }
+                forceTouch={isPending || !isWithinJoinWindow}
+              >
+                <Button
+                  variant="ghost"
+                  className="w-full bg-primary-blue-50 text-primary-blue-700 hover:bg-primary-blue-100 border border-primary-blue-100 group-hover:bg-primary-blue-100"
+                  onClick={isPending || !isWithinJoinWindow ? undefined : joinInZoomDesktopClient}
+                  disabled={isPending || !isWithinJoinWindow}
+                >
+                  <ScreenShare size={16} className="mr-2" />
+                  <span>Open with Zoom</span>
+                </Button>
+              </MobileTooltip>
 
               <CopyLinkButton
                 url={`${process.env.NEXT_PUBLIC_SITE_URL}/sessions/student/${sessionData.id}?type=upcoming&sessionId=${sessionData.id}&className=${sessionData.name}&sessionDate=${sessionData.date}&sessionTime=${sessionData.time}&sessionSubject=${sessionData.subject}&sessionTitle=${sessionData.lessonTitle}`}
@@ -343,43 +333,33 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                 shouldGenerateLink={true}
               />
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className={`w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200 ${sessionData.materials && sessionData.materials?.length > 0 ? 'bg-primary-blue-50 border-primary-blue-100' : ''}`}
-                      onClick={() => setShowMaterialDialog(true)}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      {sessionData.materials?.length
-                        ? 'Update Materials'
-                        : 'Upload Materials'}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Manage class materials</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <MobileTooltip
+                content={<p>Manage class materials</p>}
+              >
+                <Button
+                  variant="ghost"
+                  className={`w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200 ${sessionData.materials && sessionData.materials?.length > 0 ? 'bg-primary-blue-50 border-primary-blue-100' : ''}`}
+                  onClick={() => setShowMaterialDialog(true)}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {sessionData.materials?.length
+                    ? 'Update Materials'
+                    : 'Upload Materials'}
+                </Button>
+              </MobileTooltip>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
-                      onClick={() => setShowSessionEditDialog(true)}
-                    >
-                      <Edit size={16} className="mr-2" />
-                      <span>Edit Session</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Edit class schedule</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <MobileTooltip
+                content={<p>Edit class schedule</p>}
+              >
+                <Button
+                  variant="ghost"
+                  className="w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
+                  onClick={() => setShowSessionEditDialog(true)}
+                >
+                  <Edit size={16} className="mr-2" />
+                  <span>Edit Session</span>
+                </Button>
+              </MobileTooltip>
             </CardFooter>
           </div>
         </CardContent>
