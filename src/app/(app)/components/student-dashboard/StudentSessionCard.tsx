@@ -14,7 +14,6 @@ import {
   ExternalLink,
   FileText,
   Banknote,
-  DollarSign,
 } from 'lucide-react';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import { PAYMENT_STATUS } from '~/lib/student-payments/constant';
@@ -168,7 +167,7 @@ const StudentSessionCard = ({
                     }}
                   >
                     <Banknote className="h-4 w-4 mr-2" />
-                    {sessionData.paymentStatus === PAYMENT_STATUS.REJECTED ? "Try Payment Again" : "Make Payment"}
+                    {sessionData.paymentStatus === PAYMENT_STATUS.REJECTED ? "Try Payment Again" : "Pay Now"}
                   </Button>
                 )}
                 
@@ -232,8 +231,8 @@ const StudentSessionCard = ({
                       setShowPaymentDialog(true);
                     }}
                   >
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    Make Payment
+                    <Banknote className="h-4 w-4 mr-2" />
+                    Pay Now
                   </Button>
                 )}
 
