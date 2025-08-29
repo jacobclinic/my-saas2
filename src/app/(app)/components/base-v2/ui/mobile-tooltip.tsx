@@ -23,47 +23,64 @@ const MobileTooltip = ({
 }: MobileTooltipProps) => {
   const [isOpen, setIsOpen] = React.useState(false)
   const timeoutRef = React.useRef<NodeJS.Timeout>()
+  const touchStarted = React.useRef(false)
+
+  const showTooltip = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    setIsOpen(true)
+    // Set auto-hide timer for 4 seconds to give more time to read
+    timeoutRef.current = setTimeout(() => setIsOpen(false), 4000)
+  }
+
+  const hideTooltip = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    setIsOpen(false)
+  }
+
+  const toggleTooltip = () => {
+    if (isOpen) {
+      hideTooltip()
+    } else {
+      showTooltip()
+    }
+  }
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault()
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    
-    setIsOpen(prev => {
-      const newState = !prev
-      if (newState) {
-        // If opening, set auto-hide timer
-        timeoutRef.current = setTimeout(() => setIsOpen(false), 3000)
-      }
-      return newState
-    })
+    touchStarted.current = true
+    toggleTooltip()
   }
 
   const handleClick = (e: React.MouseEvent) => {
-    // Only prevent default for disabled buttons (forceTouch)
+    // Prevent click event if touch was used (avoid double triggering)
+    if (touchStarted.current) {
+      touchStarted.current = false
+      e.preventDefault()
+      e.stopPropagation()
+      return
+    }
+
+    // Only handle click for disabled buttons (forceTouch)
     if (forceTouch) {
       e.preventDefault()
       e.stopPropagation()
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      
-      setIsOpen(prev => {
-        const newState = !prev
-        if (newState) {
-          // If opening, set auto-hide timer
-          timeoutRef.current = setTimeout(() => setIsOpen(false), 3000)
-        }
-        return newState
-      })
+      toggleTooltip()
     }
   }
 
   const handleMouseEnter = () => {
+    // Don't interfere if touch was just used
+    if (touchStarted.current) return
+    
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
     setIsOpen(true)
   }
 
   const handleMouseLeave = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    setIsOpen(false)
+    // Don't interfere if touch was just used
+    if (touchStarted.current) return
+    
+    hideTooltip()
   }
 
   React.useEffect(() => {
