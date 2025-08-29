@@ -74,6 +74,19 @@ export default async function SessionViewPage({ params }: Params) {
     sessionData.class_id!,
   );
 
+  // If student is not enrolled in the class, redirect to registration page
+  if (!isStudentEnrolledToClass && classData) {
+    // Build registration URL with class information
+    const registrationUrl = new URL('/self-registration', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
+    registrationUrl.searchParams.set('classId', sessionData.class_id!);
+    registrationUrl.searchParams.set('className', classData.name);
+    registrationUrl.searchParams.set('nextSession', sessionData.start_time || '');
+    registrationUrl.searchParams.set('time', classData.time_slots?.map((slot: any) => `${slot.day}, ${slot.startTime} - ${slot.endTime}`).join('; ') || '');
+    registrationUrl.searchParams.set('tutorName', `${classData.tutor?.first_name || ''} ${classData.tutor?.last_name || ''}`.trim());
+    
+    redirect(registrationUrl.toString());
+  }
+
   // Determine session type based on start time
   const sessionType =
     new Date(sessionData.start_time || '') > new Date() ? 'upcoming' : 'past';
