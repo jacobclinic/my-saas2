@@ -96,21 +96,30 @@ export async function getAllUsersByUserRoleData(
       return [];
     }
 
-    return data.map((user) => ({
-      ...user,
-      email: user.email || undefined,
-      display_name: user.display_name || undefined,
-      photo_url: user.photo_url || undefined,
-      first_name: user.first_name || undefined,
-      last_name: user.last_name || undefined,
-      user_role: user.user_role || undefined,
-      address: user.address || undefined,
-      biography: user.biography || undefined,
-      is_approved: user.is_approved,
-      subjects_teach: user.subjects_teach,
-      zoom_user: Array.isArray(user.zoom_user) ? user.zoom_user[0] : user.zoom_user
+    return data.map((user) => {
+      const zoomUser = Array.isArray(user.zoom_user) ? user.zoom_user[0] : user.zoom_user;
+      const transformedZoomUser = zoomUser ? {
+        id: zoomUser.zoom_user_id || '',
+        email: zoomUser.email,
+        account_type: zoomUser.account_type,
+        tutor_id: zoomUser.tutor_id
+      } : null;
 
-    })) as UserTypeExtended[];
+      return {
+        ...user,
+        email: user.email || undefined,
+        display_name: user.display_name || undefined,
+        photo_url: user.photo_url || undefined,
+        first_name: user.first_name || undefined,
+        last_name: user.last_name || undefined,
+        user_role: user.user_role || undefined,
+        address: user.address || undefined,
+        biography: user.biography || undefined,
+        is_approved: user.is_approved,
+        subjects_teach: user.subjects_teach,
+        zoom_user: transformedZoomUser
+      };
+    }) as UserTypeExtended[];
   } catch (error) {
     console.error('Failed to fetch all users:', error);
     throw error;
