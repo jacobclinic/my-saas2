@@ -14,6 +14,7 @@ import {
   getFullDateUTC,
   getDueDateUTC,
   getPaymentPeriodFromDate,
+  isFirstWeekOfMonth,
 } from '~/lib/utils/date-utils';
 import { getClassFeeById } from '~/lib/classes/database/queries';
 import { generateId } from '~/lib/utils/nanoid-utils';
@@ -361,6 +362,12 @@ export class InvoiceService {
   // Check if the student has paid for the invoice (or the class for the invoice period)
   async validateStudentPayment(studentId: string, classId: string, sessionDate: Date): Promise<Result<boolean, AppError>> {
     try {
+      // Allow free access for the first week of the month
+      if (isFirstWeekOfMonth(sessionDate)) {
+        this.logger.info('First week of the month. Free access granted.', { studentId, classId, sessionDate });
+        return success(true);
+      }
+
       const invoicePeriod = getPaymentPeriodFromDate(sessionDate);
 
       const invoiceResult = await getInvoiceByDetails(this.supabaseClient, studentId, classId, invoicePeriod, this.logger);
