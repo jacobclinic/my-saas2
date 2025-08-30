@@ -109,6 +109,7 @@ export async function getAllUsersByUserRoleData(
       is_approved: user.is_approved,
       subjects_teach: user.subjects_teach,
       zoom_user: Array.isArray(user.zoom_user) ? user.zoom_user[0] : user.zoom_user
+
     })) as UserTypeExtended[];
   } catch (error) {
     console.error('Failed to fetch all users:', error);
@@ -231,4 +232,23 @@ export async function getAllTutorsWithDetails(
     console.error('Failed to fetch tutors with details:', error);
     throw error;
   }
+}
+
+
+export async function getTutorCommissionRate(
+  client: SupabaseClient<Database>,
+  tutorId: string
+): Promise<number | null> {
+  const { data, error } = await client
+    .from('users')
+    .select('commission_rate')
+    .eq('id', tutorId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching tutor commission rate:', error);
+    return null;
+  }
+
+  return data?.commission_rate || null;
 }

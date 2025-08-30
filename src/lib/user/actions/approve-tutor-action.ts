@@ -5,6 +5,7 @@ import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import { sendTutorApprovalNotification } from '~/lib/utils/internal-api-client';
 import { ZoomService } from '~/lib/zoom/v2/zoom.service';
 import { getUserDataById } from '../database/queries';
+import { updateUserRow } from '../database/mutations';
 
 export interface ApproveTutorActionResult {
   success: boolean;
@@ -12,7 +13,16 @@ export interface ApproveTutorActionResult {
   data?: any;
 }
 
-export async function approveTutorAction(tutorId: string, approve: boolean, zoomUserId: number): Promise<ApproveTutorActionResult> {
+export interface ApproveTutorParams {
+  tutorId: string;
+  approve: boolean;
+  zoomUserId: number;
+  commissionRate: number;
+}
+
+export async function approveTutorAction(params: ApproveTutorParams): Promise<ApproveTutorActionResult> {
+  const { tutorId, approve, zoomUserId, commissionRate } = params;
+
   try {
     const client = getSupabaseServerActionClient();
 
@@ -37,6 +47,12 @@ export async function approveTutorAction(tutorId: string, approve: boolean, zoom
       throw new Error(`Failed to update tutor: ${error.message}`);
     }
 
+    // Set tutor commission rate
+    const updatedUser = await updateUserRow(client, tutorId, {
+      commission_rate: commissionRate
+    });
+    console.log('Updated tutor commission rate:', updatedUser);
+
     // Create the new zoom user.
     // Create Zoom user if not already created
     const currentUserData = await getUserDataById(client, tutorId);
@@ -57,8 +73,6 @@ export async function approveTutorAction(tutorId: string, approve: boolean, zoom
     }
 
     const zoomUser = zoomUserResult.data;
-
-    console.log(zoomUser);
 
     // Create the zoom user.
     await zoomService.createZoomUser({

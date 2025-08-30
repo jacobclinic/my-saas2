@@ -627,6 +627,7 @@ export type Database = {
           birthday: string | null
           city: string | null
           class_size: string | null
+          commission_rate: number | null
           created_at: string
           display_name: string | null
           district: string | null
@@ -650,6 +651,7 @@ export type Database = {
           birthday?: string | null
           city?: string | null
           class_size?: string | null
+          commission_rate?: number | null
           created_at?: string
           display_name?: string | null
           district?: string | null
@@ -673,6 +675,7 @@ export type Database = {
           birthday?: string | null
           city?: string | null
           class_size?: string | null
+          commission_rate?: number | null
           created_at?: string
           display_name?: string | null
           district?: string | null
