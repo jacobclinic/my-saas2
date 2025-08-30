@@ -804,3 +804,42 @@ export async function getActiveClassesForTutorInvoices(
     return failure(new DatabaseError('An unexpected error occurred while fetching active classes.'));
   }
 }
+
+export async function getClassFreeAccessSetting(
+  client: SupabaseClient<Database>,
+  classId: string
+): Promise<Result<boolean, DatabaseError>> {
+  try {
+    const { data: classData, error } = await client
+      .from(CLASSES_TABLE)
+      .select('allow_free_access_first_week')
+      .eq('id', classId)
+      .throwOnError()
+      .single();
+
+    if (error) {
+      logger.error("Failed to fetch class free access setting", { error, classId });
+      return failure(new DatabaseError("Failed to fetch class free access setting"));
+    }
+
+    if (!classData) {
+      logger.warn("Class not found when fetching free access setting", { classId });
+      return failure(new DatabaseError("Class not found"));
+    }
+
+    logger.info("Successfully fetched class free access setting", { 
+      classId, 
+      allowFreeAccess: classData.allow_free_access_first_week 
+    });
+    return success(classData.allow_free_access_first_week || false);
+
+  } catch (error) {
+    logger.error("Something went wrong while fetching class free access setting", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      classId
+    });
+    return failure(new DatabaseError("Something went wrong while fetching class free access setting"));
+  }
+}

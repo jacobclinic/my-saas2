@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       classes: {
         Row: {
+          allow_free_access_first_week: boolean
           created_at: string
           description: string | null
           end_date: string | null
@@ -31,6 +32,7 @@ export type Database = {
           tutor_id: string
         }
         Insert: {
+          allow_free_access_first_week?: boolean
           created_at?: string
           description?: string | null
           end_date?: string | null
@@ -46,6 +48,7 @@ export type Database = {
           tutor_id: string
         }
         Update: {
+          allow_free_access_first_week?: boolean
           created_at?: string
           description?: string | null
           end_date?: string | null
