@@ -1,13 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { Check, Edit, Link, Users } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Check, Edit, Link, Trash, Users, Plus } from 'lucide-react';
+import { ColumnDef } from '@tanstack/react-table';
 import {
   ClassListData,
   ClassListStudent,
   ClassType,
   ClassWithTutorAndEnrollmentAdmin,
+  DbClassType,
   EditClassData,
+  SelectedClassAdmin,
+  TimeSlot,
+  TutorOption,
 } from '~/lib/classes/types/class-v2';
 import {
   Select,
@@ -24,9 +29,10 @@ import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import RegisteredStudentsDialog from '../../classes/RegisteredStudentsDialog';
 import EditClassDialog from '../../classes/EditClassDialog';
 import TimezoneIndicator from '../../TimezoneIndicator';
-import useCsrfToken from '~/core/hooks/use-csrf-token';
+import AdminCreateClassDialog from './AdminCreateClassDialog';
+import Button from '~/core/ui/Button';
 import DataTable from '~/core/ui/DataTable';
-import { useMemo } from 'react';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
 
 // Helper function to get status badge variant
 const getStatusBadgeVariant = (status: string) => {
@@ -63,8 +69,10 @@ type ClassTableData = {
 
 const ClassesAdmin = ({
   classesData,
+  tutors,
 }: {
   classesData: ClassWithTutorAndEnrollmentAdmin[];
+  tutors: TutorOption[];
 }) => {
   const [selectedTutor, setSelectedTutor] = useState('');
   const [copiedLinks, setCopiedLinks] = useState<Record<string, boolean>>({});
@@ -81,6 +89,8 @@ const ClassesAdmin = ({
   const [editLoading, setEditLoading] = useState(false);
   const [selectedEditClassData, setSelectedEditClassData] =
     useState<ClassListData>({} as ClassListData);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
   const csrfToken = useCsrfToken();
 
   const createSchedule = (cls: ClassWithTutorAndEnrollmentAdmin) => {
@@ -181,7 +191,7 @@ const ClassesAdmin = ({
     const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
 
     const shortLinkResult = await createShortUrlAction({
-      originalUrl: registrationUrl
+      originalUrl: registrationUrl,
     });
 
     const finalLink =
@@ -228,7 +238,68 @@ const ClassesAdmin = ({
     setSelectedEditClassData(() => formatDataForEditCls(cls));
   };
 
-  // Create lookup map for O(1) access to class data
+  const handleCreateClass = async (classData: DbClassType) => {
+    try {
+      setCreateLoading(true);
+      // The actual creation is handled in the dialog component
+      // This is just for any additional logic if needed
+    } catch (error) {
+      console.error('Error creating class:', error);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case 'active':
+        return (
+          <Badge
+            variant="outline"
+            className="bg-green-100 text-green-800 border-green-300"
+          >
+            Active
+          </Badge>
+        );
+      case 'canceled':
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 border-red-300"
+          >
+            Canceled
+          </Badge>
+        );
+      case 'inactive':
+        return (
+          <Badge
+            variant="outline"
+            className="bg-gray-100 text-gray-800 border-gray-300"
+          >
+            Inactive
+          </Badge>
+        );
+      case 'draft':
+        return (
+          <Badge
+            variant="outline"
+            className="bg-yellow-100 text-yellow-800 border-yellow-300"
+          >
+            Draft
+          </Badge>
+        );
+      default:
+        return (
+          <Badge
+            variant="outline"
+            className="bg-gray-100 text-gray-800 border-gray-300"
+          >
+            {status || 'Unknown'}
+          </Badge>
+        );
+    }
+  };
+
   const classLookupMap = useMemo(() => {
     return filteredData.reduce(
       (map, cls) => {
@@ -346,7 +417,16 @@ const ClassesAdmin = ({
     [classLookupMap],
   );
 
-  // Prepare table data for DataTable
+  // Define column widths - giving more width to tutor name and class name
+  const columnWidths = {
+    tutorName: '200px',
+    name: '200px',
+    day: '120px',
+    timeSlot: '140px',
+    status: '120px',
+    actions: '180px',
+  };
+
   const tableData: ClassTableData[] = useMemo(() => {
     return filteredData.map((cls) => ({
       id: cls.id,
@@ -364,11 +444,23 @@ const ClassesAdmin = ({
 
   return (
     <>
-      <div className="max-w-7xl p-6">
+      <div className="max-w-screen p-6">
+        {/* Header with Create Button */}
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold text-gray-900">Class groups</h1>
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            className="bg-blue-700 hover:bg-blue-900 text-white"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Class
+          </Button>
+        </div>
+
         {/* Filters */}
-        <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex justify-between">
-          <div className="flex flex-wrap gap-4 items-end">
-            <div>
+        <div className="bg-white shadow-md rounded-lg pb-4 pl-4 pr-4 mb-2">
+          <div className="flex gap-6 items-end">
+            <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Search Tutor
               </label>
@@ -377,15 +469,15 @@ const ClassesAdmin = ({
                 value={selectedTutor}
                 onChange={(e) => setSelectedTutor(e.target.value)}
                 placeholder="Enter tutor name"
-                className="border border-gray-300 rounded-md px-3 py-2"
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
               />
             </div>
-            <div>
+            <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Year Filter
               </label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Filter by year" />
                 </SelectTrigger>
                 <SelectContent>
@@ -400,35 +492,42 @@ const ClassesAdmin = ({
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status Filter
-              </label>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="canceled">Canceled</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex-1">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status Filter
+                </label>
+                <Select
+                  value={selectedStatus}
+                  onValueChange={setSelectedStatus}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="canceled">Canceled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-          <div>
-            <TimezoneIndicator />
-          </div>
-        </div>
 
-        {/* DataTable */}
-        <DataTable
-          data={tableData}
-          columns={columns}
-          columnWidths={columnWidths}
-          pageSize={PAGE_SIZE}
-          pageCount={Math.ceil(tableData.length / PAGE_SIZE)}
-        />
+          {/* Table */}
+          <DataTable
+            data={tableData}
+            columns={columns}
+            columnWidths={columnWidths}
+            tableProps={{
+              className: 'bg-white shadow-md rounded-lg',
+            }}
+            pageSize={PAGE_SIZE}
+            pageCount={Math.ceil(tableData.length / PAGE_SIZE)}
+          />
+        </div>
       </div>
 
       <RegisteredStudentsDialog
@@ -444,6 +543,14 @@ const ClassesAdmin = ({
         onUpdateClass={handleUpdateClass}
         classData={selectedEditClassData}
         loading={editLoading}
+      />
+
+      <AdminCreateClassDialog
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onCreateClass={handleCreateClass}
+        loading={createLoading}
+        tutors={tutors}
       />
     </>
   );

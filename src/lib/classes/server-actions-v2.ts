@@ -3,12 +3,29 @@
 import { revalidatePath } from 'next/cache';
 import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
-import { createClassFailure, CreateClassParams, CreateClassResponse, createClassSuccess, TimeSlot, updateClassFailure, UpdateClassParams, updateClassSuccess, deleteClassSuccess, deleteClassFailure, DeleteClassResponse, ClassCreatedEvent } from './types/class-v2';
+import {
+  CreateClassParams,
+  UpdateClassParams,
+} from './types/class-v2';
 import { USERS_TABLE } from '../db-tables';
+import {
+  createClassFailure,
+  CreateClassResponse,
+  createClassSuccess,
+  TimeSlot,
+  updateClassFailure,
+  updateClassSuccess,
+  deleteClassSuccess,
+  deleteClassFailure,
+  DeleteClassResponse,
+  ClassCreatedEvent,
+} from './types/class-v2';
 import verifyCsrfToken from '~/core/verify-csrf-token';
-import { getClassByIdWithTutor, getClassDataByIdwithNextSession } from './database/queries';
+import {
+  getClassByIdWithTutor,
+  getClassDataByIdwithNextSession,
+} from './database/queries';
 import { getAllUpcommingSessionsData } from '../sessions/database/queries';
-
 import { createShortUrlAction } from '../short-links/server-actions-v2';
 import { format as dateFnsFormat } from 'date-fns';
 import { sendSingleSMS } from '../notifications/sms/sms.notification.service';
@@ -17,7 +34,11 @@ import { getStudentInvitationToClass } from '~/core/email/templates/emailTemplat
 import { isAdminOrCLassTutor } from '../user/database/queries';
 import { notifyStudentsAfterClassScheduleUpdate } from '../notifications/email/email.notification.service';
 import { notifyStudentsAfterClassScheduleUpdateSMS } from '../notifications/sms/sms.notification.service';
-import { generateWeeklyOccurrences, RecurrenceInput } from '../utils/recurrence-utils';
+import { isAdmin } from '../user/actions.server';
+import {
+  generateWeeklyOccurrences,
+  RecurrenceInput,
+} from '../utils/recurrence-utils';
 import { ZoomService } from '../zoom/v2/zoom.service';
 import { ErrorCodes } from '../shared/error-codes';
 import { ClassService } from './class.service';
@@ -27,6 +48,7 @@ import { isEqual } from '../utils/lodash-utils';
 import { UpstashService } from '../upstash/upstash.service';
 import { ShortLinksService } from '../short-links/short-links-service';
 
+const logger = getLogger();
 
 type DeleteClassParams = {
   classId: string;
@@ -35,7 +57,69 @@ type DeleteClassParams = {
 
 export const createClassAction = withSession(
   async (params: CreateClassParams): Promise<CreateClassResponse> => {
+    const { data, csrfToken } = params;
+    const client = getSupabaseServerActionClient();
+    const logger = getLogger();
+    const zoomService = new ZoomService(client);
+    const classService = new ClassService(client, logger);
+    try {
+      await verifyCsrfToken(csrfToken);
 
+      logger.info('Creating class', { classData: data });
+
+      const zoomUserValidity = await zoomService.checkIfZoomUserValid(
+        data.tutor_id,
+      );
+      if (!zoomUserValidity.success) {
+        return createClassFailure(
+          zoomUserValidity.error.message,
+          ErrorCodes.ZOOM_ERROR,
+        );
+      }
+
+      const classResult = await classService.createClass(params.data);
+
+      if (!classResult.success) {
+        return createClassFailure(
+          classResult.error.message,
+          ErrorCodes.SERVICE_LEVEL_ERROR,
+        );
+      }
+
+      const upstashService = UpstashService.getInstance(logger);
+      const result = await upstashService.publishToUpstash<ClassCreatedEvent>({
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/public/class/async-create`,
+        body: {
+          classId: classResult.data.id,
+          timeSlots: data.time_slots as unknown as TimeSlot[],
+          tutorId: data.tutor_id,
+          startDate: data.starting_date,
+        },
+      });
+      if (!result.success) {
+        return createClassFailure(
+          result.error.message,
+          ErrorCodes.SERVICE_LEVEL_ERROR,
+        );
+      }
+
+      // Revalidate paths
+      revalidatePath('/classes');
+      revalidatePath('/(app)/classes');
+      return createClassSuccess();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      logger.error('Unexpected error in createClassAction', {
+        error: errorMessage,
+      });
+      return createClassFailure(errorMessage, ErrorCodes.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+export const createClassByAdminAction = withSession(
+  async (params: CreateClassParams) => {
     const { data, csrfToken } = params;
     const client = getSupabaseServerActionClient();
     const logger = getLogger();
@@ -43,20 +127,50 @@ export const createClassAction = withSession(
     const classService = new ClassService(client, logger);
     const shortLinksService = ShortLinksService.getInstance(client, logger);
     try {
-
+      // Verify CSRF token
       await verifyCsrfToken(csrfToken);
 
-      logger.info("Creating class", { classData: data });
+      // Get the current user's session and verify admin role
+      const {
+        data: { session },
+        error: sessionError,
+      } = await client.auth.getSession();
 
-      const zoomUserValidity = await zoomService.checkIfZoomUserValid(data.tutor_id);
+      if (sessionError || !session?.user) {
+        return {
+          success: false,
+          error: 'User not authenticated',
+        };
+      }
+      // Check if user is admin
+      const admin = await isAdmin(client);
+      if (!admin) {
+        return {
+          success: false,
+          error: 'Unauthorized access',
+        };
+      }
+
+      // Create the class
+      // logger.info("Creating class", { classData: data });
+
+      const zoomUserValidity = await zoomService.checkIfZoomUserValid(
+        data.tutor_id,
+      );
       if (!zoomUserValidity.success) {
-        return createClassFailure(zoomUserValidity.error.message, ErrorCodes.ZOOM_ERROR);
+        return createClassFailure(
+          zoomUserValidity.error.message,
+          ErrorCodes.ZOOM_ERROR,
+        );
       }
 
       const classResult = await classService.createClass(params.data);
 
       if (!classResult.success) {
-        return createClassFailure(classResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+        return createClassFailure(
+          classResult.error.message,
+          ErrorCodes.SERVICE_LEVEL_ERROR,
+        );
       }
 
       const classUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?classId=${classResult.data.id}`;
@@ -91,7 +205,10 @@ export const createClassAction = withSession(
         },
       });
       if (!result.success) {
-        return createClassFailure(result.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+        return createClassFailure(
+          result.error.message,
+          ErrorCodes.SERVICE_LEVEL_ERROR,
+        );
       }
 
       // Revalidate paths
@@ -99,8 +216,11 @@ export const createClassAction = withSession(
       revalidatePath('/(app)/classes');
       return createClassSuccess();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      logger.error('Unexpected error in createClassAction', { error: errorMessage });
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      logger.error('Unexpected error in createClassAction', {
+        error: errorMessage,
+      });
       return createClassFailure(errorMessage, ErrorCodes.INTERNAL_SERVER_ERROR);
     }
   },
@@ -114,11 +234,17 @@ export const updateClassAction = withSession(
     const classService = new ClassService(client, logger);
     const sessionService = new SessionService(client, logger);
     try {
-      const classWithTutorData = await getClassByIdWithTutor(client, params.classId);
+      const classWithTutorData = await getClassByIdWithTutor(
+        client,
+        params.classId,
+      );
       const tutorId = classWithTutorData?.tutor_id;
       const zoomUserValidity = await zoomService.checkIfZoomUserValid(tutorId!);
       if (!zoomUserValidity.success) {
-        return updateClassFailure(zoomUserValidity.error.message, ErrorCodes.ZOOM_ERROR);
+        return updateClassFailure(
+          zoomUserValidity.error.message,
+          ErrorCodes.ZOOM_ERROR,
+        );
       }
       // Get the current user's session
       const {
@@ -126,9 +252,11 @@ export const updateClassAction = withSession(
         error: sessionError,
       } = await client.auth.getSession();
       if (sessionError || !session?.user) {
-        return updateClassFailure('User not authenticated', ErrorCodes.UNAUTHORIZED);
+        return updateClassFailure(
+          'User not authenticated',
+          ErrorCodes.UNAUTHORIZED,
+        );
       }
-
       const userId = session.user.id;
 
       // Check if the user has permission to update this class
@@ -138,34 +266,73 @@ export const updateClassAction = withSession(
         params.classId,
       );
       if (!hasPermission) {
-        return updateClassFailure("You don't have permissions to update this class", ErrorCodes.FORBIDDEN);
+        return updateClassFailure(
+          "You don't have permissions to update this class",
+          ErrorCodes.FORBIDDEN,
+        );
       }
 
-      const originalClassResult = await classService.getClassById(params.classId);
+      const originalClassResult = await classService.getClassById(
+        params.classId,
+      );
       if (!originalClassResult.success) {
-        return updateClassFailure(originalClassResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+        return updateClassFailure(
+          originalClassResult.error.message,
+          ErrorCodes.SERVICE_LEVEL_ERROR,
+        );
       }
 
-      const updateClassResult = await classService.updateClass(params.classId, params.classData, originalClassResult.data)
+      const updateClassResult = await classService.updateClass(
+        params.classId,
+        params.classData,
+        originalClassResult.data,
+      );
 
       if (!updateClassResult.success) {
-        return updateClassFailure(updateClassResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+        return updateClassFailure(
+          updateClassResult.error.message,
+          ErrorCodes.SERVICE_LEVEL_ERROR,
+        );
       }
 
-      if (!isEqual(originalClassResult.data.time_slots, params.classData.time_slots)) {
-        const deleteSessionsResult = await sessionService.deleteSessions(params.classId, originalClassResult.data.starting_date);
+      if (
+        !isEqual(
+          originalClassResult.data.time_slots,
+          params.classData.time_slots,
+        )
+      ) {
+        const deleteSessionsResult = await sessionService.deleteSessions(
+          params.classId,
+          originalClassResult.data.starting_date,
+        );
         if (!deleteSessionsResult.success) {
-          return updateClassFailure(deleteSessionsResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+          return updateClassFailure(
+            deleteSessionsResult.error.message,
+            ErrorCodes.SERVICE_LEVEL_ERROR,
+          );
         }
-        const createSessionsResult = await sessionService.createRecurringSessions(params.classId, params.classData.time_slots as unknown as TimeSlot[], params.classData.starting_date!);
+        const createSessionsResult =
+          await sessionService.createRecurringSessions(
+            params.classId,
+            params.classData.time_slots as unknown as TimeSlot[],
+            params.classData.starting_date!,
+          );
         if (!createSessionsResult.success) {
-          return updateClassFailure(createSessionsResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+          return updateClassFailure(
+            createSessionsResult.error.message,
+            ErrorCodes.SERVICE_LEVEL_ERROR,
+          );
         }
 
         await zoomService.createMeetingsForTomorrowSessions();
 
         // Todo : Refactor the notification service.
-        if (!isEqual(originalClassResult.data.time_slots, params.classData.time_slots)) {
+        if (
+          !isEqual(
+            originalClassResult.data.time_slots,
+            params.classData.time_slots,
+          )
+        ) {
           try {
             // Helper function to get the next occurrence of a specific day
             const getNextOccurrenceOfDay = (dayName: string): Date => {
@@ -203,7 +370,8 @@ export const updateClassAction = withSession(
             };
 
             // Format the time slots for notification - combine multiple slots if they exist
-            const timeSlots = params.classData.time_slots as unknown as TimeSlot[];
+            const timeSlots = params.classData
+              .time_slots as unknown as TimeSlot[];
             const scheduleInfo = timeSlots
               .map((slot) => `${slot.day} ${slot.startTime}-${slot.endTime}`)
               .join(', ');
@@ -243,11 +411,11 @@ export const updateClassAction = withSession(
                 nextClassDate: nextSessionDate,
               }),
             ]);
-            console.log(
+            logger.info(
               'Successfully sent schedule update notifications (email and SMS) to students',
             );
           } catch (notificationError) {
-            console.error(
+            logger.error(
               'Failed to send schedule update notifications:',
               notificationError,
             );
@@ -260,7 +428,10 @@ export const updateClassAction = withSession(
       revalidatePath('/(app)/classes');
       return updateClassSuccess();
     } catch (error) {
-      return updateClassFailure(error instanceof Error ? error.message : String(error), ErrorCodes.INTERNAL_SERVER_ERROR);
+      return updateClassFailure(
+        error instanceof Error ? error.message : String(error),
+        ErrorCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 );
@@ -281,7 +452,10 @@ export const deleteClassAction = withSession(
         error: sessionError,
       } = await client.auth.getSession();
       if (sessionError || !session?.user) {
-        return deleteClassFailure('User not authenticated', ErrorCodes.UNAUTHORIZED);
+        return deleteClassFailure(
+          'User not authenticated',
+          ErrorCodes.UNAUTHORIZED,
+        );
       }
 
       const userId = session.user.id;
@@ -290,17 +464,21 @@ export const deleteClassAction = withSession(
 
       const result = await classService.deleteClass(classId, userId);
       if (!result.success) {
-        return deleteClassFailure(result.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+        return deleteClassFailure(
+          result.error.message,
+          ErrorCodes.SERVICE_LEVEL_ERROR,
+        );
       }
 
       revalidatePath('/classes');
       revalidatePath('/(app)/classes');
       return deleteClassSuccess();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return deleteClassFailure(errorMessage, ErrorCodes.INTERNAL_SERVER_ERROR);
     }
-  }
+  },
 );
 
 export const getAllUpcominSessionsAdmin = withSession(async () => {
@@ -329,7 +507,7 @@ export const getAllUpcominSessionsAdmin = withSession(async () => {
   const isAdmin = userProfile.user_role === 'admin';
 
   if (!isAdmin) {
-    console.log('here...');
+    logger.info('User is not an admin');
     throw new Error('Unauthorized to access this data');
   }
 
@@ -395,7 +573,7 @@ export const sendEmailMSGToStudentAction = withSession(
     const registrationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/self-registration?${urlParams.toString()}`;
 
     const shortLinkResult = await createShortUrlAction({
-      originalUrl: registrationUrl
+      originalUrl: registrationUrl,
     });
 
     const registrationLink =
@@ -428,7 +606,7 @@ export const sendEmailMSGToStudentAction = withSession(
         }),
       ]);
     } catch (error) {
-      console.error('Error sending email:', error);
+      logger.error('Error sending email:', error);
     }
 
     return {
@@ -461,7 +639,7 @@ function generateAllWeeklyOccurrencesForYear(classData: {
       );
       occurrences.push(...weeklyOccurrences);
     } catch (error) {
-      console.error(
+      logger.error(
         `Error generating weekly occurrences for slot: ${JSON.stringify(slot)}`,
         error,
       );
