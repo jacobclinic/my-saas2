@@ -1,4 +1,4 @@
-import { addDays, startOfWeek, endOfYear, endOfMonth, subHours, isAfter, isBefore, isWithinInterval } from 'date-fns';
+import { addDays, startOfWeek, endOfYear, endOfMonth, subHours, isAfter, isBefore, isWithinInterval, getDate } from 'date-fns';
 import { TimeSlot } from '../classes/types/class-v2';
 import { dayMap } from '../constants-v2';
 import { parse, format } from 'date-fns';
@@ -301,8 +301,7 @@ export function getPaymentPeriodFromDate(date: Date): string {
 
 export function isFirstWeekOfMonth(checkDate: string | Date): boolean {
   const date = new Date(checkDate);
-  const dayOfMonth = date.getDate();
-  return dayOfMonth <= 7;
+  return getDate(date) <= 7;
 }
 
 export function formatToLocalHHmmAMPM(date: string | Date): string {

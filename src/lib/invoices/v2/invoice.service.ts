@@ -14,14 +14,16 @@ import {
   getFullDateUTC,
   getDueDateUTC,
   getPaymentPeriodFromDate,
+  isFirstWeekOfMonth,
 } from '~/lib/utils/date-utils';
-import { getClassFeeById } from '~/lib/classes/database/queries';
+import { getClassFeeById, getClassFreeAccessSetting } from '~/lib/classes/database/queries';
 import { generateId } from '~/lib/utils/nanoid-utils';
 import { getTutorInvoiceByDetails, getTutorInvoicesByClassAndPeriod } from './database/tutor-queries';
 import { createTutorInvoice, updateTutorInvoice, createTutorInvoices } from './database/tutor-mutations';
 import { getActiveClassesForTutorInvoices } from '~/lib/classes/database/queries';
 import { getPaidStudentInvoicesByClassAndPeriod } from './database/queries';
-import { TUTOR_PAYOUT_RATE } from '~/lib/constants-v2';
+import { TUTOR_PAYOUT_RATE, DEFAULT_TUTOR_COMMISSION_RATE } from '~/lib/constants-v2';
+import { getTutorCommissionRate } from '~/lib/user/database/queries';
 
 export class InvoiceService {
   private static instance: InvoiceService;
@@ -274,6 +276,10 @@ export class InvoiceService {
             this.logger
           );
 
+          const commissionRate = await getTutorCommissionRate(this.supabaseClient, tutorId);
+          const tutorCommissionRate = commissionRate || DEFAULT_TUTOR_COMMISSION_RATE;
+          let effectiveCommissionRate = (1 - tutorCommissionRate);
+
           if (!existingInvoicesResult.success) {
             this.logger.error('Failed to fetch existing tutor invoices', { classId: classData.id });
             continue;
@@ -297,7 +303,8 @@ export class InvoiceService {
           const numberOfPaidInvoices = paidInvoicesResult.data.length;
           const classFee = classData.fee || 0;
           const totalRevenue = numberOfPaidInvoices * classFee;
-          const tutorPayment = totalRevenue * TUTOR_PAYOUT_RATE;
+          // const tutorPayment = totalRevenue * TUTOR_PAYOUT_RATE;
+          const tutorPayment = totalRevenue * effectiveCommissionRate;
 
           if (existingInvoice) {
             const updateResult = await updateTutorInvoice(
@@ -355,27 +362,67 @@ export class InvoiceService {
   // Check if the student has paid for the invoice (or the class for the invoice period)
   async validateStudentPayment(studentId: string, classId: string, sessionDate: Date): Promise<Result<boolean, AppError>> {
     try {
+      this.logger.info('Starting payment validation', { studentId, classId, sessionDate });
+
+      const freeAccessResult = await getClassFreeAccessSetting(this.supabaseClient, classId);
+      
+      if (!freeAccessResult.success) {
+        this.logger.error('Failed to fetch class free access setting for payment validation', { 
+          studentId, 
+          classId, 
+          sessionDate,
+          error: freeAccessResult.error 
+        });
+        // Continue with normal validation if we can't fetch the setting
+      } else {
+        const allowFreeAccessFirstWeek = freeAccessResult.data;
+        if (allowFreeAccessFirstWeek && isFirstWeekOfMonth(sessionDate)) {
+          this.logger.info('First week of the month with free access enabled. Free access granted', { 
+            studentId, 
+            classId, 
+            sessionDate,
+            allowFreeAccessFirstWeek 
+          });
+          return success(true);
+        }
+
+        this.logger.info('Free access check completed', {
+          studentId,
+          classId,
+          allowFreeAccessFirstWeek,
+          isFirstWeek: isFirstWeekOfMonth(sessionDate),
+          freeAccessGranted: false
+        });
+      }
+
       const invoicePeriod = getPaymentPeriodFromDate(sessionDate);
 
       const invoiceResult = await getInvoiceByDetails(this.supabaseClient, studentId, classId, invoicePeriod, this.logger);
 
       if (!invoiceResult.success) {
-        this.logger.error('Failed to retrieve invoice for payment validation.', { studentId, classId, invoicePeriod });
-        return failure(new AppError('Failed to retrieve invoice for validation.', ErrorCodes.DATABASE_ERROR));
+        this.logger.error('Failed to retrieve invoice for payment validation', { studentId, classId, invoicePeriod });
+        return failure(new AppError('Failed to retrieve invoice for validation', ErrorCodes.DATABASE_ERROR));
       }
 
       const invoice = invoiceResult.data;
       if (!invoice || invoice.status !== 'paid') {
-        this.logger.warn('Payment validation failed: Invoice not found or not paid.', { studentId, classId, invoicePeriod });
+        this.logger.warn('Payment validation failed: Invoice not found or not paid', { studentId, classId, invoicePeriod });
         return success(false);
       }
 
-      this.logger.info('Payment validation successful.', { studentId, classId, invoicePeriod });
+      this.logger.info('Payment validation successful', { studentId, classId, invoicePeriod });
       return success(true);
 
     } catch (error) {
-      this.logger.error('An unexpected error occurred during payment validation.', { error });
-      return failure(new AppError('An unexpected error occurred during payment validation.', ErrorCodes.INTERNAL_SERVER_ERROR));
+      this.logger.error('An unexpected error occurred during payment validation', { 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : undefined,
+        studentId,
+        classId,
+        sessionDate
+      });
+      return failure(new AppError('An unexpected error occurred during payment validation', ErrorCodes.INTERNAL_SERVER_ERROR));
     }
   }
 }
