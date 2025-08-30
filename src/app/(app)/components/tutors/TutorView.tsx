@@ -18,6 +18,7 @@ import {
   XCircle,
   Presentation,
   ChartLine,
+  BadgePercent
 } from 'lucide-react';
 import UserType from '~/lib/user/types/user';
 import { approveTutorAction } from '~/lib/user/actions/approve-tutor-action';
@@ -25,11 +26,13 @@ import { toast } from 'sonner';
 import { CommaZoomUser, DBZoomUser } from '~/lib/zoom/v2/types';
 import { getUnassignedZoomUsersAction } from '~/lib/zoom/v2/actions';
 import { Select, SelectItem, SelectValue, SelectTrigger, SelectContent } from '../base-v2/ui/Select';
+import { Slider } from '../base-v2/ui/Slider';
 
 // Extended UserType to include additional tutor-specific fields
 interface ExtendedUserType extends UserType {
   activeClassesCount?: number;
   zoom_user: CommaZoomUser | null;
+  commission_rate?: number;
 }
 
 interface TutorViewProps {
@@ -48,11 +51,12 @@ const TutorView: React.FC<TutorViewProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [unassignedZoomUsers, setUnassignedZoomUsers] = useState<DBZoomUser[]>([]);
   const [selectedZoomUserId, setSelectedZoomUserId] = useState<string>("");
+  // Set the default commission rate
+  const [commissionRate, setCommissionRate] = useState(tutor?.commission_rate || 15);
 
   useEffect(() => {
     const fetchUnassignedZoomUsers = async () => {
       const result = await getUnassignedZoomUsersAction();
-      console.log(result);
       if (result.success) {
         setUnassignedZoomUsers(result.data);
       } else {
@@ -83,7 +87,13 @@ const TutorView: React.FC<TutorViewProps> = ({
 
     setIsProcessing(true);
     try {
-      const result = await approveTutorAction(tutor.id, approve, parseInt(selectedZoomUserId));
+      const payload = {
+        tutorId: tutor.id,
+        approve,
+        zoomUserId: parseInt(selectedZoomUserId),
+        commissionRate
+      }
+      const result = await approveTutorAction(payload);
 
       if (result.success) {
         toast.success(
@@ -280,25 +290,41 @@ const TutorView: React.FC<TutorViewProps> = ({
               <div>
                 <p className="text-sm text-gray-500">Zoom Email (Internal use only)</p>
                 <div className="w-full mt-2">
-                  <Select onValueChange={(value) => handleZoomUserChange(value)}>
-                    <SelectTrigger className="w-[300px]">
-                      <SelectValue placeholder="Select a zoom user" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unassignedZoomUsers.map((user) => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {
+                    tutor.status === 'ACTIVE' ? (
+                      <p className="font-medium text-gray-500">{tutor.zoom_user?.email}</p>
+                    ) : (
+                      <Select value={selectedZoomUserId} onValueChange={(value) => handleZoomUserChange(value)}>
+                        <SelectTrigger className="w-[300px]">
+                          <SelectValue placeholder="Select a zoom user" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {unassignedZoomUsers.map((user) => (
+                            <SelectItem key={user.id} value={user.id.toString()}>
+                              {user.email}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )
+                  }
                 </div>
 
               </div>
             </div>
           </div>
         </div>
-
+        {/* Tutor Commission */}
+        <div>
+          <h3 className="text-lg font-semibold mb-4 text-blue-600 flex items-center">
+            <BadgePercent className="h-5 w-5 mr-2" />
+            Commission Rate
+          </h3>
+          <div className='grid grid-cols-8 gap-4 items-center ml-4'>
+            <Slider disabled={tutor.status !== "PENDING"} className='col-span-7' value={commissionRate} onChange={setCommissionRate} />
+            <span className='col-span-1'>{commissionRate}%</span>
+          </div>
+        </div>
         {/* Identity Proof */}
         <div className="space-y-3">
           <h3 className="text-lg font-semibold mb-4 text-blue-600">

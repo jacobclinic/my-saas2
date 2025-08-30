@@ -21,7 +21,8 @@ import { getTutorInvoiceByDetails, getTutorInvoicesByClassAndPeriod } from './da
 import { createTutorInvoice, updateTutorInvoice, createTutorInvoices } from './database/tutor-mutations';
 import { getActiveClassesForTutorInvoices } from '~/lib/classes/database/queries';
 import { getPaidStudentInvoicesByClassAndPeriod } from './database/queries';
-import { TUTOR_PAYOUT_RATE } from '~/lib/constants-v2';
+import { TUTOR_PAYOUT_RATE, DEFAULT_TUTOR_COMMISSION_RATE } from '~/lib/constants-v2';
+import { getTutorCommissionRate } from '~/lib/user/database/queries';
 
 export class InvoiceService {
   private static instance: InvoiceService;
@@ -274,6 +275,10 @@ export class InvoiceService {
             this.logger
           );
 
+          const commissionRate = await getTutorCommissionRate(this.supabaseClient, tutorId);
+          const tutorCommissionRate = commissionRate || DEFAULT_TUTOR_COMMISSION_RATE;
+          let effectiveCommissionRate = (1 - tutorCommissionRate);
+
           if (!existingInvoicesResult.success) {
             this.logger.error('Failed to fetch existing tutor invoices', { classId: classData.id });
             continue;
@@ -297,7 +302,8 @@ export class InvoiceService {
           const numberOfPaidInvoices = paidInvoicesResult.data.length;
           const classFee = classData.fee || 0;
           const totalRevenue = numberOfPaidInvoices * classFee;
-          const tutorPayment = totalRevenue * TUTOR_PAYOUT_RATE;
+          // const tutorPayment = totalRevenue * TUTOR_PAYOUT_RATE;
+          const tutorPayment = totalRevenue * effectiveCommissionRate;
 
           if (existingInvoice) {
             const updateResult = await updateTutorInvoice(
