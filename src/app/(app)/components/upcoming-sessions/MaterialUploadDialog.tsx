@@ -4,11 +4,12 @@
 import React, { useState, useTransition } from 'react'
 import type { MaterialUploadDialogProps } from '~/lib/sessions/types/upcoming-sessions'
 import { Textarea } from "../base-v2/ui/Textarea"
-import { FileText, Trash2, Upload } from 'lucide-react'
+import { Input } from "../base-v2/ui/Input"
+import { FileText, Trash2, Upload, Edit3, Check, X } from 'lucide-react'
 import BaseDialog from '../base-v2/BaseDialog'
 import { FileUploadDropzone } from '../base-v2/FileUploadDropzone'
 import { FileUploadItem } from '../base-v2/FileUploadItem'
-import { deleteSessionMaterialAction, updateSessionMaterialsAction, uploadSessionMaterialsAction } from '~/lib/sessions/server-actions-v2'
+import { deleteSessionMaterialAction, renameSessionMaterialAction, updateSessionMaterialsAction, uploadSessionMaterialsAction } from '~/lib/sessions/server-actions-v2'
 import useCsrfToken from '~/core/hooks/use-csrf-token'
 import { getFileBuffer } from '~/lib/utils/upload-material-utils'
 import { Button } from '../base-v2/ui/Button'
@@ -18,6 +19,7 @@ import { toast } from 'sonner'
 interface UploadingFile {
   id: string
   file: File
+  displayName: string // The name to display (can be renamed)
   progress: number
   status: 'uploading' | 'error' | 'complete' | 'waiting'
   error?: string
@@ -40,6 +42,8 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
   const [materialsToDelete, setMaterialsToDelete] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [uploadCompleted, setUploadCompleted] = useState(false)
+  const [renamingMaterialId, setRenamingMaterialId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
 
   const supabase = useSupabase();
 
@@ -49,10 +53,19 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
     const newFiles = files.map(file => ({
       id: Math.random().toString(36).slice(2),
       file,
+      displayName: file.name,
       progress: 0,
       status: 'waiting' as const
     }))
     setUploadingFiles(prev => [...prev, ...newFiles])
+  }
+
+  const handleRenameUploadingFile = (fileId: string, newName: string) => {
+    setUploadingFiles(prev =>
+      prev.map(f =>
+        f.id === fileId ? { ...f, displayName: newName } : f
+      )
+    )
   }
 
   const resetUploadState = () => {
@@ -61,6 +74,8 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
     setUploadCompleted(false)
     setDescription('')
     setMaterialsToDelete([])
+    setRenamingMaterialId(null)
+    setRenameValue('')
   }
 
   const handleDialogClose = () => {
@@ -153,7 +168,7 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
           
           filesToUpdateInDB.push({
             session_id: sessionId,
-            name: uploadingFile.file.name,
+            name: uploadingFile.displayName, // Use renamed display name
             file_size: (uploadingFile.file.size / 1024 / 1024).toFixed(2),
             url: publicUrl,
             description: description,
@@ -216,6 +231,42 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
       })
     } catch (error) {
       console.error('Error deleting material:', error)
+    }
+  }
+
+  const handleStartRename = (materialId: string, currentName: string) => {
+    setRenamingMaterialId(materialId)
+    setRenameValue(currentName)
+  }
+
+  const handleCancelRename = () => {
+    setRenamingMaterialId(null)
+    setRenameValue('')
+  }
+
+  const handleConfirmRename = async (materialId: string) => {
+    if (!renameValue.trim() || renameValue === '') return
+
+    try {
+      startTransition(async () => {
+        const result = await renameSessionMaterialAction({
+          materialId,
+          newName: renameValue.trim(),
+          csrfToken
+        })
+
+        if (result.success) {
+          setRenamingMaterialId(null)
+          setRenameValue('')
+          toast.success('Material renamed successfully')
+          onSuccess?.()
+        } else {
+          toast.error('Failed to rename material')
+        }
+      })
+    } catch (error) {
+      console.error('Error renaming material:', error)
+      toast.error('Failed to rename material')
     }
   }
 
@@ -319,22 +370,77 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
                       key={material.id}
                       className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-1">
                         <FileText size={18} className="text-primary-blue-600" />
-                        <div>
-                          <p className="text-sm font-medium">{material.name}</p>
-                          <p className="text-xs text-neutral-500">{material.file_size} MB</p>
+                        <div className="flex-1">
+                          {renamingMaterialId === material.id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={renameValue}
+                                onChange={(e) => setRenameValue(e.target.value)}
+                                className="text-sm font-medium h-8"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleConfirmRename(material.id)
+                                  } else if (e.key === 'Escape') {
+                                    handleCancelRename()
+                                  }
+                                }}
+                              />
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-green-600 hover:bg-green-100"
+                                  onClick={() => handleConfirmRename(material.id)}
+                                  disabled={isPending}
+                                >
+                                  <Check size={12} />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-gray-500 hover:bg-gray-100"
+                                  onClick={handleCancelRename}
+                                  disabled={isPending}
+                                >
+                                  <X size={12} />
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-sm font-medium">{material.name}</p>
+                              <p className="text-xs text-neutral-500">{material.file_size} MB</p>
+                            </>
+                          )}
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-neutral-500 hover:text-error hover:bg-error-light"
-                        onClick={() => handleDeleteMaterial(material.id, material.url || "")}
-                        disabled={isUploading}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
+                      {renamingMaterialId !== material.id && (
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-neutral-500 hover:text-blue-600 hover:bg-blue-50"
+                            onClick={() => handleStartRename(material.id, material.name || '')}
+                            disabled={isUploading || isPending}
+                            title="Rename file"
+                          >
+                            <Edit3 size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-neutral-500 hover:text-error hover:bg-error-light"
+                            onClick={() => handleDeleteMaterial(material.id, material.url || "")}
+                            disabled={isUploading || isPending}
+                            title="Delete file"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
 
@@ -342,12 +448,14 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
                 {uploadingFiles.map((file) => (
                   <div key={file.id} className="bg-white border border-gray-200 rounded-lg">
                     <FileUploadItem
-                      fileName={file.file.name}
+                      fileName={file.displayName}
                       fileSize={(file.file.size / 1024 / 1024).toFixed(2)}
                       progress={file.progress}
                       status={file.status}
                       error={file.error}
                       onRemove={isUploading ? undefined : () => handleRemoveFile(file.id)}
+                      onRename={(newName) => handleRenameUploadingFile(file.id, newName)}
+                      allowRename={!isUploading}
                     />
                   </div>
                 ))}
