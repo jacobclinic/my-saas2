@@ -57,6 +57,7 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showMaterialDialog, setShowMaterialDialog] = useState(false);
   const [uploadedMaterials, setUploadedMaterials] = useState<UploadedMaterial[]>([]);
   const [materialDescription, setMaterialDescription] = useState('');
+  const [isMaterialUploading, setIsMaterialUploading] = useState(false);
   const csrfToken = useCsrfToken();
 
   const handleCopyLink = async (
@@ -289,11 +290,14 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
               variant="ghost"
               className={`w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200 ${sessionData.materials && sessionData.materials?.length > 0 ? 'bg-primary-blue-50 border-primary-blue-100' : ''}`}
               onClick={() => setShowMaterialDialog(true)}
+              disabled={isMaterialUploading}
             >
               <Upload className="h-4 w-4 mr-2" />
-              {sessionData.materials?.length
-                ? 'Update Materials'
-                : 'Upload Materials'}
+              {isMaterialUploading 
+                ? 'Uploading...' 
+                : sessionData.materials?.length
+                  ? 'Update Materials'
+                  : 'Upload Materials'}
             </Button>
           </MobileTooltip>
 
@@ -334,8 +338,13 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
         materialDescription={materialDescription}
         setMaterialDescription={setMaterialDescription}
         sessionId={sessionData.id}
-        onSuccess={() => console.log('Material upload success')}
+        onSuccess={() => {
+          console.log('Material upload success')
+          setIsMaterialUploading(false)
+        }}
         existingMaterials={sessionData.materials || []}
+        onUploadStart={() => setIsMaterialUploading(true)}
+        onUploadComplete={() => setIsMaterialUploading(false)}
       />
     </>
   );

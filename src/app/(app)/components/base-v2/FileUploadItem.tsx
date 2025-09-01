@@ -10,7 +10,7 @@ interface FileUploadItemProps {
   progress?: number
   status: 'uploading' | 'error' | 'complete' | 'waiting'
   error?: string
-  onRemove: () => void
+  onRemove?: () => void
 }
 
 const FileUploadItem: React.FC<FileUploadItemProps> = ({
@@ -39,14 +39,16 @@ const FileUploadItem: React.FC<FileUploadItemProps> = ({
           {status === 'complete' && (
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-red-600 hover:text-red-700"
-            onClick={onRemove}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          {onRemove && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-600 hover:text-red-700"
+              onClick={onRemove}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 

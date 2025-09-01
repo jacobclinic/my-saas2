@@ -75,8 +75,10 @@ interface MaterialUploadDialogProps {
   materialDescription: string;
   setMaterialDescription: (description: string) => void;
   sessionId: string;
-  onSuccess: (materials: Material[]) => void;
+  onSuccess: (materials?: Material[]) => void;
   existingMaterials?: Material[];
+  onUploadStart?: () => void;
+  onUploadComplete?: () => void;
 }
 
 interface UpcommingSessionCardProps {

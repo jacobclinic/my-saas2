@@ -69,6 +69,7 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
     UploadedMaterial[]
   >([]);
   const [materialDescription, setMaterialDescription] = useState('');
+  const [isMaterialUploading, setIsMaterialUploading] = useState(false);
   const [lessonDetails, setLessonDetails] = useState<LessonDetails>({
     title: sessionData?.sessionRawData?.title || '',
   });
@@ -340,11 +341,14 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
                   variant="ghost"
                   className={`w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200 ${sessionData.materials && sessionData.materials?.length > 0 ? 'bg-primary-blue-50 border-primary-blue-100' : ''}`}
                   onClick={() => setShowMaterialDialog(true)}
+                  disabled={isMaterialUploading}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {sessionData.materials?.length
-                    ? 'Update Materials'
-                    : 'Upload Materials'}
+                  {isMaterialUploading 
+                    ? 'Uploading...' 
+                    : sessionData.materials?.length
+                      ? 'Update Materials'
+                      : 'Upload Materials'}
                 </Button>
               </MobileTooltip>
 
@@ -373,8 +377,13 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
         materialDescription={materialDescription}
         setMaterialDescription={setMaterialDescription}
         sessionId={sessionData.id}
-        onSuccess={() => console.log('Material upload success')}
+        onSuccess={() => {
+          console.log('Material upload success')
+          setIsMaterialUploading(false)
+        }}
         existingMaterials={sessionData.materials || []}
+        onUploadStart={() => setIsMaterialUploading(true)}
+        onUploadComplete={() => setIsMaterialUploading(false)}
       />
       <EditSessionDialog
         open={showEditSessionDialog}
