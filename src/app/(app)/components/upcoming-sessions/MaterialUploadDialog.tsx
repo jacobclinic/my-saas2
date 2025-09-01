@@ -253,88 +253,115 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
       showCloseButton={!isUploading}
     >
       <div className="space-y-6">
-        <FileUploadDropzone 
-          onFilesAdded={handleFilesAdded} 
-          className={isUploading ? 'opacity-50 pointer-events-none' : ''} 
-        />
-        
-        {/* Overall Upload Progress */}
-        {(isUploading || uploadCompleted) && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                {uploadCompleted ? (
-                  <div className="rounded-full h-4 w-4 bg-green-600 flex items-center justify-center">
-                    <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                )}
-                <span className="text-sm font-medium text-blue-900">
-                  {uploadCompleted ? 'Upload Complete!' : 'Uploading materials...'}
+        {/* Upload Section */}
+        <div className="space-y-4">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+            <FileUploadDropzone 
+              onFilesAdded={handleFilesAdded} 
+              className={isUploading ? 'opacity-50 pointer-events-none' : ''} 
+            />
+          </div>
+          
+          {/* Overall Upload Progress */}
+          {(isUploading || uploadCompleted) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  {uploadCompleted ? (
+                    <div className="rounded-full h-4 w-4 bg-green-600 flex items-center justify-center">
+                      <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                  )}
+                  <span className="text-sm font-medium text-blue-900">
+                    {uploadCompleted ? 'Upload Complete!' : 'Uploading materials...'}
+                  </span>
+                </div>
+                <span className="text-xs text-blue-700">
+                  {uploadingFiles.filter(f => f.status === 'complete').length} of {uploadingFiles.length} files completed
                 </span>
               </div>
-              <span className="text-xs text-blue-700">
-                {uploadingFiles.filter(f => f.status === 'complete').length} of {uploadingFiles.length} files completed
-              </span>
+              <div className="w-full bg-blue-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    uploadCompleted ? 'bg-green-600' : 'bg-blue-600'
+                  }`}
+                  style={{ 
+                    width: `${(uploadingFiles.filter(f => f.status === 'complete').length / uploadingFiles.length) * 100}%` 
+                  }}
+                ></div>
+              </div>
             </div>
-            <div className="w-full bg-blue-200 rounded-full h-2">
-              <div 
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  uploadCompleted ? 'bg-green-600' : 'bg-blue-600'
-                }`}
-                style={{ 
-                  width: `${(uploadingFiles.filter(f => f.status === 'complete').length / uploadingFiles.length) * 100}%` 
-                }}
-              ></div>
+          )}
+        </div>
+
+        {/* Files Section */}
+        {(existingMaterials.length > 0 || uploadingFiles.length > 0) && (
+          <div className="space-y-4">
+            <div className="border-t border-gray-200 pt-4">
+              <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                <FileText size={16} className="mr-2 text-gray-500" />
+                Class Materials
+                <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                  {(existingMaterials.filter(material => !materialsToDelete.includes(material.id)).length + uploadingFiles.length)}
+                </span>
+              </h3>
+              
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                {/* Existing Materials */}
+                {existingMaterials
+                  .filter(material => !materialsToDelete.includes(material.id))
+                  .map((material) => (
+                    <div
+                      key={material.id}
+                      className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileText size={18} className="text-primary-blue-600" />
+                        <div>
+                          <p className="text-sm font-medium">{material.name}</p>
+                          <p className="text-xs text-neutral-500">{material.file_size} MB</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-neutral-500 hover:text-error hover:bg-error-light"
+                        onClick={() => handleDeleteMaterial(material.id, material.url || "")}
+                        disabled={isUploading}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  ))}
+
+                {/* Uploading Files */}
+                {uploadingFiles.map((file) => (
+                  <div key={file.id} className="bg-white border border-gray-200 rounded-lg">
+                    <FileUploadItem
+                      fileName={file.file.name}
+                      fileSize={(file.file.size / 1024 / 1024).toFixed(2)}
+                      progress={file.progress}
+                      status={file.status}
+                      error={file.error}
+                      onRemove={isUploading ? undefined : () => handleRemoveFile(file.id)}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
-        {existingMaterials.length > 0 ? (
-          <div className="space-y-3">
-            {existingMaterials
-              .filter(material => !materialsToDelete.includes(material.id))
-              .map((material) => (
-                <div
-                  key={material.id}
-                  className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <FileText size={18} className="text-primary-blue-600" />
-                    <div>
-                      <p className="text-sm font-medium">{material.name}</p>
-                      <p className="text-xs text-neutral-500">{material.file_size} MB</p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-neutral-500 hover:text-error hover:bg-error-light"
-                    onClick={() => handleDeleteMaterial(material.id, material.url || "")}
-                    disabled={isUploading}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-              ))}
-          </div>
-        ) : null}
 
-        {uploadingFiles.length > 0 && (
-          <div className="space-y-3">
-            {uploadingFiles.map((file) => (
-              <FileUploadItem
-                key={file.id}
-                fileName={file.file.name}
-                fileSize={(file.file.size / 1024 / 1024).toFixed(2)}
-                progress={file.progress}
-                status={file.status}
-                error={file.error}
-                onRemove={isUploading ? undefined : () => handleRemoveFile(file.id)}
-              />
-            ))}
+        {/* Empty State */}
+        {existingMaterials.length === 0 && uploadingFiles.length === 0 && (
+          <div className="text-center pt-8 pb-2 text-neutral-500 border-t border-gray-200">
+            <FileText size={40} className="mx-auto mb-3 text-neutral-400" />
+            <p className="font-medium">No materials uploaded yet</p>
+            <p className="text-sm">Upload files to share with your students</p>
           </div>
         )}
 
@@ -347,11 +374,6 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
             className="h-24"
           />
         </div> */}
-        {existingMaterials.length === 0 && uploadingFiles.length === 0  ? <div className="text-center pt-8 pb-2 text-neutral-500">
-          <FileText size={40} className="mx-auto mb-3 text-neutral-400" />
-          <p>No materials uploaded yet</p>
-          <p className="text-sm">Upload files to share with your students</p>
-        </div> : null}
       </div>
     </BaseDialog>
   )
