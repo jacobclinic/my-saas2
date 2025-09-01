@@ -11,7 +11,7 @@ enum Themes {
 const configuration = {
   site: {
     name: 'Comma Education',
-    description: 'Your SaaS Description',
+    description: 'Sri Lanka\'s Best Tutoring Platform',
     themeColor: '#ffffff',
     themeColorDark: '#0a0a0a',
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://makerkit.dev',
