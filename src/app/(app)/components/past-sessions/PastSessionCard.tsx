@@ -20,6 +20,8 @@ import {
   Link,
   UserCheck,
   BookOpen,
+  Upload,
+  File,
 } from 'lucide-react';
 import AttendanceDialog from './AttendanceDialog';
 import {
@@ -38,6 +40,9 @@ import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import CopyLinkButton from '~/components/CopyLinkButton';
+import MaterialUploadDialog from '../upcoming-sessions/MaterialUploadDialog';
+import { MobileTooltip } from '~/app/(app)/components/base-v2/ui/mobile-tooltip';
+import { UploadedMaterial } from '~/lib/sessions/types/upcoming-sessions';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
@@ -49,6 +54,9 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     allMaterials?: boolean;
     student?: boolean;
   }>({});
+  const [showMaterialDialog, setShowMaterialDialog] = useState(false);
+  const [uploadedMaterials, setUploadedMaterials] = useState<UploadedMaterial[]>([]);
+  const [materialDescription, setMaterialDescription] = useState('');
   const csrfToken = useCsrfToken();
 
   const handleCopyLink = async (
@@ -218,7 +226,35 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
           </div>
         </CardContent>
 
-        <CardFooter className="pt-3 grid grid-cols-2 md:grid-cols-3 gap-2 border-t border-neutral-100">
+        {/* Materials Section */}
+        {sessionData.materials && sessionData.materials.length > 0 && (
+          <div className="border-t px-6 pt-4">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="font-medium">Class Materials</h4>
+              <Badge variant="outline">
+                {sessionData.materials.length} files
+              </Badge>
+            </div>
+            <div className="space-y-2 mb-4">
+              {sessionData.materials.map((material) => (
+                <div
+                  key={material.id}
+                  className="flex items-center justify-between bg-gray-100 p-2 rounded"
+                >
+                  <div className="flex items-center">
+                    <File className="h-4 w-4 text-blue-600 mr-2" />
+                    <span className="text-sm">{material.name}</span>
+                  </div>
+                  <span className="text-sm text-gray-600">
+                    {material.file_size} MB
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <CardFooter className="pt-3 grid grid-cols-2 md:grid-cols-4 gap-2 border-t border-neutral-100">
           {sessionData.recordingUrl && sessionData.recordingUrl.length > 0 ? (
             sessionData.recordingUrl.map((fileName, index) => (
               <Button
@@ -245,6 +281,21 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
             tooltipText='Copy class link to clipboard'
             shouldGenerateLink={true}
           />
+
+          <MobileTooltip
+            content={<p>Manage class materials</p>}
+          >
+            <Button
+              variant="ghost"
+              className={`w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200 ${sessionData.materials && sessionData.materials?.length > 0 ? 'bg-primary-blue-50 border-primary-blue-100' : ''}`}
+              onClick={() => setShowMaterialDialog(true)}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {sessionData.materials?.length
+                ? 'Update Materials'
+                : 'Upload Materials'}
+            </Button>
+          </MobileTooltip>
 
           <TooltipProvider>
             <Tooltip>
@@ -273,6 +324,18 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
         setShowAttendanceDialog={setShowAttendanceDialog}
         selectedSession={sessionData}
         attendance={attendanceData}
+      />
+
+      <MaterialUploadDialog
+        showMaterialDialog={showMaterialDialog}
+        setShowMaterialDialog={setShowMaterialDialog}
+        uploadedMaterials={uploadedMaterials}
+        setUploadedMaterials={setUploadedMaterials}
+        materialDescription={materialDescription}
+        setMaterialDescription={setMaterialDescription}
+        sessionId={sessionData.id}
+        onSuccess={() => console.log('Material upload success')}
+        existingMaterials={sessionData.materials || []}
       />
     </>
   );
