@@ -5,7 +5,7 @@ import React, { useState, useTransition } from 'react'
 import type { MaterialUploadDialogProps } from '~/lib/sessions/types/upcoming-sessions'
 import { Textarea } from "../base-v2/ui/Textarea"
 import { Input } from "../base-v2/ui/Input"
-import { FileText, Trash2, Upload, Edit3, Check, X } from 'lucide-react'
+import { FileText, Trash2, Upload, Edit3, Check, X, Eye, Download } from 'lucide-react'
 import BaseDialog from '../base-v2/BaseDialog'
 import { FileUploadDropzone } from '../base-v2/FileUploadDropzone'
 import { FileUploadItem } from '../base-v2/FileUploadItem'
@@ -270,6 +270,38 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
     }
   }
 
+  const handleViewMaterial = (material: any) => {
+    if (material.url) {
+      window.open(material.url, '_blank');
+    }
+  }
+
+  const handleDownloadMaterial = async (material: any) => {
+    if (!material.url) {
+      toast.error('Material file is not available');
+      return;
+    }
+
+    try {
+      const response = await fetch(material.url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = material.name || `material-${material.id}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast.success(`Successfully downloaded "${material.name}"`);
+    } catch (error) {
+      console.error('Error downloading material:', error);
+      toast.error('Failed to download material. Please try again.');
+    }
+  }
+
   const isValid = uploadingFiles.length > 0 && !isUploading && !uploadCompleted
 
   // Determine the confirmation button text based on context
@@ -419,6 +451,26 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
                       </div>
                       {renamingMaterialId !== material.id && (
                         <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-neutral-500 hover:text-blue-600 hover:bg-blue-50"
+                            onClick={() => handleViewMaterial(material)}
+                            disabled={isUploading || isPending}
+                            title="View file"
+                          >
+                            <Eye size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-neutral-500 hover:text-green-600 hover:bg-green-50"
+                            onClick={() => handleDownloadMaterial(material)}
+                            disabled={isUploading || isPending}
+                            title="Download file"
+                          >
+                            <Download size={16} />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
