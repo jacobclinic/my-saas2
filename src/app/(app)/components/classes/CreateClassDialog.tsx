@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../base-v2/ui/Select';
+import { TimeInput, DatePicker, Select as HeroSelect, SelectItem as HeroSelectItem, Input as HeroInput, Textarea as HeroTextarea } from '@heroui/react';
+import { Time, CalendarDate, getLocalTimeZone, parseDate } from '@internationalized/date';
 import TimezoneIndicator from '../TimezoneIndicator';
 import { DAYS_OF_WEEK, GRADES, SUBJECTS } from '~/lib/constants-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
@@ -84,6 +86,39 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 
   const [allFilled, setAllFilled] = useState(false);
 
+  // Utility functions to convert between time strings and Time objects
+  const timeStringToTime = (timeString: string): Time | null => {
+    if (!timeString) return null;
+    const [hours, minutes] = timeString.split(':').map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return null;
+    return new Time(hours, minutes);
+  };
+
+  const timeToTimeString = (time: Time | null): string => {
+    if (!time) return '';
+    return `${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}`;
+  };
+
+  // Utility functions to convert between date strings and CalendarDate objects
+  const dateStringToCalendarDate = (dateString: string): CalendarDate | null => {
+    if (!dateString) return null;
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return null;
+      return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    } catch {
+      return null;
+    }
+  };
+
+  const calendarDateToDateString = (date: CalendarDate | null): string => {
+    if (!date) return '';
+    const year = date.year;
+    const month = String(date.month).padStart(2, '0');
+    const day = String(date.day).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Update subject when tutor profile changes
   useEffect(() => {
     const preselectedSubject = getPreselectedSubject();
@@ -121,6 +156,15 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
         timeSlots: updatedTimeSlots as [TimeSlot], // Type assertion to match the expected tuple type
       };
     });
+  };
+
+  const updateTimeSlotWithTime = (
+    index: number,
+    field: 'startTime' | 'endTime',
+    time: Time | null,
+  ) => {
+    const timeString = timeToTimeString(time);
+    updateTimeSlot(index, field, timeString);
   };
 
   const handleSubmit = () => {
@@ -229,32 +273,45 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Class Name</label>
-            <Input
+            <HeroInput
               placeholder="Enter class name"
               value={newClass.name}
               onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
+              classNames={{
+                base: "w-full",
+                input: "text-sm",
+                inputWrapper: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md"
+              }}
+              radius="sm"
+              size="md"
+              variant="bordered"
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Subject</label>
-            <Select
-              value={newClass.subject}
-              onValueChange={(value) =>
-                setNewClass({ ...newClass, subject: value })
-              }
+            <HeroSelect
+              selectedKeys={newClass.subject ? [newClass.subject] : []}
+              onSelectionChange={(keys) => {
+                const selectedKey = Array.from(keys)[0] as string;
+                setNewClass({ ...newClass, subject: selectedKey });
+              }}
+              classNames={{
+                base: "w-full",
+                trigger: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md",
+                value: "text-sm pr-8",
+                selectorIcon: "right-2"
+              }}
+              radius="sm"
+              size="md"
+              variant="bordered"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select subject" />
-              </SelectTrigger>
-              <SelectContent>
-                {SUBJECTS.map((subject) => (
-                  <SelectItem key={subject} value={subject.toLowerCase()}>
-                    {subject}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {SUBJECTS.map((subject) => (
+                <HeroSelectItem key={subject.toLowerCase()} value={subject.toLowerCase()}>
+                  {subject}
+                </HeroSelectItem>
+              ))}
+            </HeroSelect>
           </div>
 
           <div className="space-y-2">
@@ -275,48 +332,81 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Year/Grade</label>
-              <Select
-                value={newClass.yearGrade}
-                onValueChange={(value) =>
-                  setNewClass({ ...newClass, yearGrade: value })
-                }
+              <HeroSelect
+                selectedKeys={newClass.yearGrade ? [newClass.yearGrade] : []}
+                onSelectionChange={(keys) => {
+                  const selectedKey = Array.from(keys)[0] as string;
+                  setNewClass({ ...newClass, yearGrade: selectedKey });
+                }}
+                classNames={{
+                  base: "w-full",
+                  trigger: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md",
+                  value: "text-sm pr-8",
+                  selectorIcon: "right-2"
+                }}
+                radius="sm"
+                size="md"
+                variant="bordered"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {GRADES.map((year) => (
-                    <SelectItem key={year} value={year}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {GRADES.map((year) => (
+                  <HeroSelectItem key={year} value={year}>
+                    {year}
+                  </HeroSelectItem>
+                ))}
+              </HeroSelect>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Monthly Fee (Rs.)</label>
-              <Input
+              <HeroInput
                 type="number"
                 placeholder="Enter fee amount"
                 value={newClass.monthlyFee}
                 onChange={(e) =>
                   setNewClass({ ...newClass, monthlyFee: e.target.value })
                 }
+                classNames={{
+                  base: "w-full",
+                  input: "text-sm",
+                  inputWrapper: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md"
+                }}
+                radius="sm"
+                size="md"
+                variant="bordered"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Starting Date</label>
-              <Input
-                type="date"
-                value={newClass.startDate}
-                onChange={(e) =>
-                  setNewClass({ ...newClass, startDate: e.target.value })
-                }
-                min={new Date().toISOString().split('T')[0]}
+              <DatePicker
+                label="Starting Date"
+                value={dateStringToCalendarDate(newClass.startDate)}
+                onChange={(date) => {
+                  const dateString = calendarDateToDateString(date);
+                  setNewClass({ ...newClass, startDate: dateString });
+                }}
+                minValue={new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())}
+                classNames={{
+                  base: "w-full",
+                  input: "text-sm",
+                  inputWrapper: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md"
+                }}
+                radius="sm"
+                size="md"
+                variant="bordered"
+                showMonthAndYearPickers
+                calendarProps={{
+                  classNames: {
+                    base: "bg-white shadow-lg border border-gray-200",
+                    headerWrapper: "pt-4 pb-2",
+                    prevButton: "text-gray-600 hover:text-gray-800",
+                    nextButton: "text-gray-600 hover:text-gray-800",
+                    gridHeader: "text-gray-500 text-xs font-medium",
+                    gridBodyRow: "border-none",
+                    cellButton: "hover:bg-gray-100 data-[selected=true]:bg-blue-500 data-[selected=true]:text-white"
+                  }
+                }}
               />
             </div>
           </div>
@@ -364,55 +454,66 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
           </div>
 
           <div className="space-y-3">
-            {/* Column Headers - Hidden on mobile */}
-            <div className="hidden sm:grid grid-cols-[200px_1fr_auto] gap-3 items-center px-1">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Day</span>
-              <div className="grid grid-cols-2 gap-3">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Start Time</span>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">End Time</span>
-              </div>
-              {newClass.timeSlots.length > 1 && (
-                <div className="w-10"></div>
-              )}
-            </div>
 
             {/* Time Slot Rows */}
             {newClass.timeSlots.map((slot, index) => (
               <div key={index}>
                 {/* Desktop Layout */}
                 <div className="hidden sm:grid grid-cols-[200px_1fr_auto] gap-3 items-start">
-                  <Select
-                    value={slot.day}
-                    onValueChange={(value) => updateTimeSlot(index, 'day', value)}
+                  <HeroSelect
+                    label="Day"
+                    selectedKeys={slot.day ? [slot.day] : []}
+                    onSelectionChange={(keys) => {
+                      const selectedKey = Array.from(keys)[0] as string;
+                      updateTimeSlot(index, 'day', selectedKey);
+                    }}
+                    classNames={{
+                      base: "w-full",
+                      trigger: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md",
+                      value: "text-sm pr-8",
+                      selectorIcon: "right-2"
+                    }}
+                    radius="sm"
+                    size="md"
+                    variant="bordered"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select day" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DAYS_OF_WEEK.map((day) => (
-                        <SelectItem key={day} value={day.toLowerCase()}>
-                          {day}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    {DAYS_OF_WEEK.map((day) => (
+                      <HeroSelectItem key={day.toLowerCase()} value={day.toLowerCase()}>
+                        {day}
+                      </HeroSelectItem>
+                    ))}
+                  </HeroSelect>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      type="time"
-                      value={slot.startTime}
-                      onChange={(e) =>
-                        updateTimeSlot(index, 'startTime', e.target.value)
-                      }
-                      placeholder="Start time"
+                    <TimeInput
+                      label="Start Time"
+                      value={timeStringToTime(slot.startTime)}
+                      onChange={(time) => updateTimeSlotWithTime(index, 'startTime', time)}
+                      classNames={{
+                        base: "w-full",
+                        input: "text-sm",
+                        inputWrapper: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md"
+                      }}
+                      radius="sm"
+                      size="md"
+                      variant="bordered"
+                      hourCycle={12}
+                      granularity="minute"
                     />
-                    <Input
-                      type="time"
-                      value={slot.endTime}
-                      onChange={(e) =>
-                        updateTimeSlot(index, 'endTime', e.target.value)
-                      }
-                      placeholder="End time"
+                    <TimeInput
+                      label="End Time"
+                      value={timeStringToTime(slot.endTime)}
+                      onChange={(time) => updateTimeSlotWithTime(index, 'endTime', time)}
+                      classNames={{
+                        base: "w-full",
+                        input: "text-sm",
+                        inputWrapper: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md"
+                      }}
+                      radius="sm"
+                      size="md"
+                      variant="bordered"
+                      hourCycle={12}
+                      granularity="minute"
                     />
                   </div>
 
@@ -448,45 +549,64 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 
                   <div className="space-y-3">
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Day</label>
-                      <Select
-                        value={slot.day}
-                        onValueChange={(value) => updateTimeSlot(index, 'day', value)}
+                      <HeroSelect
+                        label="Day"
+                        selectedKeys={slot.day ? [slot.day] : []}
+                        onSelectionChange={(keys) => {
+                          const selectedKey = Array.from(keys)[0] as string;
+                          updateTimeSlot(index, 'day', selectedKey);
+                        }}
+                        classNames={{
+                          base: "w-full",
+                          trigger: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md",
+                          value: "text-sm pr-8",
+                          selectorIcon: "right-2"
+                        }}
+                        radius="sm"
+                        size="md"
+                        variant="bordered"
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select day" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {DAYS_OF_WEEK.map((day) => (
-                            <SelectItem key={day} value={day.toLowerCase()}>
-                              {day}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        {DAYS_OF_WEEK.map((day) => (
+                          <HeroSelectItem key={day.toLowerCase()} value={day.toLowerCase()}>
+                            {day}
+                          </HeroSelectItem>
+                        ))}
+                      </HeroSelect>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Start Time</label>
-                        <Input
-                          type="time"
-                          value={slot.startTime}
-                          onChange={(e) =>
-                            updateTimeSlot(index, 'startTime', e.target.value)
-                          }
-                          placeholder="Start time"
+                        <TimeInput
+                          label="Start Time"
+                          value={timeStringToTime(slot.startTime)}
+                          onChange={(time) => updateTimeSlotWithTime(index, 'startTime', time)}
+                          classNames={{
+                            base: "w-full",
+                            input: "text-sm",
+                            inputWrapper: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md"
+                          }}
+                          radius="sm"
+                          size="md"
+                          variant="bordered"
+                          hourCycle={12}
+                          granularity="minute"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">End Time</label>
-                        <Input
-                          type="time"
-                          value={slot.endTime}
-                          onChange={(e) =>
-                            updateTimeSlot(index, 'endTime', e.target.value)
-                          }
-                          placeholder="End time"
+                        <TimeInput
+                          label="End Time"
+                          value={timeStringToTime(slot.endTime)}
+                          onChange={(time) => updateTimeSlotWithTime(index, 'endTime', time)}
+                          classNames={{
+                            base: "w-full",
+                            input: "text-sm",
+                            inputWrapper: "bg-gray-50 border border-gray-300 hover:border-gray-400 rounded-md"
+                          }}
+                          radius="sm"
+                          size="md"
+                          variant="bordered"
+                          hourCycle={12}
+                          granularity="minute"
                         />
                       </div>
                     </div>
