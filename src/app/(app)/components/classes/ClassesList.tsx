@@ -21,17 +21,20 @@ import ClassCard from './ClassCard';
 import CreateClassDialog from './CreateClassDialog';
 import { GRADES } from '~/lib/constants-v2';
 import AppHeader from '../AppHeader';
+import UserType from '~/lib/user/types/user';
 
 const TutorClasses = ({
   classesData,
   userRole,
   tutorId,
+  tutorProfile,
   setFilteredData,
   allClassesData,
 }: {
   classesData: ClassType[];
   userRole: string;
   tutorId?: string;
+  tutorProfile?: UserType | null;
   setFilteredData: React.Dispatch<React.SetStateAction<ClassType[]>>;
   allClassesData: ClassType[];
 }) => {
@@ -192,6 +195,7 @@ const TutorClasses = ({
           open={showCreateClass}
           onClose={() => setShowCreateClass(false)}
           tutorId={tutorId || classesData?.[0]?.tutor_id}
+          tutorProfile={tutorProfile}
         />
       </div>
     </>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useTransition } from 'react';
+import React, { useCallback, useEffect, useState, useTransition } from 'react';
 import { Input } from '../base-v2/ui/Input';
 import { Textarea } from '../base-v2/ui/Textarea';
 import { Checkbox } from '../base-v2/ui/Checkbox';
@@ -21,6 +21,7 @@ import { CreateClassPayload, NewClassData, TimeSlot } from '~/lib/classes/types/
 import Button from '~/core/ui/Button';
 import { Plus, X } from 'lucide-react';
 import { Json } from '~/database.types';
+import UserType from '~/lib/user/types/user';
 
 interface CreateClassDialogProps {
   open: boolean;
@@ -28,6 +29,7 @@ interface CreateClassDialogProps {
   onCreateClass?: (classData: NewClassData) => void;
   loading?: boolean;
   tutorId: string;
+  tutorProfile?: UserType | null;
 }
 
 const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
@@ -36,6 +38,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   onCreateClass,
   loading = false,
   tutorId,
+  tutorProfile,
 }) => {
   const [isPending, startTransition] = useTransition();
   const csrfToken = useCsrfToken();
@@ -56,6 +59,15 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 
   const today = getTodayInSriLankaTimezone();
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
+  // Get the first subject from tutor's profile if available
+  const getPreselectedSubject = useCallback(() => {
+    if (tutorProfile?.subjects_teach && tutorProfile.subjects_teach.length > 0) {
+      return tutorProfile.subjects_teach[0].toLowerCase();
+    }
+    return '';
+  }, [tutorProfile?.subjects_teach]);
+
   const [newClass, setNewClass] = useState<NewClassData>({
     name: '',
     subject: '',
@@ -71,6 +83,14 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   });
 
   const [allFilled, setAllFilled] = useState(false);
+
+  // Update subject when tutor profile changes
+  useEffect(() => {
+    const preselectedSubject = getPreselectedSubject();
+    if (preselectedSubject) {
+      setNewClass(prev => ({ ...prev, subject: preselectedSubject }));
+    }
+  }, [getPreselectedSubject]);
 
   const handleAddTimeSlot = () => {
     setNewClass((prev) => ({
@@ -129,7 +149,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
         toast.success('New class created successfully');
         setNewClass({
           name: '',
-          subject: '',
+          subject: getPreselectedSubject(),
           description: '',
           yearGrade: '',
           monthlyFee: '',
@@ -178,7 +198,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     onClose();
     setNewClass({
       name: '',
-      subject: '',
+      subject: getPreselectedSubject(),
       description: '',
       yearGrade: '',
       monthlyFee: '',

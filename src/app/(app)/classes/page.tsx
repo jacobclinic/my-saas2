@@ -3,6 +3,7 @@ import {
   getAllClassesByTutorIdData,
   getAllClassesDataAdmin,
 } from '~/lib/classes/database/queries';
+import { getUserDataById } from '~/lib/user/database/queries';
 import { redirect } from 'next/navigation';
 import ClassesListClient from '../components/classes/ClassesListClient';
 import ClassesAdmin from '../components/admin/classes/ClassesAdmin';
@@ -39,10 +40,12 @@ async function ClassesPage() {
 
   let classesData: any[] = [];
   let tutorId;
+  let tutorProfile = null;
 
   if (userRole === 'tutor') {
     classesData = await getAllClassesByTutorIdData(client, user?.id || '');
     tutorId = user?.id;
+    tutorProfile = await getUserDataById(client, user?.id || '');
   } else if (userRole === 'admin') {
     classesData = await getAllClassesDataAdmin(client);  
   }
@@ -55,6 +58,7 @@ async function ClassesPage() {
             classesData={classesData}
             userRole={userRole}
             tutorId={tutorId}
+            tutorProfile={tutorProfile}
           />
         ) : (
           <ClassesAdmin classesData={classesData} />

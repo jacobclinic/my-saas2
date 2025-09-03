@@ -4,15 +4,18 @@ import { useState, useEffect } from 'react';
 import ClassesList from '../../components/classes/ClassesList';
 import { ClassType } from '~/lib/classes/types/class-v2';
 import PaginationControls from '../PaginationControls';
+import UserType from '~/lib/user/types/user';
 
 const ClassesListClient = ({
   classesData,
   userRole,
   tutorId,
+  tutorProfile,
 }: {
   classesData: ClassType[];
   userRole: string;
   tutorId?: string;
+  tutorProfile?: UserType | null;
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -40,6 +43,7 @@ const ClassesListClient = ({
         classesData={currentClasses}
         userRole={userRole}
         tutorId={tutorId}
+        tutorProfile={tutorProfile}
         setFilteredData={setFilteredData}
         allClassesData={classesData}
       />
