@@ -804,3 +804,43 @@ export async function getActiveClassesForTutorInvoices(
     return failure(new DatabaseError('An unexpected error occurred while fetching active classes.'));
   }
 }
+
+export async function checkStudentEnrollment(
+  client: SupabaseClient<Database>,
+  studentId: string,
+  classId: string
+): Promise<Result<boolean, DatabaseError>> {
+  try {
+    const { data: enrollment, error } = await client
+      .from(STUDENT_CLASS_ENROLLMENTS_TABLE)
+      .select('id')
+      .eq('student_id', studentId)
+      .eq('class_id', classId)
+      .throwOnError()
+      .single();
+
+    if (error) {
+      // If no enrollment found, return false (not an error)
+      if (error.code === 'PGRST116') {
+        return success(false);
+      }
+      logger.error('Error checking student enrollment', { 
+        error: error.message,
+        studentId,
+        classId 
+      });
+      return failure(new DatabaseError('Failed to check student enrollment'));
+    }
+
+    return success(!!enrollment);
+  } catch (error) {
+    logger.error('Something went wrong while checking student enrollment', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      studentId,
+      classId
+    });
+    return failure(new DatabaseError('Something went wrong while checking student enrollment'));
+  }
+}

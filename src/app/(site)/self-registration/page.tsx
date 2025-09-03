@@ -10,7 +10,7 @@ import { PublicNextSessionResponse } from '~/lib/sessions/types/session-v2';
 import { formatToHumanReadableDate, formatToLocalHHmmAMPM } from '~/lib/utils/date-utils';
 import { getUserDataById } from '~/lib/user/database/queries';
 import { formatToLocalTime } from '~/lib/utils/timezone-utils';
-import { STUDENT_CLASS_ENROLLMENTS_TABLE } from '~/lib/db-tables';
+import { checkStudentEnrollment } from '~/lib/classes/database/queries';
 
 
 interface SearchParams {
@@ -38,14 +38,8 @@ export default async function RegisterPage({
     
     // Check if user is already enrolled in this class
     if (searchParams.classId) {
-      const { data: enrollment } = await client
-        .from(STUDENT_CLASS_ENROLLMENTS_TABLE)
-        .select('id')
-        .eq('student_id', authUser.id)
-        .eq('class_id', searchParams.classId)
-        .single();
-      
-      isAlreadyEnrolled = !!enrollment;
+      const enrollmentResult = await checkStudentEnrollment(client, authUser.id, searchParams.classId);
+      isAlreadyEnrolled = enrollmentResult.success ? enrollmentResult.data : false;
     }
   }
 

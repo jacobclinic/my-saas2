@@ -165,6 +165,7 @@ export class ModuleService {
 - **Location**: `src/lib/{module}/database/mutations-v2.ts`, `queries.ts`
 - **Responsibility**: Single database operations with proper error handling
 - **Pattern**: Use Result pattern, comprehensive logging, type safety
+- **IMPORTANT**: ALL database queries must be in dedicated database layer files. NEVER write inline database queries in components, pages, or other layers. Always extract database operations to appropriate `queries.ts` or `mutations-v2.ts` files.
 
 ```typescript
 export async function operationName(
@@ -301,6 +302,7 @@ import { ErrorCodes } from '~/lib/shared/error-codes';
 - **Always use server actions for mutations (create/update/delete)**
 - **Always use API routes for authenticated user queries/reads**
 - **Use API routes in `/api/public/` folder for publicly accessible queries**
+- **Always extract database queries to dedicated `queries.ts` or `mutations-v2.ts` files - NEVER write inline database queries in components or pages**
 - **Always use the logger from `~/core/logger` for all logging**
 - **Never use console.log, console.error, console.warn, etc. - always use logger instead**
 
