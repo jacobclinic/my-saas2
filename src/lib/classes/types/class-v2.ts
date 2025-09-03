@@ -138,6 +138,7 @@ export interface NewClassData {
   // endDate: string;
   timeSlots: TimeSlot[];
   tutorId: string;
+  allowFreeAccessFirstWeek: boolean;
 }
 
 export interface LinkCopiedState {

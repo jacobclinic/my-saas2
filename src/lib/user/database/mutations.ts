@@ -27,6 +27,7 @@ export interface UpdateUserData {
 }
 
 export type InsertUserData = Database['public']['Tables']['users']['Insert'];
+export type UpdateUserRow = Database['public']['Tables']['users']['Update'];
 
 export async function updateUserData(
   client: Client,
@@ -79,7 +80,7 @@ export async function updateTutorMutation(
       education_level: data.education_level,
       subjects_teach: data.subjects_teach,
       class_size: data.class_size,
-      status: data.status,
+      status: data.status
     })
     .eq('id', tutorId)
     .select()
@@ -91,4 +92,20 @@ export async function updateTutorMutation(
   }
 
   return updatedTutor;
+}
+
+export async function updateUserRow(client: Client, userId: string, data: UpdateUserRow){
+  const { data: updatedUser, error } = await client
+    .from('users')
+    .update(data)
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating user:', error);
+    throw new Error(`Failed to update user: ${error.message}`);
+  }
+
+  return updatedUser;
 }

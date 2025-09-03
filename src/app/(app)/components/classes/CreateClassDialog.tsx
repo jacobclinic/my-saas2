@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useTransition } from 'react';
 import { Input } from '../base-v2/ui/Input';
 import { Textarea } from '../base-v2/ui/Textarea';
+import { Checkbox } from '../base-v2/ui/Checkbox';
 import {
   Select,
   SelectContent,
@@ -66,6 +67,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       { day: '', startTime: '', endTime: '', timezone: userTimezone },
     ], // Single time slot
     tutorId,
+    allowFreeAccessFirstWeek: false,
   });
 
   const [allFilled, setAllFilled] = useState(false);
@@ -103,7 +105,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
 
   const handleSubmit = () => {
     const startDate = new Date(newClass.startDate).toISOString();
-    const classDataPayload: CreateClassPayload ={
+    const classDataPayload: CreateClassPayload = {
       fee: Number(newClass.monthlyFee),
       grade: newClass.yearGrade,
       name: newClass.name,
@@ -112,7 +114,8 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       status: 'active',
       subject: newClass.subject,
       time_slots: newClass.timeSlots as unknown as Json[],
-      tutor_id: newClass.tutorId
+      tutor_id: newClass.tutorId,
+      allow_free_access_first_week: newClass.allowFreeAccessFirstWeek,
     }
 
     startTransition(async () => {
@@ -135,6 +138,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
             { day: '', startTime: '', endTime: '', timezone: userTimezone },
           ], // Reset to a single time slot
           tutorId,
+          allowFreeAccessFirstWeek: false,
         });
       } else {
         const errorMessage = result.error || 'Failed to create class, Please try again. If the problem persists, please contact support.';
@@ -183,6 +187,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
         { day: '', startTime: '', endTime: '', timezone: userTimezone },
       ], // Reset to a single time slot
       tutorId,
+      allowFreeAccessFirstWeek: false,
     });
   };
 
@@ -199,169 +204,274 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       confirmButtonVariant={isValid ? 'primary' : 'secondary'}
       confirmButtonDisabled={!allFilled}
     >
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm font-medium">Class Name</label>
-          <Input
-            placeholder="Enter class name"
-            value={newClass.name}
-            onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
-          />
-        </div>
+      <div className="space-y-6">
+        {/* Basic Information Section */}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Class Name</label>
+            <Input
+              placeholder="Enter class name"
+              value={newClass.name}
+              onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
+            />
+          </div>
 
-        <div>
-          <label className="text-sm font-medium">Subject</label>
-          <Select
-            value={newClass.subject}
-            onValueChange={(value) =>
-              setNewClass({ ...newClass, subject: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select subject" />
-            </SelectTrigger>
-            <SelectContent>
-              {SUBJECTS.map((subject) => (
-                <SelectItem key={subject} value={subject.toLowerCase()}>
-                  {subject}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">Description</label>
-          <Textarea
-            placeholder="Describe what students will learn in this class..."
-            value={newClass.description}
-            onChange={(e) =>
-              setNewClass({ ...newClass, description: e.target.value })
-            }
-            className="h-24"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium">Year/Grade</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Subject</label>
             <Select
-              value={newClass.yearGrade}
+              value={newClass.subject}
               onValueChange={(value) =>
-                setNewClass({ ...newClass, yearGrade: value })
+                setNewClass({ ...newClass, subject: value })
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select year" />
+                <SelectValue placeholder="Select subject" />
               </SelectTrigger>
               <SelectContent>
-                {GRADES.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
+                {SUBJECTS.map((subject) => (
+                  <SelectItem key={subject} value={subject.toLowerCase()}>
+                    {subject}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Monthly Fee (Rs.)</label>
-            <Input
-              type="number"
-              placeholder="Enter fee amount"
-              value={newClass.monthlyFee}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Description</label>
+            <Textarea
+              placeholder="Describe what students will learn in this class..."
+              value={newClass.description}
               onChange={(e) =>
-                setNewClass({ ...newClass, monthlyFee: e.target.value })
+                setNewClass({ ...newClass, description: e.target.value })
               }
+              className="h-24 resize-none"
             />
           </div>
         </div>
 
-        <div className="flex justify-between gap-4">
-          <div>
-            <label className="text-sm font-medium">Starting Date</label>
-            <Input
-              type="date"
-              value={newClass.startDate}
-              onChange={(e) =>
-                setNewClass({ ...newClass, startDate: e.target.value })
-              }
-              min={new Date().toISOString().split('T')[0]}
-            />
+        {/* Course Details Section */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Year/Grade</label>
+              <Select
+                value={newClass.yearGrade}
+                onValueChange={(value) =>
+                  setNewClass({ ...newClass, yearGrade: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GRADES.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Monthly Fee (Rs.)</label>
+              <Input
+                type="number"
+                placeholder="Enter fee amount"
+                value={newClass.monthlyFee}
+                onChange={(e) =>
+                  setNewClass({ ...newClass, monthlyFee: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Starting Date</label>
+              <Input
+                type="date"
+                value={newClass.startDate}
+                onChange={(e) =>
+                  setNewClass({ ...newClass, startDate: e.target.value })
+                }
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          </div>
+
+          {/* Allow Free Access First Week */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="allowFreeAccess"
+                checked={newClass.allowFreeAccessFirstWeek}
+                onCheckedChange={(checked) =>
+                  setNewClass({ ...newClass, allowFreeAccessFirstWeek: checked as boolean })
+                }
+              />
+              <label
+                htmlFor="allowFreeAccess"
+                className="text-sm font-medium text-gray-700 cursor-pointer"
+              >
+                Allow free access for the first week
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 mt-1 ml-7">
+              Students can join the first week of classes without payment
+            </p>
           </div>
         </div>
 
-        {/* Class Schedule with Timezone Indicator */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <TimezoneIndicator />
-          </div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium">Class Schedule</label>
+        {/* Class Schedule Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-700">Class Schedule</h3>
+              <TimezoneIndicator />
+            </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleAddTimeSlot}
+              className="flex items-center gap-2"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               Add Time Slot
             </Button>
           </div>
-          <div className="space-y-2 flex flex-col pb-2">
-            <div className="flex self-end gap-[75px] mr-14">
-              <label className="text-sm font-medium">Start Time</label>
-              <label className="text-sm font-medium">End Time</label>
+
+          <div className="space-y-3">
+            {/* Column Headers - Hidden on mobile */}
+            <div className="hidden sm:grid grid-cols-[200px_1fr_auto] gap-3 items-center px-1">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Day</span>
+              <div className="grid grid-cols-2 gap-3">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Start Time</span>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">End Time</span>
+              </div>
+              {newClass.timeSlots.length > 1 && (
+                <div className="w-10"></div>
+              )}
             </div>
+
+            {/* Time Slot Rows */}
             {newClass.timeSlots.map((slot, index) => (
-              <div key={index} className="flex gap-2 items-start">
-                <Select
-                  value={slot.day}
-                  onValueChange={(value) => updateTimeSlot(index, 'day', value)}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select day" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAYS_OF_WEEK.map((day) => (
-                      <SelectItem key={day} value={day.toLowerCase()}>
-                        {day}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div key={index}>
+                {/* Desktop Layout */}
+                <div className="hidden sm:grid grid-cols-[200px_1fr_auto] gap-3 items-start">
+                  <Select
+                    value={slot.day}
+                    onValueChange={(value) => updateTimeSlot(index, 'day', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DAYS_OF_WEEK.map((day) => (
+                        <SelectItem key={day} value={day.toLowerCase()}>
+                          {day}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                <div className="flex gap-2">
-                  <Input
-                    type="time"
-                    value={slot.startTime}
-                    onChange={(e) =>
-                      updateTimeSlot(index, 'startTime', e.target.value)
-                    }
-                    placeholder="Start time"
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      type="time"
+                      value={slot.startTime}
+                      onChange={(e) =>
+                        updateTimeSlot(index, 'startTime', e.target.value)
+                      }
+                      placeholder="Start time"
+                    />
+                    <Input
+                      type="time"
+                      value={slot.endTime}
+                      onChange={(e) =>
+                        updateTimeSlot(index, 'endTime', e.target.value)
+                      }
+                      placeholder="End time"
+                    />
+                  </div>
 
-                  <Input
-                    type="time"
-                    value={slot.endTime}
-                    onChange={(e) =>
-                      updateTimeSlot(index, 'endTime', e.target.value)
-                    }
-                    placeholder="End time"
-                  />
+                  {newClass.timeSlots.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveTimeSlot(index)}
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
 
-                {newClass.timeSlots.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveTimeSlot(index)}
-                    className="text-red-500 hover:text-red-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
+                {/* Mobile Layout */}
+                <div className="sm:hidden space-y-3 p-4 border border-gray-200 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Time Slot {index + 1}</span>
+                    {newClass.timeSlots.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveTimeSlot(index)}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Day</label>
+                      <Select
+                        value={slot.day}
+                        onValueChange={(value) => updateTimeSlot(index, 'day', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select day" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DAYS_OF_WEEK.map((day) => (
+                            <SelectItem key={day} value={day.toLowerCase()}>
+                              {day}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Start Time</label>
+                        <Input
+                          type="time"
+                          value={slot.startTime}
+                          onChange={(e) =>
+                            updateTimeSlot(index, 'startTime', e.target.value)
+                          }
+                          placeholder="Start time"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">End Time</label>
+                        <Input
+                          type="time"
+                          value={slot.endTime}
+                          onChange={(e) =>
+                            updateTimeSlot(index, 'endTime', e.target.value)
+                          }
+                          placeholder="End time"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
