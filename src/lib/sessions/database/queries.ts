@@ -1934,6 +1934,7 @@ export async function getNextSessionByClassID(
             id,
             name,
             subject,
+            description,
             tutor:${USERS_TABLE}!tutor_id(
               first_name,
               last_name

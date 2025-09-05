@@ -10,6 +10,7 @@ import { PublicNextSessionResponse } from '~/lib/sessions/types/session-v2';
 import { formatToHumanReadableDate, formatToLocalHHmmAMPM } from '~/lib/utils/date-utils';
 import { getUserDataById } from '~/lib/user/database/queries';
 import { formatToLocalTime } from '~/lib/utils/timezone-utils';
+import { checkStudentEnrollment } from '~/lib/classes/database/queries';
 
 
 interface SearchParams {
@@ -30,9 +31,16 @@ export default async function RegisterPage({
   // Check if user is authenticated and get their data
   const { data: { user: authUser } } = await client.auth.getUser();
   let userData = null;
+  let isAlreadyEnrolled = false;
   
   if (authUser) {
     userData = await getUserDataById(client, authUser.id);
+    
+    // Check if user is already enrolled in this class
+    if (searchParams.classId) {
+      const enrollmentResult = await checkStudentEnrollment(client, authUser.id, searchParams.classId);
+      isAlreadyEnrolled = enrollmentResult.success ? enrollmentResult.data : false;
+    }
   }
 
   // Extract data from URL parameters
@@ -91,6 +99,11 @@ export default async function RegisterPage({
                 <h3 className="text-lg font-semibold text-gray-900">
                   {classRegistrationData?.class.name}
                 </h3>
+                {classRegistrationData?.class.description && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    {classRegistrationData.class.description}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center text-gray-600">
@@ -105,7 +118,9 @@ export default async function RegisterPage({
 
               <div className="flex items-center text-gray-600">
                 <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                {capitalizeDayNames(classData.time)}
+                {classRegistrationData ? 
+                  formatToLocalTime(classRegistrationData.start_time!, 'h:mm a') + ' - ' + formatToLocalTime(classRegistrationData.end_time!, 'h:mm a')
+                  : 'Time not available'}
               </div>
 
 
@@ -121,14 +136,38 @@ export default async function RegisterPage({
             </div>
           </CardContent>
         </Card>
-        <StudentRegistrationForm
-          classData={classData}
-          nextSessionId={classRegistrationData?.id!}
-          formattedDate={classRegistrationData ? formatToHumanReadableDate(classRegistrationData.start_time!) : undefined}
-          formattedTime={classRegistrationData ? formatToLocalTime(classRegistrationData.start_time!, 'h:mm a') + ' - ' + formatToLocalTime(classRegistrationData.end_time!, 'h:mm a') : undefined}
-          authUser={authUser}
-          userData={userData}
-        />
+        {isAlreadyEnrolled ? (
+          <Card className="rounded-2xl shadow-lg">
+            <CardContent className="p-8 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Welcome Back!
+              </h3>
+              <p className="text-gray-600 mb-6">
+                You are already enrolled in this class. Access your class materials, recordings, and join live sessions through your student portal.
+              </p>
+              <div className="space-y-3">
+                <a
+                  href="/dashboard"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 inline-block"
+                >
+                  Go to Student Portal
+                </a>
+                <p className="text-sm text-gray-500">
+                  Access your classes, materials, and session recordings
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <StudentRegistrationForm
+            classData={classData}
+            nextSessionId={classRegistrationData?.id!}
+            formattedDate={classRegistrationData ? formatToHumanReadableDate(classRegistrationData.start_time!) : undefined}
+            formattedTime={classRegistrationData ? formatToLocalTime(classRegistrationData.start_time!, 'h:mm a') + ' - ' + formatToLocalTime(classRegistrationData.end_time!, 'h:mm a') : undefined}
+            authUser={authUser}
+            userData={userData}
+          />
+        )}
       </div>
     </div>
   );

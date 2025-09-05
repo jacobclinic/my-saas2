@@ -62,11 +62,7 @@ export function validateBirthday(birthday: string): BirthdayValidationResult {
 // Helper function to get min and max dates for the date picker
 export function getBirthdayDateLimits() {
   const today = new Date();
-  const maxDate = new Date(
-    today.getFullYear() - 13,
-    today.getMonth(),
-    today.getDate(),
-  );
+  const maxDate = today; // Today's date - cannot pick future dates
   const minDate = new Date(
     today.getFullYear() - 100,
     today.getMonth(),
