@@ -7,7 +7,7 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const nextConfig = {
   experimental: {
     serverActions: {
-      bodySizeLimit: '5mb',
+      bodySizeLimit: '50mb',
       timeout: 120000, // 2 minutes timeout for server actions
     },
   },

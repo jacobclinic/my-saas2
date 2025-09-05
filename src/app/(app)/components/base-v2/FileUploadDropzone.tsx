@@ -3,6 +3,7 @@ import React, { useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload } from 'lucide-react'
 import { cn } from "../../lib/utils"
+import { toast } from 'sonner'
 
 interface FileUploadDropzoneProps {
   onFilesAdded: (files: File[]) => void
@@ -14,7 +15,7 @@ interface FileUploadDropzoneProps {
 
 const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({
   onFilesAdded,
-  maxSize = 5242880, // 5MB
+  maxSize = 52428800, // 50MB
   accept = {
     'application/pdf': ['.pdf'],
     'application/msword': ['.doc'],
@@ -30,8 +31,26 @@ const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({
     onFilesAdded(acceptedFiles)
   }, [onFilesAdded])
 
+  const onDropRejected = useCallback((rejectedFiles: any[]) => {
+    rejectedFiles.forEach((rejectedFile) => {
+      const { file, errors } = rejectedFile
+      errors.forEach((error: any) => {
+        if (error.code === 'file-too-large') {
+          toast.error(`File "${file.name}" is too large. Maximum size allowed is 50MB.`)
+        } else if (error.code === 'file-invalid-type') {
+          toast.error(`File "${file.name}" is not a supported format.`)
+        } else if (error.code === 'too-many-files') {
+          toast.error(`Too many files. Maximum ${maxFiles} files allowed.`)
+        } else {
+          toast.error(`Error uploading "${file.name}": ${error.message}`)
+        }
+      })
+    })
+  }, [maxFiles])
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected,
     maxSize,
     accept,
     maxFiles
@@ -53,7 +72,7 @@ const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({
           {isDragActive ? "Drop files here" : "Drop files or click to upload"}
         </p>
         <p className="text-xs text-gray-500">
-          PDF, DOC, PPT, or images up to 5MB
+          PDF, DOC, PPT, or images up to 50MB
         </p>
       </div>
     </div>

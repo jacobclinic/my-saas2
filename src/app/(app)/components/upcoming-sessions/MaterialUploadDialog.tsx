@@ -4,19 +4,22 @@
 import React, { useState, useTransition } from 'react'
 import type { MaterialUploadDialogProps } from '~/lib/sessions/types/upcoming-sessions'
 import { Textarea } from "../base-v2/ui/Textarea"
-import { FileText, Trash2, Upload } from 'lucide-react'
+import { Input } from "../base-v2/ui/Input"
+import { FileText, Trash2, Upload, Edit3, Check, X, Eye, Download } from 'lucide-react'
 import BaseDialog from '../base-v2/BaseDialog'
 import { FileUploadDropzone } from '../base-v2/FileUploadDropzone'
 import { FileUploadItem } from '../base-v2/FileUploadItem'
-import { deleteSessionMaterialAction, updateSessionMaterialsAction, uploadSessionMaterialsAction } from '~/lib/sessions/server-actions-v2'
+import { deleteSessionMaterialAction, renameSessionMaterialAction, updateSessionMaterialsAction, uploadSessionMaterialsAction } from '~/lib/sessions/server-actions-v2'
 import useCsrfToken from '~/core/hooks/use-csrf-token'
 import { getFileBuffer } from '~/lib/utils/upload-material-utils'
 import { Button } from '../base-v2/ui/Button'
 import useSupabase from '~/core/hooks/use-supabase'
+import { toast } from 'sonner'
 
 interface UploadingFile {
   id: string
   file: File
+  displayName: string // The name to display (can be renamed)
   progress: number
   status: 'uploading' | 'error' | 'complete' | 'waiting'
   error?: string
@@ -27,7 +30,9 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
   setShowMaterialDialog,
   sessionId,
   onSuccess,
-  existingMaterials = []
+  existingMaterials = [],
+  onUploadStart,
+  onUploadComplete
 }) => {
   const [isPending, startTransition] = useTransition()
   const csrfToken = useCsrfToken()
@@ -35,35 +40,79 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([])
   const [description, setDescription] = useState('')
   const [materialsToDelete, setMaterialsToDelete] = useState<string[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadCompleted, setUploadCompleted] = useState(false)
+  const [renamingMaterialId, setRenamingMaterialId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
 
   const supabase = useSupabase();
 
   const handleFilesAdded = (files: File[]) => {
+    if (isUploading) return // Prevent adding files during upload
+    
     const newFiles = files.map(file => ({
       id: Math.random().toString(36).slice(2),
       file,
+      displayName: file.name,
       progress: 0,
       status: 'waiting' as const
     }))
     setUploadingFiles(prev => [...prev, ...newFiles])
   }
 
+  const handleRenameUploadingFile = (fileId: string, newName: string) => {
+    setUploadingFiles(prev =>
+      prev.map(f =>
+        f.id === fileId ? { ...f, displayName: newName } : f
+      )
+    )
+  }
+
+  const resetUploadState = () => {
+    setUploadingFiles([])
+    setIsUploading(false)
+    setUploadCompleted(false)
+    setDescription('')
+    setMaterialsToDelete([])
+    setRenamingMaterialId(null)
+    setRenameValue('')
+  }
+
+  const handleDialogClose = () => {
+    if (isUploading) return // Prevent closing during upload
+    resetUploadState()
+    setShowMaterialDialog(false)
+  }
+
   const handleRemoveFile = (fileId: string) => {
     setUploadingFiles(prev => prev.filter(f => f.id !== fileId))
   }
 
-  const uploadFileToSupabase = async (file: File, sessionId: string) => {
+  const uploadFileToSupabase = async (file: File, sessionId: string, fileId: string) => {
     const fileExt = file.name.split('.').pop();
     const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `materials/${sessionId}/${uniqueFileName}`;
 
+    // Update progress to show upload starting
+    setUploadingFiles(prev => 
+      prev.map(f => f.id === fileId ? { ...f, progress: 10 } : f)
+    );
+
     const { data, error } = await supabase.storage
       .from('class-materials')
-      .upload(filePath, file, { cacheControl: '3600' });
+      .upload(filePath, file, { 
+        cacheControl: '3600',
+        upsert: false
+      });
 
     if (error) {
       throw new Error(error.message);
     }
+
+    // Update progress to show upload completed
+    setUploadingFiles(prev => 
+      prev.map(f => f.id === fileId ? { ...f, progress: 90 } : f)
+    );
 
     const { data: publicData } = supabase.storage
       .from('class-materials')
@@ -75,6 +124,10 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
   const handleUpload = async () => {
     if (uploadingFiles.length === 0) return
 
+    setIsUploading(true)
+    setUploadCompleted(false)
+    onUploadStart?.() // Call the parent callback
+
     try {
       // Update all files to uploading status
       setUploadingFiles(prev =>
@@ -82,40 +135,83 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
       )
 
       let filesToUpdateInDB = [];
+      const totalFiles = uploadingFiles.length;
+      let completedFiles = 0;
+
       // Process files one by one
       for (const uploadingFile of uploadingFiles) {
         if (uploadingFile.status === 'complete') continue
-        const { publicUrl, filePath, uniqueFileName} = await uploadFileToSupabase(uploadingFile.file, sessionId)
-        // Update file status to complete
-        setUploadingFiles(prev => 
-          prev.map(f => f.id === uploadingFile.id 
-            ? { ...f, status: 'complete', progress: 100 } 
-            : f
+        
+        try {
+          // Set file to uploading with initial progress
+          setUploadingFiles(prev => 
+            prev.map(f => f.id === uploadingFile.id 
+              ? { ...f, status: 'uploading', progress: 5 } 
+              : f
+            )
+          );
+
+          const { publicUrl, filePath, uniqueFileName} = await uploadFileToSupabase(uploadingFile.file, sessionId, uploadingFile.id)
+          
+          // Update file status to complete
+          setUploadingFiles(prev => 
+            prev.map(f => f.id === uploadingFile.id 
+              ? { ...f, status: 'complete', progress: 100 } 
+              : f
+            )
           )
-        )
-        filesToUpdateInDB.push({
-          session_id: sessionId,
-          name: uploadingFile.file.name,
-          file_size: (uploadingFile.file.size / 1024 / 1024).toFixed(2),
-          url: publicUrl,
-          description: description,
-        })
+          
+          completedFiles++;
+          
+          // Small delay to make progress visible
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          filesToUpdateInDB.push({
+            session_id: sessionId,
+            name: uploadingFile.displayName, // Use renamed display name
+            file_size: (uploadingFile.file.size / 1024 / 1024).toFixed(2),
+            url: publicUrl,
+            description: description,
+          })
+        } catch (error) {
+          // Mark individual file as error
+          setUploadingFiles(prev => 
+            prev.map(f => f.id === uploadingFile.id 
+              ? { ...f, status: 'error', error: error instanceof Error ? error.message : 'Upload failed' } 
+              : f
+            )
+          )
+        }
       }
 
       const result = await updateSessionMaterialsAction({ materialData: filesToUpdateInDB })
 
       if (result.success) {
         setUploadingFiles([]);
-      }
-
-      // Check if all files completed successfully
-      const allComplete = uploadingFiles.every(f => f.status === 'complete')
-      if (allComplete) {
-        // onSuccess?.()
-        setShowMaterialDialog(false)
+        setUploadCompleted(true)
+        toast.success(`Successfully uploaded ${filesToUpdateInDB.length} file${filesToUpdateInDB.length > 1 ? 's' : ''}`)
+        
+        // Close dialog after showing success message for 2 seconds
+        setTimeout(() => {
+          setShowMaterialDialog(false)
+          setUploadCompleted(false)
+          setIsUploading(false)
+          onUploadComplete?.() // Call the parent callback
+        }, 2000)
+        
+        // Call onSuccess callback if provided
+        onSuccess?.()
+      } else {
+        throw new Error('Failed to save materials to database')
       }
     } catch (error) {
       console.error('Upload failed:', error)
+      toast.error('Failed to upload materials. Please try again.')
+      setUploadingFiles(prev => 
+        prev.map(f => ({ ...f, status: 'error' as const }))
+      )
+      setIsUploading(false)
+      onUploadComplete?.() // Call the parent callback on error too
     }
   }
 
@@ -138,10 +234,84 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
     }
   }
 
-  const isValid = uploadingFiles.length > 0
+  const handleStartRename = (materialId: string, currentName: string) => {
+    setRenamingMaterialId(materialId)
+    setRenameValue(currentName)
+  }
+
+  const handleCancelRename = () => {
+    setRenamingMaterialId(null)
+    setRenameValue('')
+  }
+
+  const handleConfirmRename = async (materialId: string) => {
+    if (!renameValue.trim() || renameValue === '') return
+
+    try {
+      startTransition(async () => {
+        const result = await renameSessionMaterialAction({
+          materialId,
+          newName: renameValue.trim(),
+          csrfToken
+        })
+
+        if (result.success) {
+          setRenamingMaterialId(null)
+          setRenameValue('')
+          toast.success('Material renamed successfully')
+          onSuccess?.()
+        } else {
+          toast.error('Failed to rename material')
+        }
+      })
+    } catch (error) {
+      console.error('Error renaming material:', error)
+      toast.error('Failed to rename material')
+    }
+  }
+
+  const handleViewMaterial = (material: any) => {
+    if (material.url) {
+      window.open(material.url, '_blank');
+    }
+  }
+
+  const handleDownloadMaterial = async (material: any) => {
+    if (!material.url) {
+      toast.error('Material file is not available');
+      return;
+    }
+
+    try {
+      const response = await fetch(material.url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = material.name || `material-${material.id}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast.success(`Successfully downloaded "${material.name}"`);
+    } catch (error) {
+      console.error('Error downloading material:', error);
+      toast.error('Failed to download material. Please try again.');
+    }
+  }
+
+  const isValid = uploadingFiles.length > 0 && !isUploading && !uploadCompleted
 
   // Determine the confirmation button text based on context
   const getConfirmButtonText = () => {
+    if (isUploading) {
+      return 'Uploading...'
+    }
+    if (uploadCompleted) {
+      return 'Upload Complete!'
+    }
     if (uploadingFiles.length > 0) {
       return (
         <>
@@ -156,59 +326,202 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
   return (
     <BaseDialog
       open={showMaterialDialog}
-      onClose={() => setShowMaterialDialog(false)}
+      onClose={handleDialogClose}
       title="Upload Class Materials"
       maxWidth="xl"
       onConfirm={isValid ? handleUpload : undefined}
       confirmButtonText={getConfirmButtonText()}
-      loading={isPending}
-      confirmButtonVariant={isValid ? 'default' : 'secondary'}
-      showCloseButton={false}
+      loading={isUploading || isPending}
+      confirmButtonVariant={isValid ? 'default' : uploadCompleted ? 'secondary' : 'secondary'}
+      showCloseButton={!isUploading}
     >
       <div className="space-y-6">
-        <FileUploadDropzone onFilesAdded={handleFilesAdded} />
-        {existingMaterials.length > 0 ? (
-          <div className="space-y-3">
-            {existingMaterials
-              .filter(material => !materialsToDelete.includes(material.id))
-              .map((material) => (
-                <div
-                  key={material.id}
-                  className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <FileText size={18} className="text-primary-blue-600" />
-                    <div>
-                      <p className="text-sm font-medium">{material.name}</p>
-                      <p className="text-xs text-neutral-500">{material.file_size} MB</p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-neutral-500 hover:text-error hover:bg-error-light"
-                    onClick={() => handleDeleteMaterial(material.id, material.url || "")}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-              ))}
+        {/* Upload Section */}
+        <div className="space-y-4">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+            <FileUploadDropzone 
+              onFilesAdded={handleFilesAdded} 
+              className={isUploading ? 'opacity-50 pointer-events-none' : ''} 
+            />
           </div>
-        ) : null}
+          
+          {/* Overall Upload Progress */}
+          {(isUploading || uploadCompleted) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  {uploadCompleted ? (
+                    <div className="rounded-full h-4 w-4 bg-green-600 flex items-center justify-center">
+                      <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                  )}
+                  <span className="text-sm font-medium text-blue-900">
+                    {uploadCompleted ? 'Upload Complete!' : 'Uploading materials...'}
+                  </span>
+                </div>
+                <span className="text-xs text-blue-700">
+                  {uploadingFiles.filter(f => f.status === 'complete').length} of {uploadingFiles.length} files completed
+                </span>
+              </div>
+              <div className="w-full bg-blue-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    uploadCompleted ? 'bg-green-600' : 'bg-blue-600'
+                  }`}
+                  style={{ 
+                    width: `${(uploadingFiles.filter(f => f.status === 'complete').length / uploadingFiles.length) * 100}%` 
+                  }}
+                ></div>
+              </div>
+            </div>
+          )}
+        </div>
 
-        {uploadingFiles.length > 0 && (
-          <div className="space-y-3">
-            {uploadingFiles.map((file) => (
-              <FileUploadItem
-                key={file.id}
-                fileName={file.file.name}
-                fileSize={(file.file.size / 1024 / 1024).toFixed(2)}
-                progress={file.progress}
-                status={file.status}
-                error={file.error}
-                onRemove={() => handleRemoveFile(file.id)}
-              />
-            ))}
+        {/* Files Section */}
+        {(existingMaterials.length > 0 || uploadingFiles.length > 0) && (
+          <div className="space-y-4">
+            <div className="border-t border-gray-200 pt-4">
+              <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                <FileText size={16} className="mr-2 text-gray-500" />
+                Class Materials
+                <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                  {(existingMaterials.filter(material => !materialsToDelete.includes(material.id)).length + uploadingFiles.length)}
+                </span>
+              </h3>
+              
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                {/* Existing Materials */}
+                {existingMaterials
+                  .filter(material => !materialsToDelete.includes(material.id))
+                  .map((material) => (
+                    <div
+                      key={material.id}
+                      className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <FileText size={18} className="text-primary-blue-600" />
+                        <div className="flex-1">
+                          {renamingMaterialId === material.id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={renameValue}
+                                onChange={(e) => setRenameValue(e.target.value)}
+                                className="text-sm font-medium h-8"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleConfirmRename(material.id)
+                                  } else if (e.key === 'Escape') {
+                                    handleCancelRename()
+                                  }
+                                }}
+                              />
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-green-600 hover:bg-green-100"
+                                  onClick={() => handleConfirmRename(material.id)}
+                                  disabled={isPending}
+                                >
+                                  <Check size={12} />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-gray-500 hover:bg-gray-100"
+                                  onClick={handleCancelRename}
+                                  disabled={isPending}
+                                >
+                                  <X size={12} />
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-sm font-medium">{material.name}</p>
+                              <p className="text-xs text-neutral-500">{material.file_size} MB</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {renamingMaterialId !== material.id && (
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-neutral-500 hover:text-blue-600 hover:bg-blue-50"
+                            onClick={() => handleViewMaterial(material)}
+                            disabled={isUploading || isPending}
+                            title="View file"
+                          >
+                            <Eye size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-neutral-500 hover:text-green-600 hover:bg-green-50"
+                            onClick={() => handleDownloadMaterial(material)}
+                            disabled={isUploading || isPending}
+                            title="Download file"
+                          >
+                            <Download size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-neutral-500 hover:text-blue-600 hover:bg-blue-50"
+                            onClick={() => handleStartRename(material.id, material.name || '')}
+                            disabled={isUploading || isPending}
+                            title="Rename file"
+                          >
+                            <Edit3 size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-neutral-500 hover:text-error hover:bg-error-light"
+                            onClick={() => handleDeleteMaterial(material.id, material.url || "")}
+                            disabled={isUploading || isPending}
+                            title="Delete file"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                {/* Uploading Files */}
+                {uploadingFiles.map((file) => (
+                  <div key={file.id} className="bg-white border border-gray-200 rounded-lg">
+                    <FileUploadItem
+                      fileName={file.displayName}
+                      fileSize={(file.file.size / 1024 / 1024).toFixed(2)}
+                      progress={file.progress}
+                      status={file.status}
+                      error={file.error}
+                      onRemove={isUploading ? undefined : () => handleRemoveFile(file.id)}
+                      onRename={(newName) => handleRenameUploadingFile(file.id, newName)}
+                      allowRename={!isUploading}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {existingMaterials.length === 0 && uploadingFiles.length === 0 && (
+          <div className="text-center pt-8 pb-2 text-neutral-500 border-t border-gray-200">
+            <FileText size={40} className="mx-auto mb-3 text-neutral-400" />
+            <p className="font-medium">No materials uploaded yet</p>
+            <p className="text-sm">Upload files to share with your students</p>
           </div>
         )}
 
@@ -221,11 +534,6 @@ const MaterialUploadDialog: React.FC<MaterialUploadDialogProps> = ({
             className="h-24"
           />
         </div> */}
-        {existingMaterials.length === 0 && uploadingFiles.length === 0  ? <div className="text-center pt-8 pb-2 text-neutral-500">
-          <FileText size={40} className="mx-auto mb-3 text-neutral-400" />
-          <p>No materials uploaded yet</p>
-          <p className="text-sm">Upload files to share with your students</p>
-        </div> : null}
       </div>
     </BaseDialog>
   )

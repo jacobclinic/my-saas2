@@ -245,6 +245,38 @@ export const updateSessionMaterialsAction = withSession(
   },
 );
 
+export const renameSessionMaterialAction = withSession(
+  async ({
+    materialId,
+    newName,
+    csrfToken,
+  }: {
+    materialId: string;
+    newName: string;
+    csrfToken: string;
+  }) => {
+    const client = getSupabaseServerActionClient();
+
+    try {
+      // Update material name in database
+      const { data: material, error: dbError } = await client
+        .from('resource_materials')
+        .update({ name: newName })
+        .eq('id', materialId)
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      revalidatePath('/upcoming-sessions');
+      return { success: true, material };
+    } catch (error: any) {
+      console.error('Server error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+);
+
 export const deleteSessionMaterialAction = withSession(
   async ({
     materialId,

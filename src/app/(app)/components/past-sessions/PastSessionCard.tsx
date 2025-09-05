@@ -20,6 +20,10 @@ import {
   Link,
   UserCheck,
   BookOpen,
+  Upload,
+  File,
+  Download,
+  Eye,
 } from 'lucide-react';
 import AttendanceDialog from './AttendanceDialog';
 import {
@@ -38,6 +42,10 @@ import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { copyToClipboard } from '~/lib/utils/clipboard';
 import { createShortUrlAction } from '~/lib/short-links/server-actions-v2';
 import CopyLinkButton from '~/components/CopyLinkButton';
+import MaterialUploadDialog from '../upcoming-sessions/MaterialUploadDialog';
+import { MobileTooltip } from '~/app/(app)/components/base-v2/ui/mobile-tooltip';
+import { UploadedMaterial } from '~/lib/sessions/types/upcoming-sessions';
+import { toast } from 'sonner';
 
 const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
@@ -49,6 +57,10 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     allMaterials?: boolean;
     student?: boolean;
   }>({});
+  const [showMaterialDialog, setShowMaterialDialog] = useState(false);
+  const [uploadedMaterials, setUploadedMaterials] = useState<UploadedMaterial[]>([]);
+  const [materialDescription, setMaterialDescription] = useState('');
+  const [isMaterialUploading, setIsMaterialUploading] = useState(false);
   const csrfToken = useCsrfToken();
 
   const handleCopyLink = async (
@@ -81,6 +93,75 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
     },
     [],
   );
+
+  const handleDownloadMaterials = async () => {
+    if (!sessionData?.materials || sessionData.materials.length === 0) {
+      toast.error('No materials available to download');
+      return;
+    }
+
+    try {
+      let downloadedCount = 0;
+      for (const material of sessionData.materials) {
+        if (material.url) {
+          const response = await fetch(material.url);
+          const blob = await response.blob();
+          const downloadUrl = window.URL.createObjectURL(blob);
+
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = material.name || `material-${material.id}`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(downloadUrl);
+
+          downloadedCount++;
+          // Add a small delay between downloads to prevent browser blocking
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+      
+      if (downloadedCount > 0) {
+        toast.success(`Successfully downloaded ${downloadedCount} material${downloadedCount > 1 ? 's' : ''}`);
+      }
+    } catch (error) {
+      console.error('Error downloading materials:', error);
+      toast.error('Failed to download materials. Please try again.');
+    }
+  };
+
+  const handleDownloadSingleMaterial = async (material: any) => {
+    if (!material.url) {
+      toast.error('Material file is not available');
+      return;
+    }
+
+    try {
+      const response = await fetch(material.url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = material.name || `material-${material.id}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast.success(`Successfully downloaded "${material.name}"`);
+    } catch (error) {
+      console.error('Error downloading material:', error);
+      toast.error('Failed to download material. Please try again.');
+    }
+  };
+
+  const handleViewMaterial = (material: any) => {
+    if (material.url) {
+      window.open(material.url, '_blank');
+    }
+  };
 
   const zoomMeetingId = sessionData.zoom_meeting_id;
   const sessionId = sessionData.id;
@@ -218,7 +299,66 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
           </div>
         </CardContent>
 
-        <CardFooter className="pt-3 grid grid-cols-2 md:grid-cols-3 gap-2 border-t border-neutral-100">
+        {/* Materials Section */}
+        {sessionData.materials && sessionData.materials.length > 0 && (
+          <div className="border-t px-6 pt-4">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="font-medium">Class Materials</h4>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">
+                  {sessionData.materials.length} files
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-primary-blue-700 hover:text-primary-blue-800 hover:bg-primary-blue-50"
+                  onClick={handleDownloadMaterials}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Download All
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2 mb-4">
+              {sessionData.materials.map((material) => (
+                <div
+                  key={material.id}
+                  className="flex items-center justify-between bg-gray-100 p-3 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <div className="flex items-center">
+                    <File className="h-4 w-4 text-blue-600 mr-3" />
+                    <div>
+                      <span className="text-sm font-medium">{material.name}</span>
+                      <p className="text-xs text-gray-600">{material.file_size} MB</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
+                      onClick={() => handleViewMaterial(material)}
+                      title="View file"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
+                      onClick={() => handleDownloadSingleMaterial(material)}
+                      title="Download file"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <CardFooter className="pt-3 grid grid-cols-2 md:grid-cols-4 gap-2 border-t border-neutral-100">
           {sessionData.recordingUrl && sessionData.recordingUrl.length > 0 ? (
             sessionData.recordingUrl.map((fileName, index) => (
               <Button
@@ -245,6 +385,24 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
             tooltipText='Copy class link to clipboard'
             shouldGenerateLink={true}
           />
+
+          <MobileTooltip
+            content={<p>Manage class materials</p>}
+          >
+            <Button
+              variant="ghost"
+              className={`w-full text-neutral-700 hover:bg-neutral-100 border border-neutral-200 ${sessionData.materials && sessionData.materials?.length > 0 ? 'bg-primary-blue-50 border-primary-blue-100' : ''}`}
+              onClick={() => setShowMaterialDialog(true)}
+              disabled={isMaterialUploading}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {isMaterialUploading 
+                ? 'Uploading...' 
+                : sessionData.materials?.length
+                  ? 'Update Materials'
+                  : 'Upload Materials'}
+            </Button>
+          </MobileTooltip>
 
           <TooltipProvider>
             <Tooltip>
@@ -273,6 +431,23 @@ const PastSessionsCard: React.FC<PastSessionsCardProps> = ({ sessionData }) => {
         setShowAttendanceDialog={setShowAttendanceDialog}
         selectedSession={sessionData}
         attendance={attendanceData}
+      />
+
+      <MaterialUploadDialog
+        showMaterialDialog={showMaterialDialog}
+        setShowMaterialDialog={setShowMaterialDialog}
+        uploadedMaterials={uploadedMaterials}
+        setUploadedMaterials={setUploadedMaterials}
+        materialDescription={materialDescription}
+        setMaterialDescription={setMaterialDescription}
+        sessionId={sessionData.id}
+        onSuccess={() => {
+          console.log('Material upload success')
+          setIsMaterialUploading(false)
+        }}
+        existingMaterials={sessionData.materials || []}
+        onUploadStart={() => setIsMaterialUploading(true)}
+        onUploadComplete={() => setIsMaterialUploading(false)}
       />
     </>
   );
