@@ -31,28 +31,8 @@ export async function updateStudentSessionStatus(
       status: params.status
     });
 
-    // Use the database function we created in the migration
-    const { data, error } = await client.rpc('update_student_session_status', {
-      p_email: params.email,
-      p_meeting_id: params.meetingId,
-      p_status: params.status,
-    });
-
-    if (error) {
-      logger.error('Database function failed for session status update', {
-        error,
-        params
-      });
-      return failure(new DatabaseError('Failed to update session status'));
-    }
-
-    if (data === false) {
-      logger.warn('Session status update returned false', { params });
-      return failure(new DatabaseError('Session status update failed'));
-    }
-
-    logger.info('Successfully updated student session status', params);
-    return success(true);
+    // Use direct database queries for better error handling
+    return await updateStudentSessionStatusDirect(client, params);
 
   } catch (error) {
     logger.error('Error updating student session status', {
@@ -96,7 +76,7 @@ export async function updateStudentSessionStatusDirect(
     // Find the student by email
     const { data: user, error: userError } = await client
       .from('users')
-      .select('id')
+      .select('id, first_name, last_name')
       .eq('email', params.email)
       .eq('user_role', 'student')
       .single();
@@ -151,6 +131,9 @@ export async function updateStudentSessionStatusDirect(
             ? new Date().toISOString()
             : null,
           created_at: new Date().toISOString(),
+          time: new Date().toISOString(),
+          email: params.email,
+          name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
         });
 
       if (insertError) {
