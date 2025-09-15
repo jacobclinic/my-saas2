@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getLogger from '~/core/logger';
 import { StudentSessionService } from '~/lib/sessions/services/student-session.service';
-import getSupabaseServerActionClient from '~/core/supabase/action-client';
+import getSupabaseRouteHandlerClient from '~/core/supabase/route-handler-client';
 // import { verifySignature } from '@upstash/qstash/nextjs'; // Temporarily disabled
 import { ZoomWebhookEvent } from '~/lib/zoom/v2/types';
 
 const logger = getLogger();
 
 async function handler(request: NextRequest) {
-  const client = getSupabaseServerActionClient();
+  const client = getSupabaseRouteHandlerClient({ admin: true });
   const service = new StudentSessionService(client, logger);
 
   try {
