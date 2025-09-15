@@ -114,11 +114,10 @@ export class StudentSessionService {
       }
 
       // Step 4: Verify Zoom meeting exists
+      this.logger.info(`Zoom meeting check - SessionID: ${params.sessionId}, MeetingID: ${sessionDetails.zoom_meeting_id || 'NULL'}`);
+
       if (!sessionDetails.zoom_meeting_id) {
-        this.logger.error('No Zoom meeting found for session', {
-          sessionId: params.sessionId,
-          sessionDetails
-        });
+        this.logger.error(`No Zoom meeting found for session ${params.sessionId} - zoom_meeting_id is ${sessionDetails.zoom_meeting_id}`);
         return failure(new ServiceError('Meeting not available yet. Please try again later.'));
       }
 
