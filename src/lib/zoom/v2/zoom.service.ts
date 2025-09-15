@@ -203,7 +203,6 @@ export class ZoomService {
                                 agenda: session.description!,
                                 default_password: false,
                                 duration: meetingDurationMinutes,
-                                password: "123456",
                                 pre_schedule: false,
                                 start_time: sessionStartTime.toISOString(),
                                 type: 2,

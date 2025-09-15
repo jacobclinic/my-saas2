@@ -282,7 +282,6 @@ export type ZoomCreateUserMeetingRequest = {
         agenda: string;
         default_password: boolean;
         duration: number;
-        password: string;
         pre_schedule?: boolean;
         start_time: string;
         timezone?: string;
