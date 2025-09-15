@@ -167,13 +167,15 @@ export class StudentSessionService {
       const meetingId = payload.object?.id?.toString();
       const participant = payload.object?.participant;
       const userEmail = participant?.email?.toString();
+      const registrantId = participant?.registrant_id?.toString();
 
       if (!meetingId || !participant || !userEmail) {
         this.logger.warn('Missing required data in session webhook payload', {
           event,
           meetingId,
           hasParticipant: !!participant,
-          userEmail
+          userEmail,
+          registrantId: registrantId || 'Missing'
         });
         return success(true); // Not an error, just incomplete data
       }
@@ -182,13 +184,14 @@ export class StudentSessionService {
         event,
         meetingId,
         userEmail,
+        registrantId: registrantId || 'Not provided',
         participantName: participant.user_name,
         joinTime: participant.join_time || participant.leave_time
       });
 
       switch (event) {
         case 'meeting.participant_joined_waiting_room':
-          return await this.handleSessionWaitingRoomJoin(meetingId, userEmail, participant);
+          return await this.handleSessionWaitingRoomJoin(meetingId, userEmail, registrantId, participant);
 
         case 'meeting.participant_joined':
           return await this.handleSessionParticipantJoined(meetingId, userEmail, participant);
@@ -218,6 +221,7 @@ export class StudentSessionService {
   private async handleSessionWaitingRoomJoin(
     meetingId: string,
     userEmail: string,
+    registrantId: string | undefined,
     participant: any
   ): Promise<Result<boolean, ServiceError>> {
     try {
@@ -291,7 +295,9 @@ export class StudentSessionService {
         // Deny access and remove from waiting room
         await this.zoomService.updateRegistrantStatus(meetingId, {
           action: 'deny',
-          registrants: [{ email: userEmail }]
+          registrants: registrantId
+            ? [{ id: registrantId }]
+            : [{ email: userEmail }] // fallback to email if no registrant_id
         });
 
         return success(true); // Don't fail webhook
@@ -324,7 +330,9 @@ export class StudentSessionService {
 
         await this.zoomService.updateRegistrantStatus(meetingId, {
           action: 'approve',
-          registrants: [{ email: userEmail }]
+          registrants: registrantId
+            ? [{ id: registrantId }]
+            : [{ email: userEmail }] // fallback to email if no registrant_id
         });
 
         this.logger.info('Student auto-approved from session waiting room', {
