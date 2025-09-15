@@ -212,10 +212,10 @@ export class ZoomService {
                                     // --- CRITICAL SETTINGS FOR SECURE FLOW ---
                                     waiting_room: true, 
                                     meeting_authentication: true, 
-                                    // --- MODIFIED: Changed approval_type to 2 ---
+                                    // --- MODIFIED: Changed approval_type to 0 ---
                                     // 2 = Registration required, but no host approval needed.
                                     // This lets our backend control admission via API.
-                                    approval_type: 2, 
+                                    approval_type: 0, 
                                     // --- Other Recommended Settings ---
                                     join_before_host: true,
                                     jbh_time: 15,
