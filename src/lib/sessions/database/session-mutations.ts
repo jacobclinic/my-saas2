@@ -82,7 +82,10 @@ export async function updateStudentSessionStatusDirect(
       .single();
 
     if (userError || !user) {
-      logger.error(userError);
+      logger.error('Student not found by email', {
+        email: params.email,
+        error: userError
+      });
       return success(true); // Don't fail for this
     }
 

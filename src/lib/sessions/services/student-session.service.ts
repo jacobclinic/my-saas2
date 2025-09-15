@@ -164,7 +164,7 @@ export class StudentSessionService {
     try {
       const meetingId = payload.object?.id?.toString();
       const participant = payload.object?.participant;
-      const userEmail = participant?.email;
+      const userEmail = participant?.email?.toString();
 
       if (!meetingId || !participant || !userEmail) {
         this.logger.warn('Missing required data in session webhook payload', {
