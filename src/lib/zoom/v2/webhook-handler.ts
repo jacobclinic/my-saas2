@@ -13,7 +13,10 @@ export const zoomWebhookEvents = {
     ENDPOINT_URL_VALIDATION: 'endpoint.url_validation',
     MEETING_ENDED: 'meeting.ended',
     RECORDING_COMPLETED: 'recording.completed',
-    MEETING_PARTICIPANT_LEFT: "meeting.participant_left"
+    MEETING_PARTICIPANT_LEFT: 'meeting.participant_left',
+    // --- NEW WAITING ROOM EVENTS ---
+    MEETING_PARTICIPANT_JOINED_WAITING_ROOM: 'meeting.participant_joined_waiting_room',
+    MEETING_PARTICIPANT_JOINED: 'meeting.participant_joined',
 } as const;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

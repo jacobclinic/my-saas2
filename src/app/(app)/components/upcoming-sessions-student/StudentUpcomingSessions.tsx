@@ -19,6 +19,10 @@ import {
   datePickerObjectToLocalDate,
 } from '~/lib/utils/timezone-utils-filter';
 import { useRouter } from 'next/navigation';
+import { secureJoinSessionAction } from '~/lib/sessions/server-actions-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { toast } from 'sonner';
+import { ErrorCodes } from '~/lib/shared/error-codes';
 
 interface DateRange {
   start?: {
@@ -58,6 +62,7 @@ const StudentUpcomingSessions = ({
     useState<SessionStudentTableData | null>(null);
 
   const [isPending, startTransition] = useTransition();
+  const csrfToken = useCsrfToken();
 
   const router = useRouter();
 
@@ -110,30 +115,44 @@ const StudentUpcomingSessions = ({
 
   const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
-      // startTransition(async () => {
-      //   const result = await joinMeetingAsUser({
-      //     meetingId: sessionData?.zoomMeetingId,
-      //     studentData: {
-      //       first_name: userSession?.data?.first_name || '',
-      //       last_name: userSession?.data?.last_name || '',
-      //       email: userSession?.auth?.user?.email || '',
-      //     },
-      //   });
-      //   if (result.success) {
-      //     window.open(result.start_url, '_blank');
-      //   } else {
-      //     alert('Failed to generate join link');
-      //   }
-      // });
-      startTransition(() => {
-        if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
-          const classId = sessionData.sessionRawData.class.id;
-          const url = `/classes/${classId}/session/${sessionData.id}`;
-          router.push(url);
+      startTransition(async () => {
+        try {
+          const result = await secureJoinSessionAction({
+            sessionId: sessionData.id,
+            csrfToken,
+          });
+
+          if (result.success && result.joinUrl) {
+            // Open the secure Zoom URL in a new tab
+            window.open(result.joinUrl, '_blank');
+            toast.success('Opening secure meeting link...');
+          } else {
+            // Handle different error types with appropriate messages
+            let errorMessage = result.error || 'Failed to generate join link';
+
+            switch (result.errorCode) {
+              case ErrorCodes.FORBIDDEN:
+                errorMessage = result.error || 'Access denied. Please check your payment status.';
+                break;
+              case ErrorCodes.RESOURCE_NOT_FOUND:
+                errorMessage = result.error || 'Meeting not found. Please try again later.';
+                break;
+              case ErrorCodes.UNAUTHORIZED:
+                errorMessage = 'Please sign in to join the class.';
+                break;
+              default:
+                errorMessage = result.error || 'Unable to join class. Please try again.';
+            }
+
+            toast.error(errorMessage);
+          }
+        } catch (error) {
+          console.error('Error joining class:', error);
+          toast.error('An unexpected error occurred. Please try again.');
         }
       });
     },
-    [userSession],
+    [csrfToken],
   );
   // Filter the complete dataset when search or date range changes
   useEffect(() => {

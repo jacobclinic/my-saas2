@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomCreateUserResponse, ZoomMeetingRecordingResponse, ZoomMeetingResponse, ZoomUserResponse } from "./types";
+import { ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomCreateUserResponse, ZoomMeetingRecordingResponse, ZoomMeetingResponse, ZoomUserResponse, ZoomRegistrant, ZoomRegistrationResponse, ZoomUpdateRegistrantStatusRequest } from "./types";
 
 export class ZoomClient {
     private axiosClient: AxiosInstance;
@@ -96,6 +96,16 @@ export class ZoomClient {
     async getUserById(userId: string): Promise<ZoomUserResponse> {
         const response = await this.axiosClient.get(`/users/${userId}`);
         return response.data;
+    }
+
+    // --- NEW METHODS FOR REGISTRATION FLOW ---
+    async registerParticipant(meetingId: string, registrant: ZoomRegistrant): Promise<ZoomRegistrationResponse> {
+        const response = await this.axiosClient.post(`/meetings/${meetingId}/registrants`, registrant);
+        return response.data;
+    }
+
+    async updateRegistrantStatus(meetingId: string, statusUpdate: ZoomUpdateRegistrantStatusRequest): Promise<void> {
+        await this.axiosClient.patch(`/meetings/${meetingId}/registrants/status`, statusUpdate);
     }
 
 }

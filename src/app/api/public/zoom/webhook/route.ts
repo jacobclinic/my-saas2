@@ -3,6 +3,7 @@ import { ZoomWebhookEventHandlerRegistry } from "~/lib/zoom/v2/webhook-handler";
 import crypto from 'crypto';
 import { ZoomWebhookEvent } from "~/lib/zoom/v2/types";
 import getLogger from "~/core/logger";
+import { UpstashService } from '~/lib/upstash/upstash.service';
 
 const logger = getLogger();
 
@@ -13,32 +14,61 @@ export async function POST(req: Request) {
     logger.info(`[Zoom] Received Zoom Webhook`);
     const rawBody = await req.text();
     logger.info(`[Zoom] Request Body: ${rawBody}`);
-    console.log(`[Zoom] Request Body: ${rawBody}`);
+
+    // Verify webhook signature
     const isAuthenticated = await isAutheticatedRequest(req, rawBody);
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
     const dataPayload: ZoomWebhookEvent = JSON.parse(rawBody);
+
+    // Handle URL validation immediately (required for Zoom setup)
+    if (dataPayload.event === 'endpoint.url_validation') {
+      const handler = ZoomWebhookEventHandlerRegistry[dataPayload.event];
+      if (handler) {
+        const response = await handler(dataPayload);
+        return NextResponse.json(response, { status: 200 });
+      }
+    }
+
+    // Events that require heavy processing - queue them via QStash
+    const queuedEvents = [
+      'meeting.participant_joined_waiting_room',
+      'meeting.participant_joined',
+      'meeting.participant_left'
+    ];
+
+    if (queuedEvents.includes(dataPayload.event)) {
+      try {
+        const upstashService = UpstashService.getInstance(logger);
+        await upstashService.publishToUpstash({
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/internal/process-zoom-event`,
+          body: dataPayload,
+        });
+
+        logger.info(`[Zoom] Event queued for processing: ${dataPayload.event}`);
+        return NextResponse.json({ message: 'Event queued for processing' }, { status: 200 });
+      } catch (queueError) {
+        logger.error('[Zoom] Failed to queue event', { error: queueError, event: dataPayload.event });
+        // Fall back to synchronous processing if queue fails
+      }
+    }
+
+    // Handle other events synchronously (like recording.completed, meeting.ended)
     const handlerKey = dataPayload.event as keyof typeof ZoomWebhookEventHandlerRegistry;
     const handler = ZoomWebhookEventHandlerRegistry[handlerKey];
+
     if (!handler) {
-      logger.error(`[Zoom] Invalid event:`, {
-        event: dataPayload.event,
-      });
-      console.log(`[Zoom] Invalid event:`, {
-        event: dataPayload.event,
-      });
+      logger.error(`[Zoom] Invalid event:`, { event: dataPayload.event });
       return NextResponse.json({ error: 'Invalid event' }, { status: 400 });
     }
+
     const response = await handler(dataPayload);
     return NextResponse.json(response, { status: 200 });
+
   } catch (error) {
-    logger.error(`[Zoom] Error:`, {
-      error,
-    });
-    console.log(`[Zoom] Error:`, {
-      error,
-    });
+    logger.error(`[Zoom] Error:`, { error });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

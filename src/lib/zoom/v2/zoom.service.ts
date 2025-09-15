@@ -6,7 +6,8 @@ import { Database } from "~/database.types";
 import getSupabaseServerActionClient from "~/core/supabase/action-client";
 import { getSessionsTillTomorrowWithZoomUser } from "~/lib/sessions/database/queries";
 import { createZoomSession } from "~/lib/zoom_sessions/database/mutations";
-import { DBZoomUser, ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomMeetingRecordingUrl } from "./types";
+// --- MODIFIED: Added new types for registration
+import { DBZoomUser, ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomMeetingRecordingUrl, ZoomRegistrant, ZoomUpdateRegistrantStatusRequest } from "./types";
 import { ZOOM_SESSIONS_TABLE } from "~/lib/db-tables";
 import { getAllUnassignedZoomUsers, getAllZoomUsersWithTutor, getUnassignedZoomUsers, getZoomUserById, getZoomUserByTutorId } from "./database/queries";
 import { DatabaseError, ZoomError } from "~/lib/shared/errors";
@@ -22,6 +23,41 @@ export class ZoomService {
     constructor(supabaseClient?: SupabaseClient<Database>) {
         this.client = zoomClient
         this.supabaseClient = supabaseClient || getSupabaseServerActionClient();
+    }
+
+    // --- NEW METHOD ---
+    /**
+     * Registers a participant for a specific Zoom meeting.
+     * This is called by the secure join flow to generate a unique join_url.
+     * @param meetingId The ID of the Zoom meeting.
+     * @param registrant The participant's details (email, first_name, last_name).
+     * @returns The registration response from Zoom, including the unique join_url.
+     */
+    async registerParticipant(meetingId: string, registrant: ZoomRegistrant) {
+        try {
+            const registrationResponse = await this.client.registerParticipant(meetingId, registrant);
+            return registrationResponse;
+        } catch (error) {
+            logger.error(error, `Failed to register participant for meeting ID: ${meetingId}`);
+            throw new Error('Failed to register participant for Zoom meeting.');
+        }
+    }
+
+    // --- NEW METHOD ---
+    /**
+     * Updates the status of a registrant in a meeting (e.g., approves them from the waiting room).
+     * This is called by the webhook processor.
+     * @param meetingId The ID of the Zoom meeting.
+     * @param statusUpdate The action to perform (e.g., 'approve') and the list of registrants.
+     */
+    async updateRegistrantStatus(meetingId: string, statusUpdate: ZoomUpdateRegistrantStatusRequest) {
+        try {
+            await this.client.updateRegistrantStatus(meetingId, statusUpdate);
+        } catch (error)
+        {
+            logger.error(error, `Failed to update registrant status for meeting ID: ${meetingId}`);
+            throw new Error('Failed to update registrant status.');
+        }
     }
 
     async createZoomUser(user: ZoomCreateUserRequest) {
@@ -127,9 +163,6 @@ export class ZoomService {
 
     async createMeetingsForTomorrowSessions() {
         try {
-            // This will return all sessions that are scheduled for tomorrow.starting from 12 am to 11:59:59 pm.
-            // const tomorrowSessions = await getTomorrowsSessionsWithZoomUser(this.supabaseClient);
-
             // This will return all sessions that are being scheduled till tomorrow midnight.
             const tomorrowSessions = await getSessionsTillTomorrowWithZoomUser(this.supabaseClient);
             const sessionIds = tomorrowSessions.map(session => session.id);
@@ -175,10 +208,22 @@ export class ZoomService {
                                 start_time: sessionStartTime.toISOString(),
                                 type: 2,
                                 timezone: "UTC",
-                                auto_recording: 'cloud',
-                                email_notification: false,
-                                join_before_host: true,
-                                jbh_time: 15,
+                                settings: {
+                                    // --- CRITICAL SETTINGS FOR SECURE FLOW ---
+                                    waiting_room: true, 
+                                    meeting_authentication: true, 
+                                    // --- MODIFIED: Changed approval_type to 2 ---
+                                    // 2 = Registration required, but no host approval needed.
+                                    // This lets our backend control admission via API.
+                                    approval_type: 2, 
+                                    // --- Other Recommended Settings ---
+                                    join_before_host: true,
+                                    jbh_time: 15,
+                                    mute_upon_entry: true,
+                                    host_video: true,
+                                    participant_video: false, 
+                                    auto_recording: 'cloud',
+                                }
                             }
                         });
 
@@ -197,7 +242,6 @@ export class ZoomService {
                             start_url: meeting.start_url,
                             password: "123456",
                             settings_json: meeting.settings,
-                            creation_source: meeting.creation_source,
                         }
 
                         await createZoomSession(this.supabaseClient, createZoomSessionPayload);

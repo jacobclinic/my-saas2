@@ -469,8 +469,9 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
-          join_time: string
-          leave_time: string
+          join_status: string
+          join_time: string | null
+          leave_time: string | null
           name: string | null
           session_id: string | null
           student_id: string
@@ -480,8 +481,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
-          join_time: string
-          leave_time: string
+          join_status?: string
+          join_time?: string | null
+          leave_time?: string | null
           name?: string | null
           session_id?: string | null
           student_id: string
@@ -491,8 +493,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
-          join_time?: string
-          leave_time?: string
+          join_status?: string
+          join_time?: string | null
+          leave_time?: string | null
           name?: string | null
           session_id?: string | null
           student_id?: string
@@ -854,7 +857,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_student_session_status: {
+        Args: {
+          p_email: string
+          p_meeting_id: string
+          p_status: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       subscription_status:

@@ -4,7 +4,9 @@ import { withSession } from '~/core/generic/actions-utils';
 import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import getLogger from '~/core/logger';
 import { SessionService } from './session.service';
+import { StudentSessionService } from './services/student-session.service';
 import { ErrorCodes } from '~/lib/shared/error-codes';
+import verifyCsrfToken from '~/core/verify-csrf-token';
 import { revalidatePath } from 'next/cache';
 import { zoomService } from '../zoom/zoom.service';
 import {
@@ -399,3 +401,137 @@ export const getNextSessionByClassIdAction = withSession(
     }
   }
 );
+
+export interface SecureJoinSessionParams {
+  sessionId: string;
+  csrfToken: string;
+}
+
+export interface SecureJoinSessionResponse {
+  success: boolean;
+  joinUrl?: string;
+  error?: string;
+  errorCode?: string;
+}
+
+/**
+ * Server action for secure, just-in-time session joining
+ * Performs all security checks and generates a unique Zoom join URL
+ */
+export const secureJoinSessionAction = withSession(
+  async (params: SecureJoinSessionParams): Promise<SecureJoinSessionResponse> => {
+    const client = getSupabaseServerActionClient();
+    const logger = getLogger();
+
+    try {
+      // Verify CSRF token
+      await verifyCsrfToken(params.csrfToken);
+
+      // Get current user session
+      const {
+        data: { session },
+        error: sessionError,
+      } = await client.auth.getSession();
+
+      if (sessionError || !session?.user) {
+        logger.error('User not authenticated', { sessionError });
+        return {
+          success: false,
+          error: 'Authentication required',
+          errorCode: ErrorCodes.UNAUTHORIZED
+        };
+      }
+
+      const user = session.user;
+
+      // Get user details
+      const { data: userData, error: userError } = await client
+        .from('users')
+        .select('first_name, last_name, email')
+        .eq('id', user.id)
+        .single();
+
+      if (userError || !userData) {
+        logger.error('Failed to get user details', { userId: user.id, error: userError });
+        return {
+          success: false,
+          error: 'User profile not found',
+          errorCode: ErrorCodes.RESOURCE_NOT_FOUND
+        };
+      }
+
+      logger.info('Starting secure join session process', {
+        userId: user.id,
+        sessionId: params.sessionId,
+        userEmail: userData.email
+      });
+
+      // Initialize service and generate secure join URL
+      const sessionService = new StudentSessionService(client, logger);
+
+      const result = await sessionService.generateSecureSessionJoinUrl({
+        userId: user.id,
+        sessionId: params.sessionId,
+        userEmail: userData.email || user.email || '',
+        userFirstName: userData.first_name || 'Student',
+        userLastName: userData.last_name || 'User',
+      });
+
+      if (!result.success) {
+        logger.warn('Secure session join failed', {
+          userId: user.id,
+          sessionId: params.sessionId,
+          error: result.error.message
+        });
+
+        return {
+          success: false,
+          error: result.error.message,
+          errorCode: result.error.code || ErrorCodes.INTERNAL_SERVER_ERROR
+        };
+      }
+
+      logger.info('Secure session join successful', {
+        userId: user.id,
+        sessionId: params.sessionId,
+        hasJoinUrl: !!result.data.joinUrl
+      });
+
+      return {
+        success: true,
+        joinUrl: result.data.joinUrl
+      };
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error('Unexpected error in secureJoinSessionAction', {
+        error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+        sessionId: params.sessionId
+      });
+
+      return {
+        success: false,
+        error: 'An unexpected error occurred. Please try again.',
+        errorCode: ErrorCodes.INTERNAL_SERVER_ERROR
+      };
+    }
+  }
+);
+
+/**
+ * Helper functions for response handling
+ */
+export const secureJoinSessionSuccess = (joinUrl: string): SecureJoinSessionResponse => ({
+  success: true,
+  joinUrl
+});
+
+export const secureJoinSessionFailure = (
+  error: string,
+  errorCode: string
+): SecureJoinSessionResponse => ({
+  success: false,
+  error,
+  errorCode
+});

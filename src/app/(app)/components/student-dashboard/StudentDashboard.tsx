@@ -11,13 +11,16 @@ import { Calendar, Info, MonitorPlay } from 'lucide-react';
 import { UpcomingSession } from '~/lib/sessions/types/session-v2';
 import { SessionStudentTableData } from '~/lib/sessions/types/upcoming-sessions';
 import PaymentDialog from '../student-payments/PaymentDialog';
-import { joinMeetingAsUser } from '~/lib/zoom/server-actions-v2';
 import useUserSession from '~/core/hooks/use-user-session';
 import StudentSessionCard from './StudentSessionCard';
 import StudentNextSessionCard from './StudentNextSessionCard';
 import { PaymentStatus } from '~/lib/payments/types/admin-payments';
 import PaginationControls from '../../components/PaginationControls';
 import { useRouter } from 'next/navigation';
+import { secureJoinSessionAction } from '~/lib/sessions/server-actions-v2';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+import { toast } from 'sonner';
+import { ErrorCodes } from '~/lib/shared/error-codes';
 
 const StudentDashboard = ({
   upcomingSessionData,
@@ -28,6 +31,7 @@ const StudentDashboard = ({
 }) => {
   const userSession = useUserSession();
   const [isPending, startTransition] = useTransition();
+  const csrfToken = useCsrfToken();
   const [nextSession, setNextSession] =
     useState<SessionStudentTableData | null>(null);
   const [upcomingSessions, setUpcomingSessions] = useState<
@@ -123,14 +127,41 @@ const StudentDashboard = ({
   const joinMeetingAsStudentUser = useCallback(
     async (sessionData: any) => {
       startTransition(async () => {
-        if (sessionData.sessionRawData && sessionData.sessionRawData.class && sessionData.sessionRawData.class.id) {
-          const classId = sessionData.sessionRawData.class.id;
-          const url = `/classes/${classId}/session/${sessionData.id}`;
-          router.push(url);
+        try {
+          const result = await secureJoinSessionAction({
+            sessionId: sessionData.id,
+            csrfToken,
+          });
+
+          if (result.success && result.joinUrl) {
+            window.open(result.joinUrl, '_blank');
+            toast.success('Opening secure meeting link...');
+          } else {
+            let errorMessage = result.error || 'Failed to generate join link';
+
+            switch (result.errorCode) {
+              case ErrorCodes.FORBIDDEN:
+                errorMessage = result.error || 'Access denied. Please check your payment status.';
+                break;
+              case ErrorCodes.RESOURCE_NOT_FOUND:
+                errorMessage = result.error || 'Meeting not found. Please try again later.';
+                break;
+              case ErrorCodes.UNAUTHORIZED:
+                errorMessage = 'Please sign in to join the class.';
+                break;
+              default:
+                errorMessage = result.error || 'Unable to join class. Please try again.';
+            }
+
+            toast.error(errorMessage);
+          }
+        } catch (error) {
+          console.error('Error joining class:', error);
+          toast.error('An unexpected error occurred. Please try again.');
         }
       });
     },
-    [userSession],
+    [csrfToken],
   );
 
   // Calculate paginated data

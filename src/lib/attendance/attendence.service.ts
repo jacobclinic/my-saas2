@@ -94,6 +94,7 @@ export class AttendanceService {
                 name: participant.user_name || null,
                 join_time: meeting.start_time, // Use meeting start_time as join_time
                 leave_time: participant.leave_time,
+                join_status: participant.leave_time ? 'Left Meeting' : 'In Meeting',
                 time: null, // Right now we are not calculating the time
             };
 
@@ -172,6 +173,7 @@ export class AttendanceService {
                 join_time: currentTimestamp,
                 // Leave time will be updated from the zoom webhook. Keep it as current timestamp for now.
                 leave_time: currentTimestamp,
+                join_status: 'In Meeting',
                 time: null,
             };
 

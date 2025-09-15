@@ -98,6 +98,53 @@ export interface ZoomRecordingCompletedPayload {
     };
 }
 
+// --- NEW WAITING ROOM WEBHOOK PAYLOADS ---
+export interface ZoomParticipantJoinedWaitingRoomPayload {
+    account_id: string;
+    object: {
+        id: string;
+        uuid: string;
+        host_id: string;
+        topic: string;
+        type: number;
+        start_time: string;
+        timezone: string;
+        duration: number;
+        participant: {
+            customer_key: string;
+            user_id: string;
+            user_name: string;
+            id: string;
+            join_time: string;
+            email: string;
+            registrant_id?: string;
+        };
+    };
+}
+
+export interface ZoomParticipantJoinedPayload {
+    account_id: string;
+    object: {
+        id: string;
+        uuid: string;
+        host_id: string;
+        topic: string;
+        type: number;
+        start_time: string;
+        timezone: string;
+        duration: number;
+        participant: {
+            customer_key: string;
+            user_id: string;
+            user_name: string;
+            id: string;
+            join_time: string;
+            email: string;
+            registrant_id?: string;
+        };
+    };
+}
+
 
 export type ZoomWebhookEvent = BaseZoomWebhookPayload<'meeting.ended', ZoomMeetingEndedPayload> | BaseZoomWebhookPayload<
     'endpoint.url_validation',
@@ -108,6 +155,12 @@ export type ZoomWebhookEvent = BaseZoomWebhookPayload<'meeting.ended', ZoomMeeti
 > | BaseZoomWebhookPayload<
     'recording.completed',
     ZoomRecordingCompletedPayload
+> | BaseZoomWebhookPayload<
+    'meeting.participant_joined_waiting_room',
+    ZoomParticipantJoinedWaitingRoomPayload
+> | BaseZoomWebhookPayload<
+    'meeting.participant_joined',
+    ZoomParticipantJoinedPayload
 >
 
 // Keep the old interface for backward compatibility if needed elsewhere
@@ -234,10 +287,24 @@ export type ZoomCreateUserMeetingRequest = {
         start_time: string;
         timezone?: string;
         type?: ZoomMeetingType;
-        auto_recording: 'local' | 'cloud' | 'none';
+        auto_recording?: 'local' | 'cloud' | 'none';
         email_notification?: boolean;
         join_before_host?: boolean;
         jbh_time?: 0 | 5 | 10 | 15;
+        settings?: {
+            host_video?: boolean;
+            participant_video?: boolean;
+            join_before_host?: boolean;
+            mute_upon_entry?: boolean;
+            use_pmi?: boolean;
+            approval_type?: 0 | 1 | 2;
+            audio?: 'both' | 'telephony' | 'voip' | 'thirdParty';
+            auto_recording?: 'local' | 'cloud' | 'none';
+            alternative_hosts?: string;
+            waiting_room?: boolean;
+            meeting_authentication?: boolean;
+            jbh_time?: 0 | 5 | 10 | 15;
+        };
     }
 }
 
@@ -334,3 +401,43 @@ export type ZoomMeetingRecordingUrl = {
 }
 
 export type DBZoomUser = Database['public']['Tables']['zoom_users']['Row'];
+
+// --- NEW TYPES FOR REGISTRATION FLOW ---
+export type ZoomRegistrant = {
+    email: string;
+    first_name: string;
+    last_name: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    zip?: string;
+    state?: string;
+    phone?: string;
+    industry?: string;
+    org?: string;
+    job_title?: string;
+    purchasing_time_frame?: string;
+    role_in_purchase_process?: string;
+    no_of_employees?: string;
+    comments?: string;
+    custom_questions?: Array<{
+        title: string;
+        value: string;
+    }>;
+};
+
+export type ZoomRegistrationResponse = {
+    id: string;
+    join_url: string;
+    registrant_id: string;
+    start_time: string;
+    topic: string;
+};
+
+export type ZoomUpdateRegistrantStatusRequest = {
+    action: 'approve' | 'cancel' | 'deny';
+    registrants: Array<{
+        id?: string;
+        email?: string;
+    }>;
+};
