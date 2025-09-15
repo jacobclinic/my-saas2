@@ -206,6 +206,8 @@ export async function getSessionDetails(
     const zoomSession = session.zoom_sessions as { meeting_id: string } | null;
     const zoomMeetingId = zoomSession?.meeting_id || null;
 
+    logger.info(`getSessionDetails debug - SessionID: ${sessionId}, ZoomSession: ${zoomSession ? 'Present' : 'NULL'}, MeetingID: ${zoomMeetingId || 'NULL'}`);
+
     // Handle class relation properly (it could be an array or object)
     const classData = Array.isArray(session.class) ? session.class[0] : session.class;
 

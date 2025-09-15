@@ -67,13 +67,16 @@ export class StudentSessionService {
       }
 
       // Step 2: Get session details and check payment requirements
+      this.logger.info(`Fetching session details for sessionId: ${params.sessionId}`);
       const sessionResult = await getSessionDetails(this.client, params.sessionId);
+
       if (!sessionResult.success) {
-        this.logger.error('Failed to get session details', { error: sessionResult.error });
+        this.logger.error(`Failed to get session details for ${params.sessionId}: ${sessionResult.error.message}`);
         return failure(new ServiceError('Session not found'));
       }
 
       const sessionDetails = sessionResult.data;
+      this.logger.info(`Session details retrieved - SessionID: ${params.sessionId}, HasZoomMeetingID: ${!!sessionDetails.zoom_meeting_id}, ZoomMeetingID: ${sessionDetails.zoom_meeting_id || 'NULL'}`);
       const sessionDate = new Date(sessionDetails.start_time);
       const isFreeFirstWeek = isFirstWeekOfMonth(sessionDate.toISOString().split('T')[0]);
 

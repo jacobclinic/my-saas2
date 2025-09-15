@@ -56,7 +56,7 @@ export async function updateStudentSessionStatusDirect(
   }
 ): Promise<Result<boolean, DatabaseError>> {
   try {
-    logger.info('Direct update of student session status', params);
+    logger.info(`Direct update of student session status - Email: ${params.email}, MeetingID: ${params.meetingId}, Status: ${params.status}`);
 
     // First, find the session associated with this meeting
     const { data: zoomSession, error: zoomError } = await client
@@ -66,14 +66,14 @@ export async function updateStudentSessionStatusDirect(
       .single();
 
     if (zoomError || !zoomSession) {
-      logger.error('Session not found for meeting ID', {
-        meetingId: params.meetingId,
-        error: zoomError
-      });
+      logger.error(`Session not found for meeting ID ${params.meetingId}: ${zoomError?.message || 'No session found'}`);
       return success(true); // Don't fail for this
     }
 
+    logger.info(`Found zoom session - MeetingID: ${params.meetingId}, SessionID: ${zoomSession.session_id}`);
+
     // Find the student by email
+    logger.info(`Looking up student by email: ${params.email}`);
     const { data: user, error: userError } = await client
       .from('users')
       .select('id, first_name, last_name')
@@ -82,12 +82,11 @@ export async function updateStudentSessionStatusDirect(
       .single();
 
     if (userError || !user) {
-      logger.error('Student not found by email', {
-        email: params.email,
-        error: userError
-      });
+      logger.error(`Student lookup failed - Email: ${params.email}, Error: ${userError?.message || 'No user found'}, Code: ${userError?.code || 'N/A'}`);
       return success(true); // Don't fail for this
     }
+
+    logger.info(`Found student - Email: ${params.email}, UserID: ${user.id}, Name: ${user.first_name} ${user.last_name}`);
 
     // Check if attendance record exists
     const { data: existingAttendance, error: attendanceCheckError } = await client

@@ -8,10 +8,18 @@ import { ZoomWebhookEvent } from '~/lib/zoom/v2/types';
 const logger = getLogger();
 
 async function handler(request: NextRequest) {
-  const client = getSupabaseRouteHandlerClient({ admin: true });
-  const service = new StudentSessionService(client, logger);
-
   try {
+    // Check if service role key exists
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceRoleKey) {
+      logger.error('SUPABASE_SERVICE_ROLE_KEY environment variable not found');
+      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 });
+    }
+
+    logger.info(`[QStash] Using service role client - Key present: ${!!serviceRoleKey}, Key length: ${serviceRoleKey.length}`);
+    const client = getSupabaseRouteHandlerClient({ admin: true });
+    const service = new StudentSessionService(client, logger);
+
     logger.info('[QStash] Processing Zoom event from queue');
 
     const body = await request.json();
