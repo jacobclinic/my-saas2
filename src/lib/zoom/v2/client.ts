@@ -105,7 +105,7 @@ export class ZoomClient {
     }
 
     async updateRegistrantStatus(meetingId: string, statusUpdate: ZoomUpdateRegistrantStatusRequest): Promise<void> {
-        await this.axiosClient.patch(`/meetings/${meetingId}/registrants/status`, statusUpdate);
+        await this.axiosClient.put(`/meetings/${meetingId}/registrants/status`, statusUpdate);
     }
 
 }
