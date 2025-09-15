@@ -256,11 +256,9 @@ export class StudentSessionService {
         .single();
 
       if (userError || !user) {
-        this.logger.error('Student not found by email during webhook', {
-          email: userEmail,
-          error: userError
-        });
-        return success(true); // Don't fail webhook
+        // Return failure to make error visible in webhook logs
+        this.logger.error(`Student lookup failed during webhook: ${userError?.message || 'No user found'} for email: ${userEmail}`);
+        return failure(new ServiceError(`Student lookup failed: ${userError?.message || 'No user found'} for email: ${userEmail}`));
       }
 
       // Check if student is already in another session

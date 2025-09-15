@@ -82,8 +82,11 @@ export async function updateStudentSessionStatusDirect(
       .single();
 
     if (userError || !user) {
-      // Return failure to make error visible in webhook response
-      return failure(new DatabaseError(`Student lookup failed: ${userError?.message || 'No user found'} for email: ${params.email}`));
+      logger.error('Student not found by email', {
+        email: params.email,
+        error: userError
+      });
+      return success(true); // Don't fail for this
     }
 
     // Check if attendance record exists
