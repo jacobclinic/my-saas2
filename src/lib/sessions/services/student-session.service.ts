@@ -96,7 +96,16 @@ export class StudentSessionService {
         sessionId: params.sessionId
       });
 
-      if (enrollmentStatusResult.success && enrollmentStatusResult.data === 'In Meeting') {
+      if (!enrollmentStatusResult.success) {
+        this.logger.error('Failed to check student enrollment status', {
+          error: enrollmentStatusResult.error,
+          userId: params.userId,
+          sessionId: params.sessionId
+        });
+        return failure(new ServiceError('Unable to verify session status'));
+      }
+
+      if (enrollmentStatusResult.data === 'In Meeting') {
         this.logger.warn('Student already in a session from another device', {
           userId: params.userId,
           sessionId: params.sessionId
@@ -260,7 +269,18 @@ export class StudentSessionService {
         sessionId: zoomSession.session_id
       });
 
-      if (enrollmentStatusResult.success && enrollmentStatusResult.data === 'In Meeting') {
+      if (!enrollmentStatusResult.success) {
+        this.logger.error('Failed to check student enrollment status during webhook', {
+          error: enrollmentStatusResult.error,
+          userId: user.id,
+          sessionId: zoomSession.session_id,
+          userEmail,
+          meetingId
+        });
+        return success(true); // Don't fail webhook, but log the error
+      }
+
+      if (enrollmentStatusResult.data === 'In Meeting') {
         this.logger.warn('Student already in another session - denying waiting room access', {
           userId: user.id,
           currentSessionId: zoomSession.session_id,
