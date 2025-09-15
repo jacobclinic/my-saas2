@@ -35,7 +35,7 @@ import {
 import MaterialUploadDialog from './MaterialUploadDialog';
 import EditSessionDialog from './EditSessionDialog';
 import { joinMeetingAsHost } from '~/lib/zoom/server-actions-v2';
-import { updateSessionAction } from '~/lib/sessions/server-actions-v2';
+import { updateSessionAction, startTutorSessionAction } from '~/lib/sessions/server-actions-v2';
 import useCsrfToken from '~/core/hooks/use-csrf-token';
 import { MobileTooltip } from '~/app/(app)/components/base-v2/ui/mobile-tooltip';
 import AddLessonDetailsDialog from './AddLessonDetailsDialog';
@@ -189,28 +189,34 @@ const UpcommingSessionCard: React.FC<UpcommingSessionCardProps> = ({
   const joinInZoomDesktopClient = useCallback(() => {
     const newTab = window.open('', '_blank');
     startTransition(async () => {
-      const session = await fetchZoomSessionBySessionIdAction(sessionData.id);
+      try {
+        // Use the new tutor session start action to get the host URL
+        const result = await startTutorSessionAction({
+          sessionId: sessionData.id,
+          csrfToken: csrfToken
+        });
 
-      if (session && session.meeting_id) {
-        const id = String(session.meeting_id).replace(/\D/g, '');
-        const pwd = session.password ? `?pwd=${encodeURIComponent(session.password)}` : '';
-        const url = `https://zoom.us/j/${id}${pwd}`;
-
-        if (newTab) {
-          newTab.location.href = url;
-          try {
-            newTab.focus();
-          } catch {
-            console.log('Failed to focus on the new tab');
+        if (result.success && result.startUrl) {
+          if (newTab) {
+            newTab.location.href = result.startUrl;
+            try {
+              newTab.focus();
+            } catch {
+              console.log('Failed to focus on the new tab');
+            }
+          } else {
+            window.location.assign(result.startUrl);
           }
+          toast.success('Opening Zoom as meeting host');
         } else {
-          window.location.assign(url);
+          toast.error(result.error || 'Failed to start meeting. Please contact admin');
         }
-      } else {
-        toast.error('Something wrong with the class, Please contact admin');
+      } catch (error) {
+        console.error('Error starting tutor session:', error);
+        toast.error('Something went wrong. Please try again.');
       }
     });
-  }, [sessionData]);
+  }, [sessionData, csrfToken]);
 
   const saveLessonDetails = async () => {
     // Save lesson details logic here

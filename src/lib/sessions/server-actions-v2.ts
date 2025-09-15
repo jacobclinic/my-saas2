@@ -5,6 +5,7 @@ import getSupabaseServerActionClient from '~/core/supabase/action-client';
 import getLogger from '~/core/logger';
 import { SessionService } from './session.service';
 import { StudentSessionService } from './services/student-session.service';
+import { TutorSessionService } from './services/tutor-session.service';
 import { ErrorCodes } from '~/lib/shared/error-codes';
 import verifyCsrfToken from '~/core/verify-csrf-token';
 import { revalidatePath } from 'next/cache';
@@ -505,6 +506,103 @@ export const secureJoinSessionAction = withSession(
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error('Unexpected error in secureJoinSessionAction', {
+        error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+        sessionId: params.sessionId
+      });
+
+      return {
+        success: false,
+        error: 'An unexpected error occurred. Please try again.',
+        errorCode: ErrorCodes.INTERNAL_SERVER_ERROR
+      };
+    }
+  }
+);
+
+type StartTutorSessionParams = {
+  sessionId: string;
+  csrfToken: string;
+};
+
+type StartTutorSessionResponse = {
+  success: boolean;
+  startUrl?: string;
+  error?: string;
+  errorCode?: string;
+};
+
+/**
+ * Server action for tutors to start their session meetings
+ * Returns the direct Zoom start URL for the tutor to host the meeting
+ */
+export const startTutorSessionAction = withSession(
+  async (params: StartTutorSessionParams): Promise<StartTutorSessionResponse> => {
+    const { sessionId, csrfToken } = params;
+    const client = getSupabaseServerActionClient();
+    const logger = getLogger();
+
+    try {
+      await verifyCsrfToken(csrfToken);
+
+      // Get current user session
+      const {
+        data: { session },
+        error: sessionError,
+      } = await client.auth.getSession();
+
+      if (sessionError || !session?.user) {
+        return {
+          success: false,
+          error: 'Authentication required',
+          errorCode: ErrorCodes.UNAUTHORIZED
+        };
+      }
+
+      const user = session.user;
+
+      logger.info('Tutor starting session', {
+        userId: user.id,
+        sessionId: params.sessionId,
+        userEmail: user.email
+      });
+
+      // Initialize tutor service and generate start URL
+      const tutorSessionService = new TutorSessionService(client, logger);
+
+      const result = await tutorSessionService.generateTutorSessionStartUrl({
+        userId: user.id,
+        sessionId: params.sessionId
+      });
+
+      if (!result.success) {
+        logger.warn('Tutor session start failed', {
+          userId: user.id,
+          sessionId: params.sessionId,
+          error: result.error.message
+        });
+
+        return {
+          success: false,
+          error: result.error.message,
+          errorCode: ErrorCodes.SERVICE_LEVEL_ERROR
+        };
+      }
+
+      logger.info('Tutor session start successful', {
+        userId: user.id,
+        sessionId: params.sessionId,
+        hasStartUrl: !!result.data.startUrl
+      });
+
+      return {
+        success: true,
+        startUrl: result.data.startUrl
+      };
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error('Unexpected error in startTutorSessionAction', {
         error: errorMessage,
         stack: error instanceof Error ? error.stack : undefined,
         sessionId: params.sessionId
