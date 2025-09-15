@@ -202,9 +202,9 @@ export async function getSessionDetails(
       return failure(new DatabaseError('Session data incomplete'));
     }
 
-    // Handle zoom_sessions array properly
-    const zoomSessions = session.zoom_sessions as Array<{ meeting_id: string }> | null;
-    const zoomMeetingId = zoomSessions && zoomSessions.length > 0 ? zoomSessions[0].meeting_id : null;
+    // Handle zoom_sessions relation properly (one-to-one relationship)
+    const zoomSession = session.zoom_sessions as { meeting_id: string } | null;
+    const zoomMeetingId = zoomSession?.meeting_id || null;
 
     // Handle class relation properly (it could be an array or object)
     const classData = Array.isArray(session.class) ? session.class[0] : session.class;
