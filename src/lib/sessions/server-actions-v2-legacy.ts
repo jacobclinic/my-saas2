@@ -83,9 +83,10 @@ export const updateZoomSessionAction = withSession(
             meetingUrl = zoomMeeting.join_url;
             zoomUpdateSuccessful = true;
 
-            // Update zoom_sessions table with new meeting data
+            // Update or create zoom_sessions table record
             try {
-              const { error: zoomSessionUpdateError } = await supabase
+              // First try to update existing record
+              const { data: updateResult, error: zoomSessionUpdateError } = await supabase
                 .from('zoom_sessions')
                 .update({
                   join_url: zoomMeeting.join_url || meetingUrl,
@@ -95,16 +96,45 @@ export const updateZoomSessionAction = withSession(
                     sessionData.endTime || session.end_time || '',
                   ),
                 })
-                .eq('meeting_id', session.zoom_meeting_id);
+                .eq('meeting_id', session.zoom_meeting_id)
+                .select();
 
               if (zoomSessionUpdateError) {
                 console.error('Error updating zoom_sessions table:', zoomSessionUpdateError);
-                // Don't fail the whole operation, just log the error
+              } else if (updateResult && updateResult.length === 0) {
+                // No existing record found, create new one
+                console.log('No existing zoom_sessions record found, creating new one for meeting:', session.zoom_meeting_id);
+
+                const { error: insertError } = await supabase
+                  .from('zoom_sessions')
+                  .insert({
+                    meeting_id: session.zoom_meeting_id,
+                    session_id: sessionId,
+                    join_url: zoomMeeting.join_url || meetingUrl,
+                    start_url: zoomMeeting.start_url,
+                    duration: getDurationInMinutes(
+                      sessionData.startTime || session.start_time || '',
+                      sessionData.endTime || session.end_time || '',
+                    ),
+                    host_id: zoomMeeting.host_id || '',
+                    host_user_id: '', // Would need to get this from session data
+                    meeting_uuid: zoomMeeting.uuid || '',
+                    start_time: sessionData.startTime || session.start_time || '',
+                    password: zoomMeeting.password,
+                    status: 'active',
+                    creation_source: 'session_edit',
+                  });
+
+                if (insertError) {
+                  console.error('Error creating zoom_sessions record:', insertError);
+                } else {
+                  console.log('Successfully created new zoom_sessions record for meeting:', session.zoom_meeting_id);
+                }
               } else {
                 console.log('Successfully updated zoom_sessions table for meeting:', session.zoom_meeting_id);
               }
             } catch (zoomSessionError) {
-              console.error('Error updating zoom_sessions table:', zoomSessionError);
+              console.error('Error with zoom_sessions table operation:', zoomSessionError);
               // Don't fail the whole operation, just log the error
             }
           } catch (zoomUpdateError) {
