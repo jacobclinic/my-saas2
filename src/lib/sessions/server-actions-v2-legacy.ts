@@ -94,7 +94,6 @@ export const updateZoomSessionAction = withSession(
                     sessionData.startTime || session.start_time || '',
                     sessionData.endTime || session.end_time || '',
                   ),
-                  updated_at: new Date().toISOString(),
                 })
                 .eq('meeting_id', session.zoom_meeting_id);
 
