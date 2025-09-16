@@ -82,6 +82,32 @@ export const updateZoomSessionAction = withSession(
             );
             meetingUrl = zoomMeeting.join_url;
             zoomUpdateSuccessful = true;
+
+            // Update zoom_sessions table with new meeting data
+            try {
+              const { error: zoomSessionUpdateError } = await supabase
+                .from('zoom_sessions')
+                .update({
+                  join_url: zoomMeeting.join_url || meetingUrl,
+                  start_url: zoomMeeting.start_url,
+                  duration: getDurationInMinutes(
+                    sessionData.startTime || session.start_time || '',
+                    sessionData.endTime || session.end_time || '',
+                  ),
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('meeting_id', session.zoom_meeting_id);
+
+              if (zoomSessionUpdateError) {
+                console.error('Error updating zoom_sessions table:', zoomSessionUpdateError);
+                // Don't fail the whole operation, just log the error
+              } else {
+                console.log('Successfully updated zoom_sessions table for meeting:', session.zoom_meeting_id);
+              }
+            } catch (zoomSessionError) {
+              console.error('Error updating zoom_sessions table:', zoomSessionError);
+              // Don't fail the whole operation, just log the error
+            }
           } catch (zoomUpdateError) {
             console.error('Error updating Zoom meeting:', zoomUpdateError);
             // Update will continue with existing Zoom data
