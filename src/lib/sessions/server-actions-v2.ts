@@ -123,22 +123,34 @@ export const updateSessionAction = withSession(
               // No existing record found, create new one
               console.log('No existing zoom_sessions record found, creating new one for meeting:', session.zoom_meeting_id);
 
+              // Get tutor user ID for host_user_id field
+              let hostUserId = '';
+              if (session.class?.tutor?.id) {
+                hostUserId = session.class.tutor.id;
+              }
+
+              // Ensure all required fields are properly set
+              const zoomSessionPayload = {
+                session_id: sessionId,
+                meeting_uuid: (zoomMeeting as any).uuid || session.zoom_meeting_id || '',
+                meeting_id: session.zoom_meeting_id,
+                host_id: zoomMeeting.host_id || '',
+                host_user_id: hostUserId || '',
+                join_url: zoomMeeting.join_url || session.meeting_url || '',
+                start_url: zoomMeeting.start_url || '',
+                start_time: sessionStartTime,
+                type: '2', // Convert to string
+                status: 'active',
+                duration: duration,
+                timezone: 'UTC',
+                password: zoomMeeting.password || '',
+                creation_source: 'session_edit',
+                created_at: new Date().toISOString(),
+              };
+
               const { error: insertError } = await client
                 .from('zoom_sessions')
-                .insert({
-                  meeting_id: session.zoom_meeting_id,
-                  session_id: sessionId,
-                  join_url: zoomMeeting.join_url || session.meeting_url || '',
-                  start_url: zoomMeeting.start_url || '',
-                  duration: duration,
-                  host_id: zoomMeeting.host_id || '',
-                  host_user_id: '', // Would need to get this from session data
-                  meeting_uuid: session.zoom_meeting_id, // Use meeting_id as fallback
-                  start_time: sessionStartTime,
-                  password: zoomMeeting.password || '',
-                  status: 'active',
-                  creation_source: 'session_edit',
-                });
+                .insert(zoomSessionPayload);
 
               if (insertError) {
                 console.error('Error creating zoom_sessions record:', insertError);

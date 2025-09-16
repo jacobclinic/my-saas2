@@ -105,25 +105,37 @@ export const updateZoomSessionAction = withSession(
                 // No existing record found, create new one
                 console.log('No existing zoom_sessions record found, creating new one for meeting:', session.zoom_meeting_id);
 
+                // Get tutor user ID for host_user_id field
+                let hostUserId = '';
+                if (session.class?.tutor?.id) {
+                  hostUserId = session.class.tutor.id;
+                }
+
+                // Ensure all required fields are properly set
+                const zoomSessionPayload = {
+                  session_id: sessionId,
+                  meeting_uuid: (zoomMeeting as any).uuid || session.zoom_meeting_id || '',
+                  meeting_id: session.zoom_meeting_id,
+                  host_id: zoomMeeting.host_id || '',
+                  host_user_id: hostUserId || '',
+                  join_url: zoomMeeting.join_url || meetingUrl,
+                  start_url: zoomMeeting.start_url || '',
+                  start_time: sessionData.startTime || session.start_time || '',
+                  type: '2', // Convert to string
+                  status: 'active',
+                  duration: getDurationInMinutes(
+                    sessionData.startTime || session.start_time || '',
+                    sessionData.endTime || session.end_time || '',
+                  ),
+                  timezone: 'UTC',
+                  password: zoomMeeting.password || '',
+                  creation_source: 'session_edit',
+                  created_at: new Date().toISOString(),
+                };
+
                 const { error: insertError } = await supabase
                   .from('zoom_sessions')
-                  .insert({
-                    meeting_id: session.zoom_meeting_id,
-                    session_id: sessionId,
-                    join_url: zoomMeeting.join_url || meetingUrl,
-                    start_url: zoomMeeting.start_url,
-                    duration: getDurationInMinutes(
-                      sessionData.startTime || session.start_time || '',
-                      sessionData.endTime || session.end_time || '',
-                    ),
-                    host_id: zoomMeeting.host_id || '',
-                    host_user_id: '', // Would need to get this from session data
-                    meeting_uuid: (zoomMeeting as any).uuid || session.zoom_meeting_id || '',
-                    start_time: sessionData.startTime || session.start_time || '',
-                    password: zoomMeeting.password,
-                    status: 'active',
-                    creation_source: 'session_edit',
-                  });
+                  .insert(zoomSessionPayload);
 
                 if (insertError) {
                   console.error('Error creating zoom_sessions record:', insertError);
