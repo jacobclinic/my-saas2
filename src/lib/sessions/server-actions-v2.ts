@@ -16,7 +16,6 @@ import {
 } from '../utils/upload-material-utils';
 import { getSessionDataById } from './database/queries';
 import { updateAllOccurrences, updateAttendanceMarked, updateSession } from './database/mutations';
-import { updateZoomSessionAction } from './server-actions-v2-legacy';
 import { fetchMeetingParticipants } from '../zoom/zoom-other.service';
 import { isAdminOrCLassTutor } from '../user/database/queries';
 import { SessionUpdateOption } from '../enums';
@@ -85,41 +84,75 @@ export const updateSessionAction = withSession(
         throw new Error('Failed to update session in database');
 
       // Only attempt to update Zoom meeting if time has changed
-      if (timeChanged) {
+      if (timeChanged && session.zoom_meeting_id) {
         try {
-          // Ensure null values are converted to undefined for the zoom update
-          const zoomUpdatedata = {
-            title: sessionData.title || session.title || '',
-            description: sessionData.description || session.description || '',
-            startTime: sessionData.startTime || session.start_time || undefined,
-            endTime: sessionData.endTime || session.end_time || undefined,
-            meetingUrl: session.meeting_url,
-          };
+          const sessionStartTime = sessionData.startTime || session.start_time || '';
+          const sessionEndTime = sessionData.endTime || session.end_time || '';
 
-          const zoomSessionUpdate = await updateZoomSessionAction({
-            sessionId: sessionId,
-            sessionData: zoomUpdatedata,
-            csrfToken: params.csrfToken,
-          });
+          // Update Zoom meeting via API
+          const zoomMeeting = await zoomService.updateMeeting(
+            session.zoom_meeting_id,
+            {
+              topic: sessionData.title || session.title || `${session?.class?.name} - ${new Date(sessionStartTime).toLocaleDateString()}`,
+              start_time: sessionStartTime,
+              duration: getDurationInMinutes(sessionStartTime, sessionEndTime),
+              type: 2,
+              timezone: 'UTC',
+            },
+          );
 
-          if (zoomSessionUpdate.error) {
-            console.error(
-              'Zoom session update error:',
-              zoomSessionUpdate.error,
-            );
-            return {
-              success: true,
-              warning:
-                'Session updated in database, but Zoom meeting update failed due to API issues. Your changes are saved, but meeting link might need updating separately.',
-            };
+          // Update zoom_sessions table to keep it in sync
+          try {
+            const duration = getDurationInMinutes(sessionStartTime, sessionEndTime);
+
+            // First try to update existing record
+            const { data: updateResult, error: zoomSessionUpdateError } = await client
+              .from('zoom_sessions')
+              .update({
+                join_url: zoomMeeting.join_url || session.meeting_url || '',
+                start_url: zoomMeeting.start_url || '',
+                duration: duration,
+                start_time: sessionStartTime,
+              })
+              .eq('meeting_id', session.zoom_meeting_id)
+              .select();
+
+            if (zoomSessionUpdateError) {
+              console.error('Error updating zoom_sessions table:', zoomSessionUpdateError);
+            } else if (updateResult && updateResult.length === 0) {
+              // No existing record found, create new one
+              console.log('No existing zoom_sessions record found, creating new one for meeting:', session.zoom_meeting_id);
+
+              const { error: insertError } = await client
+                .from('zoom_sessions')
+                .insert({
+                  meeting_id: session.zoom_meeting_id,
+                  session_id: sessionId,
+                  join_url: zoomMeeting.join_url || session.meeting_url || '',
+                  start_url: zoomMeeting.start_url || '',
+                  duration: duration,
+                  host_id: zoomMeeting.host_id || '',
+                  host_user_id: '', // Would need to get this from session data
+                  meeting_uuid: session.zoom_meeting_id, // Use meeting_id as fallback
+                  start_time: sessionStartTime,
+                  password: zoomMeeting.password || '',
+                  status: 'active',
+                  creation_source: 'session_edit',
+                });
+
+              if (insertError) {
+                console.error('Error creating zoom_sessions record:', insertError);
+              } else {
+                console.log('Successfully created new zoom_sessions record for meeting:', session.zoom_meeting_id);
+              }
+            } else {
+              console.log('Successfully updated zoom_sessions table for meeting:', session.zoom_meeting_id);
+            }
+          } catch (zoomSessionError) {
+            console.error('Error with zoom_sessions table operation:', zoomSessionError);
+            // Don't fail the whole operation, just log the error
           }
 
-          if (zoomSessionUpdate.warning) {
-            return {
-              success: true,
-              warning: zoomSessionUpdate.warning,
-            };
-          }
         } catch (zoomError) {
           console.error('Failed to update Zoom meeting:', zoomError);
           return {

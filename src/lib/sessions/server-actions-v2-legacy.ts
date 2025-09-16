@@ -118,7 +118,7 @@ export const updateZoomSessionAction = withSession(
                     ),
                     host_id: zoomMeeting.host_id || '',
                     host_user_id: '', // Would need to get this from session data
-                    meeting_uuid: zoomMeeting.uuid || '',
+                    meeting_uuid: (zoomMeeting as any).uuid || session.zoom_meeting_id || '',
                     start_time: sessionData.startTime || session.start_time || '',
                     password: zoomMeeting.password,
                     status: 'active',
