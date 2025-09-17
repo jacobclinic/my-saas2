@@ -2,6 +2,8 @@ import './globals.css';
 
 import { cookies } from 'next/headers';
 import classNames from 'clsx';
+import * as Sentry from '@sentry/nextjs';
+import type { Metadata } from 'next';
 
 import ThemeSetter from '~/components/ThemeSetter';
 import Fonts from '~/components/Fonts';
@@ -37,31 +39,36 @@ function getClassName() {
   });
 }
 
-export const metadata = {
-  title: configuration.site.name,
-  description: configuration.site.description,
-  metadataBase: new URL(configuration.site.siteUrl!),
-  openGraph: {
-    url: configuration.site.siteUrl,
-    siteName: configuration.site.siteName,
-    description: configuration.site.description,
-  },
-  twitter: {
-    card: 'summary_large_image',
+export function generateMetadata(): Metadata {
+  return {
     title: configuration.site.name,
     description: configuration.site.description,
-    creator: configuration.site.twitterHandle,
-  },
-  icons: {
-    icon: '/assets/images/favicon/favicon.ico',
-    shortcut: '/shortcut-icon.png',
-    apple: '/assets/images/favicon/apple-touch-icon.png',
-    other: {
-      rel: 'apple-touch-icon-precomposed',
-      url: '/apple-touch-icon-precomposed.png',
+    metadataBase: new URL(configuration.site.siteUrl!),
+    openGraph: {
+      url: configuration.site.siteUrl,
+      siteName: configuration.site.siteName,
+      description: configuration.site.description,
     },
-  },
-};
+    twitter: {
+      card: 'summary_large_image',
+      title: configuration.site.name,
+      description: configuration.site.description,
+      creator: configuration.site.twitterHandle,
+    },
+    icons: {
+      icon: '/assets/images/favicon/favicon.ico',
+      shortcut: '/shortcut-icon.png',
+      apple: '/assets/images/favicon/apple-touch-icon.png',
+      other: {
+        rel: 'apple-touch-icon-precomposed',
+        url: '/apple-touch-icon-precomposed.png',
+      },
+    },
+    other: {
+      ...Sentry.getTraceData()
+    }
+  };
+}
 
 export const viewport = {
   themeColor: configuration.site.themeColor,
