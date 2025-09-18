@@ -7,7 +7,7 @@ import { generateWeeklyOccurrences, RecurrenceInput } from "../utils/recurrence-
 import { TimeSlot } from "../classes/types/class-v2";
 import { createMultipleRecurringSessions, deleteSessions, updateSessionAsync, updateSession, updateSessionWithZoomFields } from "./database/mutations";
 import { InsertSessionData } from "./types/session-v2";
-import { getNextSessionByClassID, getSessionById, getSessionDataById } from "./database/queries";
+import { getNextSessionByClassID, getSessionById, getSessionDataById, getSessionDataByIdWithZoomUser } from "./database/queries";
 import type { UpcomingSession, UpdateSessionData } from "./types/session-v2";
 import { getZoomSessionByZoomMeetingId } from "../zoom_sessions/database/queries";
 import { ZoomService } from "../zoom/v2/zoom.service";
@@ -154,8 +154,8 @@ export class SessionService {
         try {
             const { sessionId, sessionData } = params;
 
-            // Get existing session with full details
-            const existingSession = await getSessionDataById(this.supabaseClient, sessionId);
+            // Get existing session with full details including zoom_user data
+            const existingSession = await getSessionDataByIdWithZoomUser(this.supabaseClient, sessionId);
             if (!existingSession) {
                 this.logger.error("Session not found", { sessionId });
                 return failure(new ServiceError("Session not found"));
@@ -312,7 +312,7 @@ export class SessionService {
     ): Promise<Result<{ meetingId: string; joinUrl: string }, ServiceError>> {
         try {
             // Get tutor's zoom user ID
-            if (!session.class?.tutor?.zoom_user?.[0]?.zoom_user_id) {
+            if (!session.class?.tutor?.zoom_user || session.class.tutor.zoom_user.length === 0) {
                 return failure(new ServiceError("Tutor does not have a valid Zoom account"));
             }
 

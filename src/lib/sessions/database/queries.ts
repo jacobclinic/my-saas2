@@ -332,6 +332,72 @@ export async function getSessionDataById(
   }
 }
 
+/**
+ * Gets session data by ID with zoom_user information needed for Zoom meeting creation
+ * Used specifically for session updates that may need to create Zoom meetings
+ */
+export async function getSessionDataByIdWithZoomUser(
+  client: SupabaseClient<Database>,
+  sessionId: string,
+): Promise<any> {
+  try {
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(`
+        *,
+        class:${CLASSES_TABLE}!class_id (
+          id,
+          name,
+          subject,
+          tutor_id,
+          tutor:${USERS_TABLE}!tutor_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            zoom_user: ${ZOOM_USERS_TABLE}!tutor_id (
+              id,
+              zoom_user_id,
+              email
+            )
+          )
+        )
+      `)
+      .eq('id', sessionId)
+      .single();
+
+    if (error) {
+      throw new Error(`Error fetching session with zoom user: ${error.message}`);
+    }
+
+    // Transform the data structure similar to other queries
+    let classTemp;
+    let tutorTemp;
+    if (data?.class) {
+      if (Array.isArray(data.class)) classTemp = data.class[0];
+      else classTemp = data.class;
+    }
+    if (classTemp?.tutor) {
+      if (Array.isArray(classTemp.tutor)) tutorTemp = classTemp.tutor[0];
+      else tutorTemp = classTemp.tutor;
+    }
+
+    return {
+      ...data,
+      class: classTemp ? {
+        id: classTemp.id,
+        name: classTemp.name,
+        subject: classTemp.subject,
+        tutor_id: classTemp.tutor_id,
+        tutor: tutorTemp,
+      } : undefined,
+    };
+  } catch (error) {
+    console.error('Failed to fetch session with zoom user by ID:', error);
+    throw error;
+  }
+}
+
 export async function getAllUpcommingSessionsData(
   client: SupabaseClient<Database>,
 ): Promise<UpcomingSession[] | []> {
