@@ -366,3 +366,52 @@ export async function updateSessionAsync(client: Client, sessionId: string, sess
     return failure(new DatabaseError("Something went wrong while updating the session"));
   }
 }
+
+/**
+ * @description Updates a session with zoom meeting fields (zoom_meeting_id, meeting_url)
+ * @param client - Supabase client instance
+ * @param sessionId - ID of the session to update
+ * @param data - Session data to update including zoom fields
+ */
+export async function updateSessionWithZoomFields(
+  client: Client,
+  sessionId: string,
+  data: {
+    zoom_meeting_id?: string | null;
+    meeting_url?: string | null;
+    title?: string | null;
+    description?: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
+    updated_at?: string | null;
+  }
+): Promise<Result<UpdateSessionData, DatabaseError>> {
+  try {
+    const { data: updatedSession, error } = await client
+      .from(SESSIONS_TABLE)
+      .update(data)
+      .eq('id', sessionId)
+      .select()
+      .single();
+
+    if (error) {
+      logger.error("Failed to update session with zoom fields", {
+        error,
+        sessionId,
+        data
+      });
+      return failure(new DatabaseError("Failed to update session with zoom fields"));
+    }
+
+    return success(updatedSession);
+  } catch (error) {
+    logger.error("Something went wrong while updating session with zoom fields", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      sessionId,
+      data
+    });
+    return failure(new DatabaseError("Something went wrong while updating session with zoom fields"));
+  }
+}
