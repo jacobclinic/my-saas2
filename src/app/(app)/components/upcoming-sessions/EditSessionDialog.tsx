@@ -158,11 +158,47 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   };
 
   const handleSubmit = async () => {
+    // Prevent submission if there are validation errors
+    if (timeValidationError) {
+      toast.error(timeValidationError);
+      return;
+    }
+
     await updateSession();
     onClose();
   };
 
-  const isValid = sessionDate && sessionStartTime && sessionEndTime;
+  // Basic validation - all fields present
+  const hasAllFields = sessionDate && sessionStartTime && sessionEndTime;
+
+  // Time validation
+  const getTimeValidationError = () => {
+    if (!hasAllFields) return null;
+
+    const combinedStartTime = combineDateAndTime(sessionDate, sessionStartTime);
+    const combinedEndTime = combineDateAndTime(sessionDate, sessionEndTime);
+
+    if (!combinedStartTime || !combinedEndTime) return null;
+
+    const startDateTime = new Date(combinedStartTime);
+    const endDateTime = new Date(combinedEndTime);
+    const now = new Date();
+
+    // Check if session is in the past
+    if (startDateTime < now) {
+      return "Cannot schedule session in the past";
+    }
+
+    // Check if end time is after start time
+    if (endDateTime <= startDateTime) {
+      return "End time must be after start time";
+    }
+
+    return null;
+  };
+
+  const timeValidationError = getTimeValidationError();
+  const isValid = hasAllFields && !timeValidationError;
 
   const updateSession = async () => {
     if (sessionId) {
@@ -259,6 +295,12 @@ const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               />
             </div>
           </div>
+
+          {timeValidationError && (
+            <div className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
+              {timeValidationError}
+            </div>
+          )}
         </div>
       </BaseDialog>
     </>

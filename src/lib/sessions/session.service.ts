@@ -13,6 +13,9 @@ import { getZoomSessionByZoomMeetingId } from "../zoom_sessions/database/queries
 import { ZoomService } from "../zoom/v2/zoom.service";
 import { zoomService } from "../zoom/zoom.service";
 import { createZoomSession } from "../zoom_sessions/database/mutations";
+import { getStudentsByClassId } from "../notifications/queries";
+import { EmailService } from "~/core/email/send-email-mailtrap";
+import { getNotifyClassUpdateTemplate } from "~/core/email/templates/emailTemplate";
 
 type Client = SupabaseClient<Database>;
 
@@ -161,6 +164,9 @@ export class SessionService {
                 return failure(new ServiceError("Session not found"));
             }
 
+            // Basic time validation is now handled in frontend
+            // Additional server-side validation could be added here if needed
+
             // Check if time has changed
             const timeChanged = (sessionData.startTime || sessionData.endTime) &&
                 ((sessionData.startTime &&
@@ -288,6 +294,26 @@ export class SessionService {
                 }
             }
 
+            // Notify enrolled students if time changed
+            if (timeChanged && existingSession.class_id) {
+                try {
+                    await this.notifyStudentsOfSessionUpdate({
+                        sessionId,
+                        classId: existingSession.class_id,
+                        className: existingSession.class?.name || 'Class',
+                        originalStartTime: existingSession.start_time || '',
+                        newStartTime: sessionData.startTime || existingSession.start_time || '',
+                        newEndTime: sessionData.endTime || existingSession.end_time || ''
+                    });
+                } catch (notificationError) {
+                    // Don't fail the whole operation if notifications fail
+                    this.logger.error("Failed to send student notifications", {
+                        error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+                        sessionId
+                    });
+                }
+            }
+
             this.logger.info("Session updated successfully", { sessionId, timeChanged });
             return success({});
 
@@ -406,6 +432,125 @@ export class SessionService {
             this.logger.error("Error updating zoom_sessions record", {
                 error: error instanceof Error ? error.message : String(error),
                 meetingId
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Notifies enrolled students about session time changes
+     */
+    private async notifyStudentsOfSessionUpdate(params: {
+        sessionId: string;
+        classId: string;
+        className: string;
+        originalStartTime: string;
+        newStartTime: string;
+        newEndTime: string;
+    }): Promise<void> {
+        try {
+            const { sessionId, classId, className, originalStartTime, newStartTime, newEndTime } = params;
+
+            // Get enrolled students
+            const enrolledStudents = await getStudentsByClassId(this.supabaseClient, classId);
+
+            if (!enrolledStudents || enrolledStudents.length === 0) {
+                this.logger.info("No enrolled students to notify", { sessionId, classId });
+                return;
+            }
+
+            const emailService = EmailService.getInstance();
+
+            // Format dates for display
+            const originalDate = new Date(originalStartTime);
+            const newStartDate = new Date(newStartTime);
+            const newEndDate = new Date(newEndTime);
+
+            const originalTimeStr = originalDate.toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'UTC'
+            });
+
+            const newTimeStr = `${newStartDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'UTC'
+            })} from ${newStartDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'UTC'
+            })} to ${newEndDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'UTC'
+            })}`;
+
+            // Send notifications to all enrolled students
+            const notificationPromises = enrolledStudents.map(async (enrollment) => {
+                try {
+                    const student = enrollment.student;
+
+                    if (!student.email) {
+                        this.logger.warn("Student has no email address", {
+                            studentId: student.id,
+                            sessionId
+                        });
+                        return;
+                    }
+
+                    const emailTemplate = getNotifyClassUpdateTemplate({
+                        className,
+                        studentName: student.first_name || 'Student',
+                        firstClassDate: originalTimeStr,
+                        updatedClassDay: newStartDate.toLocaleDateString('en-US', { weekday: 'long' }),
+                        updatedClassTime: newTimeStr
+                    });
+
+                    await emailService.sendEmail({
+                        from: process.env.EMAIL_SENDER!,
+                        to: student.email,
+                        subject: `Class Schedule Update: ${className}`,
+                        html: emailTemplate.html,
+                        text: emailTemplate.text || `Your class ${className} has been rescheduled from ${originalTimeStr} to ${newTimeStr}.`
+                    });
+
+                    this.logger.info("Sent session update notification", {
+                        studentEmail: student.email,
+                        sessionId,
+                        className
+                    });
+
+                    // Add small delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 200));
+
+                } catch (emailError) {
+                    this.logger.error("Failed to send notification to student", {
+                        error: emailError instanceof Error ? emailError.message : String(emailError),
+                        studentId: enrollment.student.id,
+                        sessionId
+                    });
+                }
+            });
+
+            await Promise.allSettled(notificationPromises);
+
+            this.logger.info("Completed sending session update notifications", {
+                sessionId,
+                classId,
+                studentCount: enrolledStudents.length
+            });
+
+        } catch (error) {
+            this.logger.error("Error in notifyStudentsOfSessionUpdate", {
+                error: error instanceof Error ? error.message : String(error),
+                params
             });
             throw error;
         }
