@@ -2307,3 +2307,53 @@ export async function getSessionById( client: SupabaseClient<Database>,  session
     throw error;
   }
 }
+
+/**
+ * Gets the first future session for a class
+ */
+export async function getFirstFutureSessionForClass(
+  client: SupabaseClient<Database>,
+  classId: string
+): Promise<any | null> {
+  try {
+    const { data, error } = await client
+      .from(SESSIONS_TABLE)
+      .select(`
+        id,
+        class_id,
+        start_time,
+        end_time,
+        title,
+        description,
+        status,
+        class:${CLASSES_TABLE}!class_id (
+          id,
+          name,
+          tutor_id,
+          tutor:${USERS_TABLE}!tutor_id (
+            id,
+            first_name,
+            last_name,
+            zoom_user:${ZOOM_USERS_TABLE}!tutor_id (
+              zoom_user_id,
+              email
+            )
+          )
+        )
+      `)
+      .eq('class_id', classId)
+      .gt('start_time', new Date().toISOString())
+      .order('start_time', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Failed to get first future session for class', { classId, error });
+    return null;
+  }
+}

@@ -4,14 +4,16 @@ import { createUnassignedZoomUser, updateZoomUser } from "./database/mutations";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "~/database.types";
 import getSupabaseServerActionClient from "~/core/supabase/action-client";
-import { getSessionsTillTomorrowWithZoomUser } from "~/lib/sessions/database/queries";
-import { createZoomSession } from "~/lib/zoom_sessions/database/mutations";
+import { getSessionsTillTomorrowWithZoomUser, getSessionDataByIdWithZoomUser, getFirstFutureSessionForClass } from "~/lib/sessions/database/queries";
+import { createZoomSession, updateZoomSession } from "~/lib/zoom_sessions/database/mutations";
+import { getZoomSessionBySessionId } from "~/lib/zoom_sessions/database/queries";
 // --- MODIFIED: Added new types for registration
 import { DBZoomUser, ZoomCreateUserMeetingRequest, ZoomCreateUserRequest, ZoomMeetingRecordingUrl, ZoomRegistrant, ZoomUpdateRegistrantStatusRequest } from "./types";
 import { ZOOM_SESSIONS_TABLE } from "~/lib/db-tables";
 import { getAllUnassignedZoomUsers, getAllZoomUsersWithTutor, getUnassignedZoomUsers, getZoomUserById, getZoomUserByTutorId } from "./database/queries";
 import { DatabaseError, ZoomError } from "~/lib/shared/errors";
 import { failure, Result, success } from "~/lib/shared/result";
+import { ZoomSessionResult } from "./zoom-session-types";
 
 
 const logger = getLogger();
@@ -158,6 +160,193 @@ export class ZoomService {
         } catch (error) {
             logger.error(error, "Failed to get existing zoom sessions");
             return [];
+        }
+    }
+
+    /**
+     * Creates/updates Zoom meeting for a specific session - TARGETED
+     */
+    async createOrUpdateZoomMeetingForSession(sessionId: string): Promise<Result<ZoomSessionResult, ZoomError>> {
+        try {
+            const session = await getSessionDataByIdWithZoomUser(this.supabaseClient, sessionId);
+            if (!session) {
+                return failure(new ZoomError(`Session ${sessionId} not found`));
+            }
+
+            const existingZoomSession = await getZoomSessionBySessionId(this.supabaseClient, sessionId);
+
+            if (existingZoomSession) {
+                logger.info(`Updating existing Zoom meeting for session ${sessionId}`);
+                const result = await this.updateZoomMeetingForSession(session, existingZoomSession);
+                return success(result);
+            } else {
+                logger.info(`Creating new Zoom meeting for session ${sessionId}`);
+                const result = await this.createZoomMeetingForSessionInternal(session);
+                return success(result);
+            }
+        } catch (error) {
+            logger.error(`Failed to create/update Zoom meeting for session ${sessionId}`, error);
+            return failure(new ZoomError(`Failed to manage Zoom meeting: ${error instanceof Error ? error.message : String(error)}`));
+        }
+    }
+
+    /**
+     * Creates Zoom meeting for first session if within cron window (today/tomorrow)
+     */
+    async createZoomMeetingForFirstSessionIfNeeded(classId: string): Promise<Result<ZoomSessionResult | null, ZoomError>> {
+        try {
+            const firstSession = await getFirstFutureSessionForClass(this.supabaseClient, classId);
+            if (!firstSession) {
+                logger.info(`No future sessions found for class ${classId}`);
+                return success(null);
+            }
+
+            // Only create if session is within today/tomorrow (cron window)
+            const sessionDate = new Date(firstSession.start_time);
+            const isWithinCronWindow = this.isWithinDailyCronWindow(sessionDate);
+
+            if (isWithinCronWindow) {
+                logger.info(`Creating Zoom meeting for first session of class ${classId} (within cron window)`, {
+                    sessionId: firstSession.id,
+                    sessionDate: sessionDate.toISOString()
+                });
+
+                const result = await this.createOrUpdateZoomMeetingForSession(firstSession.id);
+                return success(result.success ? result.data : null);
+            } else {
+                logger.info(`First session of class ${classId} is beyond cron window, will be handled by daily cron`, {
+                    sessionId: firstSession.id,
+                    sessionDate: sessionDate.toISOString()
+                });
+                return success(null);
+            }
+        } catch (error) {
+            logger.error(`Failed to create Zoom meeting for first class session ${classId}`, error);
+            return failure(new ZoomError(`Failed to create meeting for first class session: ${error instanceof Error ? error.message : String(error)}`));
+        }
+    }
+
+    /**
+     * Check if session falls within daily cron window (today + tomorrow)
+     */
+    private isWithinDailyCronWindow(sessionDate: Date): boolean {
+        const now = new Date();
+        const tomorrowEnd = new Date(Date.UTC(
+            now.getUTCFullYear(),
+            now.getUTCMonth(),
+            now.getUTCDate() + 1,
+            23, 59, 59, 999
+        ));
+
+        return sessionDate <= tomorrowEnd;
+    }
+
+    /**
+     * Creates Zoom meeting for a session (internal method)
+     */
+    private async createZoomMeetingForSessionInternal(session: any): Promise<ZoomSessionResult> {
+        try {
+            const sessionStartTime = new Date(session.start_time);
+            const sessionEndTime = new Date(session.end_time);
+            const meetingDurationMinutes = Math.ceil((sessionEndTime.getTime() - sessionStartTime.getTime()) / (1000 * 60));
+            const meetingTitle = session.title || `${session.class.name} - Session`;
+
+            if (!session.class?.tutor?.zoom_user?.[0]?.zoom_user_id) {
+                throw new Error('No valid Zoom user found for tutor');
+            }
+
+            const zoomUserId = session.class.tutor.zoom_user[0].zoom_user_id;
+
+            const meeting = await this.client.createUserMeeting({
+                userId: zoomUserId,
+                body: {
+                    topic: meetingTitle,
+                    agenda: session.description || '',
+                    default_password: false,
+                    duration: meetingDurationMinutes,
+                    pre_schedule: false,
+                    start_time: sessionStartTime.toISOString(),
+                    type: 2,
+                    timezone: "UTC",
+                    settings: {
+                        waiting_room: false,
+                        meeting_authentication: false,
+                        approval_type: 0,
+                        join_before_host: false,
+                        jbh_time: 15,
+                        mute_upon_entry: true,
+                        host_video: true,
+                        participant_video: false,
+                        auto_recording: 'cloud',
+                    }
+                }
+            });
+
+            const createZoomSessionPayload = {
+                session_id: session.id,
+                meeting_uuid: meeting.uuid,
+                meeting_id: meeting.id!.toString(),
+                host_id: zoomUserId,
+                host_user_id: session.class.tutor.id,
+                type: meeting.type,
+                status: meeting.status,
+                start_time: sessionStartTime.toISOString(),
+                duration: meetingDurationMinutes,
+                timezone: "UTC",
+                join_url: meeting.join_url,
+                start_url: meeting.start_url,
+                password: "123456",
+                settings_json: meeting.settings,
+            };
+
+            await createZoomSession(this.supabaseClient, createZoomSessionPayload);
+
+            return {
+                sessionId: session.id,
+                status: 'success',
+                meetingId: meeting.id!.toString()
+            };
+        } catch (error) {
+            logger.error(`Failed to create Zoom meeting for session ${session.id}`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Updates existing Zoom meeting with new session timing
+     */
+    private async updateZoomMeetingForSession(
+        session: any,
+        existingZoomSession: any
+    ): Promise<ZoomSessionResult> {
+        try {
+            const sessionStartTime = new Date(session.start_time);
+            const sessionEndTime = new Date(session.end_time);
+            const meetingDurationMinutes = Math.ceil((sessionEndTime.getTime() - sessionStartTime.getTime()) / (1000 * 60));
+
+            // Update Zoom meeting via API (use the old zoom service for now)
+            const { zoomService } = await import('../zoom.service');
+            const updatedMeeting = await zoomService.updateMeeting(existingZoomSession.meeting_id, {
+                start_time: sessionStartTime.toISOString(),
+                duration: meetingDurationMinutes,
+                topic: session.title || `${session.class.name} - Session`
+            });
+
+            // Update our database record
+            await updateZoomSession(this.supabaseClient, session.id, {
+                start_time: sessionStartTime.toISOString(),
+                duration: meetingDurationMinutes,
+                settings_json: updatedMeeting.settings
+            });
+
+            return {
+                sessionId: session.id,
+                status: 'updated',
+                meetingId: existingZoomSession.meeting_id
+            };
+        } catch (error) {
+            logger.error(`Failed to update Zoom meeting for session ${session.id}`, error);
+            throw error;
         }
     }
 

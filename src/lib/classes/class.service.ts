@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "~/database.types";
-import { CreateClassPayload, DbClassType, UpdateClassData } from "./types/class-v2";
+import { CreateClassPayload, DbClassType, UpdateClassData, TimeSlot } from "./types/class-v2";
 import { createClass, updateClass, deleteClass } from "./database/mutations-v2";
 import { failure, success } from "../shared/result";
 import { Logger } from "pino";
@@ -9,15 +9,22 @@ import { getClassById } from "./database/queries";
 import { isAdminOrCLassTutor } from "../user/database/queries";
 import { updateClassShortUrl } from "./database/mutations-v2";
 import { Result } from "../shared/result";
+import { ZoomService } from "../zoom/v2/zoom.service";
+import { UpstashService } from "../upstash/upstash.service";
+import { isEqual } from "../utils/lodash-utils";
 
 export class ClassService {
 
     private supabaseClient: SupabaseClient<Database>;
     private logger: Logger;
+    private zoomService: ZoomService;
+    private upstashService: UpstashService;
 
     constructor(supabaseClient: SupabaseClient<Database>, logger: Logger) {
         this.supabaseClient = supabaseClient;
         this.logger = logger;
+        this.zoomService = new ZoomService(supabaseClient);
+        this.upstashService = UpstashService.getInstance(logger);
     }
 
     async createClass(classData: CreateClassPayload) {
@@ -160,12 +167,88 @@ export class ClassService {
             this.logger.info('Class short URL updated successfully', { classId, shortUrlCode });
             return success(undefined);
         } catch (error) {
-            this.logger.error('Error updating class short URL', { 
+            this.logger.error('Error updating class short URL', {
                 error: error instanceof Error ? error.message : String(error),
                 classId,
                 shortUrlCode
             });
             return failure(new ServiceError('Error updating class short URL'));
+        }
+    }
+
+    /**
+     * Updates class with immediate response and background processing for heavy operations
+     */
+    async updateClassWithBackgroundProcessing(
+        classId: string,
+        classData: UpdateClassData,
+        originalClass: DbClassType,
+        userId: string
+    ): Promise<Result<{ message?: string; queuedOperations?: boolean }>> {
+        try {
+            // ✅ IMMEDIATE: Update class data
+            const updateClassResult = await this.updateClass(classId, classData, originalClass);
+            if (!updateClassResult.success) {
+                return failure(new ServiceError(updateClassResult.error.message));
+            }
+
+            // Check if time slots changed
+            if (!isEqual(originalClass.time_slots, classData.time_slots)) {
+                this.logger.info(`Time slots changed for class ${classId}, processing update`);
+
+                // ✅ IMMEDIATE: Create Zoom meeting for first session if within cron window
+                const firstSessionZoomResult = await this.zoomService.createZoomMeetingForFirstSessionIfNeeded(classId);
+                if (firstSessionZoomResult.success && firstSessionZoomResult.data) {
+                    this.logger.info(`First session Zoom meeting created for class ${classId}`, {
+                        sessionId: firstSessionZoomResult.data.sessionId,
+                        meetingId: firstSessionZoomResult.data.meetingId
+                    });
+                } else if (!firstSessionZoomResult.success) {
+                    this.logger.warn(`Failed to create first session Zoom meeting for class ${classId}`, {
+                        error: firstSessionZoomResult.error
+                    });
+                }
+
+                // ✅ BACKGROUND: Queue heavy operations (session recreation + notifications)
+                const queueResult = await this.upstashService.publishToUpstash({
+                    url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/public/class/async-update`,
+                    body: {
+                        classId,
+                        originalTimeSlots: originalClass.time_slots,
+                        newTimeSlots: classData.time_slots,
+                        startingDate: originalClass.starting_date,
+                        newStartingDate: classData.starting_date,
+                        className: updateClassResult.data.name,
+                        operation: 'recreate_sessions_and_notify',
+                        requestedAt: new Date().toISOString(),
+                        userId
+                    },
+                    retries: 3
+                });
+
+                if (queueResult.success) {
+                    this.logger.info(`Background processing queued for class ${classId}`, {
+                        messageId: queueResult.data.messageId
+                    });
+                    return success({
+                        message: 'Class updated successfully. Sessions are being recreated in the background.',
+                        queuedOperations: true
+                    });
+                } else {
+                    this.logger.error(`Failed to queue background processing for class ${classId}`, {
+                        error: queueResult.error
+                    });
+                    return failure(new ServiceError('Failed to queue background processing'));
+                }
+            }
+
+            return success({ message: 'Class updated successfully.' });
+        } catch (error) {
+            this.logger.error('Error in updateClassWithBackgroundProcessing', {
+                error: error instanceof Error ? error.message : String(error),
+                classId
+            });
+            return failure(new ServiceError('Failed to update class'));
         }
     }
 }

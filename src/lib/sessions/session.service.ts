@@ -22,10 +22,12 @@ type Client = SupabaseClient<Database>;
 export class SessionService {
     private supabaseClient: Client;
     private logger: Logger;
+    private zoomService: ZoomService;
 
     constructor(supabaseClient: Client, logger: Logger) {
         this.supabaseClient = supabaseClient;
         this.logger = logger;
+        this.zoomService = new ZoomService(supabaseClient);
     }
 
     async createRecurringSessions(classId: string, timeSlots: TimeSlot[], startDate: string): Promise<Result<InsertSessionData[], DatabaseError>> {
@@ -197,100 +199,29 @@ export class SessionService {
                 return failure(new ServiceError(updateResult.error.message));
             }
 
-            // Handle Zoom meeting synchronization if time changed
+            // ✅ NEW: Handle Zoom meeting synchronization with targeted approach
             if (timeChanged) {
-                const sessionStartTime = sessionData.startTime || existingSession.start_time || '';
-                const sessionEndTime = sessionData.endTime || existingSession.end_time || '';
-                const sessionTitle = sessionData.title || existingSession.title || existingSession?.class?.name || 'Session';
+                this.logger.info(`Date/time changed for session ${sessionId}, updating Zoom meeting`, {
+                    originalStart: existingSession.start_time,
+                    originalEnd: existingSession.end_time,
+                    newStart: sessionData.startTime,
+                    newEnd: sessionData.endTime
+                });
 
-                if (existingSession.zoom_meeting_id) {
-                    // Update existing Zoom meeting
-                    try {
-                        const zoomMeeting = await zoomService.updateMeeting(
-                            existingSession.zoom_meeting_id,
-                            {
-                                topic: sessionTitle,
-                                start_time: sessionStartTime,
-                                duration: this.getDurationInMinutes(sessionStartTime, sessionEndTime),
-                                type: 2,
-                                timezone: 'UTC',
-                            }
-                        );
+                // Use the new targeted ZoomService method
+                const zoomResult = await this.zoomService.createOrUpdateZoomMeetingForSession(sessionId);
 
-                        // Update zoom_sessions table
-                        await this.updateZoomSessionRecord(existingSession.zoom_meeting_id, {
-                            join_url: zoomMeeting.join_url || existingSession.meeting_url || '',
-                            start_url: zoomMeeting.start_url || '',
-                            duration: this.getDurationInMinutes(sessionStartTime, sessionEndTime),
-                            start_time: sessionStartTime,
-                        });
-
-                        this.logger.info("Successfully updated Zoom meeting", {
-                            sessionId,
-                            zoomMeetingId: existingSession.zoom_meeting_id
-                        });
-
-                    } catch (zoomError) {
-                        this.logger.error("Failed to update Zoom meeting", {
-                            error: zoomError instanceof Error ? zoomError.message : String(zoomError),
-                            sessionId,
-                            zoomMeetingId: existingSession.zoom_meeting_id
-                        });
-                        return success({
-                            warning: 'Session updated successfully, but there was a problem communicating with Zoom. Your changes are saved, but meeting link might need updating separately.'
-                        });
-                    }
+                if (zoomResult.success) {
+                    this.logger.info(`Zoom meeting ${zoomResult.data.status} for session ${sessionId}`, {
+                        meetingId: zoomResult.data.meetingId
+                    });
                 } else {
-                    // Create new Zoom meeting for sessions that don't have one yet
-                    try {
-                        const zoomMeetingResult = await this.createZoomMeetingForSession(
-                            existingSession,
-                            sessionStartTime,
-                            sessionEndTime,
-                            sessionTitle
-                        );
-
-                        if (!zoomMeetingResult.success) {
-                            this.logger.error("Failed to create Zoom meeting for session update", {
-                                error: zoomMeetingResult.error.message,
-                                sessionId
-                            });
-                            return success({
-                                warning: 'Session updated successfully, but failed to create Zoom meeting. The meeting will be created automatically closer to the session date.'
-                            });
-                        }
-
-                        // Update session with new zoom_meeting_id
-                        const zoomUpdateResult = await updateSessionWithZoomFields(
-                            this.supabaseClient,
-                            sessionId,
-                            {
-                                zoom_meeting_id: zoomMeetingResult.data.meetingId,
-                                meeting_url: zoomMeetingResult.data.joinUrl
-                            }
-                        );
-
-                        if (!zoomUpdateResult.success) {
-                            this.logger.error("Failed to update session with Zoom meeting ID", {
-                                error: zoomUpdateResult.error.message,
-                                sessionId
-                            });
-                        }
-
-                        this.logger.info("Successfully created Zoom meeting for session update", {
-                            sessionId,
-                            zoomMeetingId: zoomMeetingResult.data.meetingId
-                        });
-
-                    } catch (error) {
-                        this.logger.error("Error creating Zoom meeting for session update", {
-                            error: error instanceof Error ? error.message : String(error),
-                            sessionId
-                        });
-                        return success({
-                            warning: 'Session updated successfully, but failed to create Zoom meeting. The meeting will be created automatically closer to the session date.'
-                        });
-                    }
+                    this.logger.error(`Failed to manage Zoom meeting for session ${sessionId}`, {
+                        error: zoomResult.error
+                    });
+                    return success({
+                        warning: 'Session updated successfully, but there was an issue with the Zoom meeting. Please check the meeting link.'
+                    });
                 }
             }
 

@@ -48,3 +48,32 @@ export async function createZoomSession(client: Client, data: CreateZoomSessionP
     throw new Error('Failed to create zoom session. Please try again.');
   }
 }
+
+export async function updateZoomSession(
+  client: Client,
+  sessionId: string,
+  updates: {
+    start_time?: string;
+    duration?: number | null;
+    settings_json?: any;
+  }
+) {
+  try {
+    const { data, error } = await client
+      .from(ZOOM_SESSIONS_TABLE)
+      .update(updates)
+      .eq('session_id', sessionId)
+      .select()
+      .single();
+
+    if (error) {
+      logger.error('Failed to update Zoom session', { sessionId, error });
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    logger.error('Error updating Zoom session', { sessionId, error });
+    throw new Error('Error updating Zoom session');
+  }
+}

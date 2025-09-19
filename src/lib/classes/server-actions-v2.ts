@@ -146,115 +146,22 @@ export const updateClassAction = withSession(
         return updateClassFailure(originalClassResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
       }
 
-      const updateClassResult = await classService.updateClass(params.classId, params.classData, originalClassResult.data)
+      // ✅ NEW: Use enhanced ClassService for orchestration and background processing
+      const classUpdateResult = await classService.updateClassWithBackgroundProcessing(
+        params.classId,
+        params.classData,
+        originalClassResult.data,
+        userId
+      );
 
-      if (!updateClassResult.success) {
-        return updateClassFailure(updateClassResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
+      if (!classUpdateResult.success) {
+        return updateClassFailure(classUpdateResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
       }
 
-      if (!isEqual(originalClassResult.data.time_slots, params.classData.time_slots)) {
-        const deleteSessionsResult = await sessionService.deleteSessions(params.classId, originalClassResult.data.starting_date);
-        if (!deleteSessionsResult.success) {
-          return updateClassFailure(deleteSessionsResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
-        }
-        const createSessionsResult = await sessionService.createRecurringSessions(params.classId, params.classData.time_slots as unknown as TimeSlot[], params.classData.starting_date!);
-        if (!createSessionsResult.success) {
-          return updateClassFailure(createSessionsResult.error.message, ErrorCodes.SERVICE_LEVEL_ERROR);
-        }
-
-        await zoomService.createMeetingsForTomorrowSessions();
-
-        // Todo : Refactor the notification service.
-        if (!isEqual(originalClassResult.data.time_slots, params.classData.time_slots)) {
-          try {
-            // Helper function to get the next occurrence of a specific day
-            const getNextOccurrenceOfDay = (dayName: string): Date => {
-              const daysOfWeek = [
-                'sunday',
-                'monday',
-                'tuesday',
-                'wednesday',
-                'thursday',
-                'friday',
-                'saturday',
-              ];
-              const targetDayIndex = daysOfWeek.indexOf(dayName.toLowerCase());
-
-              if (targetDayIndex === -1) {
-                throw new Error(`Invalid day name: ${dayName}`);
-              }
-
-              const today = new Date();
-              const currentDayIndex = today.getDay();
-
-              // Calculate days until the target day
-              let daysUntilTarget = targetDayIndex - currentDayIndex;
-
-              // If the target day is today or has passed this week, get it for next week
-              if (daysUntilTarget <= 0) {
-                daysUntilTarget += 7;
-              }
-
-              // Create the next occurrence date
-              const nextOccurrence = new Date(today);
-              nextOccurrence.setDate(today.getDate() + daysUntilTarget);
-
-              return nextOccurrence;
-            };
-
-            // Format the time slots for notification - combine multiple slots if they exist
-            const timeSlots = params.classData.time_slots as unknown as TimeSlot[];
-            const scheduleInfo = timeSlots
-              .map((slot) => `${slot.day} ${slot.startTime}-${slot.endTime}`)
-              .join(', ');
-
-            // Use the first time slot's day and combined time for the template
-            const firstTimeSlot = timeSlots[0];
-
-            // Calculate the next occurrence of the updated class day
-            const nextSessionDate = getNextOccurrenceOfDay(
-              firstTimeSlot.day,
-            ).toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            });
-
-            await Promise.all([
-              notifyStudentsAfterClassScheduleUpdate(client, {
-                classId: params.classId,
-                className: updateClassResult.data.name,
-                updatedClassDay: firstTimeSlot.day,
-                updatedStartTime: firstTimeSlot.startTime,
-                updatedEndTime: scheduleInfo.includes(',')
-                  ? scheduleInfo
-                  : firstTimeSlot.endTime,
-                nextClassDate: nextSessionDate,
-              }),
-              notifyStudentsAfterClassScheduleUpdateSMS(client, {
-                classId: params.classId,
-                className: updateClassResult.data.name,
-                updatedClassDay: firstTimeSlot.day,
-                updatedStartTime: firstTimeSlot.startTime,
-                updatedEndTime: scheduleInfo.includes(',')
-                  ? scheduleInfo
-                  : firstTimeSlot.endTime,
-                nextClassDate: nextSessionDate,
-              }),
-            ]);
-            console.log(
-              'Successfully sent schedule update notifications (email and SMS) to students',
-            );
-          } catch (notificationError) {
-            console.error(
-              'Failed to send schedule update notifications:',
-              notificationError,
-            );
-            // Don't throw here - we don't want to fail the entire update if notifications fail
-          }
-        }
-      }
+      logger.info(`Class update completed for ${params.classId}`, {
+        queuedOperations: classUpdateResult.data.queuedOperations,
+        message: classUpdateResult.data.message
+      });
       revalidatePath('/classes');
       revalidatePath(`/classes/${params.classId}`);
       revalidatePath('/(app)/classes');
