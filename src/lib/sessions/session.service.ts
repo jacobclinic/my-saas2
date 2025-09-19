@@ -363,7 +363,7 @@ export class SessionService {
                     timezone: "UTC",
                     settings: {
                         waiting_room: false,
-                        meeting_authentication: true,
+                        meeting_authentication: false,
                         approval_type: 0,
                         join_before_host: false,
                         jbh_time: 15,

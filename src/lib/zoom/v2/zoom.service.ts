@@ -210,7 +210,7 @@ export class ZoomService {
                                 settings: {
                                     // --- WAITING ROOM DISABLED ---
                                     waiting_room: false,
-                                    meeting_authentication: true,
+                                    meeting_authentication: false,
                                     // --- MODIFIED: Changed approval_type to 0 ---
                                     // 2 = Registration required, but no host approval needed.
                                     // This lets our backend control admission via API.
