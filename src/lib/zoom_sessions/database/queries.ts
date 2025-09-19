@@ -7,7 +7,7 @@ const logger = getLogger();
 type Client = SupabaseClient<Database>;
 const ZOOM_SESSIONS_TABLE = 'zoom_sessions';
 
-export async function getZoomSessionBySessionId(client: Client, sessionId: string) {
+export async function getZoomSessionBySessionId(client: Client, sessionId: string): Promise<any | null> {
   const { data, error } = await client
     .from(ZOOM_SESSIONS_TABLE)
     .select(`
@@ -23,9 +23,14 @@ export async function getZoomSessionBySessionId(client: Client, sessionId: strin
     .single();
 
   if (error) {
+    // Handle the case where no zoom session exists yet (normal for future sessions)
+    if (error.code === 'PGRST116') {
+      logger.info(`No zoom session found for session ${sessionId} - this is normal for future sessions`);
+      return null;
+    }
     logger.error('Error fetching session by session ID:', error);
-    throw error
-  };
+    throw error;
+  }
   return data;
 }
 
