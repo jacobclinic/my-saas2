@@ -315,6 +315,8 @@ class ZoomService {
         return {
           join_url: existingRegistration.joinUrl,
           start_url: existingRegistration.joinUrl,
+          registrant_id: existingRegistration.registrantId,
+          success: true
         };
       }
 
@@ -339,6 +341,8 @@ class ZoomService {
       return {
         join_url: registrant.join_url,
         start_url: registrant.join_url,
+        registrant_id: registrant.registrant_id,
+        success: true
       };
 
     } catch (error: any) {

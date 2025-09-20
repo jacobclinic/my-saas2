@@ -11,6 +11,11 @@ import {
   getSessionDetails,
   verifyStudentPaymentByEmailForSession
 } from '../database/session-join-queries';
+import {
+  getCachedStudentRegistration,
+  storeCachedRegistration,
+  getSessionFallbackUrl
+} from '../database/student-registration-cache';
 import { isFirstWeekOfMonth } from '~/lib/utils/date-utils';
 import { updateStudentSessionStatus } from '../database/session-mutations';
 
@@ -124,32 +129,134 @@ export class StudentSessionService {
         return failure(new ServiceError('Meeting not available yet. Please try again later.'));
       }
 
-      // Step 5: Smart registration with Zoom (checks existing registrations first)
-      this.logger.info('Registering participant with Zoom for session using improved batch approach', {
-        meetingId: sessionDetails.zoom_meeting_id,
-        participantEmail: params.userEmail,
-        sessionId: params.sessionId
-      });
-
-      // Import the enhanced zoom service that has batch registration
-      const { zoomService } = await import('~/lib/zoom/zoom.service');
-      const registrationResult = await zoomService.joinMeetingAsStudent(
-        sessionDetails.zoom_meeting_id,
-        {
-          email: params.userEmail,
-          first_name: params.userFirstName,
-          last_name: params.userLastName,
-        }
-      );
-
-      this.logger.info('Zoom registration successful for session', {
+      // Step 5: Smart registration with cache-first approach
+      this.logger.info('Starting smart registration with cache-first approach', {
         meetingId: sessionDetails.zoom_meeting_id,
         participantEmail: params.userEmail,
         sessionId: params.sessionId,
-        joinUrl: registrationResult.join_url ? 'generated' : 'not_generated'
+        userId: params.userId
       });
 
-      return success({ joinUrl: registrationResult.join_url });
+      // First, check if we have a cached registration
+      const cachedResult = await getCachedStudentRegistration(
+        this.client,
+        this.logger,
+        params.userId,
+        params.sessionId
+      );
+
+      let joinUrl: string | null = null;
+
+      if (cachedResult.success && cachedResult.data) {
+        // Use cached registration
+        this.logger.info('Using cached registration for student', {
+          userId: params.userId,
+          sessionId: params.sessionId,
+          registrantId: cachedResult.data.registrant_id
+        });
+        joinUrl = cachedResult.data.join_url;
+      } else {
+        // No cached registration, register with Zoom
+        this.logger.info('No cached registration found, registering with Zoom', {
+          meetingId: sessionDetails.zoom_meeting_id,
+          participantEmail: params.userEmail,
+          sessionId: params.sessionId
+        });
+
+        try {
+          // Import the enhanced zoom service that has batch registration
+          const { zoomService } = await import('~/lib/zoom/zoom.service');
+          const registrationResult = await zoomService.joinMeetingAsStudent(
+            sessionDetails.zoom_meeting_id,
+            {
+              email: params.userEmail,
+              first_name: params.userFirstName,
+              last_name: params.userLastName,
+            }
+          );
+
+          if (registrationResult.success && registrationResult.join_url) {
+            joinUrl = registrationResult.join_url;
+
+            // Cache the new registration for future use
+            if (registrationResult.registrant_id) {
+              const cacheResult = await storeCachedRegistration(
+                this.client,
+                this.logger,
+                {
+                  student_id: params.userId,
+                  session_id: params.sessionId,
+                  meeting_id: sessionDetails.zoom_meeting_id,
+                  registrant_id: registrationResult.registrant_id,
+                  join_url: registrationResult.join_url,
+                  registrant_status: 'approved'
+                }
+              );
+
+              if (cacheResult.success) {
+                this.logger.info('Successfully registered and cached student with Zoom', {
+                  userId: params.userId,
+                  sessionId: params.sessionId,
+                  meetingId: sessionDetails.zoom_meeting_id,
+                  registrantId: registrationResult.registrant_id
+                });
+              } else {
+                this.logger.warn('Registration successful but caching failed', {
+                  userId: params.userId,
+                  sessionId: params.sessionId,
+                  error: cacheResult.error.message
+                });
+              }
+            } else {
+              this.logger.info('Successfully registered student with Zoom (no registrant_id for caching)', {
+                userId: params.userId,
+                sessionId: params.sessionId,
+                meetingId: sessionDetails.zoom_meeting_id
+              });
+            }
+          }
+        } catch (error) {
+          // Registration failed, try fallback URL
+          this.logger.warn('Zoom registration failed, attempting fallback URL', {
+            userId: params.userId,
+            sessionId: params.sessionId,
+            error: error instanceof Error ? error.message : String(error)
+          });
+
+          const fallbackResult = await getSessionFallbackUrl(
+            this.client,
+            this.logger,
+            params.sessionId
+          );
+
+          if (fallbackResult.success && fallbackResult.data) {
+            joinUrl = fallbackResult.data;
+            this.logger.info('Using fallback join URL', {
+              userId: params.userId,
+              sessionId: params.sessionId
+            });
+          }
+        }
+      }
+
+      if (!joinUrl) {
+        this.logger.error('No join URL available for student', {
+          userId: params.userId,
+          sessionId: params.sessionId,
+          meetingId: sessionDetails.zoom_meeting_id
+        });
+        return failure(new ServiceError('Unable to generate join link. Please contact support.'));
+      }
+
+      this.logger.info('Join URL generation successful for session', {
+        meetingId: sessionDetails.zoom_meeting_id,
+        participantEmail: params.userEmail,
+        sessionId: params.sessionId,
+        joinUrl: joinUrl ? 'available' : 'not_available',
+        source: cachedResult.success && cachedResult.data ? 'cache' : 'live_registration'
+      });
+
+      return success({ joinUrl });
 
     } catch (error) {
       this.logger.error('Unexpected error generating session join URL', {
