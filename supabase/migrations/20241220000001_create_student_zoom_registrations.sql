@@ -42,9 +42,17 @@ CREATE TRIGGER update_student_zoom_registrations_updated_at
 -- Add RLS policies
 ALTER TABLE student_zoom_registrations ENABLE ROW LEVEL SECURITY;
 
--- Students can only see their own registrations
+-- Students can view their own registrations
 CREATE POLICY "Students can view own registrations" ON student_zoom_registrations
     FOR SELECT USING (auth.uid() = student_id);
+
+-- Students can insert their own registrations
+CREATE POLICY "Students can cache own registrations" ON student_zoom_registrations
+    FOR INSERT WITH CHECK (auth.uid() = student_id);
+
+-- Students can update their own registrations
+CREATE POLICY "Students can update own registrations" ON student_zoom_registrations
+    FOR UPDATE USING (auth.uid() = student_id);
 
 -- Service role can manage all registrations
 CREATE POLICY "Service role can manage all registrations" ON student_zoom_registrations

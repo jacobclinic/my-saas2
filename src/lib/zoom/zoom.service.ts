@@ -90,6 +90,8 @@ class ZoomService {
           registration_type: 2, // Each registrant gets a unique link
           waiting_room: false,
           mute_upon_entry: true,
+          registrants_confirmation_email: false,
+          registrants_email_notification: false,
         },
       };
 

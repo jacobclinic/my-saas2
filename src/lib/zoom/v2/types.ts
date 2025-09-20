@@ -303,6 +303,8 @@ export type ZoomCreateUserMeetingRequest = {
             waiting_room?: boolean;
             meeting_authentication?: boolean;
             jbh_time?: 0 | 5 | 10 | 15;
+            registrants_confirmation_email: boolean,
+            registrants_email_notification: boolean,
         };
     }
 }
@@ -340,6 +342,8 @@ export type ZoomMeetingResponse = {
         alternative_hosts?: string;
         waiting_room?: boolean;
         meeting_authentication?: boolean;
+        registrants_confirmation_email: boolean,
+        registrants_email_notification: boolean,
     };
 }
 

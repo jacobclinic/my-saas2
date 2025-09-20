@@ -295,13 +295,15 @@ export class SessionService {
                     settings: {
                         waiting_room: false,
                         meeting_authentication: false,
-                        approval_type: 0,
+                        approval_type: 1,
                         join_before_host: false,
                         jbh_time: 15,
                         mute_upon_entry: true,
                         host_video: true,
                         participant_video: false,
                         auto_recording: 'cloud',
+                        registrants_confirmation_email: false,
+                        registrants_email_notification: false,
                     }
                 }
             });

@@ -278,6 +278,8 @@ export class ZoomService {
                         host_video: true,
                         participant_video: false,
                         auto_recording: 'cloud',
+                        registrants_confirmation_email: false,
+                        registrants_email_notification: false,
                     }
                 }
             });
@@ -411,6 +413,8 @@ export class ZoomService {
                                     host_video: true,
                                     participant_video: false, 
                                     auto_recording: 'cloud',
+                                    registrants_confirmation_email: false,
+                                    registrants_email_notification: false,
                                 }
                             }
                         });
