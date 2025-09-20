@@ -271,7 +271,7 @@ export class ZoomService {
                     settings: {
                         waiting_room: false,
                         meeting_authentication: false,
-                        approval_type: 0,
+                        approval_type: 1,
                         join_before_host: false,
                         jbh_time: 15,
                         mute_upon_entry: true,
@@ -405,7 +405,7 @@ export class ZoomService {
                                     // --- MODIFIED: Changed approval_type to 0 ---
                                     // 2 = Registration required, but no host approval needed.
                                     // This lets our backend control admission via API.
-                                    approval_type: 0, 
+                                    approval_type: 1, 
                                     // --- Other Recommended Settings ---
                                     join_before_host: false,
                                     jbh_time: 15,
