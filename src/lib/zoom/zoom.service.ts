@@ -298,50 +298,59 @@ class ZoomService {
         meetingId
       });
 
-      // Step 1: Check if student is already registered
-      const existingRegistration = await this.getStudentRegistration(meetingId, studentData.email);
+      // Note: Cache checking is handled in student-session.service.ts
+      // This method is only called when no cache exists
 
-      if (!existingRegistration.success) {
-        throw new Error(`Failed to check existing registration: ${existingRegistration.error}`);
+      // Step 1: Register student using individual registration API
+      const accessToken = await this.getAccessToken();
+      if (!accessToken) {
+        throw new Error('Could not obtain valid access token');
       }
 
-      // Step 2: If already registered, return existing join URL
-      if (existingRegistration.isRegistered && existingRegistration.joinUrl) {
-        logger.info(`Student already registered for meeting ${meetingId}, returning existing join URL`, {
-          email: studentData.email,
-          registrantId: existingRegistration.registrantId
-        });
+      const response = await fetch(
+        `${this.baseUrl}/meetings/${meetingId}/registrants`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: studentData.email,
+            first_name: studentData.first_name,
+            last_name: studentData.last_name,
+            auto_approve: true
+          }),
+        },
+      );
 
-        return {
-          join_url: existingRegistration.joinUrl,
-          start_url: existingRegistration.joinUrl,
-          registrant_id: existingRegistration.registrantId,
-          success: true
-        };
+      if (!response.ok) {
+        const responseText = await response.text();
+        let errorMessage = response.statusText;
+
+        if (responseText) {
+          try {
+            const errorData = JSON.parse(responseText);
+            errorMessage = errorData.message || errorMessage;
+          } catch (parseError) {
+            errorMessage = responseText || errorMessage;
+          }
+        }
+
+        throw new Error(`Registration failed: ${errorMessage}`);
       }
 
-      // Step 3: Student not registered, register them individually
-      logger.info(`Student not registered, registering for meeting ${meetingId}`, {
-        email: studentData.email
-      });
-
-      const batchResult = await this.batchRegisterStudents(meetingId, [studentData]);
-
-      if (!batchResult.success || !batchResult.registrants || batchResult.registrants.length === 0) {
-        throw new Error(`Failed to register student: ${batchResult.error || 'No registrant returned'}`);
-      }
-
-      const registrant = batchResult.registrants[0];
+      const result = await response.json();
 
       logger.info(`Student successfully registered for meeting ${meetingId}`, {
         email: studentData.email,
-        registrantId: registrant.registrant_id
+        registrantId: result.registrant_id
       });
 
       return {
-        join_url: registrant.join_url,
-        start_url: registrant.join_url,
-        registrant_id: registrant.registrant_id,
+        join_url: result.join_url,
+        start_url: result.join_url,
+        registrant_id: result.registrant_id,
         success: true
       };
 
