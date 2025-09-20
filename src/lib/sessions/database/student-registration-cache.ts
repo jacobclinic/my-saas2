@@ -50,11 +50,7 @@ export async function storeCachedRegistration(
       .single();
 
     if (error) {
-      logger.error('Failed to store cached registration', {
-        error: error.message,
-        studentId: data.student_id,
-        sessionId: data.session_id
-      });
+      logger.error(`Failed to store cached registration: ${error.message} | Code: ${error.code} | Details: ${error.details || 'none'}`);
       return failure(new DatabaseError('Failed to store registration in cache'));
     }
 
@@ -68,12 +64,7 @@ export async function storeCachedRegistration(
     return success(registration);
 
   } catch (error) {
-    logger.error('Error storing cached registration', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      studentId: data.student_id,
-      sessionId: data.session_id
-    });
+    logger.error(`Error storing cached registration: ${error instanceof Error ? error.message : String(error)}`);
     return failure(new DatabaseError('Failed to store registration in cache'));
   }
 }
