@@ -5,6 +5,7 @@ import { SessionService } from '~/lib/sessions/session.service';
 import { notifyStudentsAfterClassScheduleUpdate } from '~/lib/notifications/email/email.notification.service';
 import { notifyStudentsAfterClassScheduleUpdateSMS } from '~/lib/notifications/sms/sms.notification.service';
 import { TimeSlot } from '~/lib/classes/types/class-v2';
+import { Client } from '@upstash/qstash';
 
 interface QStashClassUpdatePayload {
   classId: string;
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
 
     const client = getSupabaseServerActionClient();
     const sessionService = new SessionService(client, logger);
+    const qstashClient = new Client({ token: process.env.QSTASH_TOKEN! });
 
     // ✅ HEAVY: Delete old sessions
     logger.info(`Deleting old sessions for class ${payload.classId}`);
@@ -58,6 +60,89 @@ export async function POST(request: NextRequest) {
     logger.info(`Sessions recreated successfully for class ${payload.classId}`, {
       sessionsCreated: createSessionsResult.data.length
     });
+
+    // ✅ LIGHTWEIGHT: Queue batch registration jobs for new sessions
+    logger.info(`Queuing batch registration jobs for new sessions in class ${payload.classId}`);
+
+    try {
+      // Get sessions that have Zoom meetings
+      const { data: sessionsWithMeetings, error: sessionsFetchError } = await client
+        .from('sessions')
+        .select('id, zoom_meeting_id, title, start_time')
+        .eq('class_id', payload.classId)
+        .not('zoom_meeting_id', 'is', null)
+        .gte('start_time', new Date().toISOString());
+
+      if (sessionsFetchError) {
+        logger.error('Error fetching sessions with Zoom meetings for batch registration:', sessionsFetchError);
+      } else if (sessionsWithMeetings && sessionsWithMeetings.length > 0) {
+        // Get enrolled students for this class
+        const { data: enrollments, error: enrollmentError } = await client
+          .from('student_class_enrollments')
+          .select(`
+            student:users (
+              email,
+              first_name,
+              last_name
+            )
+          `)
+          .eq('class_id', payload.classId);
+
+        if (enrollmentError) {
+          logger.error('Error fetching enrolled students for batch registration:', enrollmentError);
+        } else if (enrollments && enrollments.length > 0) {
+          const students = enrollments
+            .filter(e => e.student && e.student.first_name && e.student.last_name && e.student.email)
+            .map(e => ({
+              first_name: e.student!.first_name!,
+              last_name: e.student!.last_name!,
+              email: e.student!.email!
+            }));
+
+          logger.info(`Found ${students.length} enrolled students and ${sessionsWithMeetings.length} sessions with Zoom meetings`);
+
+          // Queue background jobs for each session instead of processing them here
+          let queuedJobs = 0;
+          for (const session of sessionsWithMeetings) {
+            try {
+              const jobId = `class-update-${payload.classId}-${session.id}-${Date.now()}`;
+              const delaySeconds = Math.floor(Math.random() * 120); // 0-2 minutes stagger
+
+              await qstashClient.publishJSON({
+                url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/public/batch-register-students`,
+                body: {
+                  sessionId: session.id,
+                  meetingId: session.zoom_meeting_id!,
+                  sessionTitle: session.title || 'Updated Session',
+                  students,
+                  requestedAt: new Date().toISOString(),
+                  jobId
+                },
+                retries: 3,
+                delay: delaySeconds
+              });
+
+              logger.info(`Queued registration job for session ${session.id}`, {
+                sessionTitle: session.title,
+                studentCount: students.length,
+                jobId,
+                delaySeconds
+              });
+
+              queuedJobs++;
+
+            } catch (queueError) {
+              logger.error(`Failed to queue registration job for session ${session.id}:`, queueError);
+            }
+          }
+
+          logger.info(`Successfully queued ${queuedJobs}/${sessionsWithMeetings.length} registration jobs for class ${payload.classId}`);
+        }
+      }
+    } catch (batchRegError) {
+      logger.error('Error in batch registration job queuing:', batchRegError);
+      // Don't fail the entire operation, just log the error
+    }
 
     // ✅ HEAVY: Send notifications to all enrolled students
     logger.info(`Sending notifications for class ${payload.classId} schedule update`);

@@ -124,14 +124,16 @@ export class StudentSessionService {
         return failure(new ServiceError('Meeting not available yet. Please try again later.'));
       }
 
-      // Step 5: Just-in-time registration with Zoom
-      this.logger.info('Registering participant with Zoom for session', {
+      // Step 5: Smart registration with Zoom (checks existing registrations first)
+      this.logger.info('Registering participant with Zoom for session using improved batch approach', {
         meetingId: sessionDetails.zoom_meeting_id,
         participantEmail: params.userEmail,
         sessionId: params.sessionId
       });
 
-      const registrationResult = await this.zoomService.registerParticipant(
+      // Import the enhanced zoom service that has batch registration
+      const { zoomService } = await import('~/lib/zoom/zoom.service');
+      const registrationResult = await zoomService.joinMeetingAsStudent(
         sessionDetails.zoom_meeting_id,
         {
           email: params.userEmail,
