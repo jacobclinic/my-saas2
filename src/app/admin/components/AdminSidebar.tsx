@@ -1,6 +1,6 @@
 'use client';
 
-import { HomeIcon, UserIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, UserIcon, ClockIcon } from '@heroicons/react/24/outline';
 import Sidebar, { SidebarContent, SidebarItem } from '~/core/ui/Sidebar';
 import Logo from '~/core/ui/Logo';
 
@@ -25,6 +25,13 @@ function AdminSidebar() {
           Icon={() => <UserIcon className={'h-6'} />}
         >
           Users
+        </SidebarItem>
+
+        <SidebarItem
+          path={'/admin/cron'}
+          Icon={() => <ClockIcon className={'h-6'} />}
+        >
+          Cron Jobs
         </SidebarItem>
       </SidebarContent>
     </Sidebar>
