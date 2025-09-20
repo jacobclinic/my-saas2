@@ -779,19 +779,19 @@ export async function getClassFeeById(
   }
 }
 
-export async function getActiveClassesForTutorInvoices(
+export async function getAllClassesForTutorInvoices(
   client: SupabaseClient,
 ): Promise<Result<ActiveClassForTutorInvoice[], DatabaseError>> {
   try {
     const { data: tutorClasses, error } = await client
       .from(CLASSES_TABLE)
       .select(`
-        id,
-        fee,
-        tutor_id,
-        name
+      id,
+      fee,
+      tutor_id,
+      name
       `)
-      .eq('status', 'active');
+      .in('status', ['active', 'canceled']);
 
     if (error) {
       logger.error('Error fetching active classes for tutor invoices.', { error });

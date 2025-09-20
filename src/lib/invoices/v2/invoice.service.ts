@@ -20,7 +20,7 @@ import { getClassFeeById, getClassFreeAccessSetting } from '~/lib/classes/databa
 import { generateId } from '~/lib/utils/nanoid-utils';
 import { getTutorInvoiceByDetails, getTutorInvoicesByClassAndPeriod } from './database/tutor-queries';
 import { createTutorInvoice, updateTutorInvoice, createTutorInvoices } from './database/tutor-mutations';
-import { getActiveClassesForTutorInvoices } from '~/lib/classes/database/queries';
+import { getAllClassesForTutorInvoices } from '~/lib/classes/database/queries';
 import { getPaidStudentInvoicesByClassAndPeriod } from './database/queries';
 import { TUTOR_PAYOUT_RATE, DEFAULT_TUTOR_COMMISSION_RATE } from '~/lib/constants-v2';
 import { getTutorCommissionRate } from '~/lib/user/database/queries';
@@ -243,12 +243,12 @@ export class InvoiceService {
       const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15);
       const invoicePeriod = getInvoicePeriodUTC(previousMonth);
 
-      const activeClassesResult = await getActiveClassesForTutorInvoices(this.supabaseClient);
-      if (!activeClassesResult.success) {
-        return failure(new AppError('Failed to fetch active classes.', ErrorCodes.DATABASE_ERROR));
+      const allClassesResult = await getAllClassesForTutorInvoices(this.supabaseClient);
+      if (!allClassesResult.success) {
+        return failure(new AppError('Failed to fetch all classes.', ErrorCodes.DATABASE_ERROR));
       }
 
-      const tutorClasses = activeClassesResult.data;
+      const tutorClasses = allClassesResult.data;
       if (tutorClasses.length === 0) {
         this.logger.info('No active classes found');
         return success(undefined);
